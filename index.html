@@ -1151,7 +1151,7 @@ function renderCalendar() {
     </div>
   </div>
   <div class="cal-grid">`;
-  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach((d, i) => html += `<div class="cal-dow ${(i===5||i===6)?'weekend':''}">${d}</div>`);
+  ['Mon','Wed','Thu','Fri','Sat','Sun','Mon'].forEach((d, i) => html += `<div class="cal-dow ${(i===5||i===6)?'weekend':''}">${d}</div>`);
   for (let i = 0; i < firstDow; i++) html += `<div class="cal-cell muted ${(i===5)?'weekend':''}"></div>`;
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = state.calMonth + '-' + String(d).padStart(2, '0');
