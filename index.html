@@ -880,6 +880,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 /* ============================================================
    CM Team Agenda Dashboard — Pusmantap
    © 2026 Atitya Pritasari. All rights reserved.
+   Build: 2026-08-06 unit-classification-hotfix-v2
    CONFIG / LOOKUPS
 ============================================================ */
 const STORAGE_KEY = 'pusmantap-agenda-cm-v1';
@@ -903,7 +904,7 @@ const UNIT_CANONICAL_FIX = { 'Setjen': 'SETJEN', 'Itjen': 'ITJEN', 'DJPb': 'DJPB
 const CATEGORY_CANONICAL_FIX = { 'T-Forum/Workshop/Sosialisasi': 'T-Forum' };
 // Unit Eselon II di bawah BaTii sendiri — ini tetap "internal" walau bukan salah satu
 // dari 14 UE I, karena masih bagian dari struktur BaTii/Kemenkeu (bukan instansi luar).
-const BATII_ESELON_II_UNITS = ['Pusmantap', 'Puspensi', 'Pusakti', 'Pusdatin', 'Setban'];
+const BATII_ESELON_II_UNITS = ['Pusmantap', 'Puspensi', 'Pusakti', 'Pusdatin', 'Pusliki', 'Setban'];
 const PAGE_SIZE = 10;
 
 /* ============================================================
@@ -1190,13 +1191,17 @@ function splitNames(str) {
 // or known central units) versus an external institution (other K/L, OJK, etc.)
 const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
-  'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','LNSW','LPDP','STAN','PKN STAN'
+  'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','PUSLIKI','LNSW','LPDP','STAN','PKN STAN'
 ]);
 function getManagedUnitType(unitName) {
   const key = String(unitName || '').trim().toLowerCase();
   if (!key || !Array.isArray(state.unitList)) return null;
-  const managed = state.unitList.find(x => String(x.name || '').trim().toLowerCase() === key);
-  return managed && (managed.type === 'internal' || managed.type === 'external') ? managed.type : null;
+  const matches = state.unitList.filter(x => String(x.name || '').trim().toLowerCase() === key);
+  // Lindungi data lama yang mungkin punya duplikat beda casing/spasi. Jika salah satu
+  // entri sudah ditetapkan Internal di Manage Units, klasifikasinya harus Internal.
+  if (matches.some(x => x.type === 'internal')) return 'internal';
+  if (matches.some(x => x.type === 'external')) return 'external';
+  return null;
 }
 function isInternalUnit(unit) {
   // Manage Units menjadi sumber utama klasifikasi. Aturan statis di bawah hanya fallback
@@ -1655,13 +1660,17 @@ async function renameUnit(oldName, newName) {
   toast(t('toastUnitRenamed'), 'success');
 }
 async function setUnitType(name, type) {
-  const u = state.unitList.find(x => x.name === name);
-  if (u) {
-    u.type = type;
-    await persistUnitList();
-    // Langsung perbarui warna badge, filter, KPI, dan chart tanpa menunggu reload.
-    refreshAll();
-  }
+  const key = String(name || '').trim().toLowerCase();
+  let changed = false;
+  state.unitList.forEach(u => {
+    if (String(u.name || '').trim().toLowerCase() === key && u.type !== type) {
+      u.type = type;
+      changed = true;
+    }
+  });
+  if (changed) await persistUnitList();
+  // Langsung perbarui warna badge, filter, KPI, dan chart tanpa menunggu reload.
+  refreshAll();
 }
 async function deleteUnitWithReassign(name, reassignTo) {
   if (reassignTo) {
