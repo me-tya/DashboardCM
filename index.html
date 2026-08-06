@@ -367,6 +367,9 @@ select.filter-select:focus, input.filter-date:focus{outline:2px solid var(--navy
   font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--navy-800);color:#fff;
   letter-spacing:.02em;
 }
+/* Explicit classification classes. !important defeats stale inline styles from older builds. */
+.unit-badge.unit-internal{background:var(--navy-800)!important;color:#fff!important;}
+.unit-badge.unit-external{background:var(--gold-500)!important;color:#4A3A0A!important;}
 
 /* ===== TABLE ===== */
 .table-wrap{overflow-x:auto;}
@@ -860,7 +863,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 
 </main>
 
-<footer class="app-footer" title="Build 2026-08-06 v3-pusliki">© 2026 Atitya Pritasari. All rights reserved.</footer>
+<footer class="app-footer" title="Build PUSLIKI-INTERNAL-20260806-2000">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build PUSLIKI-INTERNAL-20260806-2000</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -1196,6 +1199,7 @@ const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
   'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','PUSLIKI','LNSW','LPDP','STAN','PKN STAN'
 ]);
+const APP_BUILD_ID = 'PUSLIKI-INTERNAL-20260806-2000';
 function normalizeUnitKey(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -2388,7 +2392,7 @@ function renderTable() {
         ${a.updatedBy ? `<div class="table-updated-by" title="${dayjs(a.updatedAt).format('D MMM YYYY, HH:mm')}">${t('updatedByLabel')} ${escapeHtml(a.updatedBy)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
-      <td><span class="unit-badge" style="${getUnitType(a.unitPemohon) === 'internal' ? '' : 'background:var(--gold-500);color:#4A3A0A;'}">${escapeHtml(a.unitPemohon)}</span></td>
+      <td><span class="unit-badge ${(normalizeUnitKey(a.unitPemohon) === 'PUSLIKI' || getUnitType(a.unitPemohon) === 'internal') ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
       <td style="max-width:160px;">${escapeHtml(a.programTerkait)}</td>
       <td style="max-width:150px;">${escapeHtml(a.picTimCM)}</td>
@@ -5374,6 +5378,7 @@ window.onDashboardLogout = function () {
    INIT
 ============================================================ */
 console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights reserved.', 'font-weight:bold;font-size:14px;color:#12275A;', 'color:#666;');
+console.info('[CM Dashboard build]', APP_BUILD_ID);
 
 (async function init() {
   wireEvents();
