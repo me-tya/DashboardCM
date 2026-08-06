@@ -367,7 +367,7 @@ select.filter-select:focus, input.filter-date:focus{outline:2px solid var(--navy
   font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--navy-800);color:#fff;
   letter-spacing:.02em;
 }
-/* Explicit classification classes. !important defeats stale inline styles from older builds. */
+/* Unit color is controlled only by the Internal/External value in Manage Units. */
 .unit-badge.unit-internal{background:var(--navy-800)!important;color:#fff!important;}
 .unit-badge.unit-external{background:var(--gold-500)!important;color:#4A3A0A!important;}
 
@@ -863,7 +863,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 
 </main>
 
-<footer class="app-footer" title="Build PUSLIKI-INTERNAL-20260806-2000">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build PUSLIKI-INTERNAL-20260806-2000</span></footer>
+<footer class="app-footer" title="Build MANAGE-UNITS-AUTHORITY-20260806-2030">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build MANAGE-UNITS-AUTHORITY-20260806-2030</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -886,7 +886,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 /* ============================================================
    CM Team Agenda Dashboard — Pusmantap
    © 2026 Atitya Pritasari. All rights reserved.
-   Build: 2026-08-06 unit-classification-hotfix-v3-pusliki
+   Build: 2026-08-06 manage-units-authoritative-v1
    CONFIG / LOOKUPS
 ============================================================ */
 const STORAGE_KEY = 'pusmantap-agenda-cm-v1';
@@ -1193,13 +1193,13 @@ function splitNames(str) {
   return String(str).split(/\s*,\s*|\s+dan\s+/gi).map(s => s.trim()).filter(Boolean);
 }
 
-// Classify whether a "Unit Pemohon" is internal to Kemenkeu (Eselon I/II units, always prefixed DJ,
-// or known central units) versus an external institution (other K/L, OJK, etc.)
+// Unit classification. Manage Units is the authoritative source.
+// The hard-coded list below is only a default for a unit that has not yet been saved in Manage Units.
 const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
   'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','PUSLIKI','LNSW','LPDP','STAN','PKN STAN'
 ]);
-const APP_BUILD_ID = 'PUSLIKI-INTERNAL-20260806-2000';
+const APP_BUILD_ID = 'MANAGE-UNITS-AUTHORITY-20260806-2030';
 function normalizeUnitKey(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -1208,26 +1208,28 @@ function normalizeUnitKey(value) {
     .trim()
     .toUpperCase();
 }
+function normalizeUnitType(type) {
+  return String(type || '').toLowerCase() === 'internal' ? 'internal' : 'external';
+}
 function getManagedUnitType(unitName) {
   const key = normalizeUnitKey(unitName);
   if (!key || !Array.isArray(state.unitList)) return null;
-  const matches = state.unitList.filter(x => normalizeUnitKey(x.name) === key);
-  // Lindungi data lama yang mungkin punya duplikat beda casing/spasi.
-  if (matches.some(x => String(x.type || '').toLowerCase() === 'internal')) return 'internal';
-  if (matches.some(x => String(x.type || '').toLowerCase() === 'external')) return 'external';
+  // Last matching entry wins as a defensive fallback. normalizeUnitListAndData()
+  // removes duplicates, so normally there is exactly one match.
+  for (let i = state.unitList.length - 1; i >= 0; i--) {
+    const item = state.unitList[i];
+    if (normalizeUnitKey(item && item.name) === key) return normalizeUnitType(item && item.type);
+  }
   return null;
 }
-function isInternalUnit(unit) {
-  const u = normalizeUnitKey(unit);
-  if (!u || u === '-') return true;
-
-  // Unit Kemenkeu yang sudah diketahui tidak boleh berubah menjadi eksternal akibat
-  // data lama/localStorage/Firestore yang masih menyimpan klasifikasi sebelumnya.
-  if (u.startsWith('DJ') || KEMENKEU_INTERNAL_UNITS.has(u)) return true;
-
-  // Untuk unit lain, Manage Units tetap menjadi sumber klasifikasi utama.
-  const managedType = getManagedUnitType(unit);
-  return managedType === 'internal';
+function getDefaultUnitType(unitName) {
+  const key = normalizeUnitKey(unitName);
+  if (!key || key === '-') return 'internal';
+  return (key.startsWith('DJ') || KEMENKEU_INTERNAL_UNITS.has(key)) ? 'internal' : 'external';
+}
+function isInternalUnit(unitName) {
+  // IMPORTANT: a value selected in Manage Units always overrides the default list.
+  return (getManagedUnitType(unitName) || getDefaultUnitType(unitName)) === 'internal';
 }
 
 /* ============================================================
@@ -1568,44 +1570,51 @@ async function loadUnitListInitial() {
   attachUnitListLiveSync();
 }
 function normalizeUnitListAndData() {
-  // 1) Perbaiki casing lama (Setjen -> SETJEN, dst) + pecah entri yang ternyata
-  //    gabungan beberapa nama unit dipisah koma (mis. "Pusmantap, Pusdatin")
-  //    jadi baris-baris unit yang terpisah.
+  // 1) Normalize names and remove duplicate entries case-insensitively.
+  // The latest saved Internal/External value wins; no unit is forcibly reclassified here.
   const seen = new Map();
+  function canonicalName(name) {
+    const raw = String(name || '').trim();
+    return UNIT_CANONICAL_FIX[raw] || raw;
+  }
   function upsert(name, type) {
-    const fixedName = UNIT_CANONICAL_FIX[name] || name;
-    const forcedType = BATII_ESELON_II_UNITS.includes(fixedName) ? 'internal' : type;
-    if (seen.has(fixedName)) {
-      const existing = seen.get(fixedName);
-      if (forcedType === 'internal') existing.type = 'internal';
+    const fixedName = canonicalName(name);
+    const key = normalizeUnitKey(fixedName);
+    if (!key) return;
+    const normalizedType = normalizeUnitType(type);
+    if (seen.has(key)) {
+      const existing = seen.get(key);
+      existing.name = fixedName;
+      existing.type = normalizedType; // last explicit setting wins
     } else {
-      seen.set(fixedName, { name: fixedName, type: forcedType });
+      seen.set(key, { name: fixedName, type: normalizedType });
     }
   }
   (state.unitList || []).forEach(u => {
-    const looksSafeToSplit = u.name.includes(',') && !u.name.includes('(') && !u.name.includes(')');
+    const rawName = String((u && u.name) || '');
+    const looksSafeToSplit = rawName.includes(',') && !rawName.includes('(') && !rawName.includes(')');
     if (looksSafeToSplit) {
-      u.name.split(',').map(s => s.trim()).filter(Boolean).forEach(part => upsert(part, u.type));
+      rawName.split(',').map(s => s.trim()).filter(Boolean).forEach(part => upsert(part, u && u.type));
     } else {
-      upsert(u.name, u.type);
+      upsert(rawName, u && u.type);
     }
   });
   const deduped = Array.from(seen.values());
 
-  // Susun ulang ke urutan nomenklatur resmi (persis urutan UNIT_SEED: UE I dulu,
-  // baru non-Eselon) — apa pun urutan lama yang kebawa dari histori data sebelumnya.
-  const seedOrder = UNIT_SEED.map(u => u.name);
-  const known = seedOrder.map(name => deduped.find(u => u.name === name)).filter(Boolean);
-  const rest = deduped.filter(u => !seedOrder.includes(u.name));
+  // Keep the official seed order first, followed by custom units.
+  const seedOrderKeys = UNIT_SEED.map(u => normalizeUnitKey(u.name));
+  const known = seedOrderKeys.map(key => deduped.find(u => normalizeUnitKey(u.name) === key)).filter(Boolean);
+  const rest = deduped.filter(u => !seedOrderKeys.includes(normalizeUnitKey(u.name)));
   const reordered = [...known, ...rest];
 
   const changedList = reordered.length !== (state.unitList || []).length
-    || reordered.some((u, i) => !state.unitList[i] || u.name !== state.unitList[i].name || u.type !== state.unitList[i].type);
+    || reordered.some((u, i) => !state.unitList[i]
+      || normalizeUnitKey(u.name) !== normalizeUnitKey(state.unitList[i].name)
+      || u.name !== state.unitList[i].name
+      || normalizeUnitType(u.type) !== normalizeUnitType(state.unitList[i].type));
   state.unitList = reordered;
 
-  // 2) Rapikan casing lama di data Activity juga. Catatan: field Unit Asal Narasumber
-  // memang bisa berisi beberapa nama sekaligus (dipisah koma) — itu tetap dibiarkan
-  // apa adanya di data activity-nya, cuma dipakai buat referensi & hitung pemakaian.
+  // 2) Repair legacy casing in Activity data without changing classification.
   let changedAgendas = false;
   state.agendas.forEach(a => {
     if (UNIT_CANONICAL_FIX[a.unitPemohon]) { a.unitPemohon = UNIT_CANONICAL_FIX[a.unitPemohon]; changedAgendas = true; }
@@ -1680,23 +1689,26 @@ async function renameUnit(oldName, newName) {
 }
 async function setUnitType(name, type) {
   const key = normalizeUnitKey(name);
-  const requestedType = String(type || '').toLowerCase() === 'internal' ? 'internal' : 'external';
-  // Unit Kemenkeu yang sudah diketahui selalu internal, termasuk Pusliki.
-  const finalType = (key.startsWith('DJ') || KEMENKEU_INTERNAL_UNITS.has(key)) ? 'internal' : requestedType;
-  let changed = false;
+  if (!key) return;
+  const finalType = normalizeUnitType(type);
   let found = false;
+  let changed = false;
+
   state.unitList.forEach(u => {
     if (normalizeUnitKey(u.name) === key) {
       found = true;
-      if (u.type !== finalType) { u.type = finalType; changed = true; }
+      if (normalizeUnitType(u.type) !== finalType) { u.type = finalType; changed = true; }
     }
   });
-  if (!found && key) {
+  if (!found) {
     state.unitList.push({ name: String(name || '').trim(), type: finalType });
     changed = true;
   }
-  if (changed) await persistUnitList();
-  // Langsung perbarui warna badge, filter, KPI, dan chart tanpa menunggu reload.
+
+  const normalized = normalizeUnitListAndData();
+  if (changed || normalized.changedList) await persistUnitList();
+
+  // Update every dependent view immediately: table badge, filters, KPI, matrix, and charts.
   refreshAll();
 }
 async function deleteUnitWithReassign(name, reassignTo) {
@@ -2153,8 +2165,8 @@ function updateLastUpdateDisplay(iso) {
    FILTER / SORT / PAGINATE
 ============================================================ */
 function getUnitType(unitName) {
-  // Satu pintu klasifikasi agar tabel, filter, KPI, dan chart selalu konsisten.
-  return isInternalUnit(unitName) ? 'internal' : 'external';
+  // One authoritative path for table, filters, KPI, matrix, and charts.
+  return getManagedUnitType(unitName) || getDefaultUnitType(unitName);
 }
 
 function getFiltered() {
@@ -2392,7 +2404,7 @@ function renderTable() {
         ${a.updatedBy ? `<div class="table-updated-by" title="${dayjs(a.updatedAt).format('D MMM YYYY, HH:mm')}">${t('updatedByLabel')} ${escapeHtml(a.updatedBy)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
-      <td><span class="unit-badge ${(normalizeUnitKey(a.unitPemohon) === 'PUSLIKI' || getUnitType(a.unitPemohon) === 'internal') ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
+      <td><span class="unit-badge ${getUnitType(a.unitPemohon) === 'internal' ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
       <td style="max-width:160px;">${escapeHtml(a.programTerkait)}</td>
       <td style="max-width:150px;">${escapeHtml(a.picTimCM)}</td>
@@ -5378,7 +5390,6 @@ window.onDashboardLogout = function () {
    INIT
 ============================================================ */
 console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights reserved.', 'font-weight:bold;font-size:14px;color:#12275A;', 'color:#666;');
-console.info('[CM Dashboard build]', APP_BUILD_ID);
 
 (async function init() {
   wireEvents();
