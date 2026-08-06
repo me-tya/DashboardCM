@@ -1192,7 +1192,17 @@ const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
   'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','LNSW','LPDP','STAN','PKN STAN'
 ]);
+function getManagedUnitType(unitName) {
+  const key = String(unitName || '').trim().toLowerCase();
+  if (!key || !Array.isArray(state.unitList)) return null;
+  const managed = state.unitList.find(x => String(x.name || '').trim().toLowerCase() === key);
+  return managed && (managed.type === 'internal' || managed.type === 'external') ? managed.type : null;
+}
 function isInternalUnit(unit) {
+  // Manage Units menjadi sumber utama klasifikasi. Aturan statis di bawah hanya fallback
+  // untuk data lama/unit yang belum tercatat di daftar referensi.
+  const managedType = getManagedUnitType(unit);
+  if (managedType) return managedType === 'internal';
   const u = (unit || '').toUpperCase().trim();
   if (!u || u === '-') return true;
   if (u.startsWith('DJ')) return true;
@@ -1483,6 +1493,9 @@ function attachUnitListLiveSync() {
     try { remote = JSON.parse(snap.data().value || '[]'); } catch (e) { return; }
     if (JSON.stringify(remote) !== JSON.stringify(state.unitList)) {
       state.unitList = remote;
+      // Perubahan klasifikasi dari pengguna/perangkat lain langsung tercermin di UI.
+      refreshAll();
+      refreshUnitSelectsIfFormOpen();
     }
   });
 }
@@ -1643,7 +1656,12 @@ async function renameUnit(oldName, newName) {
 }
 async function setUnitType(name, type) {
   const u = state.unitList.find(x => x.name === name);
-  if (u) { u.type = type; await persistUnitList(); }
+  if (u) {
+    u.type = type;
+    await persistUnitList();
+    // Langsung perbarui warna badge, filter, KPI, dan chart tanpa menunggu reload.
+    refreshAll();
+  }
 }
 async function deleteUnitWithReassign(name, reassignTo) {
   if (reassignTo) {
@@ -2099,8 +2117,9 @@ function updateLastUpdateDisplay(iso) {
    FILTER / SORT / PAGINATE
 ============================================================ */
 function getUnitType(unitName) {
-  const u = (state.unitList || []).find(x => x.name === unitName);
-  return u ? u.type : null;
+  const managedType = getManagedUnitType(unitName);
+  if (managedType) return managedType;
+  return isInternalUnit(unitName) ? 'internal' : 'external';
 }
 
 function getFiltered() {
