@@ -6,6 +6,9 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
@@ -311,11 +314,21 @@ main.content{max-width:1440px;margin:0 auto;padding:22px 28px 60px;}
 }
 .search-wrap{position:relative;flex:1 1 240px;min-width:200px;}
 .search-wrap input{
-  width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border);border-radius:9px;
+  width:100%;padding:9px 40px 9px 34px;border:1px solid var(--border);border-radius:9px;
   font-size:13px;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink-900);
 }
 .search-wrap input:focus{outline:2px solid var(--navy-600);outline-offset:-1px;background:#fff;}
-.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-300);}
+.search-wrap > svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-300);pointer-events:none;}
+.search-clear-btn{
+  position:absolute;right:7px;top:50%;transform:translateY(-50%);z-index:2;
+  width:30px;height:30px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;
+  display:flex;align-items:center;justify-content:center;color:var(--navy-700);cursor:pointer;
+  transition:background .15s ease,color .15s ease,border-color .15s ease,opacity .15s ease;
+}
+.search-clear-btn:hover:not(:disabled){background:var(--gray-bg);border-color:var(--border);color:var(--navy-900);}
+.search-clear-btn:focus-visible{outline:2px solid var(--navy-600);outline-offset:1px;}
+.search-clear-btn:disabled{opacity:.28;cursor:default;}
+.search-clear-btn svg{position:static;width:18px;height:18px;transform:none;pointer-events:none;}
 select.filter-select, input.filter-date{
   padding:9px 10px;border:1px solid var(--border);border-radius:9px;font-size:12.5px;
   font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink-700);cursor:pointer;min-width:130px;
@@ -364,6 +377,9 @@ select.filter-select:focus, input.filter-date:focus{outline:2px solid var(--navy
   font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--navy-800);color:#fff;
   letter-spacing:.02em;
 }
+/* Unit color is controlled only by the Internal/External value in Manage Units. */
+.unit-badge.unit-internal{background:var(--navy-800)!important;color:#fff!important;}
+.unit-badge.unit-external{background:var(--gold-500)!important;color:#4A3A0A!important;}
 
 /* ===== TABLE ===== */
 .table-wrap{overflow-x:auto;}
@@ -786,6 +802,9 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
       <div class="search-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search activity, PIC, program, category...">
+        <button type="button" class="search-clear-btn" id="btnClearSearch" data-i18n-title="clearSearchTitle" data-i18n-aria-label="clearSearchTitle" title="Clear search" aria-label="Clear search" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
       <button class="btn-filter-toggle" id="btnFilterToggle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M9 18h6"/></svg>
@@ -857,7 +876,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 
 </main>
 
-<footer class="app-footer">© 2026 Atitya Pritasari. All rights reserved.</footer>
+<footer class="app-footer" title="Build SEARCH-X-VISIBLE-20260806-2058">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build SEARCH-X-VISIBLE-20260806-2058</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -880,7 +899,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 /* ============================================================
    CM Team Agenda Dashboard — Pusmantap
    © 2026 Atitya Pritasari. All rights reserved.
-   Build: 2026-08-06 unit-classification-hotfix-v2
+   Build: 2026-08-06 manage-units-authoritative-v1
    CONFIG / LOOKUPS
 ============================================================ */
 const STORAGE_KEY = 'pusmantap-agenda-cm-v1';
@@ -926,7 +945,7 @@ const I18N = {
     lastUpdatedLabel: 'Last updated:', lastImportLabel: 'Last import:',
     lastUpdatedTitle: 'Last time any data was saved in this browser',
     lastImportTitle: 'Last time data was imported from the shared Excel file',
-    searchPlaceholder: 'Search activity, PIC, program, category...',
+    searchPlaceholder: 'Search activity, PIC, program, category...', clearSearchTitle: 'Clear search',
     filtersLabel: 'Filters', resetLabel: 'Reset', dateSepTo: 'to',
     allCategories: 'All Categories', allPrograms: 'All Programs', allUnits: 'All Requesting Units',
     allLayanan: 'All (Service & Non-Service)', allStatus: 'All Status', allPic: 'All PIC',
@@ -1007,7 +1026,7 @@ const I18N = {
     lastUpdatedLabel: 'Terakhir diperbarui:', lastImportLabel: 'Impor terakhir:',
     lastUpdatedTitle: 'Waktu terakhir data disimpan di browser ini',
     lastImportTitle: 'Waktu terakhir data diimpor dari file Excel bersama',
-    searchPlaceholder: 'Cari activity, PIC, program, kategori...',
+    searchPlaceholder: 'Cari activity, PIC, program, kategori...', clearSearchTitle: 'Hapus pencarian',
     filtersLabel: 'Filter', resetLabel: 'Reset', dateSepTo: 's/d',
     allCategories: 'Semua Kategori', allPrograms: 'Semua Program', allUnits: 'Semua Unit Pengusul',
     allLayanan: 'Semua (Layanan & Non-Layanan)', allStatus: 'Semua Status', allPic: 'Semua PIC',
@@ -1094,6 +1113,9 @@ function applyLanguage() {
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.getAttribute('data-i18n-title'));
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
   });
   const toggle = document.getElementById('btnLangToggle');
   if (toggle) toggle.setAttribute('data-active', currentLang);
@@ -1187,31 +1209,43 @@ function splitNames(str) {
   return String(str).split(/\s*,\s*|\s+dan\s+/gi).map(s => s.trim()).filter(Boolean);
 }
 
-// Classify whether a "Unit Pemohon" is internal to Kemenkeu (Eselon I/II units, always prefixed DJ,
-// or known central units) versus an external institution (other K/L, OJK, etc.)
+// Unit classification. Manage Units is the authoritative source.
+// The hard-coded list below is only a default for a unit that has not yet been saved in Manage Units.
 const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
   'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','PUSLIKI','LNSW','LPDP','STAN','PKN STAN'
 ]);
+const APP_BUILD_ID = 'SEARCH-X-VISIBLE-20260806-2058';
+function normalizeUnitKey(value) {
+  return String(value || '')
+    .normalize('NFKC')
+    .replace(/[\u00A0\u2000-\u200D\u202F\u205F\u3000]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+function normalizeUnitType(type) {
+  return String(type || '').toLowerCase() === 'internal' ? 'internal' : 'external';
+}
 function getManagedUnitType(unitName) {
-  const key = String(unitName || '').trim().toLowerCase();
+  const key = normalizeUnitKey(unitName);
   if (!key || !Array.isArray(state.unitList)) return null;
-  const matches = state.unitList.filter(x => String(x.name || '').trim().toLowerCase() === key);
-  // Lindungi data lama yang mungkin punya duplikat beda casing/spasi. Jika salah satu
-  // entri sudah ditetapkan Internal di Manage Units, klasifikasinya harus Internal.
-  if (matches.some(x => x.type === 'internal')) return 'internal';
-  if (matches.some(x => x.type === 'external')) return 'external';
+  // Last matching entry wins as a defensive fallback. normalizeUnitListAndData()
+  // removes duplicates, so normally there is exactly one match.
+  for (let i = state.unitList.length - 1; i >= 0; i--) {
+    const item = state.unitList[i];
+    if (normalizeUnitKey(item && item.name) === key) return normalizeUnitType(item && item.type);
+  }
   return null;
 }
-function isInternalUnit(unit) {
-  // Manage Units menjadi sumber utama klasifikasi. Aturan statis di bawah hanya fallback
-  // untuk data lama/unit yang belum tercatat di daftar referensi.
-  const managedType = getManagedUnitType(unit);
-  if (managedType) return managedType === 'internal';
-  const u = (unit || '').toUpperCase().trim();
-  if (!u || u === '-') return true;
-  if (u.startsWith('DJ')) return true;
-  return KEMENKEU_INTERNAL_UNITS.has(u);
+function getDefaultUnitType(unitName) {
+  const key = normalizeUnitKey(unitName);
+  if (!key || key === '-') return 'internal';
+  return (key.startsWith('DJ') || KEMENKEU_INTERNAL_UNITS.has(key)) ? 'internal' : 'external';
+}
+function isInternalUnit(unitName) {
+  // IMPORTANT: a value selected in Manage Units always overrides the default list.
+  return (getManagedUnitType(unitName) || getDefaultUnitType(unitName)) === 'internal';
 }
 
 /* ============================================================
@@ -1497,8 +1531,11 @@ function attachUnitListLiveSync() {
     let remote;
     try { remote = JSON.parse(snap.data().value || '[]'); } catch (e) { return; }
     if (JSON.stringify(remote) !== JSON.stringify(state.unitList)) {
-      state.unitList = remote;
-      // Perubahan klasifikasi dari pengguna/perangkat lain langsung tercermin di UI.
+      state.unitList = Array.isArray(remote) ? remote : [];
+      // Bersihkan juga data cloud lama sebelum dipakai untuk mewarnai badge.
+      const normalized = normalizeUnitListAndData();
+      if (normalized.changedList) persistUnitList();
+      if (normalized.changedAgendas) persist();
       refreshAll();
       refreshUnitSelectsIfFormOpen();
     }
@@ -1549,44 +1586,51 @@ async function loadUnitListInitial() {
   attachUnitListLiveSync();
 }
 function normalizeUnitListAndData() {
-  // 1) Perbaiki casing lama (Setjen -> SETJEN, dst) + pecah entri yang ternyata
-  //    gabungan beberapa nama unit dipisah koma (mis. "Pusmantap, Pusdatin")
-  //    jadi baris-baris unit yang terpisah.
+  // 1) Normalize names and remove duplicate entries case-insensitively.
+  // The latest saved Internal/External value wins; no unit is forcibly reclassified here.
   const seen = new Map();
+  function canonicalName(name) {
+    const raw = String(name || '').trim();
+    return UNIT_CANONICAL_FIX[raw] || raw;
+  }
   function upsert(name, type) {
-    const fixedName = UNIT_CANONICAL_FIX[name] || name;
-    const forcedType = BATII_ESELON_II_UNITS.includes(fixedName) ? 'internal' : type;
-    if (seen.has(fixedName)) {
-      const existing = seen.get(fixedName);
-      if (forcedType === 'internal') existing.type = 'internal';
+    const fixedName = canonicalName(name);
+    const key = normalizeUnitKey(fixedName);
+    if (!key) return;
+    const normalizedType = normalizeUnitType(type);
+    if (seen.has(key)) {
+      const existing = seen.get(key);
+      existing.name = fixedName;
+      existing.type = normalizedType; // last explicit setting wins
     } else {
-      seen.set(fixedName, { name: fixedName, type: forcedType });
+      seen.set(key, { name: fixedName, type: normalizedType });
     }
   }
   (state.unitList || []).forEach(u => {
-    const looksSafeToSplit = u.name.includes(',') && !u.name.includes('(') && !u.name.includes(')');
+    const rawName = String((u && u.name) || '');
+    const looksSafeToSplit = rawName.includes(',') && !rawName.includes('(') && !rawName.includes(')');
     if (looksSafeToSplit) {
-      u.name.split(',').map(s => s.trim()).filter(Boolean).forEach(part => upsert(part, u.type));
+      rawName.split(',').map(s => s.trim()).filter(Boolean).forEach(part => upsert(part, u && u.type));
     } else {
-      upsert(u.name, u.type);
+      upsert(rawName, u && u.type);
     }
   });
   const deduped = Array.from(seen.values());
 
-  // Susun ulang ke urutan nomenklatur resmi (persis urutan UNIT_SEED: UE I dulu,
-  // baru non-Eselon) — apa pun urutan lama yang kebawa dari histori data sebelumnya.
-  const seedOrder = UNIT_SEED.map(u => u.name);
-  const known = seedOrder.map(name => deduped.find(u => u.name === name)).filter(Boolean);
-  const rest = deduped.filter(u => !seedOrder.includes(u.name));
+  // Keep the official seed order first, followed by custom units.
+  const seedOrderKeys = UNIT_SEED.map(u => normalizeUnitKey(u.name));
+  const known = seedOrderKeys.map(key => deduped.find(u => normalizeUnitKey(u.name) === key)).filter(Boolean);
+  const rest = deduped.filter(u => !seedOrderKeys.includes(normalizeUnitKey(u.name)));
   const reordered = [...known, ...rest];
 
   const changedList = reordered.length !== (state.unitList || []).length
-    || reordered.some((u, i) => !state.unitList[i] || u.name !== state.unitList[i].name || u.type !== state.unitList[i].type);
+    || reordered.some((u, i) => !state.unitList[i]
+      || normalizeUnitKey(u.name) !== normalizeUnitKey(state.unitList[i].name)
+      || u.name !== state.unitList[i].name
+      || normalizeUnitType(u.type) !== normalizeUnitType(state.unitList[i].type));
   state.unitList = reordered;
 
-  // 2) Rapikan casing lama di data Activity juga. Catatan: field Unit Asal Narasumber
-  // memang bisa berisi beberapa nama sekaligus (dipisah koma) — itu tetap dibiarkan
-  // apa adanya di data activity-nya, cuma dipakai buat referensi & hitung pemakaian.
+  // 2) Repair legacy casing in Activity data without changing classification.
   let changedAgendas = false;
   state.agendas.forEach(a => {
     if (UNIT_CANONICAL_FIX[a.unitPemohon]) { a.unitPemohon = UNIT_CANONICAL_FIX[a.unitPemohon]; changedAgendas = true; }
@@ -1660,16 +1704,27 @@ async function renameUnit(oldName, newName) {
   toast(t('toastUnitRenamed'), 'success');
 }
 async function setUnitType(name, type) {
-  const key = String(name || '').trim().toLowerCase();
+  const key = normalizeUnitKey(name);
+  if (!key) return;
+  const finalType = normalizeUnitType(type);
+  let found = false;
   let changed = false;
+
   state.unitList.forEach(u => {
-    if (String(u.name || '').trim().toLowerCase() === key && u.type !== type) {
-      u.type = type;
-      changed = true;
+    if (normalizeUnitKey(u.name) === key) {
+      found = true;
+      if (normalizeUnitType(u.type) !== finalType) { u.type = finalType; changed = true; }
     }
   });
-  if (changed) await persistUnitList();
-  // Langsung perbarui warna badge, filter, KPI, dan chart tanpa menunggu reload.
+  if (!found) {
+    state.unitList.push({ name: String(name || '').trim(), type: finalType });
+    changed = true;
+  }
+
+  const normalized = normalizeUnitListAndData();
+  if (changed || normalized.changedList) await persistUnitList();
+
+  // Update every dependent view immediately: table badge, filters, KPI, matrix, and charts.
   refreshAll();
 }
 async function deleteUnitWithReassign(name, reassignTo) {
@@ -2126,9 +2181,8 @@ function updateLastUpdateDisplay(iso) {
    FILTER / SORT / PAGINATE
 ============================================================ */
 function getUnitType(unitName) {
-  const managedType = getManagedUnitType(unitName);
-  if (managedType) return managedType;
-  return isInternalUnit(unitName) ? 'internal' : 'external';
+  // One authoritative path for table, filters, KPI, matrix, and charts.
+  return getManagedUnitType(unitName) || getDefaultUnitType(unitName);
 }
 
 function getFiltered() {
@@ -2366,7 +2420,7 @@ function renderTable() {
         ${a.updatedBy ? `<div class="table-updated-by" title="${dayjs(a.updatedAt).format('D MMM YYYY, HH:mm')}">${t('updatedByLabel')} ${escapeHtml(a.updatedBy)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
-      <td><span class="unit-badge" style="${isInternalUnit(a.unitPemohon) ? '' : 'background:var(--gold-500);color:#4A3A0A;'}">${escapeHtml(a.unitPemohon)}</span></td>
+      <td><span class="unit-badge ${getUnitType(a.unitPemohon) === 'internal' ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
       <td style="max-width:160px;">${escapeHtml(a.programTerkait)}</td>
       <td style="max-width:150px;">${escapeHtml(a.picTimCM)}</td>
@@ -2784,8 +2838,8 @@ function renderAnalytics() {
   const unitMap = {};
   filtered.forEach(a => { unitMap[a.unitPemohon] = (unitMap[a.unitPemohon] || 0) + 1; });
   const unitLabels = Object.keys(unitMap).sort((a,b)=>unitMap[b]-unitMap[a]);
-  const unitInternalData = unitLabels.map(u => isInternalUnit(u) ? unitMap[u] : 0);
-  const unitExternalData = unitLabels.map(u => isInternalUnit(u) ? 0 : unitMap[u]);
+  const unitInternalData = unitLabels.map(u => getUnitType(u) === 'internal' ? unitMap[u] : 0);
+  const unitExternalData = unitLabels.map(u => getUnitType(u) === 'internal' ? 0 : unitMap[u]);
   state.charts.unit = new Chart(document.getElementById('chartUnit'), {
     type: 'bar',
     data: {
@@ -5240,10 +5294,32 @@ function wireEvents() {
   setFilterBarOpen(savedOpen === '1');
 
   let searchTimer;
-  document.getElementById('searchInput').addEventListener('input', (e) => {
+  const mainSearchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('btnClearSearch');
+  function syncClearSearchButton() {
+    const hasSearch = mainSearchInput.value.length > 0;
+    clearSearchBtn.disabled = !hasSearch;
+    clearSearchBtn.setAttribute('aria-disabled', hasSearch ? 'false' : 'true');
+  }
+  function clearMainSearch() {
+    clearTimeout(searchTimer);
+    mainSearchInput.value = '';
+    state.filters.search = '';
+    state.page = 1;
+    syncClearSearchButton();
+    renderActiveTab();
+    mainSearchInput.focus();
+  }
+  mainSearchInput.addEventListener('input', (e) => {
+    syncClearSearchButton();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { state.filters.search = e.target.value; state.page = 1; renderActiveTab(); }, 180);
   });
+  mainSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mainSearchInput.value) clearMainSearch();
+  });
+  clearSearchBtn.addEventListener('click', clearMainSearch);
+  syncClearSearchButton();
   document.getElementById('filterKategori').addEventListener('change', (e) => { state.filters.kategori = e.target.value; state.page = 1; refreshAll(); });
   document.getElementById('filterProgram').addEventListener('change', (e) => { state.filters.program = e.target.value; state.page = 1; refreshAll(); });
   document.getElementById('filterStatus').addEventListener('change', (e) => { state.filters.status = e.target.value; state.page = 1; refreshAll(); });
@@ -5257,6 +5333,7 @@ function wireEvents() {
   document.getElementById('btnResetFilter').addEventListener('click', () => {
     state.filters = { search:'', kategori:'ALL', program:'ALL', status:'ALL', pic:'ALL', unit:'ALL', layanan:'ALL', tahun:'ALL', unitType:'ALL', dateFrom:'', dateTo:'' };
     document.getElementById('searchInput').value = '';
+    syncClearSearchButton();
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
     refreshAll();
