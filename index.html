@@ -314,11 +314,20 @@ main.content{max-width:1440px;margin:0 auto;padding:22px 28px 60px;}
 }
 .search-wrap{position:relative;flex:1 1 240px;min-width:200px;}
 .search-wrap input{
-  width:100%;padding:9px 12px 9px 34px;border:1px solid var(--border);border-radius:9px;
+  width:100%;padding:9px 40px 9px 34px;border:1px solid var(--border);border-radius:9px;
   font-size:13px;font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink-900);
 }
 .search-wrap input:focus{outline:2px solid var(--navy-600);outline-offset:-1px;background:#fff;}
-.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-300);}
+.search-wrap > svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-300);pointer-events:none;}
+.search-clear-btn{
+  position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  width:28px;height:28px;padding:0;border:none;border-radius:7px;background:transparent;
+  display:flex;align-items:center;justify-content:center;color:var(--ink-500);cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+.search-clear-btn:hover{background:var(--gray-bg);color:var(--navy-800);}
+.search-clear-btn:focus-visible{outline:2px solid var(--navy-600);outline-offset:1px;}
+.search-clear-btn svg{position:static;width:15px;height:15px;transform:none;pointer-events:none;}
 select.filter-select, input.filter-date{
   padding:9px 10px;border:1px solid var(--border);border-radius:9px;font-size:12.5px;
   font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink-700);cursor:pointer;min-width:130px;
@@ -792,6 +801,9 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
       <div class="search-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
         <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search activity, PIC, program, category...">
+        <button type="button" class="search-clear-btn hidden" id="btnClearSearch" data-i18n-title="clearSearchTitle" data-i18n-aria-label="clearSearchTitle" title="Clear search" aria-label="Clear search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
       <button class="btn-filter-toggle" id="btnFilterToggle">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M9 18h6"/></svg>
@@ -863,7 +875,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 
 </main>
 
-<footer class="app-footer" title="Build MANAGE-UNITS-AUTHORITY-20260806-2030">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build MANAGE-UNITS-AUTHORITY-20260806-2030</span></footer>
+<footer class="app-footer" title="Build SEARCH-CLEAR-20260806-2045">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build SEARCH-CLEAR-20260806-2045</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -932,7 +944,7 @@ const I18N = {
     lastUpdatedLabel: 'Last updated:', lastImportLabel: 'Last import:',
     lastUpdatedTitle: 'Last time any data was saved in this browser',
     lastImportTitle: 'Last time data was imported from the shared Excel file',
-    searchPlaceholder: 'Search activity, PIC, program, category...',
+    searchPlaceholder: 'Search activity, PIC, program, category...', clearSearchTitle: 'Clear search',
     filtersLabel: 'Filters', resetLabel: 'Reset', dateSepTo: 'to',
     allCategories: 'All Categories', allPrograms: 'All Programs', allUnits: 'All Requesting Units',
     allLayanan: 'All (Service & Non-Service)', allStatus: 'All Status', allPic: 'All PIC',
@@ -1013,7 +1025,7 @@ const I18N = {
     lastUpdatedLabel: 'Terakhir diperbarui:', lastImportLabel: 'Impor terakhir:',
     lastUpdatedTitle: 'Waktu terakhir data disimpan di browser ini',
     lastImportTitle: 'Waktu terakhir data diimpor dari file Excel bersama',
-    searchPlaceholder: 'Cari activity, PIC, program, kategori...',
+    searchPlaceholder: 'Cari activity, PIC, program, kategori...', clearSearchTitle: 'Hapus pencarian',
     filtersLabel: 'Filter', resetLabel: 'Reset', dateSepTo: 's/d',
     allCategories: 'Semua Kategori', allPrograms: 'Semua Program', allUnits: 'Semua Unit Pengusul',
     allLayanan: 'Semua (Layanan & Non-Layanan)', allStatus: 'Semua Status', allPic: 'Semua PIC',
@@ -1100,6 +1112,9 @@ function applyLanguage() {
   });
   document.querySelectorAll('[data-i18n-title]').forEach(el => {
     el.title = t(el.getAttribute('data-i18n-title'));
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
   });
   const toggle = document.getElementById('btnLangToggle');
   if (toggle) toggle.setAttribute('data-active', currentLang);
@@ -1199,7 +1214,7 @@ const KEMENKEU_INTERNAL_UNITS = new Set([
   'BATII','SETJEN','ITJEN','BPPK','PUSMANTAP','PUSDATIN','PUSINTEK','PUSPENSI','PUSAKTI',
   'PUSDIKLAT','PUSKPAKN','PUSAT LPSE','PUSLIKI','LNSW','LPDP','STAN','PKN STAN'
 ]);
-const APP_BUILD_ID = 'MANAGE-UNITS-AUTHORITY-20260806-2030';
+const APP_BUILD_ID = 'SEARCH-CLEAR-20260806-2045';
 function normalizeUnitKey(value) {
   return String(value || '')
     .normalize('NFKC')
@@ -5278,10 +5293,30 @@ function wireEvents() {
   setFilterBarOpen(savedOpen === '1');
 
   let searchTimer;
-  document.getElementById('searchInput').addEventListener('input', (e) => {
+  const mainSearchInput = document.getElementById('searchInput');
+  const clearSearchBtn = document.getElementById('btnClearSearch');
+  function syncClearSearchButton() {
+    clearSearchBtn.classList.toggle('hidden', !mainSearchInput.value);
+  }
+  function clearMainSearch() {
+    clearTimeout(searchTimer);
+    mainSearchInput.value = '';
+    state.filters.search = '';
+    state.page = 1;
+    syncClearSearchButton();
+    renderActiveTab();
+    mainSearchInput.focus();
+  }
+  mainSearchInput.addEventListener('input', (e) => {
+    syncClearSearchButton();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => { state.filters.search = e.target.value; state.page = 1; renderActiveTab(); }, 180);
   });
+  mainSearchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mainSearchInput.value) clearMainSearch();
+  });
+  clearSearchBtn.addEventListener('click', clearMainSearch);
+  syncClearSearchButton();
   document.getElementById('filterKategori').addEventListener('change', (e) => { state.filters.kategori = e.target.value; state.page = 1; refreshAll(); });
   document.getElementById('filterProgram').addEventListener('change', (e) => { state.filters.program = e.target.value; state.page = 1; refreshAll(); });
   document.getElementById('filterStatus').addEventListener('change', (e) => { state.filters.status = e.target.value; state.page = 1; refreshAll(); });
@@ -5295,6 +5330,7 @@ function wireEvents() {
   document.getElementById('btnResetFilter').addEventListener('click', () => {
     state.filters = { search:'', kategori:'ALL', program:'ALL', status:'ALL', pic:'ALL', unit:'ALL', layanan:'ALL', tahun:'ALL', unitType:'ALL', dateFrom:'', dateTo:'' };
     document.getElementById('searchInput').value = '';
+    syncClearSearchButton();
     document.getElementById('filterDateFrom').value = '';
     document.getElementById('filterDateTo').value = '';
     refreshAll();
