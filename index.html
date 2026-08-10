@@ -574,6 +574,14 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   color:var(--red,#c0392b);font-weight:700;font-size:18px;background:var(--bg);
 }
+.doc-thumb, .doc-thumb-editor img{cursor:zoom-in;}
+.lightbox-box{background:transparent;box-shadow:none;max-width:92vw;max-height:92vh;width:auto;overflow:visible;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.lightbox-box img{max-width:92vw;max-height:82vh;border-radius:10px;box-shadow:var(--shadow-lg);display:block;}
+.lightbox-close{
+  align-self:flex-end;width:36px;height:36px;border-radius:50%;border:none;background:rgba(255,255,255,.92);
+  color:var(--ink-900);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.lightbox-caption{color:#fff;font-size:12.5px;text-align:center;max-width:92vw;overflow-wrap:anywhere;}
 .doc-thumb-add{
   width:88px;height:88px;border-radius:10px;border:1.5px dashed var(--border);background:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;
@@ -925,6 +933,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
 <div id="categoryManageModal" class="modal-overlay hidden"></div>
 <div id="unitManageModal" class="modal-overlay hidden"></div>
 <div id="kbModal" class="modal-overlay hidden"></div>
+<div id="imageLightbox" class="modal-overlay hidden"></div>
 <div id="toastContainer"></div>
 <div id="loadingOverlay" class="hidden">
   <div class="spinner"></div>
@@ -4041,11 +4050,33 @@ async function hydrateDocThumbs(container) {
       node.target = '_blank';
       node.rel = 'noopener';
       node.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(node.dataset.name || 'documentation')}">`;
+      node.addEventListener('click', (e) => {
+        e.preventDefault();
+        openImageLightbox(url, node.dataset.name);
+      });
     } else {
       node.removeAttribute('href');
       node.innerHTML = `<span class="doc-thumb-error">!</span>`;
     }
   }));
+}
+
+// Opens a full-size preview popup for a documentation image (used by both the
+// read-only gallery in Activity Details and the thumbnail editor in the form).
+function openImageLightbox(url, name) {
+  const modal = document.getElementById('imageLightbox');
+  if (!modal) return;
+  modal.innerHTML = `<div class="lightbox-box">
+    <button type="button" class="lightbox-close" id="closeLightbox" title="${t('close')}">&times;</button>
+    <img src="${escapeHtml(url)}" alt="${escapeHtml(name || 'documentation')}">
+    ${name ? `<div class="lightbox-caption">${escapeHtml(name)}</div>` : ''}
+  </div>`;
+  modal.classList.remove('hidden');
+  document.getElementById('closeLightbox').addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  document.addEventListener('keydown', function escClose(e) {
+    if (e.key === 'Escape') { modal.classList.add('hidden'); document.removeEventListener('keydown', escClose); }
+  });
 }
 
 /* ============================================================
@@ -4358,6 +4389,9 @@ function openForm(id) {
           try { await deleteDocImage(refId); sessionAddedRefIds.delete(refId); }
           catch (e) { /* image may already be gone — nothing to do */ }
         });
+      });
+      grid.querySelectorAll('.doc-thumb-editor img').forEach(img => {
+        img.addEventListener('click', () => openImageLightbox(img.src, img.alt));
       });
       const addBtn = document.getElementById('docAddBtn');
       if (addBtn) addBtn.addEventListener('click', () => fileInput.click());
