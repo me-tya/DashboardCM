@@ -27,7 +27,7 @@
     getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, doc, setDoc, getDoc, onSnapshot
+    getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -52,6 +52,7 @@
   window.fbDoc = doc;
   window.fbSetDoc = setDoc;
   window.fbGetDoc = getDoc;
+  window.fbDeleteDoc = deleteDoc;
   window.fbOnSnapshot = onSnapshot;
 
   // Login is optional for viewing the dashboard — the topbar pill just
@@ -544,6 +545,45 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .doc-download-link:hover{color:var(--gold-600,#8A6A1B);}
 .doc-download-link .icon{width:14px;height:14px;flex-shrink:0;}
 
+/* ===== DOCUMENTATION (image attachments) ===== */
+.doc-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px;}
+.doc-thumb{
+  position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);display:block;background:var(--bg);flex-shrink:0;
+}
+.doc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.doc-thumb:hover{border-color:var(--gold-400);}
+.doc-thumb-editor{
+  position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;
+  border:1px solid var(--border);background:var(--bg);flex-shrink:0;
+}
+.doc-thumb-editor img{width:100%;height:100%;object-fit:cover;display:block;}
+.doc-thumb-editor .doc-thumb-remove{
+  position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;
+  background:rgba(20,20,30,.72);color:#fff;border:none;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:14px;line-height:1;padding:0;
+}
+.doc-thumb-editor .doc-thumb-remove:hover{background:var(--red,#c0392b);}
+.doc-thumb-editor.uploading{display:flex;align-items:center;justify-content:center;}
+.doc-thumb-spinner{
+  width:22px;height:22px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--navy-600);
+  animation:doc-spin 0.8s linear infinite;
+}
+@keyframes doc-spin{to{transform:rotate(360deg);}}
+.doc-thumb-error{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  color:var(--red,#c0392b);font-weight:700;font-size:18px;background:var(--bg);
+}
+.doc-thumb-add{
+  width:88px;height:88px;border-radius:10px;border:1.5px dashed var(--border);background:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;
+  color:var(--ink-500);font-size:11px;font-weight:600;flex-shrink:0;
+}
+.doc-thumb-add:hover{border-color:var(--gold-400);color:var(--gold-600,#8A6A1B);}
+.doc-thumb-add svg{width:20px;height:20px;}
+.doc-thumb-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.doc-upload-hint{font-size:11px;color:var(--ink-400);margin-top:6px;}
+
 /* ===== KNOWLEDGE ===== */
 .kb-hero{
   background:linear-gradient(120deg,var(--navy-900) 0%, var(--navy-700) 100%);
@@ -973,6 +1013,14 @@ const I18N = {
     fieldCmPic: 'CM Team PIC', fieldLocationChannel: 'Location/Channel', fieldSpeakerUnit: "Speaker's Home Unit",
     fieldTargetParticipants: 'Target Participants', fieldInvitation: 'Invitation', fieldAssignmentLetter: 'Assignment Letter',
     fieldObjectiveOutput: 'Objective / Output', fieldMaterials: 'Materials', fieldNotes: 'Notes',
+    fieldDocumentation: 'Documentation',
+    docAddImages: '+ Add Images', docUploading: 'Uploading...', docNoFiles: 'No images yet',
+    docUploadHint: 'PNG, JPG, JPEG, WEBP, GIF · max 5MB per file · multiple files allowed',
+    docRemoveTitle: 'Remove image', docOpenTitle: 'Open full image',
+    toastDocUploaded: 'Image uploaded', toastDocRemoved: 'Image removed',
+    toastDocUploadFailed: 'Failed to upload image', toastDocTooLarge: 'File too large (max 5MB)',
+    toastDocInvalidType: 'Unsupported file type — use PNG, JPG, JPEG, WEBP, or GIF',
+    toastDocLoginRequired: 'Sign in with Google first to upload documentation images',
     fromKnowledge: 'From Knowledge', saveChanges: 'Save Changes',
     toastMaterialsInserted: 'Materials link inserted from Knowledge',
     toastInvitationInserted: 'Invitation link inserted from Knowledge',
@@ -1056,6 +1104,14 @@ const I18N = {
     fieldCmPic: 'PIC Tim CM', fieldLocationChannel: 'Lokasi/Channel', fieldSpeakerUnit: 'Unit Asal Narasumber',
     fieldTargetParticipants: 'Target Peserta', fieldInvitation: 'Undangan', fieldAssignmentLetter: 'Surat Tugas',
     fieldObjectiveOutput: 'Tujuan / Output', fieldMaterials: 'Materi', fieldNotes: 'Catatan',
+    fieldDocumentation: 'Dokumentasi',
+    docAddImages: '+ Tambah Gambar', docUploading: 'Mengunggah...', docNoFiles: 'Belum ada gambar',
+    docUploadHint: 'PNG, JPG, JPEG, WEBP, GIF · maks 5MB per file · bisa pilih beberapa file sekaligus',
+    docRemoveTitle: 'Hapus gambar', docOpenTitle: 'Buka gambar penuh',
+    toastDocUploaded: 'Gambar berhasil diunggah', toastDocRemoved: 'Gambar dihapus',
+    toastDocUploadFailed: 'Gagal mengunggah gambar', toastDocTooLarge: 'Ukuran file terlalu besar (maks 5MB)',
+    toastDocInvalidType: 'Tipe file tidak didukung — gunakan PNG, JPG, JPEG, WEBP, atau GIF',
+    toastDocLoginRequired: 'Login dengan Google dulu untuk mengunggah gambar dokumentasi',
     fromKnowledge: 'Dari Knowledge', saveChanges: 'Simpan Perubahan',
     toastMaterialsInserted: 'Link materi dimasukkan dari Knowledge',
     toastInvitationInserted: 'Link undangan dimasukkan dari Knowledge',
@@ -1307,6 +1363,7 @@ function preprocess(list) {
       status: item.status || '',
       statusNorm: normalizeStatus(item.status),
       catatan: item.catatan || '',
+      dokumentasi: item.dokumentasi || '[]',
       yearMonth: tglMulai.slice(0, 7),
       updatedBy: item.updatedBy || null,
       updatedAt: item.updatedAt || null,
@@ -2416,7 +2473,7 @@ function renderTable() {
       <td class="mono" style="white-space:nowrap;width:1%;">${formatActivityDateCell(a)}</td>
       <td style="max-width:280px;">
         <div class="table-title">${escapeHtml(a.namaKegiatan)}</div>
-        <div class="table-meta">${escapeHtml(a.waktu || '')} ${a.lokasiChannel ? '· ' + escapeHtml(a.lokasiChannel) : ''}</div>
+        <div class="table-meta">${escapeHtml(a.waktu || '')} ${a.lokasiChannel ? '· ' + renderLocationValue(a.lokasiChannel) : ''}</div>
         ${a.updatedBy ? `<div class="table-updated-by" title="${dayjs(a.updatedAt).format('D MMM YYYY, HH:mm')}">${t('updatedByLabel')} ${escapeHtml(a.updatedBy)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
@@ -2461,7 +2518,7 @@ function renderTable() {
   });
   container.querySelectorAll('tbody tr').forEach(tr => {
     tr.addEventListener('click', (e) => {
-      if (e.target.closest('.icon-btn')) return;
+      if (e.target.closest('.icon-btn') || e.target.closest('a')) return;
       openDetail(tr.dataset.id);
     });
   });
@@ -3829,7 +3886,7 @@ function openDetail(id) {
         <div class="detail-item"><div class="detail-label">${t('fieldService')}</div><div class="detail-value">${escapeHtml(a.layanan)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldRequestingUnit')}</div><div class="detail-value">${escapeHtml(a.unitPemohon)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldRelatedProgram')}</div><div class="detail-value">${escapeHtml(a.programTerkait)}</div></div>
-        <div class="detail-item"><div class="detail-label">${t('fieldLocationChannel')}</div><div class="detail-value">${escapeHtml(a.lokasiChannel||'-')}</div></div>
+        <div class="detail-item"><div class="detail-label">${t('fieldLocationChannel')}</div><div class="detail-value">${renderLocationValue(a.lokasiChannel)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldCmPic')}</div><div class="detail-value">${escapeHtml(a.picTimCM||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldSpeakerUnit')}</div><div class="detail-value">${escapeHtml(a.unitAsalNarsum||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldTargetParticipants')}</div><div class="detail-value">${escapeHtml(a.pesertaTarget||'-')}</div></div>
@@ -3838,6 +3895,7 @@ function openDetail(id) {
         <div class="detail-item full"><div class="detail-label">${t('fieldObjectiveOutput')}</div><div class="detail-value">${escapeHtml(a.tujuanOutput||'-')}</div></div>
         <div class="detail-item full"><div class="detail-label">${t('fieldMaterials')}</div><div class="detail-value">${renderMateriValue(a.materi)}</div></div>
         <div class="detail-item full"><div class="detail-label">${t('fieldNotes')}</div><div class="detail-value">${escapeHtml(a.catatan||'-')}</div></div>
+        <div class="detail-item full"><div class="detail-label">${t('fieldDocumentation')}</div>${renderDocumentationGallery(a.dokumentasi)}</div>
       </div>
     </div>
     <div class="modal-foot">
@@ -3846,6 +3904,7 @@ function openDetail(id) {
     </div>
   </div>`;
   modal.classList.remove('hidden');
+  hydrateDocThumbs(modal);
   document.getElementById('closeDetail').addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
   document.getElementById('detailEdit').addEventListener('click', () => { modal.classList.add('hidden'); openForm(id); });
@@ -3908,6 +3967,85 @@ function renderMateriValue(materi) {
     </a>`;
   }
   return escapeHtml(raw);
+}
+
+// Renders the Location/Channel field: a plain text value (room name, building, etc.)
+// stays as text, but a URL-like value (Zoom/Teams/meeting link) becomes a plain
+// native hyperlink so it can be clicked directly — same reasoning as renderDocValue:
+// a real <a href target="_blank">, not a JS-intercepted click.
+function renderLocationValue(lokasi) {
+  if (!lokasi) return '-';
+  const raw = String(lokasi).trim();
+  if (isUrlLike(raw)) {
+    const url = /^www\./i.test(raw) ? 'https://' + raw : raw;
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="doc-download-link">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.07 0l2.83-2.83a5 5 0 00-7.07-7.07L11.5 4.5M14 11a5 5 0 00-7.07 0L4.1 13.83a5 5 0 007.07 7.07L12.5 19.5"/></svg>
+      ${escapeHtml(raw)}
+    </a>`;
+  }
+  return escapeHtml(raw);
+}
+
+// Parses the "dokumentasi" field (JSON string of [{refId,name}, ...]) safely —
+// old/blank/malformed values just fall back to an empty gallery. Images are stored
+// as separate small Firestore documents (see uploadDocToFirestore) rather than in
+// Firebase Storage, so only a lightweight reference is kept here.
+function parseDokumentasi(raw) {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(d => d && d.refId) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// In-memory cache so re-opening the same activity's detail/edit view doesn't
+// re-fetch every image document from Firestore each time.
+const _docImageCache = new Map();
+async function fetchDocImageDataUrl(refId) {
+  if (_docImageCache.has(refId)) return _docImageCache.get(refId);
+  if (!isLoggedIn() || !window.fbDb) return null;
+  try {
+    const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
+    const snap = await window.fbGetDoc(ref);
+    const url = (snap && snap.exists()) ? (snap.data().dataUrl || null) : null;
+    if (url) _docImageCache.set(refId, url);
+    return url;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Renders placeholder tiles for the read-only Documentation gallery in the Activity
+// Details modal. Actual images are resolved asynchronously afterwards via
+// hydrateDocThumbs() — see the call right after this modal's innerHTML is set.
+function renderDocumentationGallery(raw) {
+  const docs = parseDokumentasi(raw);
+  if (!docs.length) return `<div class="detail-value">-</div>`;
+  return `<div class="doc-gallery">${docs.map(d => `
+    <a href="#" class="doc-thumb" data-refid="${escapeHtml(d.refId)}" data-name="${escapeHtml(d.name || '')}" title="${escapeHtml(d.name || '')}">
+      <div class="doc-thumb-spinner"></div>
+    </a>`).join('')}</div>`;
+}
+
+// Fetches each image referenced by [data-refid] inside `container` and swaps the
+// spinner placeholder for the actual thumbnail (or a broken-image marker on failure).
+async function hydrateDocThumbs(container) {
+  const nodes = Array.from(container.querySelectorAll('[data-refid]'));
+  await Promise.all(nodes.map(async (node) => {
+    const refId = node.dataset.refid;
+    const url = await fetchDocImageDataUrl(refId);
+    if (url) {
+      node.href = url;
+      node.target = '_blank';
+      node.rel = 'noopener';
+      node.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(node.dataset.name || 'documentation')}">`;
+    } else {
+      node.removeAttribute('href');
+      node.innerHTML = `<span class="doc-thumb-error">!</span>`;
+    }
+  }));
 }
 
 /* ============================================================
@@ -4020,6 +4158,13 @@ function openForm(id) {
           <div class="form-field full">
             <label>${t('fieldNotes')}</label>
             <textarea name="catatan">${escapeHtml(v('catatan'))}</textarea>
+          </div>
+          <div class="form-field full">
+            <label>${t('fieldDocumentation')}</label>
+            <input type="hidden" name="dokumentasi" id="dokumentasiHidden" value="${escapeHtml(v('dokumentasi', '[]'))}">
+            <div class="doc-thumb-grid" id="docThumbGrid"></div>
+            <input type="file" id="docFileInput" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" multiple class="hidden">
+            <div class="doc-upload-hint">${t('docUploadHint')}</div>
           </div>
         </div>
       </form>
@@ -4158,6 +4303,174 @@ function openForm(id) {
       toast(t('toastAssignmentInserted'), 'success');
     });
   });
+
+  // Documentation (image attachments): images are compressed in the browser then
+  // saved as small individual Firestore documents (collection 'dashboardImages') —
+  // NOT Firebase Storage, because that domain is blocked on some office networks
+  // and uploads would hang forever with no error. Only a lightweight {refId,name}
+  // reference is kept on the activity itself, so the main activity list stays small.
+  (function setupDocumentationField() {
+    const grid = document.getElementById('docThumbGrid');
+    const fileInput = document.getElementById('docFileInput');
+    const hidden = document.getElementById('dokumentasiHidden');
+    if (!grid || !fileInput || !hidden) return;
+
+    const ownerId = state.editingId || uid('NEWACT');
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+    const maxBytes = 5 * 1024 * 1024;
+    // Pre-existing images only have a refId until their dataUrl is resolved from Firestore.
+    let items = parseDokumentasi(hidden.value).map(d => ({ status: 'resolving', refId: d.refId, name: d.name }));
+    const sessionAddedRefIds = new Set();
+
+    function syncHidden() {
+      hidden.value = JSON.stringify(
+        items.filter(it => it.refId).map(({ refId, name }) => ({ refId, name }))
+      );
+    }
+
+    function renderThumbs() {
+      grid.innerHTML = items.map(it => {
+        if (it.status === 'uploading' || it.status === 'resolving') {
+          return `<div class="doc-thumb-editor uploading" data-tmp="${it.tmpId || ''}" data-refid="${it.refId || ''}"><div class="doc-thumb-spinner"></div></div>`;
+        }
+        if (it.status === 'error') {
+          return `<div class="doc-thumb-editor">
+            <span class="doc-thumb-error">!</span>
+            <button type="button" class="doc-thumb-remove" data-refid="${escapeHtml(it.refId)}" title="${t('docRemoveTitle')}">&times;</button>
+          </div>`;
+        }
+        return `<div class="doc-thumb-editor">
+          <img src="${escapeHtml(it.dataUrl)}" alt="${escapeHtml(it.name || 'documentation')}">
+          <button type="button" class="doc-thumb-remove" data-refid="${escapeHtml(it.refId)}" title="${t('docRemoveTitle')}">&times;</button>
+        </div>`;
+      }).join('') + `<button type="button" class="doc-thumb-add" id="docAddBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>${t('docAddImages')}</span>
+      </button>`;
+
+      grid.querySelectorAll('.doc-thumb-remove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const refId = btn.dataset.refid;
+          items = items.filter(it => it.refId !== refId);
+          syncHidden();
+          renderThumbs();
+          toast(t('toastDocRemoved'), 'success');
+          try { await deleteDocImage(refId); sessionAddedRefIds.delete(refId); }
+          catch (e) { /* image may already be gone — nothing to do */ }
+        });
+      });
+      const addBtn = document.getElementById('docAddBtn');
+      if (addBtn) addBtn.addEventListener('click', () => fileInput.click());
+    }
+
+    // Resolve any pre-existing images (loaded from the saved activity) in the background.
+    function resolvePending() {
+      items.filter(it => it.status === 'resolving').forEach(async (it) => {
+        const url = await fetchDocImageDataUrl(it.refId);
+        const target = items.find(x => x.refId === it.refId);
+        if (!target) return; // removed while resolving
+        if (url) { target.status = 'done'; target.dataUrl = url; }
+        else { target.status = 'error'; }
+        renderThumbs();
+      });
+    }
+
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      fileInput.value = '';
+      if (!isLoggedIn()) { toast(t('toastDocLoginRequired'), 'error'); return; }
+      for (const file of files) {
+        if (!allowedTypes.includes(file.type)) { toast(t('toastDocInvalidType'), 'error'); continue; }
+        if (file.size > maxBytes) { toast(t('toastDocTooLarge'), 'error'); continue; }
+        const tmpId = uid('TMP');
+        items.push({ status: 'uploading', tmpId });
+        renderThumbs();
+        try {
+          const { refId, name, dataUrl } = await uploadDocToFirestore(file, ownerId);
+          const idx = items.findIndex(it => it.tmpId === tmpId);
+          if (idx > -1) items[idx] = { status: 'done', refId, name, dataUrl };
+          sessionAddedRefIds.add(refId);
+          syncHidden();
+          renderThumbs();
+          toast(t('toastDocUploaded'), 'success');
+        } catch (err) {
+          items = items.filter(it => it.tmpId !== tmpId);
+          renderThumbs();
+          toast(t('toastDocUploadFailed'), 'error');
+        }
+      }
+    });
+
+    // If the form is closed/cancelled without saving, delete any images that were
+    // uploaded during this session so we don't leave orphans in Firestore.
+    async function cleanupSessionUploads() {
+      for (const refId of sessionAddedRefIds) {
+        try { await deleteDocImage(refId); } catch (e) { /* best effort */ }
+      }
+    }
+    document.getElementById('closeForm').addEventListener('click', cleanupSessionUploads);
+    document.getElementById('cancelForm').addEventListener('click', cleanupSessionUploads);
+
+    renderThumbs();
+    resolvePending();
+  })();
+}
+
+// Reads an image File as a data URL.
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// Resizes/compresses an image file client-side (max 1280px on the longest side,
+// JPEG quality ~0.75) so it comfortably fits inside a single Firestore document.
+// Animated GIFs are left untouched (canvas would flatten them to a single frame).
+async function compressImageFile(file, maxDim = 1280, quality = 0.75) {
+  const rawDataUrl = await readFileAsDataURL(file);
+  if (file.type === 'image/gif') return rawDataUrl;
+  const img = await new Promise((resolve, reject) => {
+    const im = new Image();
+    im.onload = () => resolve(im);
+    im.onerror = reject;
+    im.src = rawDataUrl;
+  });
+  let { width, height } = img;
+  if (width > maxDim || height > maxDim) {
+    const scale = maxDim / Math.max(width, height);
+    width = Math.round(width * scale);
+    height = Math.round(height * scale);
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(img, 0, 0, width, height);
+  return canvas.toDataURL('image/jpeg', quality);
+}
+
+// Compresses then saves an image as its own small Firestore document (collection
+// 'dashboardImages') and returns a lightweight reference — this is what actually
+// keeps working on networks that block Firebase Storage.
+async function uploadDocToFirestore(file, ownerId) {
+  if (!isLoggedIn() || !window.fbDb) throw new Error('Not signed in');
+  const dataUrl = await compressImageFile(file);
+  const approxBytes = Math.ceil((dataUrl.length * 3) / 4);
+  if (approxBytes > 900000) throw new Error('Image still too large after compression');
+  const refId = uid('IMG');
+  const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
+  await window.fbSetDoc(ref, { dataUrl, name: file.name, activityId: ownerId, createdAt: new Date().toISOString() });
+  return { refId, name: file.name, dataUrl };
+}
+
+async function deleteDocImage(refId) {
+  if (!refId || !isLoggedIn() || !window.fbDb || !window.fbDeleteDoc) return;
+  const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
+  await window.fbDeleteDoc(ref);
 }
 
 function getCurrentUserEmail() {
