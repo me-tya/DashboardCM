@@ -2695,7 +2695,7 @@ function renderTable() {
   let html = `<div class="table-wrap"><table class="data-table"><thead><tr>`;
   html += `<th style="width:48px;">No</th>`;
   cols.forEach(c => { html += `<th data-sort="${c.key}">${c.label}${sortInd(c.key)}</th>`; });
-  html += `<th style="width:90px;">Aksi</th></tr></thead><tbody>`;
+  html += `<th style="width:124px;">${uiText('Actions','Aksi')}</th></tr></thead><tbody>`;
 
   pageItems.forEach((a, idx) => {
     const cs = getCategoryStyle(a.kategori);
@@ -2717,6 +2717,7 @@ function renderTable() {
       <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${a.statusNorm}</span></td>
       <td>
         <div class="row-actions">
+          ${isUrlLike(a.lokasiChannel||'') ? `<button class="icon-btn" data-action="copy-link" data-id="${a.id}" title="${uiText('Copy meeting link','Salin link rapat')}" aria-label="${uiText('Copy meeting link','Salin link rapat')}">${iconCopyLink()}</button>` : ''}
           <button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button>
           <button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>
         </div>
@@ -2755,6 +2756,7 @@ function renderTable() {
       openDetail(tr.dataset.id);
     });
   });
+  container.querySelectorAll('[data-action="copy-link"]').forEach(b => b.addEventListener('click', async (e) => { e.stopPropagation(); const a=state.agendas.find(x=>x.id===b.dataset.id); if(a) await copyActivityLocationLink(a); }));
   container.querySelectorAll('[data-action="edit"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openForm(b.dataset.id); }));
   container.querySelectorAll('[data-action="delete"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openConfirmDelete(b.dataset.id); }));
   const prevBtn = document.getElementById('pagePrev');
@@ -2773,6 +2775,14 @@ function pageButtons(current, total) {
   start = Math.max(1, end - maxShown + 1);
   for (let i = start; i <= end; i++) pages.push(i);
   return pages.map(p => `<button class="page-btn ${p === current ? 'active' : ''}" data-page="${p}">${p}</button>`).join('');
+}
+function iconCopyLink(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>`;}
+async function copyActivityLocationLink(a){
+  const raw=String(a?.lokasiChannel||'').trim();
+  if(!isUrlLike(raw)){toast(uiText('No link available to copy','Tidak ada link yang dapat disalin'),'info');return;}
+  const url=/^www\./i.test(raw)?'https://'+raw:raw;
+  try{await copyTextToClipboard(url);toast(uiText('Meeting link copied','Link rapat disalin'),'success');}
+  catch(e){toast(uiText('Could not copy link','Link gagal disalin'),'error');}
 }
 function iconEdit(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;}
 function iconTrash(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>`;}
@@ -4088,6 +4098,7 @@ function openDetail(id) {
       </div>
     </div>
     <div class="modal-foot">
+      ${isUrlLike(a.lokasiChannel||'') ? `<button class="btn btn-outline btn-sm" id="detailCopyLink" title="${uiText('Copy meeting link','Salin link rapat')}">${iconCopyLink()} <span>${uiText('Copy Link','Salin Link')}</span></button>` : ''}
       <button class="btn btn-outline btn-sm" id="detailEdit">${t('edit')}</button>
       <button class="btn btn-danger btn-sm" id="detailDelete">${t('delete')}</button>
     </div>
@@ -4096,6 +4107,7 @@ function openDetail(id) {
   hydrateDocThumbs(modal);
   document.getElementById('closeDetail').addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+  document.getElementById('detailCopyLink')?.addEventListener('click', () => copyActivityLocationLink(a));
   document.getElementById('detailEdit').addEventListener('click', () => { modal.classList.add('hidden'); openForm(id); });
   document.getElementById('detailDelete').addEventListener('click', () => { modal.classList.add('hidden'); openConfirmDelete(id); });
   // Note: no click handler on .doc-download-link — it's a plain native <a href target="_blank">.
