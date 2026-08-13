@@ -593,6 +593,8 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .table-link-ellipsis .link-text{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;}
 @media(max-width:900px){.table-link-ellipsis{max-width:210px;}}
 @media(max-width:600px){.table-link-ellipsis{max-width:165px;}}
+.activity-link-wrap{display:inline-flex;align-items:center;gap:5px;max-width:100%;min-width:0;vertical-align:bottom}.activity-link-wrap .doc-download-link{min-width:0}.activity-link-copy{width:26px;height:26px;flex:0 0 26px;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--navy-700);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background .15s,border-color .15s,color .15s}.activity-link-copy:hover,.activity-link-copy:focus-visible{background:var(--blue-bg);border-color:#BFD2F3;color:var(--blue);outline:none}.activity-link-copy svg{width:13px;height:13px}.detail-value .activity-link-wrap{max-width:100%}.detail-value .activity-link-wrap .doc-download-link{overflow-wrap:anywhere}
+
 
 /* ===== DOCUMENTATION (image attachments) ===== */
 .doc-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px;}
@@ -2706,7 +2708,7 @@ function renderTable() {
       <td class="mono" style="white-space:nowrap;width:1%;">${formatActivityDateCell(a)}</td>
       <td style="max-width:280px;">
         <div class="table-title">${escapeHtml(a.namaKegiatan)}</div>
-        <div class="table-meta">${escapeHtml(a.waktu || '')} ${a.lokasiChannel ? '· ' + renderLocationValue(a.lokasiChannel,true) : ''}</div>
+        <div class="table-meta">${escapeHtml(a.waktu || '')} ${a.lokasiChannel ? '· ' + renderLocationWithCopy(a.lokasiChannel,true,a.id) : ''}</div>
         ${a.updatedBy ? `<div class="table-updated-by" title="${dayjs(a.updatedAt).format('D MMM YYYY, HH:mm')}">${t('updatedByLabel')} ${escapeHtml(a.updatedBy)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
@@ -2717,7 +2719,6 @@ function renderTable() {
       <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${a.statusNorm}</span></td>
       <td>
         <div class="row-actions">
-          ${isUrlLike(a.lokasiChannel||'') ? `<button class="icon-btn" data-action="copy-link" data-id="${a.id}" title="${uiText('Copy meeting link','Salin link rapat')}" aria-label="${uiText('Copy meeting link','Salin link rapat')}">${iconCopyLink()}</button>` : ''}
           <button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button>
           <button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>
         </div>
@@ -2756,7 +2757,7 @@ function renderTable() {
       openDetail(tr.dataset.id);
     });
   });
-  container.querySelectorAll('[data-action="copy-link"]').forEach(b => b.addEventListener('click', async (e) => { e.stopPropagation(); const a=state.agendas.find(x=>x.id===b.dataset.id); if(a) await copyActivityLocationLink(a); }));
+  container.querySelectorAll('[data-inline-copy-link]').forEach(b => b.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); const a=state.agendas.find(x=>x.id===b.dataset.inlineCopyLink); if(a) await copyActivityLocationLink(a); }));
   container.querySelectorAll('[data-action="edit"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openForm(b.dataset.id); }));
   container.querySelectorAll('[data-action="delete"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openConfirmDelete(b.dataset.id); }));
   const prevBtn = document.getElementById('pagePrev');
@@ -4085,7 +4086,7 @@ function openDetail(id) {
         <div class="detail-item"><div class="detail-label">${t('fieldService')}</div><div class="detail-value">${escapeHtml(a.layanan)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldRequestingUnit')}</div><div class="detail-value">${escapeHtml(a.unitPemohon)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldRelatedProgram')}</div><div class="detail-value">${escapeHtml(a.programTerkait)}</div></div>
-        <div class="detail-item"><div class="detail-label">${t('fieldLocationChannel')}</div><div class="detail-value">${renderLocationValue(a.lokasiChannel)}</div></div>
+        <div class="detail-item"><div class="detail-label">${t('fieldLocationChannel')}</div><div class="detail-value">${renderLocationWithCopy(a.lokasiChannel,false,a.id)}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldCmPic')}</div><div class="detail-value">${escapeHtml(a.picTimCM||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldSpeakerUnit')}</div><div class="detail-value">${escapeHtml(a.unitAsalNarsum||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldTargetParticipants')}</div><div class="detail-value">${escapeHtml(a.pesertaTarget||'-')}</div></div>
@@ -4098,7 +4099,6 @@ function openDetail(id) {
       </div>
     </div>
     <div class="modal-foot">
-      ${isUrlLike(a.lokasiChannel||'') ? `<button class="btn btn-outline btn-sm" id="detailCopyLink" title="${uiText('Copy meeting link','Salin link rapat')}">${iconCopyLink()} <span>${uiText('Copy Link','Salin Link')}</span></button>` : ''}
       <button class="btn btn-outline btn-sm" id="detailEdit">${t('edit')}</button>
       <button class="btn btn-danger btn-sm" id="detailDelete">${t('delete')}</button>
     </div>
@@ -4107,7 +4107,7 @@ function openDetail(id) {
   hydrateDocThumbs(modal);
   document.getElementById('closeDetail').addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
-  document.getElementById('detailCopyLink')?.addEventListener('click', () => copyActivityLocationLink(a));
+  modal.querySelectorAll('[data-inline-copy-link]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();copyActivityLocationLink(a);}));
   document.getElementById('detailEdit').addEventListener('click', () => { modal.classList.add('hidden'); openForm(id); });
   document.getElementById('detailDelete').addEventListener('click', () => { modal.classList.add('hidden'); openConfirmDelete(id); });
   // Note: no click handler on .doc-download-link — it's a plain native <a href target="_blank">.
@@ -4187,6 +4187,14 @@ function renderLocationValue(lokasi, compact=false) {
     </a>`;
   }
   return escapeHtml(raw);
+}
+
+function renderLocationWithCopy(lokasi, compact=false, activityId='') {
+  if (!lokasi) return '-';
+  const raw=String(lokasi).trim();
+  if(!isUrlLike(raw)) return renderLocationValue(raw,compact);
+  const tip=uiText('Copy meeting link','Salin link rapat');
+  return `<span class="activity-link-wrap">${renderLocationValue(raw,compact)}<button type="button" class="activity-link-copy" data-inline-copy-link="${escapeHtml(activityId)}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${iconCopyLink()}</button></span>`;
 }
 
 // Parses the "dokumentasi" field (JSON string of [{refId,name}, ...]) safely —
