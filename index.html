@@ -1011,7 +1011,7 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
     <div class="filter-bar-row1">
       <div class="search-wrap">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search activity, PIC, program, category...">
+        <input type="text" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="Search activity, PIC, program, category, notes...">
         <button type="button" class="search-clear-btn" id="btnClearSearch" data-i18n-title="clearSearchTitle" data-i18n-aria-label="clearSearchTitle" title="Clear search" aria-label="Clear search" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
@@ -1162,7 +1162,7 @@ const I18N = {
     lastUpdatedLabel: 'Last updated:', lastImportLabel: 'Last import:',
     lastUpdatedTitle: 'Last time any data was saved in this browser',
     lastImportTitle: 'Last time data was imported from the shared Excel file',
-    searchPlaceholder: 'Search activity, PIC, program, category...', clearSearchTitle: 'Clear search',
+    searchPlaceholder: 'Search activity, PIC, program, category, notes...', clearSearchTitle: 'Clear search',
     filtersLabel: 'Filters', resetLabel: 'Reset', dateSepTo: 'to',
     allCategories: 'All Categories', allPrograms: 'All Programs', allUnits: 'All Requesting Units',
     allLayanan: 'All (Service & Non-Service)', allStatus: 'All Status', allPic: 'All PIC',
@@ -1251,7 +1251,7 @@ const I18N = {
     lastUpdatedLabel: 'Terakhir diperbarui:', lastImportLabel: 'Impor terakhir:',
     lastUpdatedTitle: 'Waktu terakhir data disimpan di browser ini',
     lastImportTitle: 'Waktu terakhir data diimpor dari file Excel bersama',
-    searchPlaceholder: 'Cari activity, PIC, program, kategori...', clearSearchTitle: 'Hapus pencarian',
+    searchPlaceholder: 'Cari activity, PIC, program, kategori, catatan...', clearSearchTitle: 'Hapus pencarian',
     filtersLabel: 'Filter', resetLabel: 'Reset', dateSepTo: 's/d',
     allCategories: 'Semua Kategori', allPrograms: 'Semua Program', allUnits: 'Semua Unit Pengusul',
     allLayanan: 'Semua (Layanan & Non-Layanan)', allStatus: 'Semua Status', allPic: 'Semua PIC',
@@ -1571,7 +1571,7 @@ function preprocess(list) {
     const kategori = normalizeCategory(item.kategori);
     const searchKey = [
       item.namaKegiatan, item.picTimCM, item.programTerkait, kategori,
-      item.unitAsalNarsum, item.unitPemohon, item.lokasiChannel, item.undangan, item.suratTugas, item.status
+      item.unitAsalNarsum, item.unitPemohon, item.lokasiChannel, item.undangan, item.suratTugas, item.status, item.catatan
     ].join(' ').toLowerCase();
     return {
       id: item.id || uid('AGD'),
