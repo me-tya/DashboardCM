@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.15-ACTIVITY-LOG-LAYOUT-FIX-20260814">
+<meta name="cm-build" content="CM-DASHBOARD-V19.16-ACTIVITY-LOG-MOCKUP-WHATSAPP-WEB-20260814">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.8: Indonesia 2026 National Holiday + Collective Leave calendar styling; preserves v19.7 WhatsApp assignment and prior features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -660,6 +660,84 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .modal-close{width:30px;height:30px;border-radius:8px;border:none;background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink-500);flex-shrink:0;}
 .modal-body{padding:22px;}
 .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
+
+/* ===== ACTIVITY LOG v19.16 — MOCKUP-ALIGNED, NO HORIZONTAL SCROLL ===== */
+.modal-box.activity-log-modal{
+  width:min(1040px,calc(100vw - 48px));
+  max-width:1040px;
+  max-height:90vh;
+  overflow:hidden;
+}
+.activity-log-modal .modal-head{padding:18px 20px;}
+.activity-log-modal .modal-body{padding:18px 20px 16px;overflow-y:auto;}
+.activity-log-modal .modal-foot{padding:14px 20px;}
+.activity-log-head-icon{width:40px;height:40px;}
+.activity-log-head-copy h2{font-size:17px;}
+.activity-log-head-copy p{font-size:12px;max-width:760px;}
+.activity-log-toolbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 178px 155px;
+  gap:10px;
+  margin-bottom:14px;
+}
+.activity-log-search input,.activity-log-toolbar select{
+  height:38px;
+  font-size:11.5px;
+  border-radius:8px;
+}
+.activity-log-table-wrap{
+  width:100%;
+  max-height:58vh;
+  overflow-y:auto;
+  overflow-x:hidden;
+  border-radius:9px;
+}
+.activity-log-table{
+  width:100%;
+  min-width:0;
+  table-layout:fixed;
+  font-size:11px;
+}
+.activity-log-table col.col-no{width:5.5%;}
+.activity-log-table col.col-time{width:13%;}
+.activity-log-table col.col-action{width:23.5%;}
+.activity-log-table col.col-detail{width:37%;}
+.activity-log-table col.col-email{width:21%;}
+.activity-log-table th{
+  font-size:10.5px;
+  padding:10px 9px;
+  white-space:normal;
+  line-height:1.25;
+}
+.activity-log-table td{
+  padding:11px 9px;
+  font-size:10.8px;
+  line-height:1.42;
+  overflow-wrap:break-word;
+  word-break:normal;
+}
+.activity-log-table .col-no{width:auto;text-align:center;}
+.activity-log-table .col-time,.activity-log-table .col-action,.activity-log-table .col-detail,.activity-log-table .col-email{width:auto;min-width:0;}
+.activity-log-time{font-size:10px;line-height:1.45;white-space:normal;}
+.activity-log-action{gap:8px;font-size:10.8px;line-height:1.3;}
+.activity-log-action-icon{width:30px;height:30px;}
+.activity-log-action-icon svg{width:14px;height:14px;}
+.activity-log-detail-lines{gap:3px;}
+.activity-log-detail-lines span{line-height:1.42;}
+.activity-log-email{font-size:10.5px;line-height:1.4;word-break:break-word;overflow-wrap:anywhere;}
+.activity-log-note{font-size:10.5px;margin-top:12px;padding:9px 11px;}
+@media(max-width:760px){
+  .modal-box.activity-log-modal{width:calc(100vw - 16px);max-width:none;}
+  .activity-log-modal .modal-body{padding:12px;}
+  .activity-log-toolbar{grid-template-columns:1fr 1fr;gap:8px;}
+  .activity-log-search{grid-column:1/-1;}
+  .activity-log-table{font-size:9.4px;}
+  .activity-log-table th,.activity-log-table td{padding:8px 5px;font-size:9.4px;}
+  .activity-log-action-icon{width:24px;height:24px;}
+  .activity-log-action{gap:5px;font-size:9.2px;}
+  .activity-log-time,.activity-log-email{font-size:9px;}
+}
+
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .form-field{display:flex;flex-direction:column;gap:5px;}
@@ -3090,17 +3168,21 @@ function cmWhatsappAssignmentText(a){
   ].join('\n');
 }
 async function shareActivityWhatsApp(a){
-  const text=cmWhatsappAssignmentText(a),url='https://wa.me/?text='+encodeURIComponent(text);
-  const opened=window.open(url,'_blank','noopener,noreferrer');
+  const text=cmWhatsappAssignmentText(a);
+  const url='https://web.whatsapp.com/send?text='+encodeURIComponent(text);
+  // Reuse one dedicated WhatsApp Web tab instead of spawning a new tab on every share.
+  // Browser security does not allow the dashboard to take over an arbitrary WhatsApp tab opened manually.
+  const opened=window.open(url,'cmDashboardWhatsAppWeb');
   if(opened){
-    toast(uiText('WhatsApp draft opened. Choose the group, then replace each @ with a member mention.','Draft WhatsApp dibuka. Pilih WAG, lalu pada setiap @ pilih anggota agar menjadi mention WhatsApp.'),'success');
+    try{opened.focus();}catch(e){}
+    toast(uiText('WhatsApp Web opened in the reusable WhatsApp tab. Choose the group, then replace each @ with a member mention.','WhatsApp Web dibuka pada tab WhatsApp yang dipakai ulang. Pilih WAG, lalu pada setiap @ pilih anggota agar menjadi mention WhatsApp.'),'success');
     return;
   }
   try{
     await copyTextToClipboard(text);
-    toast(uiText('Popup was blocked. Assignment text was copied; paste it into WhatsApp.','Popup diblokir. Teks penugasan sudah disalin; tempelkan ke WhatsApp.'),'info');
+    toast(uiText('WhatsApp Web popup was blocked. Assignment text was copied; paste it into the open WhatsApp Web tab.','Popup WhatsApp Web diblokir. Teks penugasan sudah disalin; tempelkan ke tab WhatsApp Web yang sudah terbuka.'),'info');
   }catch(e){
-    toast(uiText('Could not open WhatsApp or copy the assignment text.','WhatsApp tidak dapat dibuka dan teks penugasan gagal disalin.'),'error');
+    toast(uiText('Could not open WhatsApp Web or copy the assignment text.','WhatsApp Web tidak dapat dibuka dan teks penugasan gagal disalin.'),'error');
   }
 }
 function iconCopyLink(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>`;}
@@ -4815,12 +4897,12 @@ function cmActivityLogFilterRows(rows){
 }
 function cmActivityLogRowsHtml(rows){
   if(!rows.length)return `<div class="activity-log-empty">${uiText('No log entries match the current filters.','Tidak ada log yang sesuai dengan filter saat ini.')}</div>`;
-  return `<table class="activity-log-table"><thead><tr><th class="col-no">No</th><th class="col-time">${uiText('Time','Waktu')}</th><th class="col-action">${uiText('Action Type','Jenis Aksi')}</th><th class="col-detail">${uiText('Change Details','Keterangan Perubahan')}</th><th class="col-email">${uiText('By (Email)','Oleh (Email)')}</th></tr></thead><tbody>${rows.map((x,i)=>{const [label,cls]=cmActivityLogActionMeta(x.action),details=(x.details||[]).length?x.details:['—'];return `<tr><td class="col-no">${i+1}</td><td class="activity-log-time">${cmActivityLogFormatTime(x)}</td><td class="col-action"><div class="activity-log-action">${cmActivityLogActionIcon(cls)}<span>${escapeHtml(label)}</span></div></td><td class="col-detail"><div class="activity-log-detail-lines">${details.map(z=>`<span>${escapeHtml(z)}</span>`).join('')}</div></td><td class="activity-log-email col-email">${escapeHtml(x.actorEmail||'—')}</td></tr>`;}).join('')}</tbody></table>`;
+  return `<table class="activity-log-table"><colgroup><col class="col-no"><col class="col-time"><col class="col-action"><col class="col-detail"><col class="col-email"></colgroup><thead><tr><th class="col-no">No</th><th class="col-time">${uiText('Time','Waktu')}</th><th class="col-action">${uiText('Action Type','Jenis Aksi')}</th><th class="col-detail">${uiText('Change Details','Keterangan Perubahan')}</th><th class="col-email">${uiText('By (Email)','Oleh (Email)')}</th></tr></thead><tbody>${rows.map((x,i)=>{const [label,cls]=cmActivityLogActionMeta(x.action),details=(x.details||[]).length?x.details:['—'];return `<tr><td class="col-no">${i+1}</td><td class="activity-log-time col-time">${cmActivityLogFormatTime(x)}</td><td class="col-action"><div class="activity-log-action">${cmActivityLogActionIcon(cls)}<span>${escapeHtml(label)}</span></div></td><td class="col-detail"><div class="activity-log-detail-lines">${details.map(z=>`<span>${escapeHtml(z)}</span>`).join('')}</div></td><td class="activity-log-email col-email">${escapeHtml(x.actorEmail||'—')}</td></tr>`;}).join('')}</tbody></table>`;
 }
 async function openActivityLog(activityId,opts={}){
   const a=state.agendas.find(x=>x.id===activityId)||opts.activity||null,modal=document.getElementById('kbModal');
   cmActivityLogUi={activityId,search:'',action:'ALL',range:'ALL',returnToDetail:!!opts.returnToDetail};
-  modal.innerHTML=`<div class="modal-box activity-log-modal"><div class="modal-head"><div class="activity-log-head-title"><div class="activity-log-head-icon">${iconHistory()}</div><div class="activity-log-head-copy"><h2>${uiText('Activity Log','Log Activity')}</h2><p>${escapeHtml(a?.namaKegiatan||activityId)}</p></div></div><button class="modal-close" id="activityLogClose">&times;</button></div><div class="modal-body"><div class="activity-log-toolbar"><div class="activity-log-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="activityLogSearch" placeholder="${uiText('Search log (email, action, or details)...','Cari di log (email, aksi, atau keterangan)...')}"></div><select id="activityLogAction"><option value="ALL">${uiText('All Action Types','Semua Jenis Aksi')}</option><option value="ACTIVITY">Activity</option><option value="STATUS">Status</option><option value="NOTULA">Notula</option><option value="DOCUMENTATION">Dokumentasi</option><option value="DOCUMENT">${uiText('Documents / Links','Dokumen / Link')}</option></select><select id="activityLogRange"><option value="ALL">${uiText('All Time','Semua Waktu')}</option><option value="TODAY">${uiText('Today','Hari Ini')}</option><option value="7D">7 ${uiText('days','hari')}</option><option value="30D">30 ${uiText('days','hari')}</option></select></div><div class="activity-log-table-wrap" id="activityLogTable"><div class="activity-log-loading">${uiText('Loading audit log...','Memuat audit log...')}</div></div><div class="activity-log-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>${uiText('This log is an append-only audit trail. Entries cannot be edited or deleted from the dashboard.','Log ini merupakan audit trail append-only. Entri tidak dapat diedit atau dihapus dari dashboard.')}</span></div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" id="activityLogDone">${uiText('Close','Tutup')}</button></div></div>`;
+  modal.innerHTML=`<div class="modal-box activity-log-modal"><div class="modal-head"><div class="activity-log-head-title"><div class="activity-log-head-icon">${iconHistory()}</div><div class="activity-log-head-copy"><h2>${uiText('Activity Log','Activity Log')}</h2><p>${escapeHtml(a?.namaKegiatan||activityId)}</p></div></div><button class="modal-close" id="activityLogClose">&times;</button></div><div class="modal-body"><div class="activity-log-toolbar"><div class="activity-log-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="activityLogSearch" placeholder="${uiText('Search log (email, action, or details)...','Cari di log (email, aksi, atau keterangan)...')}"></div><select id="activityLogAction"><option value="ALL">${uiText('All Action Types','Semua Jenis Aksi')}</option><option value="ACTIVITY">Activity</option><option value="STATUS">Status</option><option value="NOTULA">Notula</option><option value="DOCUMENTATION">Dokumentasi</option><option value="DOCUMENT">${uiText('Documents / Links','Dokumen / Link')}</option></select><select id="activityLogRange"><option value="ALL">${uiText('All Time','Semua Waktu')}</option><option value="TODAY">${uiText('Today','Hari Ini')}</option><option value="7D">7 ${uiText('days','hari')}</option><option value="30D">30 ${uiText('days','hari')}</option></select></div><div class="activity-log-table-wrap" id="activityLogTable"><div class="activity-log-loading">${uiText('Loading audit log...','Memuat audit log...')}</div></div><div class="activity-log-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><span>${uiText('This log is an append-only audit trail. Entries cannot be edited or deleted from the dashboard.','Log ini merupakan audit trail append-only. Entri tidak dapat diedit atau dihapus dari dashboard.')}</span></div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" id="activityLogDone">${uiText('Close','Tutup')}</button></div></div>`;
   modal.classList.remove('hidden');
   const close=()=>{modal.classList.add('hidden');if(cmActivityLogUi.returnToDetail&&state.agendas.some(x=>x.id===activityId))openDetail(activityId);};
   document.getElementById('activityLogClose').onclick=close;document.getElementById('activityLogDone').onclick=close;modal.onclick=e=>{if(e.target===modal)close();};
@@ -7843,8 +7925,8 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.15-ACTIVITY-LOG-LAYOUT-FIX-20260814';
-const CM_MANUAL_VERSION='19.15';
+const CM_APP_BUILD='CM-DASHBOARD-V19.16-ACTIVITY-LOG-MOCKUP-WHATSAPP-WEB-20260814';
+const CM_MANUAL_VERSION='19.16';
 const CM_MANUAL_UPDATED='14 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
 const CM_AI_DEFAULT_WORKER='https://cm-assistant.ristya-onlineshop.workers.dev';
@@ -7878,7 +7960,7 @@ const CM_USER_MANUAL_ARTICLES=[
 {id:'squad',category:{en:'Squad Team',id:'Squad Team'},title:{en:'Searching and Filtering Squad Team',id:'Mencari dan Memfilter Squad Team'},summary:{en:'Find team members by name, NIP, position, role, unit, squad, and other stored member metadata.',id:'Temukan anggota tim berdasarkan nama, NIP, jabatan, role, unit, squad, dan metadata anggota lainnya.'},keywords:['squad team','contact','NIP','role','unit','member','team'],steps:{en:['Open Squad Team.','Use search for name, NIP, position, role, unit, squad/team, and member metadata.','Use contextual filters for Team/Squad, Role, and Unit.','Open team sections to review members and their roles.'],id:['Buka Squad Team.','Gunakan search untuk nama, NIP, jabatan, role, unit, squad/team, dan metadata anggota.','Gunakan filter kontekstual untuk Team/Squad, Role, dan Unit.','Buka bagian tim untuk melihat anggota dan perannya.']}},
 {id:'backup',category:{en:'Data & Backup',id:'Data & Backup'},title:{en:'Backup and Restore',id:'Backup dan Restore'},summary:{en:'Create and restore dashboard backups including Activity audit logs while preserving the separation between dashboard data and the external AI service.',id:'Buat dan pulihkan backup dashboard termasuk Activity audit log sambil menjaga pemisahan data dashboard dengan layanan AI eksternal.'},keywords:['backup','restore','json','data'],steps:{en:['Use Backup All in the header to create a backup of supported dashboard data.','Store the backup file in an approved secure location.','Use Restore All to restore supported data from a backup file or supported text-code flow.','Review counts and scope in the confirmation dialog before restoring.'],id:['Gunakan Backup All di header untuk membuat backup data dashboard yang didukung.','Simpan file backup pada lokasi yang aman dan sesuai ketentuan.','Gunakan Restore All untuk memulihkan data yang didukung dari file backup atau alur text-code yang tersedia.','Review jumlah dan scope data pada dialog konfirmasi sebelum restore.']}},
 {id:'ai-assistant',category:{en:'AI',id:'AI'},title:{en:'Using Ask T-Agent',id:'Menggunakan Ask T-Agent'},summary:{en:'Ask questions about Dashboard CM procedures, current dashboard context, or general Change Management concepts.',id:'Ajukan pertanyaan tentang cara menggunakan Dashboard CM, konteks dashboard yang tersedia, atau konsep Change Management umum.'},keywords:['AI','assistant','Groq','Cloudflare Worker','question','help','change management'],steps:{en:['Click the floating Ask T-Agent button at the bottom-right of the dashboard.','Ask a procedural question such as “How do I generate a QR for a CRA survey?” or a CM question such as “What is the difference between stakeholder engagement and communication planning?”','The assistant retrieves relevant User Manual and Knowledge content locally before sending context to the configured Worker.','When signed in, the assistant can include relevant Activity and CRA summaries; private dashboard context is sent only with a Firebase ID token for Worker validation.','Use Clear Chat in the Ask T-Agent header when you want to reset only the visible conversation. It does not delete Activity, CRA, Knowledge, or AI Reference data.','The Dashboard CM Worker endpoint is preconfigured in this build. Use AI Settings only if the Worker URL changes or you need to point to another environment.'],id:['Klik tombol floating Ask T-Agent di kanan bawah dashboard.','Ajukan pertanyaan prosedural seperti “Gimana bikin QR untuk survei CRA?” atau pertanyaan CM seperti “Apa beda stakeholder engagement dan communication planning?”','Assistant mencari konteks User Manual dan Knowledge secara lokal sebelum mengirim konteks ke Worker yang dikonfigurasi.','Saat login, assistant dapat menyertakan ringkasan Activity dan CRA yang relevan; konteks private dikirim bersama Firebase ID token untuk validasi Worker.','Gunakan Clear Chat di header Ask T-Agent untuk mengosongkan percakapan yang tampil saja. Fitur ini tidak menghapus Activity, CRA, Knowledge, atau data AI Reference.','Endpoint Worker Dashboard CM sudah diprakonfigurasi pada build ini. Gunakan AI Settings hanya jika URL Worker berubah atau perlu diarahkan ke environment lain.']},note:{en:'The Groq API key is never stored in this HTML; keep it as a Cloudflare Worker Secret.',id:'Groq API key tidak pernah disimpan di HTML ini; simpan sebagai Cloudflare Worker Secret.'}},
-{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.15",id:'Yang Baru di v19.15'},summary:{en:'The Activity Log popup layout has been widened and rebalanced so the audit table columns are more proportional, making long change details and emails easier to read.',id:'Layout popup Activity Log kini diperlebar dan diseimbangkan ulang agar kolom tabel lebih proporsional, sehingga keterangan perubahan yang panjang dan email lebih mudah dibaca.'},keywords:['v19.15','activity log','layout','table width','audit trail','history','popup'],steps:{en:['Open Activities and click the History icon in the Actions column, or open Activity Details and choose History.','The popup is now wider and the log table uses more proportional columns.','The Change Details column now gets more space, while Time, Action Type, and Email remain readable without awkward text wrapping.','Search and filter behavior remain the same, and audit entries are still append-only.'],id:['Buka Activities lalu klik ikon History pada kolom Aksi, atau buka Detail Activity lalu pilih Riwayat.','Popup kini lebih lebar dan tabel log memakai proporsi kolom yang lebih seimbang.','Kolom Keterangan Perubahan kini mendapat ruang lebih besar, sementara Waktu, Jenis Aksi, dan Email tetap nyaman dibaca tanpa wrapping yang aneh.','Perilaku search dan filter tetap sama, dan entri audit tetap bersifat append-only.']}}
+{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.16",id:'Yang Baru di v19.16'},summary:{en:'Activity Log now matches the approved table mockup more closely: the popup uses a fixed balanced column layout without horizontal scrolling. WhatsApp assignment now opens WhatsApp Web in one reusable named tab instead of using wa.me.',id:'Activity Log kini lebih mendekati mockup tabel yang disetujui: popup memakai layout kolom tetap yang seimbang tanpa scroll horizontal. Penugasan WhatsApp kini membuka WhatsApp Web pada satu tab bernama yang dipakai ulang, bukan melalui wa.me.'},keywords:['v19.16','activity log','table layout','no horizontal scroll','whatsapp web','reusable tab'],steps:{en:['Open an Activity Log: No, Time, Action Type, Change Details, and Email now use fixed proportions matching the approved mockup.','The popup no longer needs horizontal scrolling; long details wrap by words inside the wider Change Details column.','Click the WhatsApp action to open the prefilled assignment directly on web.whatsapp.com.','The dashboard reuses and focuses the WhatsApp Web tab it created previously, so later shares do not create additional tabs.'],id:['Buka Activity Log: kolom No, Waktu, Jenis Aksi, Keterangan Perubahan, dan Email kini memakai proporsi tetap mengikuti mockup yang disetujui.','Popup tidak lagi membutuhkan scroll horizontal; keterangan panjang membungkus per kata di kolom Keterangan Perubahan yang lebih lega.','Klik aksi WhatsApp untuk membuka draft penugasan langsung di web.whatsapp.com.','Dashboard memakai ulang dan memfokuskan tab WhatsApp Web yang pernah dibuatnya, sehingga share berikutnya tidak membuat tab tambahan.']}}
 ];
 
 
