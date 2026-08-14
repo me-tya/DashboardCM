@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.11-YEAR-DROPDOWN-PROVISIONAL-HOLIDAYS-20260814">
+<meta name="cm-build" content="CM-DASHBOARD-V19.12-MONTH-YEAR-DROPDOWN-HOLIDAYS-20260814">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.8: Indonesia 2026 National Holiday + Collective Leave calendar styling; preserves v19.7 WhatsApp assignment and prior features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -476,14 +476,16 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
   display:flex;align-items:center;justify-content:space-between;padding:16px 18px;
   background:linear-gradient(120deg,var(--navy-800),var(--navy-700));border-radius:14px 14px 0 0;
 }
-.cal-title-wrap{display:flex;align-items:center;gap:10px;min-width:0;}
+.cal-title-wrap{display:flex;align-items:center;gap:8px;min-width:0;}
 .cal-title{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:#fff;white-space:nowrap;}
-.cal-year-select{
-  height:32px;min-width:82px;padding:0 30px 0 11px;border-radius:9px;border:1px solid rgba(255,255,255,.28);
+.cal-month-select,.cal-year-select{
+  height:32px;padding:0 30px 0 11px;border-radius:9px;border:1px solid rgba(255,255,255,.28);
   background:rgba(255,255,255,.12);color:#fff;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;
 }
-.cal-year-select:hover,.cal-year-select:focus{background:rgba(255,255,255,.2);border-color:var(--gold-400);outline:none;}
-.cal-year-select option{color:var(--ink-900);background:#fff;}
+.cal-month-select{min-width:132px;}
+.cal-year-select{min-width:82px;}
+.cal-month-select:hover,.cal-month-select:focus,.cal-year-select:hover,.cal-year-select:focus{background:rgba(255,255,255,.2);border-color:var(--gold-400);outline:none;}
+.cal-month-select option,.cal-year-select option{color:var(--ink-900);background:#fff;}
 .cal-nav{display:flex;gap:6px;}
 .cal-nav .btn-outline{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25);}
 .cal-nav .btn-outline:hover{background:rgba(255,255,255,.22);border-color:var(--gold-400);}
@@ -3369,8 +3371,9 @@ function renderCalendar() {
     while(!cursor.isAfter(visibleEnd,'day')){const day=cursor.date();(eventsByDay[day]||(eventsByDay[day]=[])).push(a);cursor=cursor.add(1,'day');}
   });
   const days=currentLang==='id'?['Sen','Sel','Rab','Kam','Jum','Sab','Min']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const monthOptions=Array.from({length:12},(_,i)=>{const value=String(i+1).padStart(2,'0'),label=dayjs(`2000-${value}-01`).locale(currentLang).format('MMMM');return `<option value="${value}" ${i===monthStart.month()?'selected':''}>${label}</option>`;}).join('');
   const yearOptions=CM_CALENDAR_YEARS.map(y=>`<option value="${y}" ${y===holidayYear?'selected':''}>${y}</option>`).join('');
-  let html=`<div class="cal-header"><div class="cal-title-wrap"><div class="cal-title">${monthStart.locale(currentLang).format('MMMM')}</div><select class="cal-year-select" id="calYearSelect" title="${uiText('Select calendar year','Pilih tahun kalender')}" aria-label="${uiText('Calendar year','Tahun kalender')}">${yearOptions}</select></div><div class="cal-nav">
+  let html=`<div class="cal-header"><div class="cal-title-wrap"><select class="cal-month-select" id="calMonthSelect" title="${uiText('Select calendar month','Pilih bulan kalender')}" aria-label="${uiText('Calendar month','Bulan kalender')}">${monthOptions}</select><select class="cal-year-select" id="calYearSelect" title="${uiText('Select calendar year','Pilih tahun kalender')}" aria-label="${uiText('Calendar year','Tahun kalender')}">${yearOptions}</select></div><div class="cal-nav">
     <button class="btn btn-outline btn-sm" id="calPrev">&lsaquo; ${uiText('Previous','Sebelumnya')}</button>
     <button class="btn btn-outline btn-sm" id="calToday">${uiText('Today','Hari Ini')}</button>
     <button class="btn btn-outline btn-sm" id="calNext">${uiText('Next','Berikutnya')} &rsaquo;</button></div></div>
@@ -3398,6 +3401,7 @@ function renderCalendar() {
     html+='</div></div>';
   }
   container.innerHTML=html+'</div>';
+  document.getElementById('calMonthSelect')?.addEventListener('change',e=>{const m=String(e.target.value||'').padStart(2,'0');if(/^(0[1-9]|1[0-2])$/.test(m)){state.calMonth=`${holidayYear}-${m}`;renderCalendar();}});
   document.getElementById('calYearSelect')?.addEventListener('change',e=>{const y=Number(e.target.value);if(CM_CALENDAR_YEARS.includes(y)){state.calMonth=`${y}-${monthStart.format('MM')}`;renderCalendar();}});
   document.getElementById('calPrev').onclick=()=>{state.calMonth=monthStart.subtract(1,'month').format('YYYY-MM');renderCalendar();};
   document.getElementById('calNext').onclick=()=>{state.calMonth=monthStart.add(1,'month').format('YYYY-MM');renderCalendar();};
@@ -7639,8 +7643,8 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.11-YEAR-DROPDOWN-PROVISIONAL-HOLIDAYS-20260814';
-const CM_MANUAL_VERSION='19.11';
+const CM_APP_BUILD='CM-DASHBOARD-V19.12-MONTH-YEAR-DROPDOWN-HOLIDAYS-20260814';
+const CM_MANUAL_VERSION='19.12';
 const CM_MANUAL_UPDATED='14 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
 const CM_AI_DEFAULT_WORKER='https://cm-assistant.ristya-onlineshop.workers.dev';
@@ -7674,7 +7678,7 @@ const CM_USER_MANUAL_ARTICLES=[
 {id:'squad',category:{en:'Squad Team',id:'Squad Team'},title:{en:'Searching and Filtering Squad Team',id:'Mencari dan Memfilter Squad Team'},summary:{en:'Find team members by name, NIP, position, role, unit, squad, and other stored member metadata.',id:'Temukan anggota tim berdasarkan nama, NIP, jabatan, role, unit, squad, dan metadata anggota lainnya.'},keywords:['squad team','contact','NIP','role','unit','member','team'],steps:{en:['Open Squad Team.','Use search for name, NIP, position, role, unit, squad/team, and member metadata.','Use contextual filters for Team/Squad, Role, and Unit.','Open team sections to review members and their roles.'],id:['Buka Squad Team.','Gunakan search untuk nama, NIP, jabatan, role, unit, squad/team, dan metadata anggota.','Gunakan filter kontekstual untuk Team/Squad, Role, dan Unit.','Buka bagian tim untuk melihat anggota dan perannya.']}},
 {id:'backup',category:{en:'Data & Backup',id:'Data & Backup'},title:{en:'Backup and Restore',id:'Backup dan Restore'},summary:{en:'Create and restore dashboard backups while preserving the separation between dashboard data and the external AI service.',id:'Buat dan pulihkan backup dashboard sambil menjaga pemisahan data dashboard dengan layanan AI eksternal.'},keywords:['backup','restore','json','data'],steps:{en:['Use Backup All in the header to create a backup of supported dashboard data.','Store the backup file in an approved secure location.','Use Restore All to restore supported data from a backup file or supported text-code flow.','Review counts and scope in the confirmation dialog before restoring.'],id:['Gunakan Backup All di header untuk membuat backup data dashboard yang didukung.','Simpan file backup pada lokasi yang aman dan sesuai ketentuan.','Gunakan Restore All untuk memulihkan data yang didukung dari file backup atau alur text-code yang tersedia.','Review jumlah dan scope data pada dialog konfirmasi sebelum restore.']}},
 {id:'ai-assistant',category:{en:'AI',id:'AI'},title:{en:'Using Ask T-Agent',id:'Menggunakan Ask T-Agent'},summary:{en:'Ask questions about Dashboard CM procedures, current dashboard context, or general Change Management concepts.',id:'Ajukan pertanyaan tentang cara menggunakan Dashboard CM, konteks dashboard yang tersedia, atau konsep Change Management umum.'},keywords:['AI','assistant','Groq','Cloudflare Worker','question','help','change management'],steps:{en:['Click the floating Ask T-Agent button at the bottom-right of the dashboard.','Ask a procedural question such as “How do I generate a QR for a CRA survey?” or a CM question such as “What is the difference between stakeholder engagement and communication planning?”','The assistant retrieves relevant User Manual and Knowledge content locally before sending context to the configured Worker.','When signed in, the assistant can include relevant Activity and CRA summaries; private dashboard context is sent only with a Firebase ID token for Worker validation.','Use Clear Chat in the Ask T-Agent header when you want to reset only the visible conversation. It does not delete Activity, CRA, Knowledge, or AI Reference data.','The Dashboard CM Worker endpoint is preconfigured in this build. Use AI Settings only if the Worker URL changes or you need to point to another environment.'],id:['Klik tombol floating Ask T-Agent di kanan bawah dashboard.','Ajukan pertanyaan prosedural seperti “Gimana bikin QR untuk survei CRA?” atau pertanyaan CM seperti “Apa beda stakeholder engagement dan communication planning?”','Assistant mencari konteks User Manual dan Knowledge secara lokal sebelum mengirim konteks ke Worker yang dikonfigurasi.','Saat login, assistant dapat menyertakan ringkasan Activity dan CRA yang relevan; konteks private dikirim bersama Firebase ID token untuk validasi Worker.','Gunakan Clear Chat di header Ask T-Agent untuk mengosongkan percakapan yang tampil saja. Fitur ini tidak menghapus Activity, CRA, Knowledge, atau data AI Reference.','Endpoint Worker Dashboard CM sudah diprakonfigurasi pada build ini. Gunakan AI Settings hanya jika URL Worker berubah atau perlu diarahkan ke environment lain.']},note:{en:'The Groq API key is never stored in this HTML; keep it as a Cloudflare Worker Secret.',id:'Groq API key tidak pernah disimpan di HTML ini; simpan sebagai Cloudflare Worker Secret.'}},
-{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.11",id:'Yang Baru di v19.11'},summary:{en:'Calendar now has a 2026–2030 year dropdown. 2026 uses official embedded data; 2027–2030 use clearly marked provisional internet estimates until the Holiday Sync Worker finds an official SKB calendar.',id:'Calendar kini memiliki dropdown tahun 2026–2030. Tahun 2026 menggunakan data resmi tersimpan; 2027–2030 memakai estimasi internet yang ditandai belum resmi sampai Holiday Sync Worker menemukan kalender SKB resmi.'},keywords:['v19.11','calendar','holiday sync','auto sync','hari libur','cuti bersama','multi-year','Cloudflare Worker','cache'],steps:{en:['Open Calendar and navigate to any year.','The dashboard loads cached data immediately when available and refreshes stale data automatically.','The sync engine first checks the configured Cloudflare Worker /holidays route for official Kemensetneg data.','If the official route is unavailable, an automatic public fallback is used so the calendar remains functional.','Use the refresh icon beside the holiday legend to force a new check at any time.','For 2027–2030, provisional internet estimates are shown for planning while the official SKB is unavailable; the Worker automatically replaces them when official data is found.'],id:['Buka Calendar lalu pindah ke tahun mana pun.','Dashboard langsung memakai cache yang tersedia dan otomatis me-refresh data yang sudah stale.','Mesin sinkronisasi terlebih dahulu mengecek route Cloudflare Worker /holidays untuk data resmi Kemensetneg.','Jika route resmi belum tersedia, fallback publik otomatis dipakai agar kalender tetap berfungsi.','Gunakan ikon refresh di samping legenda hari libur untuk memaksa pengecekan ulang kapan saja.','Untuk 2027–2030, estimasi internet sementara ditampilkan untuk kebutuhan perencanaan selama SKB resmi belum tersedia; Worker otomatis menggantinya ketika data resmi ditemukan.']}}
+{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.12",id:'Yang Baru di v19.12'},summary:{en:'Calendar now has direct month and year dropdowns. The 2026–2030 holiday data and automatic Holiday Sync Worker behavior remain unchanged.',id:'Calendar kini memiliki dropdown bulan dan tahun untuk navigasi langsung. Data hari libur 2026–2030 dan mekanisme otomatis Holiday Sync Worker tetap dipertahankan.'},keywords:['v19.12','calendar','holiday sync','auto sync','hari libur','cuti bersama','multi-year','Cloudflare Worker','cache'],steps:{en:['Open Calendar and choose the month and year directly from the dropdowns.','The dashboard loads cached data immediately when available and refreshes stale data automatically.','The sync engine first checks the configured Cloudflare Worker /holidays route for official Kemensetneg data.','If the official route is unavailable, an automatic public fallback is used so the calendar remains functional.','Use the refresh icon beside the holiday legend to force a new check at any time.','For 2027–2030, provisional internet estimates are shown for planning while the official SKB is unavailable; the Worker automatically replaces them when official data is found.'],id:['Buka Calendar lalu pilih bulan dan tahun langsung dari dropdown.','Dashboard langsung memakai cache yang tersedia dan otomatis me-refresh data yang sudah stale.','Mesin sinkronisasi terlebih dahulu mengecek route Cloudflare Worker /holidays untuk data resmi Kemensetneg.','Jika route resmi belum tersedia, fallback publik otomatis dipakai agar kalender tetap berfungsi.','Gunakan ikon refresh di samping legenda hari libur untuk memaksa pengecekan ulang kapan saja.','Untuk 2027–2030, estimasi internet sementara ditampilkan untuk kebutuhan perencanaan selama SKB resmi belum tersedia; Worker otomatis menggantinya ketika data resmi ditemukan.']}}
 ];
 
 
