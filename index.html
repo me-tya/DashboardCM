@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.9-AUTO-HOLIDAY-SYNC-20260814">
+<meta name="cm-build" content="CM-DASHBOARD-V19.11-YEAR-DROPDOWN-PROVISIONAL-HOLIDAYS-20260814">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.8: Indonesia 2026 National Holiday + Collective Leave calendar styling; preserves v19.7 WhatsApp assignment and prior features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -476,7 +476,14 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
   display:flex;align-items:center;justify-content:space-between;padding:16px 18px;
   background:linear-gradient(120deg,var(--navy-800),var(--navy-700));border-radius:14px 14px 0 0;
 }
-.cal-title{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:#fff;}
+.cal-title-wrap{display:flex;align-items:center;gap:10px;min-width:0;}
+.cal-title{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:#fff;white-space:nowrap;}
+.cal-year-select{
+  height:32px;min-width:82px;padding:0 30px 0 11px;border-radius:9px;border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.12);color:#fff;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;
+}
+.cal-year-select:hover,.cal-year-select:focus{background:rgba(255,255,255,.2);border-color:var(--gold-400);outline:none;}
+.cal-year-select option{color:var(--ink-900);background:#fff;}
 .cal-nav{display:flex;gap:6px;}
 .cal-nav .btn-outline{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25);}
 .cal-nav .btn-outline:hover{background:rgba(255,255,255,.22);border-color:var(--gold-400);}
@@ -545,6 +552,9 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
 /* A holiday that happens to be today keeps the holiday palette while retaining the gold today outline. */
 .cal-cell.today.holiday-national,.cal-cell.today.holiday-collective{box-shadow:inset 0 0 0 2px var(--gold-500);}
 @media(max-width:600px){
+  .cal-header{align-items:flex-start;gap:10px;flex-wrap:wrap;}
+  .cal-title-wrap{width:100%;justify-content:space-between;}
+  .cal-nav{width:100%;overflow-x:auto;}
   .cal-holiday-legend{gap:8px 12px;padding:8px 10px;}
   .cal-holiday-legend-source{width:100%;margin-left:0;}
   .cal-holiday-sync-wrap{width:100%;margin-left:0;justify-content:space-between;}
@@ -3086,13 +3096,118 @@ const CM_INDONESIA_HOLIDAYS_2026={
   '2026-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'}
 };
 
-const CM_HOLIDAY_CACHE_PREFIX='cm_indonesia_holiday_cache_v2_';
+
+/* Provisional internet estimates for planning only. These are NOT official SKB 3 Menteri data.
+   The Holiday Sync Worker remains authoritative and replaces these estimates automatically
+   once an official calendar for the selected year becomes available. */
+const CM_CALENDAR_YEARS=[2026,2027,2028,2029,2030];
+const CM_INDONESIA_HOLIDAY_ESTIMATES={
+  2027:{
+    sourceUrl:'https://publicholidays.co.id/',sourceLabel:'PublicHolidays.co.id — estimasi 2027',
+    items:{
+      '2027-01-01':{type:'national',id:'Tahun Baru 2027 Masehi',en:'New Year 2027'},
+      '2027-01-05':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Isra Mi'raj (estimate)"},
+      '2027-02-06':{type:'national',id:'Tahun Baru Imlek (estimasi)',en:'Chinese New Year (estimate)'},
+      '2027-03-09':{type:'national',id:'Hari Suci Nyepi (estimasi)',en:'Nyepi (estimate)'},
+      '2027-03-10':{type:'national',id:'Idulfitri (estimasi)',en:'Eid al-Fitr (estimate)'},
+      '2027-03-11':{type:'national',id:'Hari Kedua Idulfitri (estimasi)',en:'Second Day of Eid al-Fitr (estimate)'},
+      '2027-03-26':{type:'national',id:'Wafat Yesus Kristus',en:'Good Friday'},
+      '2027-03-28':{type:'national',id:'Kebangkitan Yesus Kristus (Paskah)',en:'Easter Sunday'},
+      '2027-05-01':{type:'national',id:'Hari Buruh Internasional',en:'International Labour Day'},
+      '2027-05-06':{type:'national',id:'Kenaikan Yesus Kristus',en:'Ascension of Jesus Christ'},
+      '2027-05-17':{type:'national',id:'Iduladha (estimasi)',en:'Eid al-Adha (estimate)'},
+      '2027-05-20':{type:'national',id:'Hari Raya Waisak (estimasi)',en:'Vesak Day (estimate)'},
+      '2027-06-01':{type:'national',id:'Hari Lahir Pancasila',en:'Pancasila Day'},
+      '2027-06-06':{type:'national',id:'Tahun Baru Islam (estimasi)',en:'Islamic New Year (estimate)'},
+      '2027-08-15':{type:'national',id:'Maulid Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Birthday (estimate)"},
+      '2027-08-17':{type:'national',id:'Proklamasi Kemerdekaan',en:'Independence Day'},
+      '2027-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'},
+      '2027-12-26':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Isra Mi'raj (estimate)"}
+    }
+  },
+  2028:{
+    sourceUrl:'https://publicholidays.co.id/',sourceLabel:'PublicHolidays.co.id — estimasi 2028',
+    items:{
+      '2028-01-01':{type:'national',id:'Tahun Baru 2028 Masehi',en:'New Year 2028'},
+      '2028-01-26':{type:'national',id:'Tahun Baru Imlek (estimasi)',en:'Chinese New Year (estimate)'},
+      '2028-02-26':{type:'national',id:'Idulfitri (estimasi)',en:'Eid al-Fitr (estimate)'},
+      '2028-02-27':{type:'national',id:'Hari Kedua Idulfitri (estimasi)',en:'Second Day of Eid al-Fitr (estimate)'},
+      '2028-03-26':{type:'national',id:'Hari Suci Nyepi (estimasi)',en:'Nyepi (estimate)'},
+      '2028-04-14':{type:'national',id:'Wafat Yesus Kristus',en:'Good Friday'},
+      '2028-04-16':{type:'national',id:'Kebangkitan Yesus Kristus (Paskah)',en:'Easter Sunday'},
+      '2028-05-01':{type:'national',id:'Hari Buruh Internasional',en:'International Labour Day'},
+      '2028-05-05':{type:'national',id:'Iduladha (estimasi)',en:'Eid al-Adha (estimate)'},
+      '2028-05-09':{type:'national',id:'Hari Raya Waisak (estimasi)',en:'Vesak Day (estimate)'},
+      '2028-05-25':{type:'national',id:'Kenaikan Yesus Kristus · Tahun Baru Islam (estimasi)',en:'Ascension of Jesus Christ · Islamic New Year (estimate)'},
+      '2028-06-01':{type:'national',id:'Hari Lahir Pancasila',en:'Pancasila Day'},
+      '2028-08-03':{type:'national',id:'Maulid Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Birthday (estimate)"},
+      '2028-08-17':{type:'national',id:'Proklamasi Kemerdekaan',en:'Independence Day'},
+      '2028-12-14':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Isra Mi'raj (estimate)"},
+      '2028-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'}
+    }
+  },
+  2029:{
+    sourceUrl:'https://husniadil.com/calendar/2029/',sourceLabel:'husniadil.com — estimasi 2029',
+    items:{
+      '2029-01-01':{type:'national',id:'Tahun Baru 2029 Masehi',en:'New Year 2029'},
+      '2029-02-13':{type:'national',id:'Tahun Baru Imlek 2580 Kongzili (estimasi)',en:'Chinese New Year 2580 Kongzili (estimate)'},
+      '2029-02-14':{type:'national',id:'Idulfitri 1450 H (estimasi)',en:'Eid al-Fitr 1450 H (estimate)'},
+      '2029-02-15':{type:'national',id:'Hari Kedua Idulfitri 1450 H (estimasi)',en:'Second Day of Eid al-Fitr 1450 H (estimate)'},
+      '2029-03-15':{type:'national',id:'Hari Suci Nyepi Tahun Baru Saka 1951 (estimasi)',en:'Nyepi, Saka New Year 1951 (estimate)'},
+      '2029-03-30':{type:'national',id:'Wafat Yesus Kristus',en:'Good Friday'},
+      '2029-04-01':{type:'national',id:'Kebangkitan Yesus Kristus (Paskah)',en:'Easter Sunday'},
+      '2029-04-24':{type:'national',id:'Iduladha 1450 H (estimasi)',en:'Eid al-Adha 1450 H (estimate)'},
+      '2029-05-01':{type:'national',id:'Hari Buruh Internasional',en:'International Labour Day'},
+      '2029-05-10':{type:'national',id:'Kenaikan Yesus Kristus',en:'Ascension of Jesus Christ'},
+      '2029-05-14':{type:'national',id:'Tahun Baru Islam 1451 H (estimasi)',en:'Islamic New Year 1451 H (estimate)'},
+      '2029-05-27':{type:'national',id:'Hari Raya Waisak 2573 BE (estimasi)',en:'Vesak Day 2573 BE (estimate)'},
+      '2029-06-01':{type:'national',id:'Hari Lahir Pancasila',en:'Pancasila Day'},
+      '2029-07-24':{type:'national',id:'Maulid Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Birthday (estimate)"},
+      '2029-08-17':{type:'national',id:'Proklamasi Kemerdekaan',en:'Independence Day'},
+      '2029-12-03':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Isra Mi'raj (estimate)"},
+      '2029-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'}
+    }
+  },
+  2030:{
+    sourceUrl:'https://pokutsoft.com/apps/id_public_holidays/',sourceLabel:'Pokutsoft Indonesia Holidays — estimasi 2030',
+    items:{
+      '2030-01-01':{type:'national',id:'Tahun Baru 2030 Masehi',en:'New Year 2030'},
+      '2030-02-03':{type:'national',id:'Tahun Baru Imlek (estimasi)',en:'Chinese New Year (estimate)'},
+      '2030-02-04':{type:'national',id:'Idulfitri (estimasi)',en:'Eid al-Fitr (estimate)'},
+      '2030-02-05':{type:'national',id:'Hari Kedua Idulfitri (estimasi)',en:'Second Day of Eid al-Fitr (estimate)'},
+      '2030-03-05':{type:'national',id:'Hari Suci Nyepi (estimasi)',en:'Nyepi (estimate)'},
+      '2030-04-13':{type:'national',id:'Iduladha (estimasi)',en:'Eid al-Adha (estimate)'},
+      '2030-04-19':{type:'national',id:'Wafat Yesus Kristus',en:'Good Friday'},
+      '2030-04-21':{type:'national',id:'Kebangkitan Yesus Kristus (Paskah)',en:'Easter Sunday'},
+      '2030-05-01':{type:'national',id:'Hari Buruh Internasional',en:'International Labour Day'},
+      '2030-05-03':{type:'national',id:'Tahun Baru Islam (estimasi)',en:'Islamic New Year (estimate)'},
+      '2030-05-16':{type:'national',id:'Hari Raya Waisak (estimasi)',en:'Vesak Day (estimate)'},
+      '2030-05-30':{type:'national',id:'Kenaikan Yesus Kristus',en:'Ascension of Jesus Christ'},
+      '2030-06-01':{type:'national',id:'Hari Lahir Pancasila',en:'Pancasila Day'},
+      '2030-07-13':{type:'national',id:'Maulid Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Birthday (estimate)"},
+      '2030-08-17':{type:'national',id:'Proklamasi Kemerdekaan',en:'Independence Day'},
+      '2030-11-23':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. (estimasi)',en:"Prophet Muhammad's Isra Mi'raj (estimate)"},
+      '2030-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'}
+    }
+  }
+};
+function cmHolidayEstimateEntry(year,stamp=0){
+  const e=CM_INDONESIA_HOLIDAY_ESTIMATES[Number(year)];
+  return e?{year:Number(year),items:{...e.items},source:'internet-estimate',sourceUrl:e.sourceUrl,sourceLabel:e.sourceLabel,official:false,estimated:true,fetchedAt:stamp,available:true}:null;
+}
+
+const CM_HOLIDAY_CACHE_PREFIX='cm_indonesia_holiday_cache_v3_';
 const CM_HOLIDAY_CACHE_TTL_MS=7*24*60*60*1000;
 const CM_HOLIDAY_EMPTY_TTL_MS=12*60*60*1000;
 const CM_HOLIDAY_PUBLIC_API='https://tanggalmerah.upset.dev/api/holidays';
 const CM_HOLIDAY_WORKER_STORAGE='cm_holiday_worker_url_v1';
+const CM_HOLIDAY_DEFAULT_WORKER='https://cm-holiday-sync.ristya-onlineshop.workers.dev/holidays';
 const CM_HOLIDAY_RUNTIME={
-  2026:{year:2026,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',official:true,fetchedAt:Date.now(),available:true}
+  2026:{year:2026,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',sourceUrl:'Kemensetneg — SKB 3 Menteri 2026',official:true,estimated:false,fetchedAt:Date.now(),available:true},
+  2027:cmHolidayEstimateEntry(2027,0),
+  2028:cmHolidayEstimateEntry(2028,0),
+  2029:cmHolidayEstimateEntry(2029,0),
+  2030:cmHolidayEstimateEntry(2030,0)
 };
 const CM_HOLIDAY_FETCHING={};
 
@@ -3111,18 +3226,22 @@ function cmHolidayWriteCache(entry){
   return entry;
 }
 function cmHolidayGetYearEntry(year){
-  if(CM_HOLIDAY_RUNTIME[year])return CM_HOLIDAY_RUNTIME[year];
-  return cmHolidayReadCache(year);
+  const runtime=CM_HOLIDAY_RUNTIME[year];
+  if(runtime?.source==='embedded-official')return runtime;
+  const cached=cmHolidayReadCache(year);
+  if(cached)return cached;
+  return runtime||null;
 }
 function cmHolidayWorkerUrl(year){
   let configured='';
   try{configured=localStorage.getItem(CM_HOLIDAY_WORKER_STORAGE)||'';}catch(e){}
-  if(configured){
-    try{const u=new URL(configured);u.searchParams.set('year',year);return u.toString();}catch(e){}
-  }
+  const endpoint=configured||CM_HOLIDAY_DEFAULT_WORKER;
   try{
-    const ai=cmAiWorkerUrl(); if(!ai)return '';
-    const u=new URL(ai); u.pathname='/holidays'; u.search=''; u.searchParams.set('year',year); return u.toString();
+    const u=new URL(endpoint);
+    if(!/\/holidays\/?$/i.test(u.pathname))u.pathname=u.pathname.replace(/\/$/,'')+'/holidays';
+    u.search='';
+    u.searchParams.set('year',year);
+    return u.toString();
   }catch(e){return '';}
 }
 function cmHolidayNormalizeRows(rows,source){
@@ -3140,7 +3259,7 @@ function cmHolidayEntryFresh(entry){
   if(!entry)return false;
   if(entry.source==='embedded-official')return true;
   const age=Date.now()-Number(entry.fetchedAt||0);
-  const ttl=entry.available===false?CM_HOLIDAY_EMPTY_TTL_MS:CM_HOLIDAY_CACHE_TTL_MS;
+  const ttl=(entry.available===false||entry.estimated===true)?CM_HOLIDAY_EMPTY_TTL_MS:CM_HOLIDAY_CACHE_TTL_MS;
   return age>=0&&age<ttl;
 }
 function cmHolidayStatusText(year){
@@ -3150,6 +3269,7 @@ function cmHolidayStatusText(year){
   if(e.available===false)return uiText(`${year} · official calendar not available yet`,`${year} · kalender resmi belum tersedia`);
   if(e.source==='embedded-official')return uiText(`${year} · official · built-in`,`${year} · resmi · tersimpan di aplikasi`);
   if(e.official)return uiText(`${year} · official auto-sync`,`${year} · auto-sync resmi`);
+  if(e.estimated)return uiText(`${year} · internet estimate · not official`,`${year} · estimasi internet · belum resmi`);
   return uiText(`${year} · automatic fallback`,`${year} · auto-sync cadangan`);
 }
 function cmHolidayStatusTitle(year){
@@ -3157,7 +3277,8 @@ function cmHolidayStatusTitle(year){
   if(!e)return uiText('Holiday data will be checked automatically.','Data hari libur akan dicek otomatis.');
   const when=e.fetchedAt?dayjs(Number(e.fetchedAt)).format('DD MMM YYYY HH:mm'):'';
   const src=e.sourceUrl||e.source||'';
-  return [e.official?uiText('Official source','Sumber resmi'):uiText('Fallback source','Sumber cadangan'),src,when?`${uiText('Updated','Diperbarui')} ${when}`:''].filter(Boolean).join(' · ');
+  const sourceKind=e.official?uiText('Official source','Sumber resmi'):(e.estimated?uiText('Internet estimate — not official','Estimasi internet — belum resmi'):uiText('Fallback source','Sumber cadangan'));
+  return [sourceKind,e.sourceLabel||src,when?`${uiText('Updated','Diperbarui')} ${when}`:''].filter(Boolean).join(' · ');
 }
 function cmIndonesiaHolidayForDate(dateStr){
   const year=Number(String(dateStr).slice(0,4)),entry=cmHolidayGetYearEntry(year);
@@ -3205,14 +3326,19 @@ async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
       if(Object.keys(items).length){
         // The embedded 2026 list remains the authoritative baseline unless the official Worker succeeds.
         const finalItems=year===2026?{...CM_INDONESIA_HOLIDAYS_2026}:items;
-        const entry=cmHolidayWriteCache({year,items:finalItems,source:year===2026?'embedded-official':'public-fallback',sourceUrl:year===2026?'Kemensetneg — SKB 3 Menteri 2026':'Tanggal Merah API (automatic fallback)',official:year===2026,fetchedAt:Date.now(),available:true});
+        const entry=cmHolidayWriteCache({year,items:finalItems,source:year===2026?'embedded-official':'public-fallback',sourceUrl:year===2026?'Kemensetneg — SKB 3 Menteri 2026':'Tanggal Merah API (automatic fallback)',official:year===2026,estimated:year!==2026,fetchedAt:Date.now(),available:true});
         if(notify)toast(uiText(`Holiday calendar ${year} synchronized.`,`Kalender libur ${year} berhasil disinkronkan.`),'success');
         return entry;
       }
     }catch(e){lastError=e;}
-    const fallback=year===2026?{year,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',sourceUrl:'Kemensetneg — SKB 3 Menteri 2026',official:true,fetchedAt:Date.now(),available:true}:{year,items:{},source:'unavailable',sourceUrl:'',official:false,fetchedAt:Date.now(),available:false};
+    const fallback=year===2026
+      ?{year,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',sourceUrl:'Kemensetneg — SKB 3 Menteri 2026',official:true,estimated:false,fetchedAt:Date.now(),available:true}
+      :(cmHolidayEstimateEntry(year,Date.now())||{year,items:{},source:'unavailable',sourceUrl:'',official:false,estimated:false,fetchedAt:Date.now(),available:false});
     cmHolidayWriteCache(fallback);
-    if(notify)toast(uiText(`Official holiday data for ${year} is not available yet.`,`Data libur resmi ${year} belum tersedia.`),'info');
+    if(notify){
+      if(fallback.estimated)toast(uiText(`Official ${year} calendar is not available yet; using an internet estimate.`,`Kalender resmi ${year} belum tersedia; sementara menggunakan estimasi internet.`),'info');
+      else toast(uiText(`Official holiday data for ${year} is not available yet.`,`Data libur resmi ${year} belum tersedia.`),'info');
+    }
     if(lastError)console.info('Holiday sync:',lastError.message||lastError);
     return fallback;
   })();
@@ -3243,7 +3369,8 @@ function renderCalendar() {
     while(!cursor.isAfter(visibleEnd,'day')){const day=cursor.date();(eventsByDay[day]||(eventsByDay[day]=[])).push(a);cursor=cursor.add(1,'day');}
   });
   const days=currentLang==='id'?['Sen','Sel','Rab','Kam','Jum','Sab','Min']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  let html=`<div class="cal-header"><div class="cal-title">${monthStart.locale(currentLang).format('MMMM YYYY')}</div><div class="cal-nav">
+  const yearOptions=CM_CALENDAR_YEARS.map(y=>`<option value="${y}" ${y===holidayYear?'selected':''}>${y}</option>`).join('');
+  let html=`<div class="cal-header"><div class="cal-title-wrap"><div class="cal-title">${monthStart.locale(currentLang).format('MMMM')}</div><select class="cal-year-select" id="calYearSelect" title="${uiText('Select calendar year','Pilih tahun kalender')}" aria-label="${uiText('Calendar year','Tahun kalender')}">${yearOptions}</select></div><div class="cal-nav">
     <button class="btn btn-outline btn-sm" id="calPrev">&lsaquo; ${uiText('Previous','Sebelumnya')}</button>
     <button class="btn btn-outline btn-sm" id="calToday">${uiText('Today','Hari Ini')}</button>
     <button class="btn btn-outline btn-sm" id="calNext">${uiText('Next','Berikutnya')} &rsaquo;</button></div></div>
@@ -3271,6 +3398,7 @@ function renderCalendar() {
     html+='</div></div>';
   }
   container.innerHTML=html+'</div>';
+  document.getElementById('calYearSelect')?.addEventListener('change',e=>{const y=Number(e.target.value);if(CM_CALENDAR_YEARS.includes(y)){state.calMonth=`${y}-${monthStart.format('MM')}`;renderCalendar();}});
   document.getElementById('calPrev').onclick=()=>{state.calMonth=monthStart.subtract(1,'month').format('YYYY-MM');renderCalendar();};
   document.getElementById('calNext').onclick=()=>{state.calMonth=monthStart.add(1,'month').format('YYYY-MM');renderCalendar();};
   document.getElementById('calToday').onclick=()=>{state.calMonth=dayjs().format('YYYY-MM');renderCalendar();};
@@ -7511,8 +7639,8 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.9-AUTO-HOLIDAY-SYNC-20260814';
-const CM_MANUAL_VERSION='19.9';
+const CM_APP_BUILD='CM-DASHBOARD-V19.11-YEAR-DROPDOWN-PROVISIONAL-HOLIDAYS-20260814';
+const CM_MANUAL_VERSION='19.11';
 const CM_MANUAL_UPDATED='14 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
 const CM_AI_DEFAULT_WORKER='https://cm-assistant.ristya-onlineshop.workers.dev';
@@ -7546,7 +7674,7 @@ const CM_USER_MANUAL_ARTICLES=[
 {id:'squad',category:{en:'Squad Team',id:'Squad Team'},title:{en:'Searching and Filtering Squad Team',id:'Mencari dan Memfilter Squad Team'},summary:{en:'Find team members by name, NIP, position, role, unit, squad, and other stored member metadata.',id:'Temukan anggota tim berdasarkan nama, NIP, jabatan, role, unit, squad, dan metadata anggota lainnya.'},keywords:['squad team','contact','NIP','role','unit','member','team'],steps:{en:['Open Squad Team.','Use search for name, NIP, position, role, unit, squad/team, and member metadata.','Use contextual filters for Team/Squad, Role, and Unit.','Open team sections to review members and their roles.'],id:['Buka Squad Team.','Gunakan search untuk nama, NIP, jabatan, role, unit, squad/team, dan metadata anggota.','Gunakan filter kontekstual untuk Team/Squad, Role, dan Unit.','Buka bagian tim untuk melihat anggota dan perannya.']}},
 {id:'backup',category:{en:'Data & Backup',id:'Data & Backup'},title:{en:'Backup and Restore',id:'Backup dan Restore'},summary:{en:'Create and restore dashboard backups while preserving the separation between dashboard data and the external AI service.',id:'Buat dan pulihkan backup dashboard sambil menjaga pemisahan data dashboard dengan layanan AI eksternal.'},keywords:['backup','restore','json','data'],steps:{en:['Use Backup All in the header to create a backup of supported dashboard data.','Store the backup file in an approved secure location.','Use Restore All to restore supported data from a backup file or supported text-code flow.','Review counts and scope in the confirmation dialog before restoring.'],id:['Gunakan Backup All di header untuk membuat backup data dashboard yang didukung.','Simpan file backup pada lokasi yang aman dan sesuai ketentuan.','Gunakan Restore All untuk memulihkan data yang didukung dari file backup atau alur text-code yang tersedia.','Review jumlah dan scope data pada dialog konfirmasi sebelum restore.']}},
 {id:'ai-assistant',category:{en:'AI',id:'AI'},title:{en:'Using Ask T-Agent',id:'Menggunakan Ask T-Agent'},summary:{en:'Ask questions about Dashboard CM procedures, current dashboard context, or general Change Management concepts.',id:'Ajukan pertanyaan tentang cara menggunakan Dashboard CM, konteks dashboard yang tersedia, atau konsep Change Management umum.'},keywords:['AI','assistant','Groq','Cloudflare Worker','question','help','change management'],steps:{en:['Click the floating Ask T-Agent button at the bottom-right of the dashboard.','Ask a procedural question such as “How do I generate a QR for a CRA survey?” or a CM question such as “What is the difference between stakeholder engagement and communication planning?”','The assistant retrieves relevant User Manual and Knowledge content locally before sending context to the configured Worker.','When signed in, the assistant can include relevant Activity and CRA summaries; private dashboard context is sent only with a Firebase ID token for Worker validation.','Use Clear Chat in the Ask T-Agent header when you want to reset only the visible conversation. It does not delete Activity, CRA, Knowledge, or AI Reference data.','The Dashboard CM Worker endpoint is preconfigured in this build. Use AI Settings only if the Worker URL changes or you need to point to another environment.'],id:['Klik tombol floating Ask T-Agent di kanan bawah dashboard.','Ajukan pertanyaan prosedural seperti “Gimana bikin QR untuk survei CRA?” atau pertanyaan CM seperti “Apa beda stakeholder engagement dan communication planning?”','Assistant mencari konteks User Manual dan Knowledge secara lokal sebelum mengirim konteks ke Worker yang dikonfigurasi.','Saat login, assistant dapat menyertakan ringkasan Activity dan CRA yang relevan; konteks private dikirim bersama Firebase ID token untuk validasi Worker.','Gunakan Clear Chat di header Ask T-Agent untuk mengosongkan percakapan yang tampil saja. Fitur ini tidak menghapus Activity, CRA, Knowledge, atau data AI Reference.','Endpoint Worker Dashboard CM sudah diprakonfigurasi pada build ini. Gunakan AI Settings hanya jika URL Worker berubah atau perlu diarahkan ke environment lain.']},note:{en:'The Groq API key is never stored in this HTML; keep it as a Cloudflare Worker Secret.',id:'Groq API key tidak pernah disimpan di HTML ini; simpan sebagai Cloudflare Worker Secret.'}},
-{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.9",id:'Yang Baru di v19.9'},summary:{en:'Calendar holiday data is now multi-year and auto-synchronized. The dashboard checks an official Cloudflare Worker route first, caches results per year, and uses an automatic public fallback when the official route is unavailable.',id:'Data hari libur Calendar kini multi-year dan auto-sync. Dashboard mengecek route Cloudflare Worker resmi terlebih dahulu, menyimpan cache per tahun, dan memakai fallback publik otomatis jika route resmi belum tersedia.'},keywords:['v19.9','calendar','holiday sync','auto sync','hari libur','cuti bersama','multi-year','Cloudflare Worker','cache'],steps:{en:['Open Calendar and navigate to any year.','The dashboard loads cached data immediately when available and refreshes stale data automatically.','The sync engine first checks the configured Cloudflare Worker /holidays route for official Kemensetneg data.','If the official route is unavailable, an automatic public fallback is used so the calendar remains functional.','Use the refresh icon beside the holiday legend to force a new check at any time.','If the government has not published the selected year yet, Calendar stays normal and shows that official data is not available instead of guessing dates.'],id:['Buka Calendar lalu pindah ke tahun mana pun.','Dashboard langsung memakai cache yang tersedia dan otomatis me-refresh data yang sudah stale.','Mesin sinkronisasi terlebih dahulu mengecek route Cloudflare Worker /holidays untuk data resmi Kemensetneg.','Jika route resmi belum tersedia, fallback publik otomatis dipakai agar kalender tetap berfungsi.','Gunakan ikon refresh di samping legenda hari libur untuk memaksa pengecekan ulang kapan saja.','Jika pemerintah belum menerbitkan kalender tahun tersebut, Calendar tetap normal dan memberi status data resmi belum tersedia tanpa menebak tanggal.']}}
+{id:'whats-new',category:{en:"What's New",id:'Yang Baru'},title:{en:"What's New in v19.11",id:'Yang Baru di v19.11'},summary:{en:'Calendar now has a 2026–2030 year dropdown. 2026 uses official embedded data; 2027–2030 use clearly marked provisional internet estimates until the Holiday Sync Worker finds an official SKB calendar.',id:'Calendar kini memiliki dropdown tahun 2026–2030. Tahun 2026 menggunakan data resmi tersimpan; 2027–2030 memakai estimasi internet yang ditandai belum resmi sampai Holiday Sync Worker menemukan kalender SKB resmi.'},keywords:['v19.11','calendar','holiday sync','auto sync','hari libur','cuti bersama','multi-year','Cloudflare Worker','cache'],steps:{en:['Open Calendar and navigate to any year.','The dashboard loads cached data immediately when available and refreshes stale data automatically.','The sync engine first checks the configured Cloudflare Worker /holidays route for official Kemensetneg data.','If the official route is unavailable, an automatic public fallback is used so the calendar remains functional.','Use the refresh icon beside the holiday legend to force a new check at any time.','For 2027–2030, provisional internet estimates are shown for planning while the official SKB is unavailable; the Worker automatically replaces them when official data is found.'],id:['Buka Calendar lalu pindah ke tahun mana pun.','Dashboard langsung memakai cache yang tersedia dan otomatis me-refresh data yang sudah stale.','Mesin sinkronisasi terlebih dahulu mengecek route Cloudflare Worker /holidays untuk data resmi Kemensetneg.','Jika route resmi belum tersedia, fallback publik otomatis dipakai agar kalender tetap berfungsi.','Gunakan ikon refresh di samping legenda hari libur untuk memaksa pengecekan ulang kapan saja.','Untuk 2027–2030, estimasi internet sementara ditampilkan untuk kebutuhan perencanaan selama SKB resmi belum tersedia; Worker otomatis menggantinya ketika data resmi ditemukan.']}}
 ];
 
 
