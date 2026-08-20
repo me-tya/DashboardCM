@@ -14,7 +14,7 @@
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
 <meta name="cm-build" content="CM-DASHBOARD-V19.19-REMINDER-CUSTOM-REPEAT-TICKER-20260820">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
-<!-- Build v19.19: Custom reminder repetition + running text + gold notification bell; preserves all prior features -->
+<!-- Build v19.20: Dynamic notification-type live preview; preserves v19.19 custom repetition, running text, gold notification bell, and all prior features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1242,7 +1242,7 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 
 
 
-/* ===== PERSONAL NOTIFICATION CENTER / REMINDERS (v19.19) ===== */
+/* ===== PERSONAL NOTIFICATION CENTER / REMINDERS (v19.20) ===== */
 .cm-reminder-bell{
   position:relative;width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
   background:rgba(255,255,255,.10);color:#fff;display:inline-flex;align-items:center;justify-content:center;
@@ -1353,8 +1353,40 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-mode b{display:block;font-size:10.5px;color:var(--ink-900);}
 .cm-reminder-mode small{display:block;font-size:9px;color:var(--ink-500);line-height:1.3;margin-top:2px;}
 .cm-reminder-center-note{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:9px;background:#EEF3FB;color:#35547A;font-size:9.5px;line-height:1.45;margin-top:7px;}
-.cm-reminder-preview{background:#F7F9FD;border:1px solid var(--border-soft);border-radius:9px;padding:9px 10px;font-size:10.5px;color:var(--ink-700);line-height:1.5;}
+.cm-reminder-preview{background:#F7F9FD;border:1px solid var(--border-soft);border-radius:11px;padding:10px;font-size:10.5px;color:var(--ink-700);line-height:1.5;}
 .cm-reminder-preview b{color:var(--navy-800);}
+.cm-reminder-preview-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px;padding:0 1px;}
+.cm-reminder-preview-title{font:800 10.5px 'Sora',sans-serif;color:var(--navy-800);}
+.cm-reminder-preview-sub{display:block;margin-top:1px;font-size:9px;color:var(--ink-500);font-weight:500;}
+.cm-reminder-preview-mode-count{flex:0 0 auto;border:1px solid #DED5B7;background:#FFF9E8;color:#7A601B;border-radius:999px;padding:3px 7px;font-size:8.8px;font-weight:800;}
+.cm-reminder-preview-stack{display:grid;gap:9px;}
+.cm-reminder-preview-block{display:grid;gap:4px;}
+.cm-reminder-preview-caption{display:flex;align-items:center;gap:5px;font-size:8.8px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-500);}
+.cm-reminder-preview-caption:before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold-500);}
+.cm-reminder-preview-ticker{border:1px solid #E9D38C;background:linear-gradient(90deg,#FFF7D7,#FFFBEA);border-radius:9px;overflow:hidden;display:flex;align-items:center;gap:7px;padding:7px 8px;color:var(--navy-900);box-shadow:0 1px 5px rgba(15,25,60,.05);}
+.cm-reminder-preview-ticker .bell{width:24px;height:24px;border-radius:7px;background:var(--gold-500);display:grid;place-items:center;flex:0 0 24px;}
+.cm-reminder-preview-ticker .status{font-size:8.5px;font-weight:800;background:var(--navy-900);color:#fff;border-radius:999px;padding:3px 6px;white-space:nowrap;}
+.cm-reminder-preview-ticker .text{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9.8px;font-weight:650;}
+.cm-reminder-preview-ticker .action{font-size:8.5px;font-weight:800;border:1px solid #D9BD68;background:#fff;border-radius:7px;padding:3px 6px;white-space:nowrap;color:var(--navy-800);}
+.cm-reminder-preview-banner{border:1px solid #E4D19A;background:#FFF8E8;border-radius:9px;padding:8px 9px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 5px rgba(15,25,60,.04);}
+.cm-reminder-preview-banner .bell{width:25px;height:25px;border-radius:7px;background:rgba(200,168,75,.18);display:grid;place-items:center;flex:0 0 25px;}
+.cm-reminder-preview-banner .body{min-width:0;flex:1;color:var(--ink-700);font-size:9.5px;line-height:1.4;}
+.cm-reminder-preview-banner .body strong{display:block;color:var(--ink-900);font:750 9.7px 'Sora',sans-serif;margin-bottom:1px;}
+.cm-reminder-preview-banner .status{font-size:8.5px;font-weight:800;border-radius:999px;padding:3px 6px;background:#fff;color:#8A6A1B;border:1px solid #E8D49C;white-space:nowrap;}
+.cm-reminder-preview-popup{border:1px solid #DDE3EF;background:rgba(11,27,61,.07);border-radius:10px;padding:10px;}
+.cm-reminder-preview-popup-window{max-width:360px;margin:0 auto;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 7px 18px rgba(15,25,60,.14);overflow:hidden;}
+.cm-reminder-preview-popup-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border-bottom:1px solid var(--border-soft);font:750 9.8px 'Sora',sans-serif;color:var(--ink-900);}
+.cm-reminder-preview-popup-head span:last-child{color:var(--ink-300);font:500 15px/1 'Inter';}
+.cm-reminder-preview-popup-body{padding:8px 9px;}
+.cm-reminder-preview-popup-item{border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:7px;padding:7px 8px;background:#fff;font-size:9.4px;line-height:1.4;color:var(--ink-700);}
+.cm-reminder-preview-popup-item strong{display:block;font-size:8px;color:var(--amber);margin-bottom:2px;text-transform:uppercase;}
+.cm-reminder-preview-popup-foot{display:flex;justify-content:flex-end;gap:5px;padding:6px 9px;border-top:1px solid var(--border-soft);background:#FBFCFE;}
+.cm-reminder-preview-popup-foot span{font-size:8px;font-weight:750;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--ink-600);}
+.cm-reminder-preview-popup-foot span:last-child{background:var(--gold-500);border-color:var(--gold-500);color:var(--navy-900);}
+.cm-reminder-preview-none{border:1px dashed #CCD4E4;background:#fff;border-radius:9px;padding:11px;text-align:center;color:var(--ink-500);font-size:9.6px;line-height:1.45;}
+.cm-reminder-preview-none .bell{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--gold-100);margin-bottom:4px;}
+.cm-reminder-preview-meta{margin-top:9px;padding-top:8px;border-top:1px dashed #DDE2EC;font-size:9px;color:var(--ink-500);display:flex;gap:6px 12px;flex-wrap:wrap;}
+.cm-reminder-preview-meta span{display:inline-flex;align-items:center;gap:4px;}
 .cm-reminder-popup-list{display:flex;flex-direction:column;gap:7px;}
 .cm-reminder-popup-item{border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:9px;padding:9px 10px;background:#fff;font-size:11.5px;line-height:1.45;}
 .cm-reminder-popup-item.urgent{border-left-color:var(--red);background:#FFF9F9;}
@@ -2060,12 +2092,13 @@ try { state.todayAgendaCollapsed = localStorage.getItem('cmTodayAgendaCollapsed'
 
 
 /* ============================================================
-   PERSONAL NOTIFICATION CENTER / DATE REMINDERS (v19.19)
+   PERSONAL NOTIFICATION CENTER / DATE REMINDERS (v19.20)
    - Generic manual reminders for any important date.
    - Notification Center is always the master list.
    - Custom repeat cadence: once, daily, every 2/3/7 days, until done,
      or custom interval/end condition.
    - Optional Running Text, Banner, and once-per-scheduled-day Popup.
+   - Reminder form has live visual preview matching every selected display type.
    - Bell turns gold and badge shows UNIQUE reminders scheduled today.
    - Local/browser scoped; included in Backup All / Restore All.
 ============================================================ */
@@ -2241,7 +2274,7 @@ function cmReminderRenderBanners(rows=cmReminderLoad()) {
   const dismiss=cmReminderGetDismissedMap(CM_REMINDER_BANNER_DISMISS_KEY),today=cmReminderDateKey();
   const current=cmReminderSort(rows.filter(r=>cmReminderState(r).current&&(r.modes||[]).includes('banner')&&dismiss[r.id]!==today));
   if(!current.length){host.classList.add('hidden');host.innerHTML='';return;}const visible=current.slice(0,2);
-  host.innerHTML=visible.map(r=>{const st=cmReminderState(r),urgent=['today','urgent','overdue'].includes(st.kind);return `<div class="cm-reminder-banner ${urgent?'urgent':''}" data-reminder-id="${escapeHtml(r.id)}"><div class="cm-reminder-banner-icon">🔔</div><div class="cm-reminder-banner-text"><strong>${escapeHtml(r.name||uiText('Reminder','Pengingat'))}</strong><br>${escapeHtml(cmReminderFormatText(r))}</div><span class="cm-reminder-banner-days">${escapeHtml(cmReminderStatusLabel(st))}</span><button type="button" class="cm-reminder-banner-dismiss" data-reminder-banner-dismiss="${escapeHtml(r.id)}" title="${uiText('Hide for today','Sembunyikan hari ini')}">&times;</button></div>`}).join('')+(current.length>2?`<div style="font-size:10px;color:var(--ink-500);padding:0 3px;">+${current.length-2} ${uiText('more reminders in Notification Center','reminder lain di Pusat Notifikasi')}</div>`:'');host.classList.remove('hidden');
+  host.innerHTML=visible.map(r=>{const st=cmReminderState(r),urgent=['today','urgent','overdue'].includes(st.kind);return `<div class="cm-reminder-banner ${urgent?'urgent':''}" data-reminder-id="${escapeHtml(r.id)}"><div class="cm-reminder-banner-icon">🔔</div><div class="cm-reminder-banner-text"><strong>${escapeHtml(r.name||uiText('Reminder','Pengingat'))}</strong><br>${escapeHtml((String(r.message||'').trim().replace(/[.!?]+$/,'')+' '+uiText('on','tanggal')+' '+cmReminderFormatDate(r.dueDate)+'.').trim())}</div><span class="cm-reminder-banner-days">${escapeHtml(cmReminderStatusLabel(st))}</span><button type="button" class="cm-reminder-banner-dismiss" data-reminder-banner-dismiss="${escapeHtml(r.id)}" title="${uiText('Hide for today','Sembunyikan hari ini')}">&times;</button></div>`}).join('')+(current.length>2?`<div style="font-size:10px;color:var(--ink-500);padding:0 3px;">+${current.length-2} ${uiText('more reminders in Notification Center','reminder lain di Pusat Notifikasi')}</div>`:'');host.classList.remove('hidden');
 }
 function cmReminderOpenForm(id=null) {
   const rows=cmReminderLoad(),existing=id?rows.find(x=>x.id===id):null;
@@ -2260,17 +2293,29 @@ function cmReminderOpenForm(id=null) {
         <label class="cm-reminder-mode"><input type="checkbox" id="cmRModeBanner" ${r.modes.includes('banner')?'checked':''}><span><b>Banner</b><small>${uiText('Static highlighted strip above dashboard content','Strip statis yang lebih menonjol')}</small></span></label>
         <label class="cm-reminder-mode"><input type="checkbox" id="cmRModePopup" ${r.modes.includes('popup')?'checked':''}><span><b>Pop-up</b><small>${uiText('At most once on each scheduled day','Maksimal sekali pada setiap hari terjadwal')}</small></span></label>
       </div><div class="cm-reminder-center-note"><span>🔔</span><span>${uiText('Notification Center is automatic: every reminder is always listed under the bell, even if no additional display is selected.','Pusat Notifikasi otomatis: semua reminder selalu masuk ke daftar lonceng meskipun tidak memilih bentuk notifikasi tambahan.')}</span></div></div>
-      <div class="cm-reminder-field full"><div class="cm-reminder-preview" id="cmRPreview"><b>${uiText('Preview','Pratinjau')}:</b> —</div></div>
+      <div class="cm-reminder-field full"><div class="cm-reminder-preview" id="cmRPreview"></div></div>
     </div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" type="button" id="cmReminderFormCancel">${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" type="button" id="cmReminderFormSave">${uiText('Save Reminder','Simpan Reminder')}</button></div></div>`;
   modal.classList.remove('hidden');
   const close=()=>modal.classList.add('hidden');document.getElementById('cmReminderFormClose').addEventListener('click',close);document.getElementById('cmReminderFormCancel').addEventListener('click',close);modal.addEventListener('click',e=>{if(e.target===modal)close();});
   const syncCustom=()=>document.getElementById('cmRCustomRepeat').classList.toggle('hidden',document.getElementById('cmRRepeat').value!=='custom');
   const updatePreview=()=>{
-    const temp=cmReminderNormalize({name:document.getElementById('cmRName').value.trim(),message:document.getElementById('cmRMessage').value.trim(),dueDate:document.getElementById('cmRDue').value,leadDays:Number(document.getElementById('cmRLead').value||0),repeatMode:document.getElementById('cmRRepeat').value,repeatEvery:Number(document.getElementById('cmRRepeatEvery').value||1),repeatEnd:document.getElementById('cmRRepeatEnd').value,modes:[],active:true});
+    const modes=[];if(document.getElementById('cmRModeTicker').checked)modes.push('ticker');if(document.getElementById('cmRModeBanner').checked)modes.push('banner');if(document.getElementById('cmRModePopup').checked)modes.push('popup');
+    const temp=cmReminderNormalize({name:document.getElementById('cmRName').value.trim(),message:document.getElementById('cmRMessage').value.trim(),dueDate:document.getElementById('cmRDue').value,leadDays:Number(document.getElementById('cmRLead').value||0),repeatMode:document.getElementById('cmRRepeat').value,repeatEvery:Number(document.getElementById('cmRRepeatEvery').value||1),repeatEnd:document.getElementById('cmRRepeatEnd').value,modes,active:true});
     const due=temp.dueDate?cmReminderParseDate(temp.dueDate):null,start=due?dayjs(due).subtract(temp.leadDays,'day').locale(currentLang).format('D MMMM YYYY'):'—';
-    document.getElementById('cmRPreview').innerHTML=`<b>${uiText('Preview','Pratinjau')}:</b> ${escapeHtml(temp.name&&temp.message&&temp.dueDate?cmReminderFormatText(temp):'—')}<br><span style="font-size:9.5px;color:var(--ink-500);">${uiText('Starts','Mulai')}: ${escapeHtml(start)} · ${escapeHtml(cmReminderRepeatLabel(temp))}</span>`;
+    const previewName=temp.name||uiText('Recipient name','Nama penerima'),previewMsg=temp.message||uiText('Reminder message will appear here','Pesan reminder akan tampil di sini');
+    const previewDate=due?cmReminderFormatDate(temp.dueDate):uiText('due date','jatuh tempo');
+    let previewText=`${previewName}, ${previewMsg}`.replace(/[.!?]+$/,'')+' '+uiText('on','tanggal')+' '+previewDate+'.';
+    const previewBodyText=previewMsg.replace(/[.!?]+$/,'')+' '+uiText('on','tanggal')+' '+previewDate+'.';
+    const status=temp.leadDays===0?'H':`H-${temp.leadDays}`;
+    const safeText=escapeHtml(previewText),safeBodyText=escapeHtml(previewBodyText),safeName=escapeHtml(previewName),safeStatus=escapeHtml(status);
+    const blocks=[];
+    if(modes.includes('ticker'))blocks.push(`<div class="cm-reminder-preview-block"><div class="cm-reminder-preview-caption">${uiText('Running Text','Running Text')}</div><div class="cm-reminder-preview-ticker"><span class="bell">🔔</span><span class="status">${safeStatus}</span><span class="text">${safeText}</span><span class="action">${uiText('View all','Lihat semua')}</span></div></div>`);
+    if(modes.includes('banner'))blocks.push(`<div class="cm-reminder-preview-block"><div class="cm-reminder-preview-caption">Banner</div><div class="cm-reminder-preview-banner"><span class="bell">🔔</span><span class="body"><strong>${safeName}</strong>${safeBodyText}</span><span class="status">${safeStatus}</span></div></div>`);
+    if(modes.includes('popup'))blocks.push(`<div class="cm-reminder-preview-block"><div class="cm-reminder-preview-caption">Pop-up</div><div class="cm-reminder-preview-popup"><div class="cm-reminder-preview-popup-window"><div class="cm-reminder-preview-popup-head"><span>🔔 ${uiText('Important reminder','Reminder penting')}</span><span>×</span></div><div class="cm-reminder-preview-popup-body"><div class="cm-reminder-preview-popup-item"><strong>${safeStatus}</strong>${safeText}</div></div><div class="cm-reminder-preview-popup-foot"><span>${uiText('Open Center','Buka Pusat')}</span><span>${uiText('Got it','Oke')}</span></div></div></div></div>`);
+    const body=blocks.length?blocks.join(''):`<div class="cm-reminder-preview-none"><span class="bell">🔔</span><br>${uiText('No additional display selected. The reminder will still appear automatically in Notification Center.','Belum ada bentuk notifikasi tambahan yang dipilih. Reminder tetap otomatis muncul di Pusat Notifikasi.')}</div>`;
+    document.getElementById('cmRPreview').innerHTML=`<div class="cm-reminder-preview-head"><div><span class="cm-reminder-preview-title">${uiText('Live Preview','Pratinjau Langsung')}</span><span class="cm-reminder-preview-sub">${uiText('Preview follows the notification types you select above.','Preview mengikuti tipe notifikasi yang dicentang di atas.')}</span></div><span class="cm-reminder-preview-mode-count">${modes.length} ${uiText('selected','dipilih')}</span></div><div class="cm-reminder-preview-stack">${body}</div><div class="cm-reminder-preview-meta"><span>📅 ${uiText('Starts','Mulai')}: ${escapeHtml(start)}</span><span>↻ ${escapeHtml(cmReminderRepeatLabel(temp))}</span><span>🔔 ${uiText('Notification Center: automatic','Pusat Notifikasi: otomatis')}</span></div>`;
   };
-  document.getElementById('cmRRepeat').addEventListener('change',()=>{syncCustom();updatePreview();});['cmRName','cmRMessage','cmRDue','cmRLead','cmRRepeatEvery'].forEach(x=>document.getElementById(x).addEventListener('input',updatePreview));document.getElementById('cmRRepeatEnd').addEventListener('change',updatePreview);syncCustom();updatePreview();
+  document.getElementById('cmRRepeat').addEventListener('change',()=>{syncCustom();updatePreview();});['cmRName','cmRMessage','cmRDue','cmRLead','cmRRepeatEvery'].forEach(x=>document.getElementById(x).addEventListener('input',updatePreview));document.getElementById('cmRRepeatEnd').addEventListener('change',updatePreview);['cmRModeTicker','cmRModeBanner','cmRModePopup'].forEach(x=>document.getElementById(x).addEventListener('change',updatePreview));syncCustom();updatePreview();
   document.getElementById('cmReminderFormSave').addEventListener('click',()=>{
     const name=document.getElementById('cmRName').value.trim(),message=document.getElementById('cmRMessage').value.trim(),dueDate=document.getElementById('cmRDue').value,leadDays=Number(document.getElementById('cmRLead').value),repeatMode=document.getElementById('cmRRepeat').value,repeatEvery=Number(document.getElementById('cmRRepeatEvery').value),repeatEnd=document.getElementById('cmRRepeatEnd').value;
     const modes=[];if(document.getElementById('cmRModeTicker').checked)modes.push('ticker');if(document.getElementById('cmRModeBanner').checked)modes.push('banner');if(document.getElementById('cmRModePopup').checked)modes.push('popup');
