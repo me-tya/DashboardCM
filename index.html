@@ -14,7 +14,7 @@
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
 <meta name="cm-build" content="CM-DASHBOARD-V19.19-REMINDER-CUSTOM-REPEAT-TICKER-20260820">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
-<!-- Build v19.20: Dynamic notification-type live preview; preserves v19.19 custom repetition, running text, gold notification bell, and all prior features -->
+<!-- Build v19.21: Bell icon background tuned to navy across reminder previews and displays, gold list captions retained, bell glyph color preserved; preserves v19.20 live preview and prior reminder features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1312,7 +1312,7 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 /* Running text / ticker sits directly below the topbar and only appears on a scheduled reminder day. */
 .cm-reminder-ticker-host{width:100%;background:linear-gradient(90deg,#FFF7D7,#FFFBEA);border-bottom:1px solid #E9D38C;box-shadow:0 2px 8px rgba(15,25,60,.05);overflow:hidden;}
 .cm-reminder-ticker-inner{max-width:1440px;margin:0 auto;display:flex;align-items:center;gap:9px;padding:7px 28px;color:var(--navy-900);}
-.cm-reminder-ticker-icon{width:27px;height:27px;flex:0 0 27px;border-radius:8px;background:var(--gold-500);display:grid;place-items:center;color:var(--navy-900);font-size:13px;}
+.cm-reminder-ticker-icon{width:27px;height:27px;flex:0 0 27px;border-radius:8px;background:var(--navy-800);display:grid;place-items:center;color:#fff;font-size:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .cm-reminder-ticker-count{flex:0 0 auto;font-size:9.5px;font-weight:800;background:var(--navy-900);color:#fff;border-radius:999px;padding:4px 7px;}
 .cm-reminder-ticker-viewport{position:relative;min-width:0;overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);}
 .cm-reminder-ticker-track{display:flex;width:max-content;align-items:center;animation:cmReminderTickerMove 28s linear infinite;will-change:transform;}
@@ -1328,8 +1328,8 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-banner-host{max-width:1440px;margin:10px auto -2px;padding:0 28px;display:flex;flex-direction:column;gap:7px;}
 .cm-reminder-banner{border:1px solid #E4D19A;background:#FFF8E8;border-radius:11px;padding:9px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm);}
 .cm-reminder-banner.urgent{background:#FFF1F1;border-color:#EAB3B3;}
-.cm-reminder-banner-icon{width:28px;height:28px;border-radius:8px;background:rgba(200,168,75,.18);color:#8A6A1B;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.cm-reminder-banner.urgent .cm-reminder-banner-icon{background:rgba(193,59,59,.12);color:var(--red);}
+.cm-reminder-banner-icon{width:28px;height:28px;border-radius:8px;background:var(--navy-800);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.cm-reminder-banner.urgent .cm-reminder-banner-icon{background:var(--navy-800);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .cm-reminder-banner-text{min-width:0;flex:1;font-size:11.5px;color:var(--ink-700);line-height:1.45;}
 .cm-reminder-banner-text strong{font-family:'Sora',sans-serif;font-size:11.5px;color:var(--ink-900);}
 .cm-reminder-banner-days{font-size:9.5px;font-weight:800;border-radius:999px;padding:4px 8px;background:#fff;color:#8A6A1B;border:1px solid #E8D49C;white-space:nowrap;}
@@ -1361,15 +1361,15 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-preview-mode-count{flex:0 0 auto;border:1px solid #DED5B7;background:#FFF9E8;color:#7A601B;border-radius:999px;padding:3px 7px;font-size:8.8px;font-weight:800;}
 .cm-reminder-preview-stack{display:grid;gap:9px;}
 .cm-reminder-preview-block{display:grid;gap:4px;}
-.cm-reminder-preview-caption{display:flex;align-items:center;gap:5px;font-size:8.8px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-500);}
+.cm-reminder-preview-caption{display:flex;align-items:center;gap:5px;font-size:8.8px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#A47717;}
 .cm-reminder-preview-caption:before{content:'';width:5px;height:5px;border-radius:50%;background:var(--gold-500);}
 .cm-reminder-preview-ticker{border:1px solid #E9D38C;background:linear-gradient(90deg,#FFF7D7,#FFFBEA);border-radius:9px;overflow:hidden;display:flex;align-items:center;gap:7px;padding:7px 8px;color:var(--navy-900);box-shadow:0 1px 5px rgba(15,25,60,.05);}
-.cm-reminder-preview-ticker .bell{width:24px;height:24px;border-radius:7px;background:var(--gold-500);display:grid;place-items:center;flex:0 0 24px;}
+.cm-reminder-preview-ticker .bell{width:24px;height:24px;border-radius:7px;background:var(--navy-800);display:grid;place-items:center;flex:0 0 24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .cm-reminder-preview-ticker .status{font-size:8.5px;font-weight:800;background:var(--navy-900);color:#fff;border-radius:999px;padding:3px 6px;white-space:nowrap;}
 .cm-reminder-preview-ticker .text{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9.8px;font-weight:650;}
 .cm-reminder-preview-ticker .action{font-size:8.5px;font-weight:800;border:1px solid #D9BD68;background:#fff;border-radius:7px;padding:3px 6px;white-space:nowrap;color:var(--navy-800);}
 .cm-reminder-preview-banner{border:1px solid #E4D19A;background:#FFF8E8;border-radius:9px;padding:8px 9px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 5px rgba(15,25,60,.04);}
-.cm-reminder-preview-banner .bell{width:25px;height:25px;border-radius:7px;background:rgba(200,168,75,.18);display:grid;place-items:center;flex:0 0 25px;}
+.cm-reminder-preview-banner .bell{width:25px;height:25px;border-radius:7px;background:var(--navy-800);display:grid;place-items:center;flex:0 0 25px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .cm-reminder-preview-banner .body{min-width:0;flex:1;color:var(--ink-700);font-size:9.5px;line-height:1.4;}
 .cm-reminder-preview-banner .body strong{display:block;color:var(--ink-900);font:750 9.7px 'Sora',sans-serif;margin-bottom:1px;}
 .cm-reminder-preview-banner .status{font-size:8.5px;font-weight:800;border-radius:999px;padding:3px 6px;background:#fff;color:#8A6A1B;border:1px solid #E8D49C;white-space:nowrap;}
@@ -1384,7 +1384,7 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-preview-popup-foot span{font-size:8px;font-weight:750;padding:3px 6px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--ink-600);}
 .cm-reminder-preview-popup-foot span:last-child{background:var(--gold-500);border-color:var(--gold-500);color:var(--navy-900);}
 .cm-reminder-preview-none{border:1px dashed #CCD4E4;background:#fff;border-radius:9px;padding:11px;text-align:center;color:var(--ink-500);font-size:9.6px;line-height:1.45;}
-.cm-reminder-preview-none .bell{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--gold-100);margin-bottom:4px;}
+.cm-reminder-preview-none .bell{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:8px;background:var(--navy-800);margin-bottom:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .cm-reminder-preview-meta{margin-top:9px;padding-top:8px;border-top:1px dashed #DDE2EC;font-size:9px;color:var(--ink-500);display:flex;gap:6px 12px;flex-wrap:wrap;}
 .cm-reminder-preview-meta span{display:inline-flex;align-items:center;gap:4px;}
 .cm-reminder-popup-list{display:flex;flex-direction:column;gap:7px;}
