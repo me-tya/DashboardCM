@@ -12,9 +12,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.18-NOTIFICATION-CENTER-20260820">
+<meta name="cm-build" content="CM-DASHBOARD-V19.19-REMINDER-CUSTOM-REPEAT-TICKER-20260820">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
-<!-- Build v19.18: Personal Notification Center + configurable date reminders; preserves all prior features -->
+<!-- Build v19.19: Custom reminder repetition + running text + gold notification bell; preserves all prior features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1242,19 +1242,25 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 
 
 
-/* ===== PERSONAL NOTIFICATION CENTER / REMINDERS (v19.18) ===== */
+/* ===== PERSONAL NOTIFICATION CENTER / REMINDERS (v19.19) ===== */
 .cm-reminder-bell{
   position:relative;width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.25);
   background:rgba(255,255,255,.10);color:#fff;display:inline-flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .12s ease;flex:0 0 auto;
+  cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .12s ease,box-shadow .15s ease,color .15s ease;flex:0 0 auto;
 }
 .cm-reminder-bell:hover{background:rgba(255,255,255,.2);border-color:var(--gold-400);transform:translateY(-1px);}
 .cm-reminder-bell svg{width:18px;height:18px;}
+.cm-reminder-bell.has-notifications{
+  background:linear-gradient(145deg,#FFE68E,#F1C84F);border-color:#FFE49A;color:var(--navy-900);
+  box-shadow:0 0 0 3px rgba(222,192,121,.15),0 4px 14px rgba(200,168,75,.30);
+}
+.cm-reminder-bell.has-notifications:hover{background:linear-gradient(145deg,#FFEDAD,#F4D46C);border-color:#FFF0BE;}
 .cm-reminder-badge{
   position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;
   background:#E24A4A;color:#fff;border:2px solid var(--navy-800);font-size:9.5px;font-weight:800;
   display:flex;align-items:center;justify-content:center;box-shadow:0 2px 7px rgba(0,0,0,.22);
 }
+.cm-reminder-bell.has-notifications .cm-reminder-badge{border-color:#F4D46C;}
 .cm-reminder-backdrop{position:fixed;inset:0;background:rgba(11,27,61,.20);z-index:66;backdrop-filter:blur(1px);}
 .cm-reminder-panel{
   position:fixed;top:78px;right:22px;width:min(440px,calc(100vw - 24px));max-height:calc(100vh - 96px);
@@ -1285,12 +1291,14 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-card.future{border-left-color:#AAB4CC;opacity:.92;}
 .cm-reminder-card.completed{border-left-color:var(--green);background:#FBFEFD;opacity:.78;}
 .cm-reminder-card.overdue{border-left-color:var(--red);background:var(--red-bg);}
+.cm-reminder-card.quiet{border-left-color:#AAB4CC;background:#FCFDFE;}
 .cm-reminder-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
 .cm-reminder-person{font-family:'Sora',sans-serif;font-size:11.5px;font-weight:700;color:var(--ink-900);line-height:1.35;}
 .cm-reminder-status{font-size:9.5px;font-weight:800;border-radius:999px;padding:3px 7px;white-space:nowrap;background:var(--blue-bg);color:var(--blue);}
 .cm-reminder-card.warning .cm-reminder-status{background:var(--amber-bg);color:var(--amber);}
 .cm-reminder-card.urgent .cm-reminder-status,.cm-reminder-card.overdue .cm-reminder-status{background:var(--red-bg);color:var(--red);}
 .cm-reminder-card.completed .cm-reminder-status{background:var(--green-bg);color:var(--green);}
+.cm-reminder-card.quiet .cm-reminder-status{background:var(--gray-bg);color:var(--gray);}
 .cm-reminder-message{font-size:11.5px;color:var(--ink-700);line-height:1.5;margin:6px 0 7px;}
 .cm-reminder-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:9.5px;color:var(--ink-500);}
 .cm-reminder-meta-chip{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border-radius:999px;padding:3px 7px;}
@@ -1301,52 +1309,70 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
 .cm-reminder-empty{text-align:center;padding:28px 15px;color:var(--ink-500);font-size:11.5px;line-height:1.5;}
 .cm-reminder-panel-foot{padding:8px 12px 10px;border-top:1px solid var(--border-soft);font-size:9.5px;color:var(--ink-300);background:#FBFCFE;line-height:1.4;}
 
+/* Running text / ticker sits directly below the topbar and only appears on a scheduled reminder day. */
+.cm-reminder-ticker-host{width:100%;background:linear-gradient(90deg,#FFF7D7,#FFFBEA);border-bottom:1px solid #E9D38C;box-shadow:0 2px 8px rgba(15,25,60,.05);overflow:hidden;}
+.cm-reminder-ticker-inner{max-width:1440px;margin:0 auto;display:flex;align-items:center;gap:9px;padding:7px 28px;color:var(--navy-900);}
+.cm-reminder-ticker-icon{width:27px;height:27px;flex:0 0 27px;border-radius:8px;background:var(--gold-500);display:grid;place-items:center;color:var(--navy-900);font-size:13px;}
+.cm-reminder-ticker-count{flex:0 0 auto;font-size:9.5px;font-weight:800;background:var(--navy-900);color:#fff;border-radius:999px;padding:4px 7px;}
+.cm-reminder-ticker-viewport{position:relative;min-width:0;overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);}
+.cm-reminder-ticker-track{display:flex;width:max-content;align-items:center;animation:cmReminderTickerMove 28s linear infinite;will-change:transform;}
+.cm-reminder-ticker-host:hover .cm-reminder-ticker-track{animation-play-state:paused;}
+.cm-reminder-ticker-set{display:flex;align-items:center;white-space:nowrap;padding-right:56px;font-size:11px;font-weight:650;}
+.cm-reminder-ticker-item b{font-family:'Sora',sans-serif;font-size:10.8px;}
+.cm-reminder-ticker-sep{display:inline-block;padding:0 18px;color:#A77D12;font-weight:900;}
+.cm-reminder-ticker-open{flex:0 0 auto;border:1px solid #D9BD68;background:#fff;color:var(--navy-800);border-radius:8px;padding:5px 8px;font-size:9.5px;font-weight:800;cursor:pointer;}
+.cm-reminder-ticker-open:hover{background:var(--gold-100);border-color:var(--gold-500);}
+@keyframes cmReminderTickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.cm-reminder-ticker-viewport{overflow:auto;mask-image:none;-webkit-mask-image:none}.cm-reminder-ticker-track{animation:none}.cm-reminder-ticker-set[aria-hidden="true"]{display:none}}
+
 .cm-reminder-banner-host{max-width:1440px;margin:10px auto -2px;padding:0 28px;display:flex;flex-direction:column;gap:7px;}
 .cm-reminder-banner{border:1px solid #E4D19A;background:#FFF8E8;border-radius:11px;padding:9px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm);}
 .cm-reminder-banner.urgent{background:#FFF1F1;border-color:#EAB3B3;}
 .cm-reminder-banner-icon{width:28px;height:28px;border-radius:8px;background:rgba(200,168,75,.18);color:#8A6A1B;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .cm-reminder-banner.urgent .cm-reminder-banner-icon{background:rgba(193,59,59,.12);color:var(--red);}
-.cm-reminder-banner-text{min-width:0;flex:1;font-size:11.5px;color:var(--ink-800,#222C43);line-height:1.45;}
+.cm-reminder-banner-text{min-width:0;flex:1;font-size:11.5px;color:var(--ink-700);line-height:1.45;}
 .cm-reminder-banner-text strong{font-family:'Sora',sans-serif;font-size:11.5px;color:var(--ink-900);}
-.cm-reminder-banner-days{font-size:9.5px;font-weight:800;color:var(--amber);white-space:nowrap;}
-.cm-reminder-banner.urgent .cm-reminder-banner-days{color:var(--red);}
-.cm-reminder-banner-dismiss{width:26px;height:26px;border:0;background:transparent;color:var(--ink-500);border-radius:7px;cursor:pointer;font-size:18px;}
-.cm-reminder-banner-dismiss:hover{background:rgba(255,255,255,.75);color:var(--ink-900);}
+.cm-reminder-banner-days{font-size:9.5px;font-weight:800;border-radius:999px;padding:4px 8px;background:#fff;color:#8A6A1B;border:1px solid #E8D49C;white-space:nowrap;}
+.cm-reminder-banner.urgent .cm-reminder-banner-days{color:var(--red);border-color:#E8B7B7;}
+.cm-reminder-banner-dismiss{width:26px;height:26px;border:0;background:transparent;color:var(--ink-500);border-radius:7px;font-size:18px;cursor:pointer;flex-shrink:0;}
+.cm-reminder-banner-dismiss:hover{background:rgba(0,0,0,.05);}
 
 .cm-reminder-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .cm-reminder-form-grid .full{grid-column:1/-1;}
-.cm-reminder-field label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-700);margin-bottom:5px;}
-.cm-reminder-field input,.cm-reminder-field textarea,.cm-reminder-field select{width:100%;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--ink-900);font:12px 'Inter',sans-serif;padding:9px 10px;outline:none;}
-.cm-reminder-field textarea{min-height:76px;resize:vertical;line-height:1.5;}
-.cm-reminder-field input:focus,.cm-reminder-field textarea:focus,.cm-reminder-field select:focus{border-color:var(--navy-600);box-shadow:0 0 0 3px rgba(37,74,140,.08);}
-.cm-reminder-help{font-size:9.5px;color:var(--ink-500);margin-top:4px;line-height:1.45;}
-.cm-reminder-modes{display:flex;gap:8px;flex-wrap:wrap;}
-.cm-reminder-mode{display:flex;align-items:flex-start;gap:7px;border:1px solid var(--border);border-radius:9px;padding:8px 9px;min-width:120px;flex:1;background:#fff;cursor:pointer;}
-.cm-reminder-mode input{width:auto;margin-top:2px;}
-.cm-reminder-mode b{display:block;font-size:10.5px;color:var(--ink-800,#222C43);}
-.cm-reminder-mode small{display:block;font-size:9px;color:var(--ink-500);margin-top:2px;line-height:1.35;}
-.cm-reminder-preview{border:1px solid #DCE5F5;background:#F7FAFF;border-radius:10px;padding:10px 11px;font-size:11px;color:var(--ink-700);line-height:1.5;}
+.cm-reminder-field label{display:block;font-size:10.5px;font-weight:750;color:var(--ink-700);margin-bottom:5px;}
+.cm-reminder-field input[type="text"],.cm-reminder-field input[type="date"],.cm-reminder-field input[type="number"],.cm-reminder-field textarea,.cm-reminder-field select{width:100%;border:1px solid var(--border);border-radius:9px;background:#fff;padding:8px 9px;font:11.5px 'Inter';color:var(--ink-900);outline:none;}
+.cm-reminder-field textarea{resize:vertical;min-height:76px;line-height:1.45;}
+.cm-reminder-field input:focus,.cm-reminder-field textarea:focus,.cm-reminder-field select:focus{border-color:var(--navy-600);box-shadow:0 0 0 2px rgba(37,74,140,.09);}
+.cm-reminder-help{font-size:9.5px;color:var(--ink-500);line-height:1.4;margin-top:4px;}
+.cm-reminder-custom-repeat{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:8px;padding:10px;border:1px solid #E4E8F2;background:#FAFBFD;border-radius:10px;}
+.cm-reminder-custom-repeat label{font-size:9.5px;margin-bottom:4px;}
+.cm-reminder-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.cm-reminder-mode{display:flex!important;align-items:flex-start;gap:7px;border:1px solid var(--border);border-radius:9px;padding:8px;background:#FAFBFD;cursor:pointer;margin:0!important;font-weight:500!important;}
+.cm-reminder-mode:has(input:checked){background:var(--gold-100);border-color:#E1C774;}
+.cm-reminder-mode input{margin-top:2px;accent-color:var(--navy-700);}
+.cm-reminder-mode b{display:block;font-size:10.5px;color:var(--ink-900);}
+.cm-reminder-mode small{display:block;font-size:9px;color:var(--ink-500);line-height:1.3;margin-top:2px;}
+.cm-reminder-center-note{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:9px;background:#EEF3FB;color:#35547A;font-size:9.5px;line-height:1.45;margin-top:7px;}
+.cm-reminder-preview{background:#F7F9FD;border:1px solid var(--border-soft);border-radius:9px;padding:9px 10px;font-size:10.5px;color:var(--ink-700);line-height:1.5;}
 .cm-reminder-preview b{color:var(--navy-800);}
-.cm-reminder-checkline{display:flex;align-items:flex-start;gap:8px;font-size:10.5px;color:var(--ink-700);line-height:1.4;cursor:pointer;}
-.cm-reminder-checkline input{margin-top:2px;}
-
-.cm-reminder-popup-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow:auto;}
-.cm-reminder-popup-item{border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:10px;padding:10px 11px;background:#fff;}
-.cm-reminder-popup-item.urgent{border-left-color:var(--red);background:#FFFBFB;}
-.cm-reminder-popup-item strong{display:block;font-family:'Sora',sans-serif;font-size:11px;color:var(--ink-900);margin-bottom:4px;}
-.cm-reminder-popup-item div{font-size:11px;color:var(--ink-700);line-height:1.5;}
-
-@media(max-width:900px){
-  .cm-reminder-panel{top:70px;right:12px;max-height:calc(100vh - 84px);}
+.cm-reminder-popup-list{display:flex;flex-direction:column;gap:7px;}
+.cm-reminder-popup-item{border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:9px;padding:9px 10px;background:#fff;font-size:11.5px;line-height:1.45;}
+.cm-reminder-popup-item.urgent{border-left-color:var(--red);background:#FFF9F9;}
+.cm-reminder-popup-item strong{display:block;font-size:9.5px;color:var(--amber);margin-bottom:3px;text-transform:uppercase;}
+.cm-reminder-popup-item.urgent strong{color:var(--red);}
+html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-reminder-panel,html[data-public-survey="1"] .cm-reminder-backdrop,html[data-public-survey="1"] .cm-reminder-banner-host,html[data-public-survey="1"] .cm-reminder-ticker-host{display:none!important;}
+@media(max-width:760px){
+  .cm-reminder-panel{top:10px;right:10px;left:10px;width:auto;max-height:calc(100vh - 20px);border-radius:14px;}
   .cm-reminder-banner-host{padding:0 14px;}
-}
-@media(max-width:600px){
-  .cm-reminder-panel{top:8px;right:8px;left:8px;width:auto;max-height:calc(100vh - 16px);}
+  .cm-reminder-banner{align-items:flex-start;flex-wrap:wrap;}
+  .cm-reminder-banner-days{margin-left:38px;}
   .cm-reminder-form-grid{grid-template-columns:1fr;}
   .cm-reminder-form-grid .full{grid-column:1;}
+  .cm-reminder-modes{grid-template-columns:1fr;}
   .cm-reminder-summary{grid-template-columns:repeat(3,minmax(0,1fr));}
-  .cm-reminder-banner{align-items:flex-start;}
-  .cm-reminder-banner-days{display:none;}
+  .cm-reminder-custom-repeat{grid-template-columns:1fr;}
+  .cm-reminder-ticker-inner{padding:7px 14px;gap:7px;}
+  .cm-reminder-ticker-open{display:none;}
 }
 
 </style>
@@ -1437,6 +1463,7 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
     </button>
   </div>
 </header>
+<div class="cm-reminder-ticker-host hidden" id="cmReminderTickerHost" aria-live="polite"></div>
 
 <div class="cm-reminder-backdrop hidden" id="cmReminderBackdrop"></div>
 <aside class="cm-reminder-panel hidden" id="cmReminderPanel" aria-hidden="true" aria-labelledby="cmReminderPanelTitle">
@@ -1453,7 +1480,7 @@ html[data-public-survey="1"] .cm-ai-fab,html[data-public-survey="1"] .cm-ai-pane
   <div class="cm-reminder-summary" id="cmReminderSummary"></div>
   <div class="cm-reminder-toolbar">
     <div class="cm-reminder-segment" id="cmReminderSegment">
-      <button type="button" data-reminder-filter="current" class="active">Aktif</button>
+      <button type="button" data-reminder-filter="current" class="active">Hari Ini</button>
       <button type="button" data-reminder-filter="all">Semua</button>
     </div>
     <span style="font-size:9.5px;color:var(--ink-300);" id="cmReminderTodayLabel"></span>
@@ -2033,14 +2060,14 @@ try { state.todayAgendaCollapsed = localStorage.getItem('cmTodayAgendaCollapsed'
 
 
 /* ============================================================
-   PERSONAL NOTIFICATION CENTER / DATE REMINDERS (v19.18)
-   - Generic: can be used for DS BSSN password, document renewal,
-     reporting deadlines, training, certificates, etc.
-   - Manual recipient/name and due date.
-   - Daily reminder window starts H-N and continues through H-day.
-   - Optional Banner + once-per-day Popup; text feed lives in bell panel.
-   - Local/browser scoped by design, so one person's reminders are not
-     broadcast to the whole team. Included in Backup All / Restore All.
+   PERSONAL NOTIFICATION CENTER / DATE REMINDERS (v19.19)
+   - Generic manual reminders for any important date.
+   - Notification Center is always the master list.
+   - Custom repeat cadence: once, daily, every 2/3/7 days, until done,
+     or custom interval/end condition.
+   - Optional Running Text, Banner, and once-per-scheduled-day Popup.
+   - Bell turns gold and badge shows UNIQUE reminders scheduled today.
+   - Local/browser scoped; included in Backup All / Restore All.
 ============================================================ */
 const CM_REMINDER_STORAGE_KEY = 'cm-dashboard-reminders-v1';
 const CM_REMINDER_SEEN_KEY = 'cm-dashboard-reminder-seen-v1';
@@ -2056,20 +2083,25 @@ function cmReminderLoad() {
   } catch (e) { return []; }
 }
 function cmReminderNormalize(r) {
-  if (!r || typeof r !== 'object') return null;
-  const modes = Array.isArray(r.modes) ? r.modes.filter(x => ['text','banner','popup'].includes(x)) : ['text'];
+  if(!r || typeof r!=='object') return null;
+  let modes=Array.isArray(r.modes)?r.modes.map(String):[];
+  // v19.18 migration: old "Text" meant bell feed. Bell feed is now automatic,
+  // so the legacy flag is safely dropped without changing its old behavior.
+  modes=[...new Set(modes.filter(x=>['ticker','banner','popup'].includes(x)))];
+  const allowedRepeat=['once','daily_due','every2_due','every3_due','every7_due','daily_done','custom'];
+  let repeatMode=String(r.repeatMode||'');
+  if(!allowedRepeat.includes(repeatMode)) repeatMode=r.keepOverdue?'daily_done':'daily_due';
+  let repeatEvery=Math.max(1,Math.min(3650,Number(r.repeatEvery)||1));
+  let repeatEnd=['due','completed'].includes(r.repeatEnd)?r.repeatEnd:(repeatMode==='daily_done'?'completed':'due');
   return {
-    id: String(r.id || uid('RMD')),
-    name: String(r.name || '').trim(),
-    message: String(r.message || '').trim(),
-    dueDate: /^\d{4}-\d{2}-\d{2}$/.test(String(r.dueDate || '')) ? String(r.dueDate) : '',
-    leadDays: Math.max(0, Math.min(3650, Number(r.leadDays ?? 12) || 0)),
-    modes: modes.length ? modes : ['text'],
-    active: r.active !== false,
-    keepOverdue: !!r.keepOverdue,
-    completedAt: r.completedAt || null,
-    createdAt: r.createdAt || new Date().toISOString(),
-    updatedAt: r.updatedAt || new Date().toISOString(),
+    id:String(r.id||uid('RMD')),
+    name:String(r.name||'').trim(),
+    message:String(r.message||'').trim(),
+    dueDate:String(r.dueDate||''),
+    leadDays:Math.max(0,Number(r.leadDays)||0),
+    repeatMode,repeatEvery,repeatEnd,modes,
+    active:r.active!==false,completedAt:r.completedAt||null,
+    createdAt:r.createdAt||new Date().toISOString(),updatedAt:r.updatedAt||new Date().toISOString()
   };
 }
 function cmReminderSave(rows, silent=false) {
@@ -2077,214 +2109,196 @@ function cmReminderSave(rows, silent=false) {
   try { localStorage.setItem(CM_REMINDER_STORAGE_KEY, JSON.stringify(clean)); } catch (e) { console.warn('Reminder save failed',e); }
   cmReminderRender();
   if (!silent && typeof toast === 'function') toast(uiText('Reminder saved','Reminder tersimpan'), 'success');
-  return clean;
 }
 function cmReminderParseDate(s) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(s || ''))) return null;
-  const [y,m,d]=String(s).split('-').map(Number);
-  const dt=new Date(y,m-1,d,12,0,0,0);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||'')))return null;
+  const [y,m,d]=String(s).split('-').map(Number),dt=new Date(y,m-1,d,12,0,0,0);
+  return Number.isNaN(dt.getTime())?null:dt;
 }
 function cmReminderDateKey(dt=new Date()) {
-  const y=dt.getFullYear(), m=String(dt.getMonth()+1).padStart(2,'0'), d=String(dt.getDate()).padStart(2,'0');
-  return `${y}-${m}-${d}`;
+  const y=dt.getFullYear(),m=String(dt.getMonth()+1).padStart(2,'0'),d=String(dt.getDate()).padStart(2,'0');return `${y}-${m}-${d}`;
 }
 function cmReminderDaysToDue(r, now=new Date()) {
   const due=cmReminderParseDate(r.dueDate); if(!due) return null;
-  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
-  return Math.round((due-today)/86400000);
+  const a=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12),b=new Date(due.getFullYear(),due.getMonth(),due.getDate(),12);
+  return Math.round((b-a)/86400000);
 }
+function cmReminderRepeatInterval(r){
+  if(r.repeatMode==='every2_due')return 2;if(r.repeatMode==='every3_due')return 3;if(r.repeatMode==='every7_due')return 7;
+  if(r.repeatMode==='custom')return Math.max(1,Number(r.repeatEvery)||1);return 1;
+}
+function cmReminderEndsWhenCompleted(r){return r.repeatMode==='daily_done'||(r.repeatMode==='custom'&&r.repeatEnd==='completed');}
 function cmReminderState(r, now=new Date()) {
-  if (!r || !r.dueDate) return {kind:'invalid',days:null,current:false};
-  const days=cmReminderDaysToDue(r,now);
-  if (r.completedAt || r.active===false) return {kind:'completed',days,current:false};
-  if (days < 0) return {kind:'overdue',days,current:!!r.keepOverdue};
-  if (days === 0) return {kind:'today',days,current:true};
-  if (days <= Number(r.leadDays||0)) return {kind:days<=3?'urgent':days<=7?'warning':'active',days,current:true};
-  return {kind:'future',days,current:false};
+  if(r.completedAt)return {kind:'completed',current:false,scheduled:false,days:cmReminderDaysToDue(r,now)};
+  if(r.active===false)return {kind:'inactive',current:false,scheduled:false,days:cmReminderDaysToDue(r,now)};
+  const days=cmReminderDaysToDue(r,now); if(days===null)return {kind:'invalid',current:false,scheduled:false,days:null};
+  const lead=Math.max(0,Number(r.leadDays)||0);
+  if(days>lead)return {kind:'future',current:false,scheduled:false,days};
+  const overdue=days<0,today=days===0,elapsed=lead-days;
+  let scheduled=false;
+  if(r.repeatMode==='once') scheduled=days===lead;
+  else if(r.repeatMode==='daily_due') scheduled=days>=0;
+  else if(['every2_due','every3_due','every7_due'].includes(r.repeatMode)) scheduled=days>=0 && ((elapsed%cmReminderRepeatInterval(r)===0)||today);
+  else if(r.repeatMode==='daily_done') scheduled=true;
+  else if(r.repeatMode==='custom') {
+    const inEnd=r.repeatEnd==='completed'||days>=0;
+    scheduled=inEnd && elapsed>=0 && (elapsed%cmReminderRepeatInterval(r)===0);
+    if(r.repeatEnd==='due'&&today)scheduled=true;
+  }
+  let kind='active';
+  if(overdue)kind='overdue'; else if(today)kind='today'; else if(days<=3)kind='urgent'; else if(days<=7)kind='warning';
+  if(!scheduled && !overdue)kind='quiet';
+  return {kind,current:scheduled,scheduled,days,elapsed};
 }
 function cmReminderFormatDate(s) {
-  const dt=cmReminderParseDate(s); if(!dt) return '-';
-  try { return dayjs(dt).locale(currentLang).format(currentLang==='id'?'D MMMM YYYY':'D MMMM YYYY'); }
-  catch(e){ return dt.toLocaleDateString(currentLang==='id'?'id-ID':'en-US',{day:'numeric',month:'long',year:'numeric'}); }
+  const dt=cmReminderParseDate(s); if(!dt)return '-';
+  try{return dayjs(dt).locale(currentLang).format('D MMMM YYYY');}catch(e){return String(s);}
 }
 function cmReminderFormatText(r) {
-  const date=cmReminderFormatDate(r.dueDate);
-  let msg=String(r.message||'').trim();
-  const hadTokens=/\{nama\}|\{tanggal\}|\{h\}/i.test(msg);
-  const st=cmReminderState(r);
-  const h=st.days===0?'H':st.days>0?`H-${st.days}`:`H+${Math.abs(st.days)}`;
-  msg=msg.replace(/\{nama\}/gi,r.name||'').replace(/\{tanggal\}/gi,date).replace(/\{h\}/gi,h);
-  if (hadTokens) return msg.replace(/\s+/g,' ').trim();
-  const prefix=r.name ? `${r.name}, ` : '';
-  const lower=msg.toLowerCase();
-  const hasDate=lower.includes(String(date).toLowerCase()) || lower.includes(' tanggal ');
-  return `${prefix}${msg}${hasDate?'':`${msg ? ' ' : ''}${uiText('on','tanggal')} ${date}`}`.replace(/\s+/g,' ').trim();
+  const date=cmReminderFormatDate(r.dueDate),name=(r.name||'').trim(),msg=(r.message||'').trim();
+  let sentence=[name,msg].filter(Boolean).join(', '); if(sentence&&!/[.!?]$/.test(sentence))sentence+='.';
+  if(!sentence)return uiText('Reminder','Pengingat')+' '+date;
+  return sentence.replace(/[.!?]$/,'')+' '+uiText('on','tanggal')+' '+date+'.';
 }
 function cmReminderStatusLabel(st) {
-  if(st.kind==='completed') return uiText('Completed','Selesai');
-  if(st.kind==='overdue') return uiText(`Overdue ${Math.abs(st.days)}d`,`Lewat ${Math.abs(st.days)} hari`);
-  if(st.kind==='today') return uiText('Due today','Jatuh tempo hari ini');
-  if(st.kind==='future') return uiText(`Starts in ${Math.max(0,st.days)}d`,`Mulai dalam ${Math.max(0,st.days)} hari`);
-  return st.days>0 ? `H-${st.days}` : 'H';
+  if(st.kind==='completed')return uiText('Completed','Selesai'); if(st.kind==='inactive')return uiText('Inactive','Nonaktif'); if(st.kind==='invalid')return uiText('Invalid date','Tanggal tidak valid');
+  if(st.kind==='overdue')return `H+${Math.abs(st.days)}`; if(st.days===0)return 'H'; if(st.days>0)return `H-${st.days}`; return '';
+}
+function cmReminderRepeatLabel(r){
+  const labels={
+    once:uiText('Once at selected H-minus','Sekali di H- yang ditentukan'),
+    daily_due:uiText('Daily until due date','Setiap hari sampai jatuh tempo'),
+    every2_due:uiText('Every 2 days until due date','Setiap 2 hari sampai jatuh tempo'),
+    every3_due:uiText('Every 3 days until due date','Setiap 3 hari sampai jatuh tempo'),
+    every7_due:uiText('Every 7 days until due date','Setiap 7 hari sampai jatuh tempo'),
+    daily_done:uiText('Daily until marked completed','Setiap hari sampai ditandai selesai')
+  };
+  if(r.repeatMode==='custom')return uiText(`Every ${r.repeatEvery} day(s) until ${r.repeatEnd==='completed'?'marked completed':'due date'}`,`Setiap ${r.repeatEvery} hari sampai ${r.repeatEnd==='completed'?'ditandai selesai':'jatuh tempo'}`);
+  return labels[r.repeatMode]||labels.daily_due;
 }
 function cmReminderModesLabel(r) {
-  const labels={text:uiText('Text','Teks'),banner:'Banner',popup:'Pop-up'};
-  return (r.modes||[]).map(x=>labels[x]||x).join(' · ');
-}
-function cmReminderCurrentRows(rows=cmReminderLoad()) {
-  return rows.filter(r=>cmReminderState(r).current);
+  const labels=[uiText('Notification Center','Pusat Notifikasi')];
+  (r.modes||[]).forEach(m=>{if(m==='ticker')labels.push(uiText('Running Text','Running Text'));if(m==='banner')labels.push('Banner');if(m==='popup')labels.push('Pop-up');});
+  return labels.join(' · ');
 }
 function cmReminderSort(rows) {
-  const rank={today:0,overdue:1,urgent:2,warning:3,active:4,future:5,completed:6,invalid:7};
   return [...rows].sort((a,b)=>{
-    const sa=cmReminderState(a), sb=cmReminderState(b);
-    const ra=rank[sa.kind]??9, rb=rank[sb.kind]??9;
-    if(ra!==rb) return ra-rb;
-    return String(a.dueDate).localeCompare(String(b.dueDate));
+    const sa=cmReminderState(a),sb=cmReminderState(b);
+    if(!!a.completedAt!==!!b.completedAt)return a.completedAt?1:-1;
+    if(sa.current!==sb.current)return sa.current?-1:1;
+    const da=cmReminderParseDate(a.dueDate)?.getTime()||Infinity,db=cmReminderParseDate(b.dueDate)?.getTime()||Infinity;
+    return da-db || String(a.name).localeCompare(String(b.name));
   });
 }
 function cmReminderOpenPanel(){
-  const p=document.getElementById('cmReminderPanel'), b=document.getElementById('cmReminderBackdrop');
-  if(!p||!b) return; p.classList.remove('hidden'); b.classList.remove('hidden'); p.setAttribute('aria-hidden','false'); cmReminderRender();
+  const p=document.getElementById('cmReminderPanel'),b=document.getElementById('cmReminderBackdrop');if(!p||!b)return;
+  p.classList.remove('hidden');b.classList.remove('hidden');p.setAttribute('aria-hidden','false');cmReminderRender();
 }
-function cmReminderClosePanel(){
-  const p=document.getElementById('cmReminderPanel'), b=document.getElementById('cmReminderBackdrop');
-  if(p){p.classList.add('hidden');p.setAttribute('aria-hidden','true');} if(b)b.classList.add('hidden');
-}
+function cmReminderClosePanel(){const p=document.getElementById('cmReminderPanel'),b=document.getElementById('cmReminderBackdrop');p?.classList.add('hidden');b?.classList.add('hidden');p?.setAttribute('aria-hidden','true');}
 function cmReminderRender() {
-  if (typeof CM_SURVEY_PUBLIC_ID !== 'undefined' && CM_SURVEY_PUBLIC_ID) {
-    document.getElementById('cmReminderBannerHost')?.classList.add('hidden');
-    document.getElementById('cmReminderPanel')?.classList.add('hidden');
-    document.getElementById('cmReminderBackdrop')?.classList.add('hidden');
-    return;
+  if(document.documentElement.dataset.publicSurvey==='1'){
+    document.getElementById('cmReminderBannerHost')?.classList.add('hidden');document.getElementById('cmReminderTickerHost')?.classList.add('hidden');document.getElementById('cmReminderPanel')?.classList.add('hidden');document.getElementById('cmReminderBackdrop')?.classList.add('hidden');return;
   }
   const rows=cmReminderLoad();
-  const current=rows.filter(r=>cmReminderState(r).current);
-  const upcoming=rows.filter(r=>{const s=cmReminderState(r);return s.kind==='future'&&!r.completedAt&&r.active!==false;});
-  const overdue=rows.filter(r=>{const s=cmReminderState(r);return s.kind==='overdue'&&!r.completedAt&&r.active!==false;});
-  const badge=document.getElementById('cmReminderBadge');
-  if(badge){badge.textContent=String(current.length);badge.classList.toggle('hidden',current.length===0);}
-  const btn=document.getElementById('btnReminderCenter');
-  if(btn){const ttl=uiText('Reminder / Notification Center','Reminder / Pusat Notifikasi');btn.title=ttl;btn.setAttribute('aria-label',ttl);}
-  const title=document.getElementById('cmReminderPanelTitle'); if(title) title.textContent=uiText('Notification Center','Pusat Notifikasi');
-  const sub=document.getElementById('cmReminderPanelSub'); if(sub) sub.textContent=uiText('Personal reminders for important dates','Pengingat pribadi untuk tanggal penting');
-  const add=document.getElementById('btnReminderAdd'); if(add) add.textContent=uiText('+ Reminder','+ Reminder');
-  const seg=document.getElementById('cmReminderSegment');
-  if(seg){
-    const bs=seg.querySelectorAll('button'); if(bs[0])bs[0].textContent=uiText('Active','Aktif'); if(bs[1])bs[1].textContent=uiText('All','Semua');
-    bs.forEach(x=>x.classList.toggle('active',x.dataset.reminderFilter===cmReminderFilter));
-  }
-  const todayLbl=document.getElementById('cmReminderTodayLabel'); if(todayLbl) todayLbl.textContent=dayjs().locale(currentLang).format('D MMM YYYY');
-  const sum=document.getElementById('cmReminderSummary');
-  if(sum) sum.innerHTML=`<div class="cm-reminder-stat"><b>${current.length}</b><span>${uiText('Active now','Aktif sekarang')}</span></div><div class="cm-reminder-stat"><b>${upcoming.length}</b><span>${uiText('Upcoming','Akan datang')}</span></div><div class="cm-reminder-stat"><b>${overdue.length}</b><span>${uiText('Overdue','Terlambat')}</span></div>`;
-  const foot=document.getElementById('cmReminderPanelFoot'); if(foot) foot.textContent=uiText('Saved in this browser and included in Backup All.','Tersimpan di browser ini dan ikut dalam Backup All.');
-  const list=document.getElementById('cmReminderList');
-  if(list){
-    let shown=cmReminderFilter==='current' ? rows.filter(r=>{const s=cmReminderState(r);return s.current || s.kind==='overdue';}) : rows;
-    shown=cmReminderSort(shown);
-    if(!shown.length) list.innerHTML=`<div class="cm-reminder-empty">${uiText('No reminders here yet. Add one for password expiry, document renewal, reporting deadlines, training, or any important date.','Belum ada reminder. Tambahkan untuk masa berlaku password, dokumen, deadline laporan, pelatihan, atau tanggal penting lainnya.')}</div>`;
-    else list.innerHTML=shown.map(cmReminderCardHtml).join('');
-  }
-  cmReminderRenderBanners(rows);
+  const scheduled=rows.filter(r=>cmReminderState(r).current);
+  const upcoming=rows.filter(r=>{const st=cmReminderState(r);return st.kind==='future'&&!r.completedAt&&r.active!==false;});
+  const overdue=rows.filter(r=>{const st=cmReminderState(r);return st.kind==='overdue'&&!r.completedAt&&r.active!==false;});
+  const badge=document.getElementById('cmReminderBadge'),btn=document.getElementById('btnReminderCenter');
+  if(badge){badge.textContent=scheduled.length>99?'99+':String(scheduled.length);badge.classList.toggle('hidden',scheduled.length===0);}
+  if(btn){btn.classList.toggle('has-notifications',scheduled.length>0);const ttl=scheduled.length?uiText(`${scheduled.length} reminder(s) scheduled today`,`${scheduled.length} reminder terjadwal hari ini`):uiText('Reminder / Notification Center','Reminder / Pusat Notifikasi');btn.title=ttl;btn.setAttribute('aria-label',ttl);}
+  const title=document.getElementById('cmReminderPanelTitle');if(title)title.textContent=uiText('Notification Center','Pusat Notifikasi');
+  const sub=document.getElementById('cmReminderPanelSub');if(sub)sub.textContent=uiText('Personal reminders for important dates','Pengingat pribadi untuk tanggal penting');
+  const add=document.getElementById('btnReminderAdd');if(add)add.textContent=uiText('+ Create Reminder','+ Buat Reminder');
+  const seg=document.getElementById('cmReminderSegment');if(seg){const bs=[...seg.querySelectorAll('[data-reminder-filter]')];if(bs[0])bs[0].textContent=uiText('Today','Hari Ini');if(bs[1])bs[1].textContent=uiText('All','Semua');bs.forEach(x=>x.classList.toggle('active',x.dataset.reminderFilter===cmReminderFilter));}
+  const todayLbl=document.getElementById('cmReminderTodayLabel');if(todayLbl)todayLbl.textContent=dayjs().locale(currentLang).format('D MMM YYYY');
+  const sum=document.getElementById('cmReminderSummary');if(sum)sum.innerHTML=`<div class="cm-reminder-stat"><b>${scheduled.length}</b><span>${uiText('Scheduled today','Terjadwal hari ini')}</span></div><div class="cm-reminder-stat"><b>${upcoming.length}</b><span>${uiText('Not started','Belum mulai')}</span></div><div class="cm-reminder-stat"><b>${overdue.length}</b><span>${uiText('Past due','Lewat jatuh tempo')}</span></div>`;
+  const foot=document.getElementById('cmReminderPanelFoot');if(foot)foot.textContent=uiText('Every reminder is always listed here. Data is saved in this browser and included in Backup All.','Semua reminder selalu masuk Pusat Notifikasi. Data tersimpan di browser ini dan ikut dalam Backup All.');
+  const list=document.getElementById('cmReminderList');if(list){let shown=cmReminderFilter==='current'?scheduled:rows;shown=cmReminderSort(shown);list.innerHTML=shown.length?shown.map(cmReminderCardHtml).join(''):`<div class="cm-reminder-empty">${cmReminderFilter==='current'?uiText('No reminder is scheduled for today.','Tidak ada reminder yang terjadwal hari ini.'):uiText('No reminders yet. Click + Create Reminder to add one.','Belum ada reminder. Klik + Buat Reminder untuk menambahkan.')}</div>`;}
+  cmReminderRenderTicker(rows);cmReminderRenderBanners(rows);
 }
 function cmReminderCardHtml(r) {
-  const st=cmReminderState(r);
-  const cls=['cm-reminder-card',st.kind].join(' ');
-  const completed=st.kind==='completed';
-  const start=dayjs(cmReminderParseDate(r.dueDate)).subtract(Number(r.leadDays||0),'day').format('D MMM YYYY');
-  return `<div class="${cls}" data-reminder-id="${escapeHtml(r.id)}">
+  const st=cmReminderState(r),cls=st.kind==='today'||st.kind==='urgent'?'urgent':st.kind==='warning'?'warning':st.kind;
+  const start=cmReminderParseDate(r.dueDate)?dayjs(cmReminderParseDate(r.dueDate)).subtract(Number(r.leadDays||0),'day').locale(currentLang).format('D MMM YYYY'):'-';
+  return `<div class="cm-reminder-card ${escapeHtml(cls)}" data-reminder-id="${escapeHtml(r.id)}">
     <div class="cm-reminder-card-top"><div class="cm-reminder-person">${escapeHtml(r.name||uiText('General reminder','Reminder umum'))}</div><span class="cm-reminder-status">${escapeHtml(cmReminderStatusLabel(st))}</span></div>
     <div class="cm-reminder-message">${escapeHtml(cmReminderFormatText(r))}</div>
-    <div class="cm-reminder-meta"><span class="cm-reminder-meta-chip">📅 ${escapeHtml(cmReminderFormatDate(r.dueDate))}</span><span class="cm-reminder-meta-chip">⏰ H-${Number(r.leadDays||0)} · ${escapeHtml(start)}</span><span class="cm-reminder-meta-chip">◉ ${escapeHtml(cmReminderModesLabel(r))}</span></div>
-    <div class="cm-reminder-card-actions">
-      <button type="button" class="cm-reminder-mini-btn" data-reminder-action="edit">${uiText('Edit','Edit')}</button>
-      <button type="button" class="cm-reminder-mini-btn" data-reminder-action="toggle">${completed?uiText('Reopen','Aktifkan lagi'):uiText('Mark done','Tandai selesai')}</button>
-      <button type="button" class="cm-reminder-mini-btn danger" data-reminder-action="delete">${uiText('Delete','Hapus')}</button>
-    </div>
+    <div class="cm-reminder-meta"><span class="cm-reminder-meta-chip">📅 ${escapeHtml(cmReminderFormatDate(r.dueDate))}</span><span class="cm-reminder-meta-chip">⏰ H-${Number(r.leadDays||0)} · ${escapeHtml(start)}</span><span class="cm-reminder-meta-chip">↻ ${escapeHtml(cmReminderRepeatLabel(r))}</span><span class="cm-reminder-meta-chip">◉ ${escapeHtml(cmReminderModesLabel(r))}</span></div>
+    <div class="cm-reminder-card-actions"><button class="cm-reminder-mini-btn" type="button" data-reminder-action="edit">${uiText('Edit','Edit')}</button><button class="cm-reminder-mini-btn" type="button" data-reminder-action="toggle">${r.completedAt?uiText('Reactivate','Aktifkan lagi'):uiText('Mark completed','Tandai selesai')}</button><button class="cm-reminder-mini-btn danger" type="button" data-reminder-action="delete">${uiText('Delete','Hapus')}</button></div>
   </div>`;
 }
 function cmReminderGetDismissedMap(key){try{return JSON.parse(localStorage.getItem(key)||'{}')||{};}catch(e){return {};}}
 function cmReminderDismissBannerToday(id){const m=cmReminderGetDismissedMap(CM_REMINDER_BANNER_DISMISS_KEY);m[id]=cmReminderDateKey();try{localStorage.setItem(CM_REMINDER_BANNER_DISMISS_KEY,JSON.stringify(m));}catch(e){}cmReminderRender();}
-function cmReminderRenderBanners(rows=cmReminderLoad()) {
-  const host=document.getElementById('cmReminderBannerHost'); if(!host)return;
-  const dismiss=cmReminderGetDismissedMap(CM_REMINDER_BANNER_DISMISS_KEY), today=cmReminderDateKey();
-  const current=cmReminderSort(rows.filter(r=>cmReminderState(r).current && (r.modes||[]).includes('banner') && dismiss[r.id]!==today));
+function cmReminderRenderTicker(rows=cmReminderLoad()){
+  const host=document.getElementById('cmReminderTickerHost');if(!host)return;
+  const current=cmReminderSort(rows.filter(r=>cmReminderState(r).current&&(r.modes||[]).includes('ticker')));
   if(!current.length){host.classList.add('hidden');host.innerHTML='';return;}
-  const visible=current.slice(0,2); host.classList.remove('hidden');
-  host.innerHTML=visible.map(r=>{const st=cmReminderState(r);const urgent=['today','urgent','overdue'].includes(st.kind);return `<div class="cm-reminder-banner ${urgent?'urgent':''}" data-reminder-id="${escapeHtml(r.id)}"><div class="cm-reminder-banner-icon">🔔</div><div class="cm-reminder-banner-text"><strong>${escapeHtml(r.name||uiText('Reminder','Pengingat'))}</strong><br>${escapeHtml(cmReminderFormatText(r))}</div><span class="cm-reminder-banner-days">${escapeHtml(cmReminderStatusLabel(st))}</span><button type="button" class="cm-reminder-banner-dismiss" data-reminder-banner-dismiss="${escapeHtml(r.id)}" title="${uiText('Hide for today','Sembunyikan hari ini')}">&times;</button></div>`}).join('') + (current.length>2?`<div style="font-size:10px;color:var(--ink-500);padding:0 3px;">+${current.length-2} ${uiText('more reminders in Notification Center','reminder lain di Pusat Notifikasi')}</div>`:'');
+  const itemHtml=current.map(r=>`<span class="cm-reminder-ticker-item"><b>${escapeHtml(cmReminderStatusLabel(cmReminderState(r)))}</b> · ${escapeHtml(cmReminderFormatText(r))}</span>`).join('<span class="cm-reminder-ticker-sep">◆</span>');
+  host.innerHTML=`<div class="cm-reminder-ticker-inner"><div class="cm-reminder-ticker-icon">🔔</div><span class="cm-reminder-ticker-count">${current.length>99?'99+':current.length}</span><div class="cm-reminder-ticker-viewport"><div class="cm-reminder-ticker-track"><div class="cm-reminder-ticker-set">${itemHtml}</div><div class="cm-reminder-ticker-set" aria-hidden="true">${itemHtml}</div></div></div><button class="cm-reminder-ticker-open" type="button" data-reminder-open-center>${uiText('View all','Lihat semua')}</button></div>`;
+  host.classList.remove('hidden');
+}
+function cmReminderRenderBanners(rows=cmReminderLoad()) {
+  const host=document.getElementById('cmReminderBannerHost');if(!host)return;
+  const dismiss=cmReminderGetDismissedMap(CM_REMINDER_BANNER_DISMISS_KEY),today=cmReminderDateKey();
+  const current=cmReminderSort(rows.filter(r=>cmReminderState(r).current&&(r.modes||[]).includes('banner')&&dismiss[r.id]!==today));
+  if(!current.length){host.classList.add('hidden');host.innerHTML='';return;}const visible=current.slice(0,2);
+  host.innerHTML=visible.map(r=>{const st=cmReminderState(r),urgent=['today','urgent','overdue'].includes(st.kind);return `<div class="cm-reminder-banner ${urgent?'urgent':''}" data-reminder-id="${escapeHtml(r.id)}"><div class="cm-reminder-banner-icon">🔔</div><div class="cm-reminder-banner-text"><strong>${escapeHtml(r.name||uiText('Reminder','Pengingat'))}</strong><br>${escapeHtml(cmReminderFormatText(r))}</div><span class="cm-reminder-banner-days">${escapeHtml(cmReminderStatusLabel(st))}</span><button type="button" class="cm-reminder-banner-dismiss" data-reminder-banner-dismiss="${escapeHtml(r.id)}" title="${uiText('Hide for today','Sembunyikan hari ini')}">&times;</button></div>`}).join('')+(current.length>2?`<div style="font-size:10px;color:var(--ink-500);padding:0 3px;">+${current.length-2} ${uiText('more reminders in Notification Center','reminder lain di Pusat Notifikasi')}</div>`:'');host.classList.remove('hidden');
 }
 function cmReminderOpenForm(id=null) {
-  const rows=cmReminderLoad();
-  const existing=id?rows.find(x=>x.id===id):null;
-  const r=existing||{id:'',name:'',message:'',dueDate:'',leadDays:12,modes:['text','banner','popup'],active:true,keepOverdue:false};
-  const modal=document.getElementById('cmReminderModal'); if(!modal)return;
-  modal.innerHTML=`<div class="modal-box" style="max-width:640px;">
-    <div class="modal-head"><h2>${existing?uiText('Edit Reminder','Edit Reminder'):uiText('Add Reminder','Tambah Reminder')}</h2><button class="modal-close" type="button" id="cmReminderFormClose">&times;</button></div>
-    <div class="modal-body">
-      <div class="cm-reminder-form-grid">
-        <div class="cm-reminder-field"><label>${uiText('Name / recipient','Nama / penerima')} *</label><input id="cmRName" maxlength="120" value="${escapeHtml(r.name)}" placeholder="Atitya Pritasari"></div>
-        <div class="cm-reminder-field"><label>${uiText('Due date','Tanggal jatuh tempo')} *</label><input type="date" id="cmRDue" value="${escapeHtml(r.dueDate)}"></div>
-        <div class="cm-reminder-field full"><label>${uiText('Message','Pesan')} *</label><textarea id="cmRMessage" maxlength="500" placeholder="password DS BSSN Anda akan kadaluarsa">${escapeHtml(r.message)}</textarea><div class="cm-reminder-help">${uiText('Name and due date are added automatically. Optional tokens: {nama}, {tanggal}, {h}.','Nama dan tanggal jatuh tempo ditambahkan otomatis. Opsional gunakan token: {nama}, {tanggal}, {h}.')}</div></div>
-        <div class="cm-reminder-field"><label>${uiText('Start reminder at H-','Reminder mulai H-')} *</label><input type="number" id="cmRLead" min="0" max="3650" step="1" value="${Number(r.leadDays||0)}"><div class="cm-reminder-help">${uiText('Example H-12: appears every day from 12 days before the due date through the due date.','Contoh H-12: muncul setiap hari mulai 12 hari sebelum jatuh tempo sampai hari H.')}</div></div>
-        <div class="cm-reminder-field"><label>${uiText('Repeat','Pengulangan')}</label><select id="cmRRepeat" disabled><option>${uiText('Every day until due date','Setiap hari sampai jatuh tempo')}</option></select><div class="cm-reminder-help">${uiText('Designed to keep important dates visible, not just notify once.','Dirancang agar tanggal penting terus terlihat, bukan hanya sekali mengingatkan.')}</div></div>
-        <div class="cm-reminder-field full"><label>${uiText('Notification display','Bentuk notifikasi')} *</label><div class="cm-reminder-modes">
-          <label class="cm-reminder-mode"><input type="checkbox" id="cmRModeText" ${r.modes.includes('text')?'checked':''}><span><b>${uiText('Text','Teks')}</b><small>${uiText('Bell / Notification Center feed','Daftar pada ikon lonceng')}</small></span></label>
-          <label class="cm-reminder-mode"><input type="checkbox" id="cmRModeBanner" ${r.modes.includes('banner')?'checked':''}><span><b>Banner</b><small>${uiText('Visible strip above dashboard content','Strip terlihat di atas dashboard')}</small></span></label>
-          <label class="cm-reminder-mode"><input type="checkbox" id="cmRModePopup" ${r.modes.includes('popup')?'checked':''}><span><b>Pop-up</b><small>${uiText('Once per day while active','Sekali per hari saat periode aktif')}</small></span></label>
-        </div></div>
-        <div class="cm-reminder-field full"><label class="cm-reminder-checkline"><input type="checkbox" id="cmRKeepOverdue" ${r.keepOverdue?'checked':''}><span>${uiText('Keep notifying after the due date until I mark it completed.','Tetap beri notifikasi setelah jatuh tempo sampai saya tandai selesai.')}</span></label></div>
-        <div class="cm-reminder-field full"><div class="cm-reminder-preview" id="cmRPreview"><b>${uiText('Preview','Pratinjau')}:</b> —</div></div>
-      </div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-outline btn-sm" type="button" id="cmReminderFormCancel">${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" type="button" id="cmReminderFormSave">${uiText('Save Reminder','Simpan Reminder')}</button></div>
-  </div>`;
+  const rows=cmReminderLoad(),existing=id?rows.find(x=>x.id===id):null;
+  const r=cmReminderNormalize(existing||{name:'',message:'',dueDate:'',leadDays:12,repeatMode:'daily_due',repeatEvery:5,repeatEnd:'due',modes:['ticker','popup'],active:true});
+  const modal=document.getElementById('cmReminderModal');if(!modal)return;
+  const opt=(value,en,idn)=>`<option value="${value}" ${r.repeatMode===value?'selected':''}>${uiText(en,idn)}</option>`;
+  modal.innerHTML=`<div class="modal-box" style="max-width:720px;"><div class="modal-head"><h2>${existing?uiText('Edit Reminder','Edit Reminder'):uiText('Create Reminder','Buat Reminder')}</h2><button class="modal-close" type="button" id="cmReminderFormClose">&times;</button></div>
+    <div class="modal-body"><div class="cm-reminder-form-grid">
+      <div class="cm-reminder-field"><label>${uiText('Name / recipient','Nama / penerima')} *</label><input type="text" id="cmRName" value="${escapeHtml(r.name)}" placeholder="Atitya Pritasari"></div>
+      <div class="cm-reminder-field"><label>${uiText('Due date','Tanggal jatuh tempo')} *</label><input type="date" id="cmRDue" value="${escapeHtml(r.dueDate)}"></div>
+      <div class="cm-reminder-field full"><label>${uiText('Message','Pesan')} *</label><textarea id="cmRMessage" placeholder="${uiText('Your DS BSSN password will expire','password DS BSSN Anda akan kadaluarsa')}">${escapeHtml(r.message)}</textarea></div>
+      <div class="cm-reminder-field"><label>${uiText('Start reminder at H-','Reminder mulai H-')} *</label><input type="number" id="cmRLead" min="0" max="3650" step="1" value="${Number(r.leadDays||0)}"><div class="cm-reminder-help">${uiText('Example H-12: the reminder window begins 12 days before the due date.','Contoh H-12: periode reminder dimulai 12 hari sebelum jatuh tempo.')}</div></div>
+      <div class="cm-reminder-field"><label>${uiText('Repeat','Pengulangan')} *</label><select id="cmRRepeat">${opt('once','Once at selected H-minus','Sekali di H- yang ditentukan')}${opt('daily_due','Daily until due date','Setiap hari sampai jatuh tempo')}${opt('every2_due','Every 2 days until due date','Setiap 2 hari sampai jatuh tempo')}${opt('every3_due','Every 3 days until due date','Setiap 3 hari sampai jatuh tempo')}${opt('every7_due','Every 7 days until due date','Setiap 7 hari sampai jatuh tempo')}${opt('daily_done','Daily until marked completed','Setiap hari sampai ditandai selesai')}${opt('custom','Custom…','Kustom…')}</select><div class="cm-reminder-custom-repeat ${r.repeatMode==='custom'?'':'hidden'}" id="cmRCustomRepeat"><div><label>${uiText('Repeat every','Ulangi setiap')}</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="cmRRepeatEvery" min="1" max="3650" value="${Number(r.repeatEvery||5)}"><span style="font-size:10px;color:var(--ink-500);">${uiText('days','hari')}</span></div></div><div><label>${uiText('Ends','Berakhir')}</label><select id="cmRRepeatEnd"><option value="due" ${r.repeatEnd==='due'?'selected':''}>${uiText('At due date','Saat jatuh tempo')}</option><option value="completed" ${r.repeatEnd==='completed'?'selected':''}>${uiText('When marked completed','Saat ditandai selesai')}</option></select></div></div></div>
+      <div class="cm-reminder-field full"><label>${uiText('Additional notification display','Bentuk notifikasi tambahan')}</label><div class="cm-reminder-modes">
+        <label class="cm-reminder-mode"><input type="checkbox" id="cmRModeTicker" ${r.modes.includes('ticker')?'checked':''}><span><b>${uiText('Running Text','Running Text')}</b><small>${uiText('Moving strip directly below the header','Teks berjalan tepat di bawah header')}</small></span></label>
+        <label class="cm-reminder-mode"><input type="checkbox" id="cmRModeBanner" ${r.modes.includes('banner')?'checked':''}><span><b>Banner</b><small>${uiText('Static highlighted strip above dashboard content','Strip statis yang lebih menonjol')}</small></span></label>
+        <label class="cm-reminder-mode"><input type="checkbox" id="cmRModePopup" ${r.modes.includes('popup')?'checked':''}><span><b>Pop-up</b><small>${uiText('At most once on each scheduled day','Maksimal sekali pada setiap hari terjadwal')}</small></span></label>
+      </div><div class="cm-reminder-center-note"><span>🔔</span><span>${uiText('Notification Center is automatic: every reminder is always listed under the bell, even if no additional display is selected.','Pusat Notifikasi otomatis: semua reminder selalu masuk ke daftar lonceng meskipun tidak memilih bentuk notifikasi tambahan.')}</span></div></div>
+      <div class="cm-reminder-field full"><div class="cm-reminder-preview" id="cmRPreview"><b>${uiText('Preview','Pratinjau')}:</b> —</div></div>
+    </div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" type="button" id="cmReminderFormCancel">${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" type="button" id="cmReminderFormSave">${uiText('Save Reminder','Simpan Reminder')}</button></div></div>`;
   modal.classList.remove('hidden');
-  const close=()=>modal.classList.add('hidden');
-  document.getElementById('cmReminderFormClose').addEventListener('click',close);document.getElementById('cmReminderFormCancel').addEventListener('click',close);modal.addEventListener('click',e=>{if(e.target===modal)close();});
+  const close=()=>modal.classList.add('hidden');document.getElementById('cmReminderFormClose').addEventListener('click',close);document.getElementById('cmReminderFormCancel').addEventListener('click',close);modal.addEventListener('click',e=>{if(e.target===modal)close();});
+  const syncCustom=()=>document.getElementById('cmRCustomRepeat').classList.toggle('hidden',document.getElementById('cmRRepeat').value!=='custom');
   const updatePreview=()=>{
-    const temp={name:document.getElementById('cmRName').value.trim(),message:document.getElementById('cmRMessage').value.trim(),dueDate:document.getElementById('cmRDue').value,leadDays:Number(document.getElementById('cmRLead').value||0),modes:['text'],active:true,keepOverdue:false};
-    const due=temp.dueDate?cmReminderParseDate(temp.dueDate):null; const start=due?dayjs(due).subtract(temp.leadDays,'day').locale(currentLang).format('D MMMM YYYY'):'—';
-    document.getElementById('cmRPreview').innerHTML=`<b>${uiText('Preview','Pratinjau')}:</b> ${escapeHtml(temp.name&&temp.message&&temp.dueDate?cmReminderFormatText(temp):'—')}<br><span style="font-size:9.5px;color:var(--ink-500);">${uiText('Starts','Mulai muncul')}: ${escapeHtml(start)} · ${uiText('daily until','setiap hari s.d.')} ${escapeHtml(temp.dueDate?cmReminderFormatDate(temp.dueDate):'—')}</span>`;
+    const temp=cmReminderNormalize({name:document.getElementById('cmRName').value.trim(),message:document.getElementById('cmRMessage').value.trim(),dueDate:document.getElementById('cmRDue').value,leadDays:Number(document.getElementById('cmRLead').value||0),repeatMode:document.getElementById('cmRRepeat').value,repeatEvery:Number(document.getElementById('cmRRepeatEvery').value||1),repeatEnd:document.getElementById('cmRRepeatEnd').value,modes:[],active:true});
+    const due=temp.dueDate?cmReminderParseDate(temp.dueDate):null,start=due?dayjs(due).subtract(temp.leadDays,'day').locale(currentLang).format('D MMMM YYYY'):'—';
+    document.getElementById('cmRPreview').innerHTML=`<b>${uiText('Preview','Pratinjau')}:</b> ${escapeHtml(temp.name&&temp.message&&temp.dueDate?cmReminderFormatText(temp):'—')}<br><span style="font-size:9.5px;color:var(--ink-500);">${uiText('Starts','Mulai')}: ${escapeHtml(start)} · ${escapeHtml(cmReminderRepeatLabel(temp))}</span>`;
   };
-  ['cmRName','cmRMessage','cmRDue','cmRLead'].forEach(x=>document.getElementById(x).addEventListener('input',updatePreview)); updatePreview();
+  document.getElementById('cmRRepeat').addEventListener('change',()=>{syncCustom();updatePreview();});['cmRName','cmRMessage','cmRDue','cmRLead','cmRRepeatEvery'].forEach(x=>document.getElementById(x).addEventListener('input',updatePreview));document.getElementById('cmRRepeatEnd').addEventListener('change',updatePreview);syncCustom();updatePreview();
   document.getElementById('cmReminderFormSave').addEventListener('click',()=>{
-    const name=document.getElementById('cmRName').value.trim(),message=document.getElementById('cmRMessage').value.trim(),dueDate=document.getElementById('cmRDue').value,leadDays=Number(document.getElementById('cmRLead').value);
-    const modes=[];if(document.getElementById('cmRModeText').checked)modes.push('text');if(document.getElementById('cmRModeBanner').checked)modes.push('banner');if(document.getElementById('cmRModePopup').checked)modes.push('popup');
-    if(!name){toast(uiText('Name is required','Nama wajib diisi'),'error');return;} if(!message){toast(uiText('Message is required','Pesan wajib diisi'),'error');return;} if(!cmReminderParseDate(dueDate)){toast(uiText('Due date is required','Tanggal jatuh tempo wajib diisi'),'error');return;} if(!Number.isFinite(leadDays)||leadDays<0){toast(uiText('H- reminder must be 0 or greater','Reminder H- harus 0 atau lebih'),'error');return;} if(!modes.length){toast(uiText('Choose at least one notification display','Pilih minimal satu bentuk notifikasi'),'error');return;}
-    const now=new Date().toISOString();
-    const data=cmReminderNormalize({...(existing||{}),id:existing?.id||uid('RMD'),name,message,dueDate,leadDays,modes,active:true,keepOverdue:document.getElementById('cmRKeepOverdue').checked,completedAt:existing?.completedAt||null,createdAt:existing?.createdAt||now,updatedAt:now});
-    const next=existing?rows.map(x=>x.id===existing.id?data:x):[...rows,data]; cmReminderSave(next); close(); cmReminderOpenPanel(); setTimeout(()=>cmReminderMaybePopup(true),80);
+    const name=document.getElementById('cmRName').value.trim(),message=document.getElementById('cmRMessage').value.trim(),dueDate=document.getElementById('cmRDue').value,leadDays=Number(document.getElementById('cmRLead').value),repeatMode=document.getElementById('cmRRepeat').value,repeatEvery=Number(document.getElementById('cmRRepeatEvery').value),repeatEnd=document.getElementById('cmRRepeatEnd').value;
+    const modes=[];if(document.getElementById('cmRModeTicker').checked)modes.push('ticker');if(document.getElementById('cmRModeBanner').checked)modes.push('banner');if(document.getElementById('cmRModePopup').checked)modes.push('popup');
+    if(!name){toast(uiText('Name is required','Nama wajib diisi'),'error');return;}if(!message){toast(uiText('Message is required','Pesan wajib diisi'),'error');return;}if(!cmReminderParseDate(dueDate)){toast(uiText('Due date is required','Tanggal jatuh tempo wajib diisi'),'error');return;}if(!Number.isFinite(leadDays)||leadDays<0){toast(uiText('H- reminder must be 0 or greater','Reminder H- harus 0 atau lebih'),'error');return;}if(repeatMode==='custom'&&(!Number.isFinite(repeatEvery)||repeatEvery<1)){toast(uiText('Custom repeat interval must be at least 1 day','Interval pengulangan kustom minimal 1 hari'),'error');return;}
+    const now=new Date().toISOString(),data=cmReminderNormalize({...(existing||{}),id:existing?.id||uid('RMD'),name,message,dueDate,leadDays,repeatMode,repeatEvery,repeatEnd,modes,active:true,completedAt:existing?.completedAt||null,createdAt:existing?.createdAt||now,updatedAt:now});
+    const next=existing?rows.map(x=>x.id===existing.id?data:x):[...rows,data];cmReminderSave(next);close();cmReminderOpenPanel();setTimeout(()=>cmReminderMaybePopup(true),80);
   });
 }
-function cmReminderDelete(id){
-  const rows=cmReminderLoad(),r=rows.find(x=>x.id===id);if(!r)return;
-  if(!confirm(uiText(`Delete reminder for ${r.name}?`,`Hapus reminder untuk ${r.name}?`)))return;
-  cmReminderSave(rows.filter(x=>x.id!==id),true);toast(uiText('Reminder deleted','Reminder dihapus'),'success');
-}
-function cmReminderToggle(id){
-  const rows=cmReminderLoad(); const next=rows.map(r=>r.id===id?{...r,completedAt:r.completedAt?null:new Date().toISOString(),active:true,updatedAt:new Date().toISOString()}:r); cmReminderSave(next,true);toast(uiText('Reminder updated','Reminder diperbarui'),'success');
-}
+function cmReminderDelete(id){const rows=cmReminderLoad(),r=rows.find(x=>x.id===id);if(!r)return;if(!confirm(uiText(`Delete reminder for ${r.name}?`,`Hapus reminder untuk ${r.name}?`)))return;cmReminderSave(rows.filter(x=>x.id!==id),true);toast(uiText('Reminder deleted','Reminder dihapus'),'success');}
+function cmReminderToggle(id){const rows=cmReminderLoad(),next=rows.map(r=>r.id===id?{...r,completedAt:r.completedAt?null:new Date().toISOString(),active:true,updatedAt:new Date().toISOString()}:r);cmReminderSave(next,true);toast(uiText('Reminder updated','Reminder diperbarui'),'success');}
 function cmReminderMaybePopup(force=false){
-  const modal=document.getElementById('cmReminderModal'); if(!modal || !modal.classList.contains('hidden')) return;
-  const rows=cmReminderSort(cmReminderLoad().filter(r=>cmReminderState(r).current&&(r.modes||[]).includes('popup'))); if(!rows.length)return;
-  const today=cmReminderDateKey(), seen=cmReminderGetDismissedMap(CM_REMINDER_SEEN_KEY); const due=force?rows:rows.filter(r=>seen[r.id]!==today); if(!due.length)return;
-  modal.innerHTML=`<div class="modal-box" style="max-width:560px;"><div class="modal-head"><h2>🔔 ${uiText('Important reminders','Reminder penting')}</h2><button class="modal-close" type="button" id="cmReminderPopupClose">&times;</button></div><div class="modal-body"><p style="margin:0 0 12px;font-size:11px;color:var(--ink-500);line-height:1.5;">${uiText('These reminders are in their active H-minus window. This pop-up appears at most once per day.','Reminder berikut sudah masuk periode H-minus aktif. Pop-up ini maksimal muncul sekali per hari.')}</p><div class="cm-reminder-popup-list">${due.map(r=>{const st=cmReminderState(r);return `<div class="cm-reminder-popup-item ${['today','urgent','overdue'].includes(st.kind)?'urgent':''}"><strong>${escapeHtml(cmReminderStatusLabel(st))}</strong><div>${escapeHtml(cmReminderFormatText(r))}</div></div>`}).join('')}</div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" type="button" id="cmReminderPopupOpen">${uiText('Open Notification Center','Buka Pusat Notifikasi')}</button><button class="btn btn-gold btn-sm" type="button" id="cmReminderPopupOk">${uiText('Got it for today','Oke untuk hari ini')}</button></div></div>`;
-  modal.classList.remove('hidden');
-  const mark=()=>{const m=cmReminderGetDismissedMap(CM_REMINDER_SEEN_KEY);due.forEach(r=>m[r.id]=today);try{localStorage.setItem(CM_REMINDER_SEEN_KEY,JSON.stringify(m));}catch(e){}};
-  const close=()=>{mark();modal.classList.add('hidden');};
-  document.getElementById('cmReminderPopupClose').addEventListener('click',close);document.getElementById('cmReminderPopupOk').addEventListener('click',close);document.getElementById('cmReminderPopupOpen').addEventListener('click',()=>{close();cmReminderOpenPanel();});
+  const modal=document.getElementById('cmReminderModal');if(!modal||!modal.classList.contains('hidden'))return;
+  const rows=cmReminderSort(cmReminderLoad().filter(r=>cmReminderState(r).current&&(r.modes||[]).includes('popup')));if(!rows.length)return;
+  const today=cmReminderDateKey(),seen=cmReminderGetDismissedMap(CM_REMINDER_SEEN_KEY),due=force?rows:rows.filter(r=>seen[r.id]!==today);if(!due.length)return;
+  modal.innerHTML=`<div class="modal-box" style="max-width:560px;"><div class="modal-head"><h2>🔔 ${uiText('Important reminders','Reminder penting')}</h2><button class="modal-close" type="button" id="cmReminderPopupClose">&times;</button></div><div class="modal-body"><p style="margin:0 0 12px;font-size:11px;color:var(--ink-500);line-height:1.5;">${uiText('These reminders are scheduled for today. This pop-up appears at most once on each scheduled day.','Reminder berikut memang terjadwal hari ini. Pop-up maksimal muncul sekali pada setiap hari yang terjadwal.')}</p><div class="cm-reminder-popup-list">${due.map(r=>{const st=cmReminderState(r);return `<div class="cm-reminder-popup-item ${['today','urgent','overdue'].includes(st.kind)?'urgent':''}"><strong>${escapeHtml(cmReminderStatusLabel(st))}</strong><div>${escapeHtml(cmReminderFormatText(r))}</div></div>`}).join('')}</div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" type="button" id="cmReminderPopupOpen">${uiText('Open Notification Center','Buka Pusat Notifikasi')}</button><button class="btn btn-gold btn-sm" type="button" id="cmReminderPopupOk">${uiText('Got it for today','Oke untuk hari ini')}</button></div></div>`;
+  modal.classList.remove('hidden');const mark=()=>{const m=cmReminderGetDismissedMap(CM_REMINDER_SEEN_KEY);due.forEach(r=>m[r.id]=today);try{localStorage.setItem(CM_REMINDER_SEEN_KEY,JSON.stringify(m));}catch(e){}};const close=()=>{mark();modal.classList.add('hidden');};document.getElementById('cmReminderPopupClose').addEventListener('click',close);document.getElementById('cmReminderPopupOk').addEventListener('click',close);document.getElementById('cmReminderPopupOpen').addEventListener('click',()=>{close();cmReminderOpenPanel();});
 }
 function cmReminderInit(){
-  if(cmReminderInitialized)return; cmReminderInitialized=true;
-  const bell=document.getElementById('btnReminderCenter'), close=document.getElementById('btnReminderClose'),back=document.getElementById('cmReminderBackdrop'),add=document.getElementById('btnReminderAdd'),seg=document.getElementById('cmReminderSegment'),list=document.getElementById('cmReminderList'),host=document.getElementById('cmReminderBannerHost');
-  bell?.addEventListener('click',()=>document.getElementById('cmReminderPanel')?.classList.contains('hidden')?cmReminderOpenPanel():cmReminderClosePanel()); close?.addEventListener('click',cmReminderClosePanel);back?.addEventListener('click',cmReminderClosePanel);add?.addEventListener('click',()=>cmReminderOpenForm());
+  if(cmReminderInitialized)return;cmReminderInitialized=true;
+  const bell=document.getElementById('btnReminderCenter'),close=document.getElementById('btnReminderClose'),back=document.getElementById('cmReminderBackdrop'),add=document.getElementById('btnReminderAdd'),seg=document.getElementById('cmReminderSegment'),list=document.getElementById('cmReminderList'),host=document.getElementById('cmReminderBannerHost'),ticker=document.getElementById('cmReminderTickerHost');
+  bell?.addEventListener('click',()=>document.getElementById('cmReminderPanel')?.classList.contains('hidden')?cmReminderOpenPanel():cmReminderClosePanel());close?.addEventListener('click',cmReminderClosePanel);back?.addEventListener('click',cmReminderClosePanel);add?.addEventListener('click',()=>cmReminderOpenForm());
   seg?.addEventListener('click',e=>{const b=e.target.closest('[data-reminder-filter]');if(!b)return;cmReminderFilter=b.dataset.reminderFilter;cmReminderRender();});
   list?.addEventListener('click',e=>{const b=e.target.closest('[data-reminder-action]'),card=e.target.closest('[data-reminder-id]');if(!b||!card)return;const id=card.dataset.reminderId;if(b.dataset.reminderAction==='edit')cmReminderOpenForm(id);else if(b.dataset.reminderAction==='toggle')cmReminderToggle(id);else if(b.dataset.reminderAction==='delete')cmReminderDelete(id);});
   host?.addEventListener('click',e=>{const b=e.target.closest('[data-reminder-banner-dismiss]');if(b)cmReminderDismissBannerToday(b.dataset.reminderBannerDismiss);});
+  ticker?.addEventListener('click',e=>{if(e.target.closest('[data-reminder-open-center]'))cmReminderOpenPanel();});
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('cmReminderPanel')?.classList.contains('hidden'))cmReminderClosePanel();});
   window.addEventListener('storage',e=>{if([CM_REMINDER_STORAGE_KEY,CM_REMINDER_SEEN_KEY,CM_REMINDER_BANNER_DISMISS_KEY].includes(e.key))cmReminderRender();});
-  cmReminderRender(); setTimeout(()=>cmReminderMaybePopup(false),700);
+  cmReminderRender();setTimeout(()=>cmReminderMaybePopup(false),700);
 }
 
 /* ============================================================
@@ -8496,7 +8510,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.18-NOTIFICATION-CENTER-20260820';
+const CM_APP_BUILD='CM-DASHBOARD-V19.19-REMINDER-CUSTOM-REPEAT-TICKER-20260820';
 const CM_MANUAL_VERSION='19.17';
 const CM_MANUAL_UPDATED='19 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
