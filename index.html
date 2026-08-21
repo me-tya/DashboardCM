@@ -12,9 +12,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.22-EO-CHECKLIST-20260821">
+<meta name="cm-build" content="CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
-<!-- Build v19.22: Adds optional EO/Event Organizer mode per Activity with structured checklist, PIC, due date, priority, progress, recommended template, and quick completion directly in Activity Details; preserves v19.21 reminder UI and all prior features -->
+<!-- Build v19.23: EO/Event Organizer is now a compact Activity toggle plus a dedicated Kelola Event workspace with guided tabs, recommended/blank checklist onboarding, PIC/timeline management, documents overview, execution and post-event views; preserves all v19.22 checklist data and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -796,7 +796,8 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 
 
 /* ===== EO / EVENT ORGANIZER CHECKLIST ===== */
-.modal-box.eo-form-modal,.modal-box.eo-detail-modal{max-width:1080px;}
+.modal-box.eo-form-modal{max-width:820px;}
+.modal-box.eo-detail-modal{max-width:1080px;}
 .eo-toggle-card{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 14px;border:1px solid #D9E2F3;border-radius:12px;background:linear-gradient(135deg,#F8FAFF,#FFFDF6);}
 .eo-toggle-copy{display:flex;gap:11px;align-items:flex-start;min-width:0;}
 .eo-toggle-icon{width:36px;height:36px;border-radius:10px;background:var(--navy-800);color:#fff;display:flex;align-items:center;justify-content:center;flex:none;}
@@ -857,6 +858,81 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .eo-detail-note{font-size:10px;color:var(--ink-500);line-height:1.35;margin-top:4px;}
 .eo-detail-status{font-size:9px;font-weight:800;padding:3px 7px;border-radius:20px;white-space:nowrap;background:var(--gray-bg);color:var(--ink-500);}
 .eo-detail-item.done .eo-detail-status{background:var(--green-bg);color:var(--green);}
+
+/* EO Workspace — dedicated Event Organizer management surface */
+.eo-manage-btn{color:#8A6A1B;border-color:#E8D7A5;background:#FFFDF6;}
+.eo-manage-btn:hover,.eo-manage-btn:focus-visible{background:var(--gold-100);border-color:var(--gold-400);color:var(--navy-900);outline:none;}
+.eo-workspace-modal{width:min(1160px,calc(100vw - 36px));max-width:1160px;max-height:92vh;overflow:hidden;display:flex;flex-direction:column;}
+.eo-workspace-modal .modal-head{position:static;flex:0 0 auto;}
+.eo-workspace-modal .modal-body{padding:0;overflow-y:auto;flex:1 1 auto;}
+.eo-workspace-modal .modal-foot{flex:0 0 auto;align-items:center;justify-content:space-between;gap:12px;}
+.eo-ws-headcopy{min-width:0;display:flex;flex-direction:column;gap:3px;}
+.eo-ws-headcopy h2{display:flex;align-items:center;gap:8px;}
+.eo-ws-subtitle{font-size:11.5px;color:var(--ink-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:760px;}
+.eo-ws-nav{display:flex;gap:5px;padding:10px 14px;border-bottom:1px solid var(--border);background:#FAFBFE;overflow-x:auto;position:sticky;top:0;z-index:2;}
+.eo-ws-tab{border:1px solid transparent;background:transparent;color:var(--ink-500);border-radius:8px;padding:8px 10px;font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.eo-ws-tab:hover{background:#fff;border-color:var(--border);color:var(--navy-800);}
+.eo-ws-tab.active{background:var(--navy-800);border-color:var(--navy-800);color:#fff;}
+.eo-ws-tab .eo-ws-stepno{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.16);font-size:9px;font-weight:800;}
+.eo-ws-tab:not(.active) .eo-ws-stepno{background:var(--gray-bg);color:var(--ink-500);}
+.eo-ws-content{padding:18px;}
+.eo-ws-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+.eo-ws-stat{border:1px solid var(--border);border-radius:11px;background:#fff;padding:11px 12px;min-width:0;}
+.eo-ws-stat label{display:block;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-400);margin-bottom:5px;}
+.eo-ws-stat strong{display:block;font:800 20px 'Sora',sans-serif;color:var(--navy-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.eo-ws-stat small{display:block;font-size:10px;color:var(--ink-500);margin-top:3px;line-height:1.35;}
+.eo-ws-section{border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;margin-top:12px;}
+.eo-ws-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border);background:#FBFCFF;}
+.eo-ws-section-head strong{font:750 12px 'Sora',sans-serif;color:var(--ink-900);}
+.eo-ws-section-body{padding:12px 13px;}
+.eo-ws-activity-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.eo-ws-summary-item{padding:9px 10px;border:1px solid var(--border-soft);border-radius:9px;background:#FBFCFE;min-width:0;}
+.eo-ws-summary-item label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-400);font-weight:800;margin-bottom:4px;}
+.eo-ws-summary-item div{font-size:11.5px;color:var(--ink-800);font-weight:650;overflow-wrap:anywhere;}
+.eo-ws-next-list{display:flex;flex-direction:column;gap:7px;}
+.eo-ws-next-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 9px;border:1px solid var(--border-soft);border-radius:9px;}
+.eo-ws-next-dot{width:9px;height:9px;border-radius:50%;background:var(--gold-500);}
+.eo-ws-next-copy strong{display:block;font-size:11px;color:var(--ink-800);line-height:1.35;}
+.eo-ws-next-copy small{display:block;font-size:9.5px;color:var(--ink-500);margin-top:2px;}
+.eo-ws-onboarding{padding:28px 18px;text-align:center;border:1px dashed #C8D2E4;border-radius:12px;background:#FBFCFF;}
+.eo-ws-onboarding-icon{width:46px;height:46px;margin:0 auto 10px;border-radius:13px;background:var(--navy-800);color:#fff;display:flex;align-items:center;justify-content:center;}
+.eo-ws-onboarding-icon svg{width:23px;height:23px;}
+.eo-ws-onboarding h3{font:800 15px 'Sora',sans-serif;margin:0 0 5px;color:var(--ink-900);}
+.eo-ws-onboarding p{font-size:11px;line-height:1.55;color:var(--ink-500);max-width:570px;margin:0 auto 14px;}
+.eo-ws-onboarding-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
+.eo-ws-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.eo-ws-toolbar-copy strong{display:block;font:750 12px 'Sora',sans-serif;color:var(--ink-900);}
+.eo-ws-toolbar-copy small{display:block;font-size:10px;color:var(--ink-500);margin-top:2px;}
+.eo-ws-toolbar-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.eo-ws-checklist .eo-checklist-panel{margin-top:0;}
+.eo-ws-timeline{width:100%;border-collapse:collapse;font-size:11px;}
+.eo-ws-timeline th{font-size:9.5px;text-transform:uppercase;letter-spacing:.035em;color:var(--ink-500);background:#F7F9FC;padding:9px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.eo-ws-timeline td{padding:8px 9px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+.eo-ws-timeline tr:last-child td{border-bottom:none;}
+.eo-ws-timeline input,.eo-ws-timeline select{width:100%;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--ink-800);font:500 10.5px 'Inter',sans-serif;padding:6px 7px;}
+.eo-ws-doc-list{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.eo-ws-doc{padding:10px 11px;border:1px solid var(--border);border-radius:9px;background:#FBFCFF;min-width:0;}
+.eo-ws-doc label{display:block;font-size:9px;font-weight:800;color:var(--ink-400);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+.eo-ws-doc div{font-size:11px;color:var(--ink-800);overflow-wrap:anywhere;line-height:1.45;}
+.eo-ws-dirty{font-size:10.5px;color:var(--amber);font-weight:700;}
+.eo-ws-saved{font-size:10.5px;color:var(--green);font-weight:700;}
+.eo-ws-empty-phase{padding:24px;text-align:center;color:var(--ink-500);font-size:11px;border:1px dashed var(--border);border-radius:10px;background:#FBFCFF;}
+@media(max-width:820px){
+  .eo-workspace-modal{width:calc(100vw - 16px);max-width:none;}
+  .eo-ws-content{padding:12px;}
+  .eo-ws-grid{grid-template-columns:1fr 1fr;}
+  .eo-ws-activity-summary{grid-template-columns:1fr 1fr;}
+  .eo-ws-doc-list{grid-template-columns:1fr;}
+  .eo-ws-timeline-wrap{overflow-x:auto;}
+  .eo-ws-timeline{min-width:700px;}
+  .eo-workspace-modal .modal-foot{align-items:flex-start;flex-direction:column;}
+  .eo-workspace-modal .modal-foot>div:last-child{width:100%;display:flex;justify-content:flex-end;gap:8px;}
+}
+@media(max-width:520px){
+  .eo-ws-grid,.eo-ws-activity-summary{grid-template-columns:1fr;}
+  .eo-ws-tab{padding:7px 8px;}
+}
+
 @media(max-width:760px){
   .modal-box.eo-form-modal,.modal-box.eo-detail-modal{max-width:none;width:calc(100vw - 16px);}
   .eo-toggle-card{align-items:flex-start;}
@@ -1687,7 +1763,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.22-EO-CHECKLIST-20260821">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.22-EO-CHECKLIST-20260821</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -2475,6 +2551,7 @@ function preprocess(list) {
       // EO/Event Organizer mode is optional so legacy Activity records remain valid.
       eoEnabled: cmIsEoEnabled(item.eoEnabled),
       eoChecklist: JSON.stringify(cmParseEoChecklist(item.eoChecklist)),
+      eoWorkspaceInitialized: cmIsEoEnabled(item.eoWorkspaceInitialized) || cmParseEoChecklist(item.eoChecklist).length>0,
       yearMonth: tglMulai.slice(0, 7),
       updatedBy: item.updatedBy || null,
       updatedAt: item.updatedAt || null,
@@ -3676,6 +3753,7 @@ function renderTable() {
         <div class="row-actions">
           <button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>
           <button class="icon-btn" data-action="history" data-id="${a.id}" title="${uiText('Activity history / audit log','Riwayat / audit log Activity')}" aria-label="${uiText('Activity history / audit log','Riwayat / audit log Activity')}">${iconHistory()}</button>
+          ${cmIsEoEnabled(a.eoEnabled)?`<button class="icon-btn eo-manage-btn" data-action="event" data-id="${a.id}" title="${uiText('Manage Event','Kelola Event')}" aria-label="${uiText('Manage Event','Kelola Event')}">${cmEoWorkspaceIcon()}</button>`:''}
           <button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button>
           <button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>
         </div>
@@ -3721,6 +3799,7 @@ function renderTable() {
   container.querySelectorAll('[data-inline-copy-link]').forEach(b => b.addEventListener('click', async (e) => { e.preventDefault(); e.stopPropagation(); const a=state.agendas.find(x=>x.id===b.dataset.inlineCopyLink); if(a) await copyActivityLocationLink(a); }));
   container.querySelectorAll('[data-action="whatsapp"]').forEach(b => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); const a=state.agendas.find(x=>x.id===b.dataset.id); if(a) shareActivityWhatsApp(a); }));
   container.querySelectorAll('[data-action="history"]').forEach(b => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openActivityLog(b.dataset.id); }));
+  container.querySelectorAll('[data-action="event"]').forEach(b => b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openEoWorkspace(b.dataset.id); }));
   container.querySelectorAll('[data-action="edit"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openForm(b.dataset.id); }));
   container.querySelectorAll('[data-action="delete"]').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openConfirmDelete(b.dataset.id); }));
   const prevBtn = document.getElementById('pagePrev');
@@ -5562,6 +5641,175 @@ function cmEoMiniBadge(a){
 }
 function cmEoPriorityLabel(v){return v==='High'?uiText('High','Tinggi'):v==='Low'?uiText('Low','Rendah'):uiText('Medium','Sedang');}
 function cmEoPhaseLabel(v){return v==='Execution'?uiText('Execution','Pelaksanaan'):v==='Post Event'?uiText('Post Event','Pasca Acara'):uiText('Planning','Persiapan');}
+
+function cmEoWorkspaceIcon(){
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M9 11l2 2 4-4"/><path d="M5 5h14v15H5z"/><path d="M8 3v4M16 3v4M5 9h14"/></svg>`;
+}
+function cmEoWorkspaceDateLabel(v){return v?fmtDate(v):'—';}
+function cmEoWorkspaceSafeCount(fn,fallback=0){try{return Number(fn())||0;}catch(e){return fallback;}}
+function openEoWorkspace(activityId,opts={}){
+  let activity=state.agendas.find(x=>x.id===activityId);
+  if(!activity||!cmIsEoEnabled(activity.eoEnabled)){
+    toast(uiText('EO is not enabled for this Activity.','EO belum diaktifkan untuk Activity ini.'),'info');return;
+  }
+  const modal=document.getElementById('kbModal');
+  let items=cmParseEoChecklist(activity.eoChecklist);
+  let active='overview';
+  let dirty=false;
+  let initialized=cmIsEoEnabled(activity.eoWorkspaceInitialized)||items.length>0;
+  let started=initialized;
+  let saving=false;
+  const steps=[
+    ['overview',uiText('Overview','Overview')],
+    ['checklist',uiText('Checklist','Checklist')],
+    ['timeline',uiText('PIC & Timeline','PIC & Timeline')],
+    ['documents',uiText('Documents','Dokumen')],
+    ['execution',uiText('Execution','Pelaksanaan')],
+    ['post',uiText('Post Event','Pasca Event')]
+  ];
+  const setDirty=(v=true)=>{dirty=v;const el=document.getElementById('eoWsSaveState');if(el){el.className=v?'eo-ws-dirty':'eo-ws-saved';el.textContent=v?uiText('Unsaved changes','Perubahan belum disimpan'):uiText('All changes saved','Semua perubahan tersimpan');}const b=document.getElementById('eoWsSave');if(b)b.disabled=!v||saving;};
+  const closeWorkspace=()=>{
+    if(dirty&&!confirm(uiText('There are unsaved EO changes. Close without saving?','Ada perubahan EO yang belum disimpan. Tutup tanpa menyimpan?')))return;
+    modal.classList.add('hidden');
+    if(opts.returnToDetail&&state.agendas.some(x=>x.id===activityId))openDetail(activityId);
+  };
+  const jumpToEditActivity=()=>{
+    if(dirty&&!confirm(uiText('There are unsaved EO changes. Continue to Edit Activity without saving them?','Ada perubahan EO yang belum disimpan. Lanjut ke Edit Activity tanpa menyimpannya?')))return;
+    modal.classList.add('hidden');openForm(activityId);
+  };
+  const workspaceItemHtml=(x,phaseLocked=false)=>`<div class="eo-item ${x.done?'is-done':''}" data-eo-ws-id="${escapeHtml(x.id)}">
+    <div class="eo-item-main">
+      <label class="eo-done-box" title="${uiText('Mark complete','Tandai selesai')}"><input type="checkbox" data-eo-ws-field="done" ${x.done?'checked':''}></label>
+      <input class="eo-task-input" type="text" data-eo-ws-field="task" value="${escapeHtml(x.task)}" placeholder="${uiText('Checklist item','Item checklist')}">
+      <select class="eo-phase-select" data-eo-ws-field="phase" ${phaseLocked?'disabled':''}><option value="Planning" ${x.phase==='Planning'?'selected':''}>${cmEoPhaseLabel('Planning')}</option><option value="Execution" ${x.phase==='Execution'?'selected':''}>${cmEoPhaseLabel('Execution')}</option><option value="Post Event" ${x.phase==='Post Event'?'selected':''}>${cmEoPhaseLabel('Post Event')}</option></select>
+      <button type="button" class="eo-remove" data-eo-ws-remove title="${uiText('Remove item','Hapus item')}">&times;</button>
+    </div>
+    <div class="eo-item-meta">
+      <div class="eo-meta-field"><label>PIC</label><input type="text" data-eo-ws-field="pic" value="${escapeHtml(x.pic)}" placeholder="Nama PIC"></div>
+      <div class="eo-meta-field"><label>${uiText('Due date','Target tanggal')}</label><input type="date" data-eo-ws-field="dueDate" value="${escapeHtml(x.dueDate)}"></div>
+      <div class="eo-meta-field"><label>${uiText('Priority','Prioritas')}</label><select data-eo-ws-field="priority"><option value="High" ${x.priority==='High'?'selected':''}>${cmEoPriorityLabel('High')}</option><option value="Medium" ${x.priority==='Medium'?'selected':''}>${cmEoPriorityLabel('Medium')}</option><option value="Low" ${x.priority==='Low'?'selected':''}>${cmEoPriorityLabel('Low')}</option></select></div>
+      <div class="eo-meta-field eo-notes-field"><label>${uiText('Notes / evidence','Catatan / evidence')}</label><textarea data-eo-ws-field="notes" placeholder="${uiText('Dependency, vendor/contact, issue, evidence...','Dependency, vendor/kontak, isu, evidence...')}">${escapeHtml(x.notes)}</textarea></div>
+    </div>
+  </div>`;
+  const onboardingHtml=()=>`<div class="eo-ws-onboarding">
+    <div class="eo-ws-onboarding-icon">${cmEoWorkspaceIcon()}</div>
+    <h3>${uiText('Set up this event workspace','Siapkan workspace event ini')}</h3>
+    <p>${uiText('Choose a recommended EO checklist to start quickly, or start blank if this event needs a custom flow. Nothing is added until you choose.','Pilih checklist EO rekomendasi untuk mulai cepat, atau mulai kosong jika event ini membutuhkan alur khusus. Belum ada item yang ditambahkan sebelum Anda memilih.')}</p>
+    <div class="eo-ws-onboarding-actions"><button type="button" class="btn btn-gold btn-sm" id="eoWsUseTemplate">${uiText('Use Recommended Template','Gunakan Template Rekomendasi')}</button><button type="button" class="btn btn-outline btn-sm" id="eoWsStartBlank">${uiText('Start Blank','Mulai Kosong')}</button></div>
+  </div>`;
+  const checklistHtml=(phase='ALL')=>{
+    if(!started)return onboardingHtml();
+    const filtered=phase==='ALL'?items:items.filter(x=>x.phase===phase);
+    const title=phase==='ALL'?uiText('EO Checklist','Checklist EO'):cmEoPhaseLabel(phase);
+    const p=cmEoProgress(filtered);
+    return `<div class="eo-ws-checklist">
+      <div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${title}</strong><small>${p.done}/${p.total} ${uiText('completed','selesai')} · ${p.pct}%</small></div><div class="eo-ws-toolbar-actions">${phase==='ALL'?`<button type="button" class="btn btn-outline btn-sm" id="eoWsReloadTemplate">${uiText('Recommended Template','Template Rekomendasi')}</button>`:''}<button type="button" class="btn btn-gold btn-sm" id="eoWsAddItem">+ ${uiText('Add Item','Tambah Item')}</button></div></div>
+      <div class="eo-checklist-panel"><div class="eo-checklist-head"><div><div class="eo-progress-copy"><strong>${title}</strong><span>${p.done}/${p.total} ${uiText('completed','selesai')}</span></div><div class="eo-progress-track"><div class="eo-progress-fill" style="width:${p.pct}%"></div></div></div></div><div class="eo-list">${filtered.length?filtered.map(x=>workspaceItemHtml(x,phase!=='ALL')).join(''):`<div class="eo-ws-empty-phase">${uiText('No checklist items in this phase yet.','Belum ada item checklist pada fase ini.')}</div>`}</div></div>
+    </div>`;
+  };
+  const overviewHtml=()=>{
+    const p=cmEoProgress(items),today=dayjs().format('YYYY-MM-DD');
+    const overdue=items.filter(x=>!x.done&&x.dueDate&&x.dueDate<today).length;
+    const pending=p.total-p.done;
+    const nextItems=items.filter(x=>!x.done).sort((a,b)=>(a.dueDate||'9999').localeCompare(b.dueDate||'9999')).slice(0,5);
+    const nextDue=nextItems.find(x=>x.dueDate)?.dueDate||'';
+    return `${!started?onboardingHtml():`<div class="eo-ws-grid">
+      <div class="eo-ws-stat"><label>${uiText('Progress','Progress')}</label><strong>${p.pct}%</strong><small>${p.done}/${p.total} ${uiText('items completed','item selesai')}</small></div>
+      <div class="eo-ws-stat"><label>${uiText('Pending','Belum Selesai')}</label><strong>${pending}</strong><small>${uiText('remaining checklist items','item checklist tersisa')}</small></div>
+      <div class="eo-ws-stat"><label>${uiText('Overdue','Terlambat')}</label><strong>${overdue}</strong><small>${uiText('past target date','melewati target tanggal')}</small></div>
+      <div class="eo-ws-stat"><label>${uiText('Next deadline','Deadline Terdekat')}</label><strong style="font-size:14px;">${nextDue?cmEoWorkspaceDateLabel(nextDue):'—'}</strong><small>${nextDue?uiText('next open checklist target','target item terbuka berikutnya'):uiText('no upcoming deadline','tidak ada deadline')}</small></div>
+    </div>`}
+    <div class="eo-ws-section"><div class="eo-ws-section-head"><strong>${uiText('Event Summary','Ringkasan Event')}</strong><button type="button" class="btn btn-outline btn-sm" data-eo-ws-edit-activity>${uiText('Edit Activity','Edit Activity')}</button></div><div class="eo-ws-section-body"><div class="eo-ws-activity-summary">
+      <div class="eo-ws-summary-item"><label>${uiText('Date','Tanggal')}</label><div>${cmEoWorkspaceDateLabel(activity.tglMulai)}${activity.tglSelesai&&activity.tglSelesai!==activity.tglMulai?` – ${cmEoWorkspaceDateLabel(activity.tglSelesai)}`:''}</div></div>
+      <div class="eo-ws-summary-item"><label>${uiText('Time','Waktu')}</label><div>${escapeHtml(activity.waktu||'—')}</div></div>
+      <div class="eo-ws-summary-item"><label>${uiText('Location / Channel','Lokasi / Channel')}</label><div>${escapeHtml(activity.lokasiChannel||'—')}</div></div>
+      <div class="eo-ws-summary-item"><label>${uiText('Requesting Unit','Unit Pemohon')}</label><div>${escapeHtml(activity.unitPemohon||'—')}</div></div>
+      <div class="eo-ws-summary-item"><label>${uiText('CM PIC','PIC Tim CM')}</label><div>${escapeHtml(activity.picTimCM||'—')}</div></div>
+      <div class="eo-ws-summary-item"><label>${uiText('Status','Status')}</label><div>${escapeHtml(activity.statusNorm||normalizeStatus(activity.status)||'—')}</div></div>
+    </div></div></div>
+    ${started?`<div class="eo-ws-section"><div class="eo-ws-section-head"><strong>${uiText('Next Actions','Aksi Terdekat')}</strong><button type="button" class="btn btn-outline btn-sm" data-eo-ws-nav="checklist">${uiText('Open Checklist','Buka Checklist')}</button></div><div class="eo-ws-section-body"><div class="eo-ws-next-list">${nextItems.length?nextItems.map(x=>`<div class="eo-ws-next-item"><span class="eo-ws-next-dot"></span><div class="eo-ws-next-copy"><strong>${escapeHtml(x.task||'—')}</strong><small>${cmEoPhaseLabel(x.phase)}${x.pic?` · PIC: ${escapeHtml(x.pic)}`:''}</small></div><span class="eo-chip ${x.dueDate&&x.dueDate<today?'overdue':''}">${x.dueDate?cmEoWorkspaceDateLabel(x.dueDate):uiText('No date','Tanpa tanggal')}</span></div>`).join(''):`<div class="eo-ws-empty-phase">${uiText('All checklist items are complete.','Semua item checklist sudah selesai.')}</div>`}</div></div></div>`:''}`;
+  };
+  const timelineHtml=()=>{
+    if(!started)return onboardingHtml();
+    return `<div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${uiText('PIC & Timeline','PIC & Timeline')}</strong><small>${uiText('Assign ownership and target dates without opening each checklist card.','Atur penanggung jawab dan target tanggal tanpa membuka setiap kartu checklist.')}</small></div></div><div class="eo-ws-section"><div class="eo-ws-timeline-wrap"><table class="eo-ws-timeline"><thead><tr><th>${uiText('Task','Item')}</th><th>${uiText('Phase','Fase')}</th><th>PIC</th><th>${uiText('Target','Target')}</th><th>${uiText('Priority','Prioritas')}</th><th>${uiText('Status','Status')}</th></tr></thead><tbody>${items.length?items.map(x=>`<tr data-eo-ws-time-id="${escapeHtml(x.id)}"><td><strong>${escapeHtml(x.task||'—')}</strong></td><td>${cmEoPhaseLabel(x.phase)}</td><td><input data-eo-ws-time-field="pic" value="${escapeHtml(x.pic)}" placeholder="Nama PIC"></td><td><input type="date" data-eo-ws-time-field="dueDate" value="${escapeHtml(x.dueDate)}"></td><td><select data-eo-ws-time-field="priority"><option value="High" ${x.priority==='High'?'selected':''}>${cmEoPriorityLabel('High')}</option><option value="Medium" ${x.priority==='Medium'?'selected':''}>${cmEoPriorityLabel('Medium')}</option><option value="Low" ${x.priority==='Low'?'selected':''}>${cmEoPriorityLabel('Low')}</option></select></td><td><span class="eo-chip">${x.done?uiText('Done','Selesai'):uiText('Open','Belum')}</span></td></tr>`).join(''):`<tr><td colspan="6">—</td></tr>`}</tbody></table></div></div>`;
+  };
+  const documentsHtml=()=>{
+    const notulaCount=cmEoWorkspaceSafeCount(()=>parseActivityNotula(activity.notula).length);
+    const docCount=cmEoWorkspaceSafeCount(()=>parseDokumentasi(activity.dokumentasi).length);
+    return `<div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${uiText('Event Documents','Dokumen Event')}</strong><small>${uiText('Uses the document fields already attached to this Activity.','Menggunakan field dokumen yang sudah melekat pada Activity ini.')}</small></div><div class="eo-ws-toolbar-actions"><button type="button" class="btn btn-gold btn-sm" data-eo-ws-edit-activity>${uiText('Edit / Upload Documents','Edit / Upload Dokumen')}</button></div></div>
+    <div class="eo-ws-doc-list">
+      <div class="eo-ws-doc"><label>${t('fieldInvitation')}</label><div>${renderDocValue(activity.undangan,activity.undanganUrl)}</div></div>
+      <div class="eo-ws-doc"><label>${t('fieldAssignmentLetter')}</label><div>${renderDocValue(activity.suratTugas,activity.suratTugasUrl)}</div></div>
+      <div class="eo-ws-doc"><label>${t('fieldMaterials')}</label><div>${renderMateriValue(activity.materi)}</div></div>
+      <div class="eo-ws-doc"><label>${uiText('Meeting Notes / Minutes','Notula Rapat')}</label><div>${notulaCount} ${uiText('file(s)','file')}</div></div>
+      <div class="eo-ws-doc"><label>${t('fieldDocumentation')}</label><div>${docCount} ${uiText('image(s)','gambar')}</div></div>
+      <div class="eo-ws-doc"><label>${uiText('Objective / Output','Tujuan / Output')}</label><div>${escapeHtml(activity.tujuanOutput||'—')}</div></div>
+    </div>`;
+  };
+  const phaseHtml=(phase)=>{
+    const heading=phase==='Execution'?uiText('Execution Control','Kontrol Pelaksanaan'):uiText('Post-Event Closure','Penutupan Pasca Event');
+    const sub=phase==='Execution'?uiText('Keep live operational tasks, issues and evidence together during the event.','Kelola tugas operasional, isu, dan evidence selama event pada satu tempat.'):uiText('Close documentation, evaluation and follow-up items after the event.','Tutup dokumentasi, evaluasi, dan tindak lanjut setelah event.');
+    return `<div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${heading}</strong><small>${sub}</small></div></div>${checklistHtml(phase)}`;
+  };
+  async function saveWorkspace(){
+    if(saving||!dirty)return;
+    saving=true;setDirty(true);
+    const idx=state.agendas.findIndex(x=>x.id===activityId);if(idx<0){saving=false;return;}
+    const previous=JSON.parse(JSON.stringify(state.agendas[idx]));
+    const merged={...state.agendas[idx],eoEnabled:true,eoChecklist:JSON.stringify(items),eoWorkspaceInitialized:initialized,updatedBy:getCurrentUserEmail()||null,updatedAt:new Date().toISOString()};
+    const saved=preprocess([merged])[0];state.agendas[idx]=saved;
+    try{
+      await persist();
+      const diff=cmActivityAuditEoDiff(previous,saved);
+      if(diff.length)await cmActivityLogRecord(saved,'eo_checklist_changed',[uiText('Updated from Kelola Event workspace.','Diperbarui dari workspace Kelola Event.'),...diff],{category:'ACTIVITY'});
+      activity=saved;dirty=false;saving=false;refreshAll();render();toast(uiText('Event workspace saved.','Workspace event tersimpan.'),'success');
+    }catch(e){saving=false;setDirty(true);toast(uiText('Failed to save Event workspace.','Gagal menyimpan workspace Event.'),'error');}
+  }
+  function bindEditor(){
+    modal.querySelectorAll('[data-eo-ws-id]').forEach(row=>{
+      const item=items.find(x=>x.id===row.dataset.eoWsId);if(!item)return;
+      row.querySelectorAll('[data-eo-ws-field]').forEach(el=>{
+        const field=el.dataset.eoWsField;
+        const evt=(field==='task'||field==='pic'||field==='notes')?'input':'change';
+        el.addEventListener(evt,()=>{
+          item[field]=field==='done'?el.checked:el.value;
+          if(field==='done'){item.completedAt=el.checked?new Date().toISOString():'';item.completedBy=el.checked?(getCurrentUserEmail()||''):'';}
+          setDirty(true);
+          if(field==='done')render();
+        });
+      });
+      row.querySelector('[data-eo-ws-remove]')?.addEventListener('click',()=>{items=items.filter(x=>x.id!==item.id);setDirty(true);render();});
+    });
+    modal.querySelectorAll('[data-eo-ws-time-id]').forEach(row=>{
+      const item=items.find(x=>x.id===row.dataset.eoWsTimeId);if(!item)return;
+      row.querySelectorAll('[data-eo-ws-time-field]').forEach(el=>{
+        const field=el.dataset.eoWsTimeField;el.addEventListener(field==='pic'?'input':'change',()=>{item[field]=el.value;setDirty(true);});
+      });
+    });
+  }
+  function render(){
+    activity=state.agendas.find(x=>x.id===activityId)||activity;
+    const p=cmEoProgress(items);
+    modal.innerHTML=`<div class="modal-box eo-workspace-modal"><div class="modal-head"><div class="eo-ws-headcopy"><h2>${cmEoWorkspaceIcon()} ${uiText('Manage Event','Kelola Event')}</h2><div class="eo-ws-subtitle">${escapeHtml(activity.namaKegiatan)} · ${cmEoWorkspaceDateLabel(activity.tglMulai)} · EO ${p.pct}%</div></div><button class="modal-close" id="eoWsClose">&times;</button></div><div class="modal-body"><div class="eo-ws-nav">${steps.map((x,i)=>`<button type="button" class="eo-ws-tab ${active===x[0]?'active':''}" data-eo-ws-nav="${x[0]}"><span class="eo-ws-stepno">${i+1}</span>${x[1]}</button>`).join('')}</div><div class="eo-ws-content">${active==='overview'?overviewHtml():active==='checklist'?checklistHtml():active==='timeline'?timelineHtml():active==='documents'?documentsHtml():active==='execution'?phaseHtml('Execution'):phaseHtml('Post Event')}</div></div><div class="modal-foot"><span id="eoWsSaveState" class="${dirty?'eo-ws-dirty':'eo-ws-saved'}">${dirty?uiText('Unsaved changes','Perubahan belum disimpan'):uiText('All changes saved','Semua perubahan tersimpan')}</span><div><button type="button" class="btn btn-outline btn-sm" id="eoWsDone">${uiText('Close','Tutup')}</button><button type="button" class="btn btn-gold btn-sm" id="eoWsSave" ${dirty?'':'disabled'}>${uiText('Save Changes','Simpan Perubahan')}</button></div></div></div>`;
+    modal.classList.remove('hidden');
+    document.getElementById('eoWsClose')?.addEventListener('click',closeWorkspace);
+    document.getElementById('eoWsDone')?.addEventListener('click',closeWorkspace);
+    document.getElementById('eoWsSave')?.addEventListener('click',saveWorkspace);
+    modal.onclick=e=>{if(e.target===modal)closeWorkspace();};
+    modal.querySelectorAll('[data-eo-ws-nav]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.eoWsNav;render();}));
+    modal.querySelectorAll('[data-eo-ws-edit-activity]').forEach(b=>b.addEventListener('click',jumpToEditActivity));
+    document.getElementById('eoWsUseTemplate')?.addEventListener('click',()=>{items=cmEoDefaultChecklist(activity.tglMulai);initialized=true;started=true;setDirty(true);active='checklist';render();});
+    document.getElementById('eoWsStartBlank')?.addEventListener('click',()=>{items=[];initialized=true;started=true;setDirty(true);active='checklist';render();});
+    document.getElementById('eoWsReloadTemplate')?.addEventListener('click',()=>{if(items.length&&!confirm(uiText('Replace the current EO checklist with the recommended template?','Ganti checklist EO saat ini dengan template rekomendasi?')))return;items=cmEoDefaultChecklist(activity.tglMulai);initialized=true;started=true;setDirty(true);render();});
+    document.getElementById('eoWsAddItem')?.addEventListener('click',()=>{
+      const phase=active==='execution'?'Execution':active==='post'?'Post Event':'Planning';
+      items.push({id:cmEoItemId(),phase,task:'',pic:'',dueDate:'',priority:'Medium',notes:'',done:false,completedAt:'',completedBy:''});started=true;setDirty(true);render();modal.querySelector('.eo-item:last-child .eo-task-input')?.focus();
+    });
+    bindEditor();
+    setDirty(dirty);
+  }
+  render();
+}
 function renderEoChecklistDetail(a){
   if(!cmIsEoEnabled(a?.eoEnabled))return '';
   const p=cmEoProgress(a?.eoChecklist),groups=['Planning','Execution','Post Event'];
@@ -5637,6 +5885,7 @@ function openDetail(id) {
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline btn-sm" id="detailHistory">${iconHistory()} ${uiText('History','Riwayat')}</button>
+      ${cmIsEoEnabled(a.eoEnabled)?`<button class="btn btn-outline btn-sm eo-manage-btn" id="detailManageEvent">${cmEoWorkspaceIcon()} ${uiText('Manage Event','Kelola Event')}</button>`:''}
       <button class="btn btn-outline btn-sm" id="detailEdit">${t('edit')}</button>
       <button class="btn btn-danger btn-sm" id="detailDelete">${t('delete')}</button>
     </div>
@@ -5649,6 +5898,7 @@ function openDetail(id) {
   cmWireActivityNotulaDetail(a,modal);
   modal.querySelectorAll('[data-eo-detail-toggle]').forEach(btn=>btn.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();btn.disabled=true;await cmToggleEoChecklistItem(id,btn.dataset.eoDetailToggle);}));
   document.getElementById('detailHistory')?.addEventListener('click',()=>{modal.classList.add('hidden');openActivityLog(id,{returnToDetail:true,activity:a});});
+  document.getElementById('detailManageEvent')?.addEventListener('click',()=>{modal.classList.add('hidden');openEoWorkspace(id,{returnToDetail:true});});
   document.getElementById('detailEdit').addEventListener('click', () => { modal.classList.add('hidden'); openForm(id); });
   document.getElementById('detailDelete').addEventListener('click', () => { modal.classList.add('hidden'); openConfirmDelete(id); });
   // Note: no click handler on .doc-download-link — it's a plain native <a href target="_blank">.
@@ -6126,13 +6376,12 @@ function openForm(id) {
             <div class="eo-toggle-card">
               <div class="eo-toggle-copy">
                 <span class="eo-toggle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><path d="M5 4h14v16H5z"/><path d="M8 4V2M16 4V2"/></svg></span>
-                <div><strong>${uiText('EO / Event Organizer Mode','Mode EO / Event Organizer')}</strong><small>${uiText('Turn on for activities that require event preparation. A structured checklist will appear and its progress will be monitored in Activity Details.','Aktifkan untuk activity yang membutuhkan pengelolaan acara. Checklist terstruktur akan muncul dan progress-nya dapat dipantau di Detail Activity.')}</small></div>
+                <div><strong>${uiText('EO / Event Organizer','EO / Event Organizer')}</strong><small>${uiText('Turn on if this Activity needs event management. After saving, use Kelola Event for checklist, PIC, timeline, execution and post-event follow-up.','Aktifkan jika Activity ini memerlukan pengelolaan event. Setelah disimpan, gunakan Kelola Event untuk checklist, PIC, timeline, pelaksanaan, dan tindak lanjut pasca acara.')}</small></div>
               </div>
-              <label class="eo-switch" title="${uiText('Enable EO checklist','Aktifkan checklist EO')}"><input type="checkbox" id="eoToggle" ${eoEnabled?'checked':''}><span></span></label>
+              <label class="eo-switch" title="${uiText('Enable Event Organizer workspace','Aktifkan workspace Event Organizer')}"><input type="checkbox" id="eoToggle" ${eoEnabled?'checked':''}><span></span></label>
             </div>
             <input type="hidden" name="eoEnabled" id="eoEnabledHidden" value="${eoEnabled?'true':'false'}">
             <input type="hidden" name="eoChecklist" id="eoChecklistHidden" value="${escapeHtml(JSON.stringify(eoChecklist))}">
-            <div class="eo-checklist-panel ${eoEnabled?'':'hidden'}" id="eoChecklistPanel"></div>
           </div>
           <div class="form-field">
             <label>${t('fieldInvitation')}</label>
@@ -6178,6 +6427,7 @@ function openForm(id) {
     </div>
     <div class="modal-foot">
       <button class="btn btn-outline btn-sm" id="cancelForm">${t('cancel')}</button>
+      <button class="btn btn-outline btn-sm ${eoEnabled?'':'hidden'}" id="submitAndManageEvent">${uiText('Save & Manage Event','Simpan & Kelola Event')}</button>
       <button class="btn btn-gold btn-sm" id="submitForm">${a ? t('saveChanges') : t('addActivity')}</button>
     </div>
   </div>`;
@@ -6271,34 +6521,18 @@ function openForm(id) {
   setupUnitField('unitPemohonSelect', 'unitPemohonHidden', 'unitPemohonNewInput', v('unitPemohon'));
   setupUnitField('unitAsalNarsumSelect', 'unitAsalNarsumHidden', 'unitAsalNarsumNewInput', v('unitAsalNarsum'));
 
-  // EO / Event Organizer checklist — local edits are serialized into the Activity record on Save.
-  (function setupEoChecklistField(){
-    const toggle=document.getElementById('eoToggle'),enabledHidden=document.getElementById('eoEnabledHidden'),hidden=document.getElementById('eoChecklistHidden'),panel=document.getElementById('eoChecklistPanel');
-    if(!toggle||!enabledHidden||!hidden||!panel)return;
-    let items=cmParseEoChecklist(hidden.value);
-    const sync=()=>{hidden.value=JSON.stringify(items);};
-    const readStart=()=>document.querySelector('#agendaForm [name="tglMulai"]')?.value||dayjs().format('YYYY-MM-DD');
-    function render(){
-      const p=cmEoProgress(items);
-      panel.innerHTML=`<div class="eo-checklist-head"><div><div class="eo-progress-copy"><strong>${uiText('EO Checklist','Checklist EO')}</strong><span>${p.done}/${p.total} ${uiText('completed','selesai')} · ${p.pct}%</span></div><div class="eo-progress-track"><div class="eo-progress-fill" style="width:${p.pct}%"></div></div></div><div class="eo-head-actions"><button type="button" class="btn btn-outline btn-sm" id="eoLoadTemplate">${uiText('Recommended Template','Template Rekomendasi')}</button><button type="button" class="btn btn-gold btn-sm" id="eoAddItem">+ ${uiText('Add Item','Tambah Item')}</button></div></div><div class="eo-list">${items.length?items.map(x=>`<div class="eo-item ${x.done?'is-done':''}" data-eo-id="${escapeHtml(x.id)}"><div class="eo-item-main"><label class="eo-done-box" title="${uiText('Mark complete','Tandai selesai')}"><input type="checkbox" data-eo-field="done" ${x.done?'checked':''}></label><input class="eo-task-input" type="text" data-eo-field="task" value="${escapeHtml(x.task)}" placeholder="${uiText('Checklist item','Item checklist')}"><select class="eo-phase-select" data-eo-field="phase"><option value="Planning" ${x.phase==='Planning'?'selected':''}>${cmEoPhaseLabel('Planning')}</option><option value="Execution" ${x.phase==='Execution'?'selected':''}>${cmEoPhaseLabel('Execution')}</option><option value="Post Event" ${x.phase==='Post Event'?'selected':''}>${cmEoPhaseLabel('Post Event')}</option></select><button type="button" class="eo-remove" data-eo-remove title="${uiText('Remove item','Hapus item')}">&times;</button></div><div class="eo-item-meta"><div class="eo-meta-field"><label>PIC</label><input type="text" data-eo-field="pic" value="${escapeHtml(x.pic)}" placeholder="Nama PIC"></div><div class="eo-meta-field"><label>${uiText('Due date','Target tanggal')}</label><input type="date" data-eo-field="dueDate" value="${escapeHtml(x.dueDate)}"></div><div class="eo-meta-field"><label>${uiText('Priority','Prioritas')}</label><select data-eo-field="priority"><option value="High" ${x.priority==='High'?'selected':''}>${cmEoPriorityLabel('High')}</option><option value="Medium" ${x.priority==='Medium'?'selected':''}>${cmEoPriorityLabel('Medium')}</option><option value="Low" ${x.priority==='Low'?'selected':''}>${cmEoPriorityLabel('Low')}</option></select></div><div class="eo-meta-field eo-notes-field"><label>${uiText('Notes / evidence','Catatan / evidence')}</label><textarea data-eo-field="notes" placeholder="${uiText('Optional note, dependency, vendor/contact, evidence...','Catatan opsional, dependency, vendor/kontak, evidence...')}">${escapeHtml(x.notes)}</textarea></div></div></div>`).join(''):`<div class="eo-empty">${uiText('No checklist yet. Use the recommended template or add your own item.','Belum ada checklist. Gunakan template rekomendasi atau tambah item sendiri.')}</div>`}</div>`;
-      panel.querySelectorAll('[data-eo-id]').forEach(row=>{
-        const id=row.dataset.eoId,item=items.find(z=>z.id===id);if(!item)return;
-        row.querySelectorAll('[data-eo-field]').forEach(el=>{
-          const field=el.dataset.eoField;
-          const evt=(field==='task'||field==='pic'||field==='notes')?'input':'change';
-          el.addEventListener(evt,()=>{item[field]=field==='done'?el.checked:el.value;if(field==='done'){item.completedAt=el.checked?new Date().toISOString():'';item.completedBy=el.checked?(getCurrentUserEmail()||''):'';}sync();if(field==='done')render();});
-        });
-        row.querySelector('[data-eo-remove]')?.addEventListener('click',()=>{items=items.filter(z=>z.id!==id);sync();render();});
-      });
-      document.getElementById('eoAddItem')?.addEventListener('click',()=>{items.push({id:cmEoItemId(),phase:'Planning',task:'',pic:'',dueDate:'',priority:'Medium',notes:'',done:false,completedAt:'',completedBy:''});sync();render();panel.querySelector('.eo-item:last-child .eo-task-input')?.focus();});
-      document.getElementById('eoLoadTemplate')?.addEventListener('click',()=>{
-        if(items.length&&!confirm(uiText('Replace the current EO checklist with the recommended template?','Ganti checklist EO saat ini dengan template rekomendasi?')))return;
-        items=cmEoDefaultChecklist(readStart());sync();render();
-      });
-    }
-    function setEnabled(on){enabledHidden.value=on?'true':'false';panel.classList.toggle('hidden',!on);if(on&&!items.length){items=cmEoDefaultChecklist(readStart());sync();}if(on)render();}
-    toggle.addEventListener('change',()=>setEnabled(toggle.checked));
-    if(toggle.checked)render();
+  // EO / Event Organizer — keep Add/Edit Activity compact. Checklist management lives in Kelola Event.
+  (function setupEoToggleOnly(){
+    const toggle=document.getElementById('eoToggle');
+    const enabledHidden=document.getElementById('eoEnabledHidden');
+    const manageBtn=document.getElementById('submitAndManageEvent');
+    if(!toggle||!enabledHidden)return;
+    const sync=()=>{
+      enabledHidden.value=toggle.checked?'true':'false';
+      manageBtn?.classList.toggle('hidden',!toggle.checked);
+    };
+    toggle.addEventListener('change',sync);
+    sync();
   })();
 
   document.getElementById('btnManageCategories').addEventListener('click', (e) => {
@@ -6319,6 +6553,7 @@ function openForm(id) {
   // Jangan tutup form saat pengguna tidak sengaja mengklik area overlay di luar form.
   // Form hanya ditutup melalui tombol X, Cancel, atau setelah berhasil disimpan.
   document.getElementById('submitForm').addEventListener('click', () => submitForm());
+  document.getElementById('submitAndManageEvent')?.addEventListener('click', () => submitForm({openEvent:true}));
   document.getElementById('btnPickMateriFromKb').addEventListener('click', () => {
     openKbPicker((it) => {
       const input = document.querySelector('#agendaForm [name="materi"]');
@@ -6524,7 +6759,8 @@ function getCurrentUserEmail() {
   return (window.fbAuth && window.fbAuth.currentUser && window.fbAuth.currentUser.email) || null;
 }
 
-async function submitForm() {
+async function submitForm(options={}) {
+  const openEventAfterSave=!!options.openEvent;
   const form = document.getElementById('agendaForm');
   if (!form.checkValidity()) { form.reportValidity(); return; }
   const fd = new FormData(form);
@@ -6582,6 +6818,7 @@ async function submitForm() {
     }
   }
   refreshAll();
+  if(openEventAfterSave&&saved&&cmIsEoEnabled(saved.eoEnabled)) openEoWorkspace(saved.id);
 }
 
 /* ============================================================
@@ -6763,6 +7000,7 @@ const FIELD_MATCHERS = [
   ['status', ['status','progres','capaian']],
   ['eoEnabled', ['eo enabled','mode eo','event organizer','eo aktif']],
   ['eoChecklist', ['eo checklist json','checklist eo','eo checklist']],
+  ['eoWorkspaceInitialized', ['eo workspace initialized','eo initialized','workspace eo']],
   ['catatan', ['catatan','keterangan','follow up','notes','note']],
   ['no', ['no','nomor']],
 ];
@@ -7075,6 +7313,7 @@ function exportToExcel() {
     'EO Enabled': cmIsEoEnabled(a.eoEnabled) ? 'Yes' : 'No',
     'EO Progress': cmIsEoEnabled(a.eoEnabled) ? `${cmEoProgress(a.eoChecklist).done}/${cmEoProgress(a.eoChecklist).total}` : '',
     'EO Checklist JSON': cmIsEoEnabled(a.eoEnabled) ? String(a.eoChecklist || '[]') : '',
+    'EO Workspace Initialized': cmIsEoEnabled(a.eoWorkspaceInitialized) ? 'Yes' : 'No',
     'Notes': a.catatan,
   }));
   const ws = XLSX.utils.json_to_sheet(data);
@@ -8778,7 +9017,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.22-EO-CHECKLIST-20260821';
+const CM_APP_BUILD='CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821';
 const CM_MANUAL_VERSION='19.17';
 const CM_MANUAL_UPDATED='19 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
