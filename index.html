@@ -12,9 +12,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.24-EO-TASK-LAYOUT-ORDERING-20260821">
+<meta name="cm-build" content="CM-DASHBOARD-V19.25-EO-ALIGN-REMINDER-20260821">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
-<!-- Build v19.24: EO task cards now keep PIC, Due Date, Priority, and Notes/Evidence aligned in one horizontal row with Notes/Evidence expanding to the right edge; adds manual task move up/down controls while preserving the EO workspace and all prior dashboard features -->
+<!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -821,24 +821,28 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .eo-list{padding:10px;display:flex;flex-direction:column;gap:8px;}
 .eo-item{border:1px solid var(--border);border-radius:11px;background:#fff;padding:10px 11px;}
 .eo-item.is-done{background:#F7FBF9;border-color:#CDE6DC;}
-.eo-item-main{display:grid;grid-template-columns:28px minmax(220px,1fr) 156px 106px;gap:8px;align-items:center;}
+.eo-item-main{display:grid;grid-template-columns:28px minmax(220px,1fr) 156px 144px;gap:8px;align-items:end;}
 .eo-done-box{display:flex;align-items:center;justify-content:center;}
 .eo-done-box input{width:17px;height:17px;accent-color:var(--green);cursor:pointer;}
 .eo-item.is-done .eo-task-input{text-decoration:line-through;color:var(--ink-500);}
 .eo-task-input{font-weight:650!important;background:#fff!important;}
 .eo-item select,.eo-item input,.eo-item textarea{font-size:11.5px!important;padding:7px 8px!important;border-radius:8px!important;}
-.eo-item-actions{display:flex;align-items:center;justify-content:flex-end;gap:4px;}
-.eo-order-btn,.eo-remove{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink-400);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0!important;line-height:1;}
+.eo-item-actions{display:flex;align-items:flex-end;justify-content:flex-end;gap:4px;align-self:end;}
+.eo-order-btn,.eo-remove,.eo-reminder-btn{width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--ink-400);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0!important;line-height:1;flex:0 0 30px;}
+.eo-reminder-btn{color:#9A7412;border-color:#E7D8A9;background:#FFFDF7;}
+.eo-reminder-btn:hover,.eo-reminder-btn:focus-visible{background:var(--gold-100);border-color:var(--gold-400);color:var(--navy-900);outline:none;}
+.eo-reminder-btn.linked{background:var(--gold-100);border-color:var(--gold-500);color:var(--navy-900);box-shadow:inset 0 0 0 1px rgba(200,168,75,.15);}
+.eo-reminder-btn svg{width:14px;height:14px;}
 .eo-order-btn{font-size:15px;font-weight:800;color:var(--navy-700);}
 .eo-order-btn:hover:not(:disabled){background:var(--blue-bg);border-color:#BFD2F3;color:var(--blue);}
 .eo-order-btn:disabled{opacity:.28;cursor:not-allowed;background:#F8F9FC;color:var(--ink-300);}
 .eo-remove{font-size:17px;}
 .eo-remove:hover{background:var(--red-bg);border-color:#E9BBBB;color:var(--red);}
-.eo-item-meta{display:grid;grid-template-columns:190px 145px 115px minmax(280px,1fr);gap:10px;margin-top:8px;padding-left:36px;align-items:end;}
-.eo-meta-field{min-width:0;}
-.eo-meta-field label{display:block!important;font-size:9.5px!important;color:var(--ink-400)!important;margin:0 0 3px!important;font-weight:750!important;text-transform:uppercase;letter-spacing:.035em;}
-.eo-meta-field input,.eo-meta-field select,.eo-meta-field textarea{width:100%!important;min-width:0;}
-.eo-meta-field textarea{min-height:33px!important;height:33px;resize:vertical;line-height:1.35;}
+.eo-item-meta{display:grid;grid-template-columns:190px 145px 140px minmax(320px,1fr);gap:10px;margin-top:8px;padding-left:36px;align-items:end;}
+.eo-meta-field{min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-self:stretch;}
+.eo-meta-field label{display:flex!important;align-items:flex-end;min-height:13px;font-size:9.5px!important;color:var(--ink-400)!important;margin:0 0 4px!important;font-weight:750!important;text-transform:uppercase;letter-spacing:.035em;}
+.eo-meta-field input,.eo-meta-field select,.eo-meta-field textarea{width:100%!important;min-width:0;height:36px!important;min-height:36px!important;margin-top:auto;}
+.eo-meta-field textarea{resize:vertical;line-height:1.35;padding-top:8px!important;padding-bottom:8px!important;}
 .eo-empty{padding:23px 16px;text-align:center;color:var(--ink-500);font-size:11.5px;line-height:1.5;}
 .eo-mini-badge{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:2px 7px;border-radius:20px;background:#EDF2FF;color:var(--navy-700);font-size:9.5px;font-weight:800;vertical-align:1px;white-space:nowrap;}
 .eo-detail-card{border:1px solid #D7E1F2;border-radius:12px;background:#FBFCFF;overflow:hidden;margin-top:3px;}
@@ -891,6 +895,11 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .eo-ws-section{border:1px solid var(--border);border-radius:12px;background:#fff;overflow:hidden;margin-top:12px;}
 .eo-ws-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-bottom:1px solid var(--border);background:#FBFCFF;}
 .eo-ws-section-head strong{font:750 12px 'Sora',sans-serif;color:var(--ink-900);}
+.eo-ws-section-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.eo-ws-section-actions .btn svg{width:14px;height:14px;flex:0 0 14px;}
+.eo-ws-reminder-cell{text-align:center;white-space:nowrap;}
+.eo-ws-reminder-cell .eo-reminder-btn{margin:0 auto;}
+#cmReminderModal{z-index:180;}
 .eo-ws-section-body{padding:12px 13px;}
 .eo-ws-activity-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
 .eo-ws-summary-item{padding:9px 10px;border:1px solid var(--border-soft);border-radius:9px;background:#FBFCFE;min-width:0;}
@@ -945,7 +954,7 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
   .eo-toggle-card{align-items:flex-start;}
   .eo-checklist-head{grid-template-columns:1fr;}
   .eo-head-actions{justify-content:flex-start;}
-  .eo-item-main{grid-template-columns:28px minmax(0,1fr) 106px;}
+  .eo-item-main{grid-template-columns:28px minmax(0,1fr) 144px;}
   .eo-item-main .eo-phase-select{grid-column:2/3;}
   .eo-item-actions{grid-column:3/4;grid-row:1/3;align-self:center;}
   .eo-item-meta{grid-template-columns:1fr 1fr;padding-left:36px;}
@@ -2295,6 +2304,9 @@ function cmReminderNormalize(r) {
     leadDays:Math.max(0,Number(r.leadDays)||0),
     repeatMode,repeatEvery,repeatEnd,modes,
     active:r.active!==false,completedAt:r.completedAt||null,
+    sourceType:String(r.sourceType||''),
+    sourceActivityId:String(r.sourceActivityId||''),
+    sourceTaskId:String(r.sourceTaskId||''),
     createdAt:r.createdAt||new Date().toISOString(),updatedAt:r.updatedAt||new Date().toISOString()
   };
 }
@@ -2437,9 +2449,11 @@ function cmReminderRenderBanners(rows=cmReminderLoad()) {
   if(!current.length){host.classList.add('hidden');host.innerHTML='';return;}const visible=current.slice(0,2);
   host.innerHTML=visible.map(r=>{const st=cmReminderState(r),urgent=['today','urgent','overdue'].includes(st.kind);return `<div class="cm-reminder-banner ${urgent?'urgent':''}" data-reminder-id="${escapeHtml(r.id)}"><div class="cm-reminder-banner-icon">🔔</div><div class="cm-reminder-banner-text"><strong>${escapeHtml(r.name||uiText('Reminder','Pengingat'))}</strong><br>${escapeHtml((String(r.message||'').trim().replace(/[.!?]+$/,'')+' '+uiText('on','tanggal')+' '+cmReminderFormatDate(r.dueDate)+'.').trim())}</div><span class="cm-reminder-banner-days">${escapeHtml(cmReminderStatusLabel(st))}</span><button type="button" class="cm-reminder-banner-dismiss" data-reminder-banner-dismiss="${escapeHtml(r.id)}" title="${uiText('Hide for today','Sembunyikan hari ini')}">&times;</button></div>`}).join('')+(current.length>2?`<div style="font-size:10px;color:var(--ink-500);padding:0 3px;">+${current.length-2} ${uiText('more reminders in Notification Center','reminder lain di Pusat Notifikasi')}</div>`:'');host.classList.remove('hidden');
 }
-function cmReminderOpenForm(id=null) {
+function cmReminderOpenForm(id=null,preset=null,onSaved=null) {
   const rows=cmReminderLoad(),existing=id?rows.find(x=>x.id===id):null;
-  const r=cmReminderNormalize(existing||{name:'',message:'',dueDate:'',leadDays:12,repeatMode:'daily_due',repeatEvery:5,repeatEnd:'due',modes:['ticker','popup'],active:true});
+  const defaults={name:'',message:'',dueDate:'',leadDays:12,repeatMode:'daily_due',repeatEvery:5,repeatEnd:'due',modes:['ticker','popup'],active:true};
+  const seed=existing||{...defaults,...((preset&&typeof preset==='object')?preset:{})};
+  const r=cmReminderNormalize(seed);
   const modal=document.getElementById('cmReminderModal');if(!modal)return;
   const opt=(value,en,idn)=>`<option value="${value}" ${r.repeatMode===value?'selected':''}>${uiText(en,idn)}</option>`;
   modal.innerHTML=`<div class="modal-box" style="max-width:720px;"><div class="modal-head"><h2>${existing?uiText('Edit Reminder','Edit Reminder'):uiText('Create Reminder','Buat Reminder')}</h2><button class="modal-close" type="button" id="cmReminderFormClose">&times;</button></div>
@@ -2481,8 +2495,10 @@ function cmReminderOpenForm(id=null) {
     const name=document.getElementById('cmRName').value.trim(),message=document.getElementById('cmRMessage').value.trim(),dueDate=document.getElementById('cmRDue').value,leadDays=Number(document.getElementById('cmRLead').value),repeatMode=document.getElementById('cmRRepeat').value,repeatEvery=Number(document.getElementById('cmRRepeatEvery').value),repeatEnd=document.getElementById('cmRRepeatEnd').value;
     const modes=[];if(document.getElementById('cmRModeTicker').checked)modes.push('ticker');if(document.getElementById('cmRModeBanner').checked)modes.push('banner');if(document.getElementById('cmRModePopup').checked)modes.push('popup');
     if(!name){toast(uiText('Name is required','Nama wajib diisi'),'error');return;}if(!message){toast(uiText('Message is required','Pesan wajib diisi'),'error');return;}if(!cmReminderParseDate(dueDate)){toast(uiText('Due date is required','Tanggal jatuh tempo wajib diisi'),'error');return;}if(!Number.isFinite(leadDays)||leadDays<0){toast(uiText('H- reminder must be 0 or greater','Reminder H- harus 0 atau lebih'),'error');return;}if(repeatMode==='custom'&&(!Number.isFinite(repeatEvery)||repeatEvery<1)){toast(uiText('Custom repeat interval must be at least 1 day','Interval pengulangan kustom minimal 1 hari'),'error');return;}
-    const now=new Date().toISOString(),data=cmReminderNormalize({...(existing||{}),id:existing?.id||uid('RMD'),name,message,dueDate,leadDays,repeatMode,repeatEvery,repeatEnd,modes,active:true,completedAt:existing?.completedAt||null,createdAt:existing?.createdAt||now,updatedAt:now});
-    const next=existing?rows.map(x=>x.id===existing.id?data:x):[...rows,data];cmReminderSave(next);close();cmReminderOpenPanel();setTimeout(()=>cmReminderMaybePopup(true),80);
+    const now=new Date().toISOString(),data=cmReminderNormalize({...(existing||{}),id:existing?.id||uid('RMD'),name,message,dueDate,leadDays,repeatMode,repeatEvery,repeatEnd,modes,active:true,completedAt:existing?.completedAt||null,sourceType:r.sourceType||'',sourceActivityId:r.sourceActivityId||'',sourceTaskId:r.sourceTaskId||'',createdAt:existing?.createdAt||now,updatedAt:now});
+    const next=existing?rows.map(x=>x.id===existing.id?data:x):[...rows,data];cmReminderSave(next);close();
+    if(typeof onSaved==='function'){try{onSaved(data);}catch(e){console.warn('Reminder onSaved callback failed',e);}}
+    else{cmReminderOpenPanel();setTimeout(()=>cmReminderMaybePopup(true),80);}
   });
 }
 function cmReminderDelete(id){const rows=cmReminderLoad(),r=rows.find(x=>x.id===id);if(!r)return;if(!confirm(uiText(`Delete reminder for ${r.name}?`,`Hapus reminder untuk ${r.name}?`)))return;cmReminderSave(rows.filter(x=>x.id!==id),true);toast(uiText('Reminder deleted','Reminder dihapus'),'success');}
@@ -5649,6 +5665,40 @@ function cmEoMiniBadge(a){
 }
 function cmEoPriorityLabel(v){return v==='High'?uiText('High','Tinggi'):v==='Low'?uiText('Low','Rendah'):uiText('Medium','Sedang');}
 function cmEoPhaseLabel(v){return v==='Execution'?uiText('Execution','Pelaksanaan'):v==='Post Event'?uiText('Post Event','Pasca Acara'):uiText('Planning','Persiapan');}
+function cmEoReminderIcon(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>`;}
+function cmEoFindReminder(activityId,taskId='__event__'){
+  return cmReminderLoad().find(r=>r.sourceType==='eo'&&r.sourceActivityId===String(activityId||'')&&r.sourceTaskId===String(taskId||'__event__'))||null;
+}
+function cmEoReminderRecipient(activity,item=null){
+  return String(item?.pic||activity?.picTimCM||getCurrentUserEmail?.()||uiText('EO Team','Tim EO')).trim()||uiText('EO Team','Tim EO');
+}
+function cmEoOpenTaskReminder(activity,item,onSaved=null){
+  if(!activity||!item)return;
+  if(!item.dueDate){toast(uiText('Set a due date for this task before adding a reminder.','Isi Due Date task terlebih dahulu sebelum menambahkan reminder.'),'info');return;}
+  const linked=cmEoFindReminder(activity.id,item.id);
+  if(linked){cmReminderOpenForm(linked.id,null,onSaved);return;}
+  const eventName=String(activity.namaKegiatan||uiText('Event','Event')).trim();
+  const taskName=String(item.task||uiText('EO task','Task EO')).trim();
+  cmReminderOpenForm(null,{
+    name:cmEoReminderRecipient(activity,item),
+    message:uiText(`EO task “${taskName}” for “${eventName}” must be completed`,`Task EO “${taskName}” untuk “${eventName}” harus diselesaikan`),
+    dueDate:item.dueDate,leadDays:3,repeatMode:'daily_due',repeatEvery:1,repeatEnd:'due',modes:['ticker','popup'],active:true,
+    sourceType:'eo',sourceActivityId:String(activity.id||''),sourceTaskId:String(item.id||'')
+  },onSaved);
+}
+function cmEoOpenEventReminder(activity,onSaved=null){
+  if(!activity)return;
+  if(!activity.tglMulai){toast(uiText('Set the event date before adding a reminder.','Isi tanggal event terlebih dahulu sebelum menambahkan reminder.'),'info');return;}
+  const linked=cmEoFindReminder(activity.id,'__event__');
+  if(linked){cmReminderOpenForm(linked.id,null,onSaved);return;}
+  const eventName=String(activity.namaKegiatan||uiText('Event','Event')).trim();
+  cmReminderOpenForm(null,{
+    name:cmEoReminderRecipient(activity),
+    message:uiText(`Event “${eventName}” will be held`,`Event “${eventName}” akan dilaksanakan`),
+    dueDate:activity.tglMulai,leadDays:3,repeatMode:'daily_due',repeatEvery:1,repeatEnd:'due',modes:['ticker','popup'],active:true,
+    sourceType:'eo',sourceActivityId:String(activity.id||''),sourceTaskId:'__event__'
+  },onSaved);
+}
 
 function cmEoWorkspaceIcon(){
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="icon"><path d="M9 11l2 2 4-4"/><path d="M5 5h14v15H5z"/><path d="M8 3v4M16 3v4M5 9h14"/></svg>`;
@@ -5695,6 +5745,7 @@ function openEoWorkspace(activityId,opts={}){
       <input class="eo-task-input" type="text" data-eo-ws-field="task" value="${escapeHtml(x.task)}" placeholder="${uiText('Checklist item','Item checklist')}">
       <select class="eo-phase-select" data-eo-ws-field="phase" ${phaseLocked?'disabled':''}><option value="Planning" ${x.phase==='Planning'?'selected':''}>${cmEoPhaseLabel('Planning')}</option><option value="Execution" ${x.phase==='Execution'?'selected':''}>${cmEoPhaseLabel('Execution')}</option><option value="Post Event" ${x.phase==='Post Event'?'selected':''}>${cmEoPhaseLabel('Post Event')}</option></select>
       <div class="eo-item-actions">
+        ${(()=>{const linked=cmEoFindReminder(activity.id,x.id);return `<button type="button" class="eo-reminder-btn ${linked?'linked':''}" data-eo-ws-reminder title="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}" aria-label="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}">${cmEoReminderIcon()}</button>`;})()}
         <button type="button" class="eo-order-btn" data-eo-ws-move="up" title="${uiText('Move task up','Naikkan task')}" aria-label="${uiText('Move task up','Naikkan task')}" ${canMoveUp?'':'disabled'}>&uarr;</button>
         <button type="button" class="eo-order-btn" data-eo-ws-move="down" title="${uiText('Move task down','Turunkan task')}" aria-label="${uiText('Move task down','Turunkan task')}" ${canMoveDown?'':'disabled'}>&darr;</button>
         <button type="button" class="eo-remove" data-eo-ws-remove title="${uiText('Remove item','Hapus item')}" aria-label="${uiText('Remove item','Hapus item')}">&times;</button>
@@ -5736,7 +5787,7 @@ function openEoWorkspace(activityId,opts={}){
       <div class="eo-ws-stat"><label>${uiText('Overdue','Terlambat')}</label><strong>${overdue}</strong><small>${uiText('past target date','melewati target tanggal')}</small></div>
       <div class="eo-ws-stat"><label>${uiText('Next deadline','Deadline Terdekat')}</label><strong style="font-size:14px;">${nextDue?cmEoWorkspaceDateLabel(nextDue):'—'}</strong><small>${nextDue?uiText('next open checklist target','target item terbuka berikutnya'):uiText('no upcoming deadline','tidak ada deadline')}</small></div>
     </div>`}
-    <div class="eo-ws-section"><div class="eo-ws-section-head"><strong>${uiText('Event Summary','Ringkasan Event')}</strong><button type="button" class="btn btn-outline btn-sm" data-eo-ws-edit-activity>${uiText('Edit Activity','Edit Activity')}</button></div><div class="eo-ws-section-body"><div class="eo-ws-activity-summary">
+    <div class="eo-ws-section"><div class="eo-ws-section-head"><strong>${uiText('Event Summary','Ringkasan Event')}</strong><div class="eo-ws-section-actions"><button type="button" class="btn btn-outline btn-sm" id="eoWsEventReminder">${cmEoReminderIcon()} ${cmEoFindReminder(activity.id,'__event__')?uiText('Edit Event Reminder','Edit Reminder Event'):uiText('Add Event Reminder','Tambah Reminder Event')}</button><button type="button" class="btn btn-outline btn-sm" data-eo-ws-edit-activity>${uiText('Edit Activity','Edit Activity')}</button></div></div><div class="eo-ws-section-body"><div class="eo-ws-activity-summary">
       <div class="eo-ws-summary-item"><label>${uiText('Date','Tanggal')}</label><div>${cmEoWorkspaceDateLabel(activity.tglMulai)}${activity.tglSelesai&&activity.tglSelesai!==activity.tglMulai?` – ${cmEoWorkspaceDateLabel(activity.tglSelesai)}`:''}</div></div>
       <div class="eo-ws-summary-item"><label>${uiText('Time','Waktu')}</label><div>${escapeHtml(activity.waktu||'—')}</div></div>
       <div class="eo-ws-summary-item"><label>${uiText('Location / Channel','Lokasi / Channel')}</label><div>${escapeHtml(activity.lokasiChannel||'—')}</div></div>
@@ -5748,7 +5799,7 @@ function openEoWorkspace(activityId,opts={}){
   };
   const timelineHtml=()=>{
     if(!started)return onboardingHtml();
-    return `<div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${uiText('PIC & Timeline','PIC & Timeline')}</strong><small>${uiText('Assign ownership and target dates without opening each checklist card.','Atur penanggung jawab dan target tanggal tanpa membuka setiap kartu checklist.')}</small></div></div><div class="eo-ws-section"><div class="eo-ws-timeline-wrap"><table class="eo-ws-timeline"><thead><tr><th>${uiText('Task','Item')}</th><th>${uiText('Phase','Fase')}</th><th>PIC</th><th>${uiText('Target','Target')}</th><th>${uiText('Priority','Prioritas')}</th><th>${uiText('Status','Status')}</th></tr></thead><tbody>${items.length?items.map(x=>`<tr data-eo-ws-time-id="${escapeHtml(x.id)}"><td><strong>${escapeHtml(x.task||'—')}</strong></td><td>${cmEoPhaseLabel(x.phase)}</td><td><input data-eo-ws-time-field="pic" value="${escapeHtml(x.pic)}" placeholder="Nama PIC"></td><td><input type="date" data-eo-ws-time-field="dueDate" value="${escapeHtml(x.dueDate)}"></td><td><select data-eo-ws-time-field="priority"><option value="High" ${x.priority==='High'?'selected':''}>${cmEoPriorityLabel('High')}</option><option value="Medium" ${x.priority==='Medium'?'selected':''}>${cmEoPriorityLabel('Medium')}</option><option value="Low" ${x.priority==='Low'?'selected':''}>${cmEoPriorityLabel('Low')}</option></select></td><td><span class="eo-chip">${x.done?uiText('Done','Selesai'):uiText('Open','Belum')}</span></td></tr>`).join(''):`<tr><td colspan="6">—</td></tr>`}</tbody></table></div></div>`;
+    return `<div class="eo-ws-toolbar"><div class="eo-ws-toolbar-copy"><strong>${uiText('PIC & Timeline','PIC & Timeline')}</strong><small>${uiText('Assign ownership and target dates without opening each checklist card.','Atur penanggung jawab dan target tanggal tanpa membuka setiap kartu checklist.')}</small></div></div><div class="eo-ws-section"><div class="eo-ws-timeline-wrap"><table class="eo-ws-timeline"><thead><tr><th>${uiText('Task','Item')}</th><th>${uiText('Phase','Fase')}</th><th>PIC</th><th>${uiText('Target','Target')}</th><th>${uiText('Priority','Prioritas')}</th><th>${uiText('Status','Status')}</th><th>${uiText('Reminder','Reminder')}</th></tr></thead><tbody>${items.length?items.map(x=>`<tr data-eo-ws-time-id="${escapeHtml(x.id)}"><td><strong>${escapeHtml(x.task||'—')}</strong></td><td>${cmEoPhaseLabel(x.phase)}</td><td><input data-eo-ws-time-field="pic" value="${escapeHtml(x.pic)}" placeholder="Nama PIC"></td><td><input type="date" data-eo-ws-time-field="dueDate" value="${escapeHtml(x.dueDate)}"></td><td><select data-eo-ws-time-field="priority"><option value="High" ${x.priority==='High'?'selected':''}>${cmEoPriorityLabel('High')}</option><option value="Medium" ${x.priority==='Medium'?'selected':''}>${cmEoPriorityLabel('Medium')}</option><option value="Low" ${x.priority==='Low'?'selected':''}>${cmEoPriorityLabel('Low')}</option></select></td><td><span class="eo-chip">${x.done?uiText('Done','Selesai'):uiText('Open','Belum')}</span></td><td class="eo-ws-reminder-cell">${(()=>{const linked=cmEoFindReminder(activity.id,x.id);return `<button type="button" class="eo-reminder-btn ${linked?'linked':''}" data-eo-ws-time-reminder title="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}" aria-label="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}">${cmEoReminderIcon()}</button>`;})()}</td></tr>`).join(''):`<tr><td colspan="7">—</td></tr>`}</tbody></table></div></div>`;
   };
   const documentsHtml=()=>{
     const notulaCount=cmEoWorkspaceSafeCount(()=>parseActivityNotula(activity.notula).length);
@@ -5795,6 +5846,7 @@ function openEoWorkspace(activityId,opts={}){
           if(field==='done')render();
         });
       });
+      row.querySelector('[data-eo-ws-reminder]')?.addEventListener('click',()=>cmEoOpenTaskReminder(activity,item,()=>render()));
       row.querySelectorAll('[data-eo-ws-move]').forEach(btn=>btn.addEventListener('click',()=>{
         const phaseFilter=active==='execution'?'Execution':active==='post'?'Post Event':null;
         const visibleIds=(phaseFilter?items.filter(x=>x.phase===phaseFilter):items).map(x=>x.id);
@@ -5814,6 +5866,7 @@ function openEoWorkspace(activityId,opts={}){
       row.querySelectorAll('[data-eo-ws-time-field]').forEach(el=>{
         const field=el.dataset.eoWsTimeField;el.addEventListener(field==='pic'?'input':'change',()=>{item[field]=el.value;setDirty(true);});
       });
+      row.querySelector('[data-eo-ws-time-reminder]')?.addEventListener('click',()=>cmEoOpenTaskReminder(activity,item,()=>render()));
     });
   }
   function render(){
@@ -5827,6 +5880,7 @@ function openEoWorkspace(activityId,opts={}){
     modal.onclick=e=>{if(e.target===modal)closeWorkspace();};
     modal.querySelectorAll('[data-eo-ws-nav]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.eoWsNav;render();}));
     modal.querySelectorAll('[data-eo-ws-edit-activity]').forEach(b=>b.addEventListener('click',jumpToEditActivity));
+    document.getElementById('eoWsEventReminder')?.addEventListener('click',()=>cmEoOpenEventReminder(activity,()=>render()));
     document.getElementById('eoWsUseTemplate')?.addEventListener('click',()=>{items=cmEoDefaultChecklist(activity.tglMulai);initialized=true;started=true;setDirty(true);active='checklist';render();});
     document.getElementById('eoWsStartBlank')?.addEventListener('click',()=>{items=[];initialized=true;started=true;setDirty(true);active='checklist';render();});
     document.getElementById('eoWsReloadTemplate')?.addEventListener('click',()=>{if(items.length&&!confirm(uiText('Replace the current EO checklist with the recommended template?','Ganti checklist EO saat ini dengan template rekomendasi?')))return;items=cmEoDefaultChecklist(activity.tglMulai);initialized=true;started=true;setDirty(true);render();});
