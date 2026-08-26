@@ -833,9 +833,6 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .eo-reminder-btn:hover,.eo-reminder-btn:focus-visible{background:var(--gold-100);border-color:var(--gold-400);color:var(--navy-900);outline:none;}
 .eo-reminder-btn.linked{background:var(--gold-100);border-color:var(--gold-500);color:var(--navy-900);box-shadow:inset 0 0 0 1px rgba(200,168,75,.15);}
 .eo-reminder-btn svg{width:14px;height:14px;}
-.eo-wa-btn{width:30px;height:30px;border:1px solid #CFE9DF;border-radius:8px;background:#fff;color:#128C7E;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0!important;line-height:1;flex:0 0 30px;}
-.eo-wa-btn:hover,.eo-wa-btn:focus-visible{background:#EAF8F1;border-color:#9ED7C2;color:#087A61;outline:none;}
-.eo-wa-btn svg{width:14px;height:14px;}
 .eo-ws-share-wa{width:30px;height:30px;border-radius:8px;border:1px solid #CFE9DF;background:#fff;color:#128C7E;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .eo-ws-share-wa svg{width:15px;height:15px;}
 .eo-ws-share-wa:hover,.eo-ws-share-wa:focus-visible{background:#EAF8F1;border-color:#9ED7C2;color:#087A61;outline:none;}
@@ -5727,49 +5724,36 @@ function cmEoWaPicMention(pic){
   const name=String(pic||'').trim();
   return name?`@${name}`:uiText('@ (pick PIC)','@ (pilih PIC)');
 }
-function cmEoWhatsappItemText(activity,item){
-  const eventName=String(activity?.namaKegiatan||'-').trim()||'-';
-  const dateLabel=cmEoWorkspaceDateLabel(activity?.tglMulai);
-  const lines=[
-    `📌 *${uiText('EO Task Reminder','Pengingat Task EO')}*`,
-    `${uiText('Event','Event')}: ${eventName} (${dateLabel})`,
-    `${uiText('Task','Task')}: ${String(item.task||'-').trim()||'-'}`,
-    `${uiText('Phase','Fase')}: ${cmEoPhaseLabel(item.phase)}`,
-    `PIC: ${cmEoWaPicMention(item.pic)}`,
-    `${uiText('Due date','Target tanggal')}: ${item.dueDate?cmEoWorkspaceDateLabel(item.dueDate):'-'}`,
-    `${uiText('Priority','Prioritas')}: ${cmEoPriorityLabel(item.priority)}`
-  ];
-  if(String(item.notes||'').trim())lines.push(`${uiText('Notes','Catatan')}: ${item.notes.trim()}`);
-  lines.push('',uiText('Please check and follow up on this task. Thank you 🙏','Mohon dicek dan ditindaklanjuti sesuai target. Terima kasih 🙏'));
-  return lines.join('\n');
-}
-function shareEoItemWhatsApp(activity,item){
-  if(!activity||!item)return;
-  cmShareTextToWhatsApp(cmEoWhatsappItemText(activity,item));
-}
 function cmEoWhatsappEventText(activity,items){
   const eventName=String(activity?.namaKegiatan||'-').trim()||'-';
   const dateLabel=cmEoWorkspaceDateLabel(activity?.tglMulai);
   const location=String(activity?.lokasiChannel||'').trim();
   const p=cmEoProgress(items);
-  const groups=['Planning','Execution','Post Event'];
   const lines=[
-    `📋 *${eventName}*`,
+    `📋 *${uiText('Task Assignment','Pembagian Tugas')} — ${eventName}*`,
     `🗓️ ${dateLabel}${location?' · '+location:''}`,
     `${uiText('Checklist progress','Progress checklist')}: ${p.done}/${p.total} (${p.pct}%)`
   ];
-  groups.forEach(phase=>{
-    const rows=items.filter(x=>x.phase===phase);
-    if(!rows.length)return;
-    lines.push('',`*${cmEoPhaseLabel(phase)}*`);
-    rows.forEach(x=>{
-      lines.push(`${x.done?'✅':'☐'} ${String(x.task||'-').trim()||'-'}`);
-      lines.push(`   PIC: ${cmEoWaPicMention(x.pic)} · ${uiText('Due','Target')}: ${x.dueDate?cmEoWorkspaceDateLabel(x.dueDate):'-'} · ${cmEoPriorityLabel(x.priority)}`);
+  const unassignedKey='__unassigned__';
+  const groups=new Map();
+  items.forEach(x=>{
+    const key=String(x.pic||'').trim()||unassignedKey;
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(x);
+  });
+  const picKeys=[...groups.keys()].filter(k=>k!==unassignedKey).sort((a,b)=>a.localeCompare(b,'id'));
+  if(groups.has(unassignedKey))picKeys.push(unassignedKey);
+  picKeys.forEach(key=>{
+    const rows=groups.get(key);
+    lines.push('',key===unassignedKey?`*${uiText('Not yet assigned','Belum ada PIC')}*`:cmEoWaPicMention(key));
+    rows.forEach((x,i)=>{
+      lines.push(`${i+1}. ${x.done?'✅':'☐'} ${String(x.task||'-').trim()||'-'} _(${cmEoPhaseLabel(x.phase)})_`);
+      lines.push(`   ${uiText('Due','Target')}: ${x.dueDate?cmEoWorkspaceDateLabel(x.dueDate):'-'} · ${cmEoPriorityLabel(x.priority)}`);
       if(String(x.notes||'').trim())lines.push(`   📝 ${x.notes.trim()}`);
     });
   });
   if(!items.length)lines.push('',uiText('(No checklist items yet.)','(Belum ada item checklist.)'));
-  lines.push('',uiText('Please each PIC check and follow up on their respective task above. Thank you 🙏','Mohon setiap PIC mengecek dan menindaklanjuti tugas masing-masing di atas. Terima kasih 🙏'));
+  lines.push('',uiText('Please each PIC check and follow up on their tasks above. Thank you 🙏','Mohon setiap PIC mengecek dan menindaklanjuti tugas di atas. Terima kasih 🙏'));
   return lines.join('\n');
 }
 function shareEoWorkspaceWhatsApp(activity,items){
@@ -5823,7 +5807,6 @@ function openEoWorkspace(activityId,opts={}){
       <select class="eo-phase-select" data-eo-ws-field="phase" ${phaseLocked?'disabled':''}><option value="Planning" ${x.phase==='Planning'?'selected':''}>${cmEoPhaseLabel('Planning')}</option><option value="Execution" ${x.phase==='Execution'?'selected':''}>${cmEoPhaseLabel('Execution')}</option><option value="Post Event" ${x.phase==='Post Event'?'selected':''}>${cmEoPhaseLabel('Post Event')}</option></select>
       <div class="eo-item-actions">
         ${(()=>{const linked=cmEoFindReminder(activity.id,x.id);return `<button type="button" class="eo-reminder-btn ${linked?'linked':''}" data-eo-ws-reminder title="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}" aria-label="${linked?uiText('Edit linked reminder','Edit reminder terkait'):uiText('Add to Reminder','Tambahkan ke Reminder')}">${cmEoReminderIcon()}</button>`;})()}
-        <button type="button" class="eo-wa-btn" data-eo-ws-wa title="${uiText('Summon PIC on WhatsApp','Summon PIC via WhatsApp')}" aria-label="${uiText('Summon PIC on WhatsApp','Summon PIC via WhatsApp')}">${iconWhatsApp()}</button>
         <button type="button" class="eo-order-btn" data-eo-ws-move="up" title="${uiText('Move task up','Naikkan task')}" aria-label="${uiText('Move task up','Naikkan task')}" ${canMoveUp?'':'disabled'}>&uarr;</button>
         <button type="button" class="eo-order-btn" data-eo-ws-move="down" title="${uiText('Move task down','Turunkan task')}" aria-label="${uiText('Move task down','Turunkan task')}" ${canMoveDown?'':'disabled'}>&darr;</button>
         <button type="button" class="eo-remove" data-eo-ws-remove title="${uiText('Remove item','Hapus item')}" aria-label="${uiText('Remove item','Hapus item')}">&times;</button>
@@ -5925,7 +5908,6 @@ function openEoWorkspace(activityId,opts={}){
         });
       });
       row.querySelector('[data-eo-ws-reminder]')?.addEventListener('click',()=>cmEoOpenTaskReminder(activity,item,()=>render()));
-      row.querySelector('[data-eo-ws-wa]')?.addEventListener('click',()=>shareEoItemWhatsApp(activity,item));
       row.querySelectorAll('[data-eo-ws-move]').forEach(btn=>btn.addEventListener('click',()=>{
         const phaseFilter=active==='execution'?'Execution':active==='post'?'Post Event':null;
         const visibleIds=(phaseFilter?items.filter(x=>x.phase===phaseFilter):items).map(x=>x.id);
