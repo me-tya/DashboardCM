@@ -833,11 +833,9 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .eo-reminder-btn:hover,.eo-reminder-btn:focus-visible{background:var(--gold-100);border-color:var(--gold-400);color:var(--navy-900);outline:none;}
 .eo-reminder-btn.linked{background:var(--gold-100);border-color:var(--gold-500);color:var(--navy-900);box-shadow:inset 0 0 0 1px rgba(200,168,75,.15);}
 .eo-reminder-btn svg{width:14px;height:14px;}
-.eo-ws-share-wa{width:30px;height:30px;border-radius:8px;border:1px solid #CFE9DF;background:#fff;color:#128C7E;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.eo-ws-share-wa svg{width:15px;height:15px;}
+.eo-ws-share-wa{color:#128C7E;border-color:#CFE9DF;}
+.eo-ws-share-wa svg{width:14px;height:14px;}
 .eo-ws-share-wa:hover,.eo-ws-share-wa:focus-visible{background:#EAF8F1;border-color:#9ED7C2;color:#087A61;outline:none;}
-.eo-ws-headcopy{flex:1;min-width:0;}
-.eo-ws-head-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .eo-order-btn{font-size:15px;font-weight:800;color:var(--navy-700);}
 .eo-order-btn:hover:not(:disabled){background:var(--blue-bg);border-color:#BFD2F3;color:var(--blue);}
 .eo-order-btn:disabled{opacity:.28;cursor:not-allowed;background:#F8F9FC;color:var(--ink-300);}
@@ -947,6 +945,7 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
   .eo-ws-timeline-wrap{overflow-x:auto;}
   .eo-ws-timeline{min-width:700px;}
   .eo-workspace-modal .modal-foot{align-items:flex-start;flex-direction:column;}
+  .eo-workspace-modal .modal-foot>.eo-ws-share-wa{width:100%;justify-content:center;}
   .eo-workspace-modal .modal-foot>div:last-child{width:100%;display:flex;justify-content:flex-end;gap:8px;}
 }
 @media(max-width:520px){
@@ -5933,7 +5932,7 @@ function openEoWorkspace(activityId,opts={}){
   function render(){
     activity=state.agendas.find(x=>x.id===activityId)||activity;
     const p=cmEoProgress(items);
-    modal.innerHTML=`<div class="modal-box eo-workspace-modal"><div class="modal-head"><div class="eo-ws-headcopy"><h2>${cmEoWorkspaceIcon()} ${uiText('Manage Event','Kelola Event')}</h2><div class="eo-ws-subtitle">${escapeHtml(activity.namaKegiatan)} · ${cmEoWorkspaceDateLabel(activity.tglMulai)} · EO ${p.pct}%</div></div><div class="eo-ws-head-actions">${started?`<button type="button" class="eo-ws-share-wa" id="eoWsShareWa" title="${uiText('Share checklist to WhatsApp group','Share checklist ke Grup WhatsApp')}" aria-label="${uiText('Share checklist to WhatsApp group','Share checklist ke Grup WhatsApp')}">${iconWhatsApp()}</button>`:''}<button class="modal-close" id="eoWsClose">&times;</button></div></div><div class="modal-body"><div class="eo-ws-nav">${steps.map((x,i)=>`<button type="button" class="eo-ws-tab ${active===x[0]?'active':''}" data-eo-ws-nav="${x[0]}"><span class="eo-ws-stepno">${i+1}</span>${x[1]}</button>`).join('')}</div><div class="eo-ws-content">${active==='overview'?overviewHtml():active==='checklist'?checklistHtml():active==='timeline'?timelineHtml():active==='documents'?documentsHtml():active==='execution'?phaseHtml('Execution'):phaseHtml('Post Event')}</div></div><div class="modal-foot"><span id="eoWsSaveState" class="${dirty?'eo-ws-dirty':'eo-ws-saved'}">${dirty?uiText('Unsaved changes','Perubahan belum disimpan'):uiText('All changes saved','Semua perubahan tersimpan')}</span><div><button type="button" class="btn btn-outline btn-sm" id="eoWsDone">${uiText('Close','Tutup')}</button><button type="button" class="btn btn-gold btn-sm" id="eoWsSave" ${dirty?'':'disabled'}>${uiText('Save Changes','Simpan Perubahan')}</button></div></div></div>`;
+    modal.innerHTML=`<div class="modal-box eo-workspace-modal"><div class="modal-head"><div class="eo-ws-headcopy"><h2>${cmEoWorkspaceIcon()} ${uiText('Manage Event','Kelola Event')}</h2><div class="eo-ws-subtitle">${escapeHtml(activity.namaKegiatan)} · ${cmEoWorkspaceDateLabel(activity.tglMulai)} · EO ${p.pct}%</div></div><button class="modal-close" id="eoWsClose">&times;</button></div><div class="modal-body"><div class="eo-ws-nav">${steps.map((x,i)=>`<button type="button" class="eo-ws-tab ${active===x[0]?'active':''}" data-eo-ws-nav="${x[0]}"><span class="eo-ws-stepno">${i+1}</span>${x[1]}</button>`).join('')}</div><div class="eo-ws-content">${active==='overview'?overviewHtml():active==='checklist'?checklistHtml():active==='timeline'?timelineHtml():active==='documents'?documentsHtml():active==='execution'?phaseHtml('Execution'):phaseHtml('Post Event')}</div></div><div class="modal-foot"><span id="eoWsSaveState" class="${dirty?'eo-ws-dirty':'eo-ws-saved'}">${dirty?uiText('Unsaved changes','Perubahan belum disimpan'):uiText('All changes saved','Semua perubahan tersimpan')}</span>${started?`<button type="button" class="btn btn-outline btn-sm eo-ws-share-wa" id="eoWsShareWa">${iconWhatsApp()} ${uiText('Share to WhatsApp','Share ke WhatsApp')}</button>`:'<span></span>'}<div><button type="button" class="btn btn-outline btn-sm" id="eoWsDone">${uiText('Close','Tutup')}</button><button type="button" class="btn btn-gold btn-sm" id="eoWsSave" ${dirty?'':'disabled'}>${uiText('Save Changes','Simpan Perubahan')}</button></div></div></div>`;
     modal.classList.remove('hidden');
     document.getElementById('eoWsClose')?.addEventListener('click',closeWorkspace);
     document.getElementById('eoWsDone')?.addEventListener('click',closeWorkspace);
