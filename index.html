@@ -1884,11 +1884,11 @@ const I18N = {
     fieldTargetParticipants: 'Target Participants', fieldInvitation: 'Invitation', fieldAssignmentLetter: 'Assignment Letter',
     fieldObjectiveOutput: 'Objective / Output', fieldMaterials: 'Materials', fieldNotes: 'Notes',
     fieldDocumentation: 'Documentation',
-    docAddImages: '+ Add Images', docUploading: 'Uploading...', docNoFiles: 'No images yet',
-    docUploadHint: 'PNG, JPG, JPEG, WEBP, GIF · max 5MB per file · multiple files allowed',
+    docAddImages: '+ Add Files', docUploading: 'Uploading...', docNoFiles: 'No files yet',
+    docUploadHint: 'Images, PDF, Office files, video, audio, ZIP, and others · max 600 KB per local file · multiple files allowed; use a SharePoint/Drive link for larger files',
     docRemoveTitle: 'Remove image', docOpenTitle: 'Open full image',
     toastDocUploaded: 'Image uploaded', toastDocRemoved: 'Image removed',
-    toastDocUploadFailed: 'Failed to upload image', toastDocTooLarge: 'File too large (max 5MB)',
+    toastDocUploadFailed: 'Failed to upload file', toastDocTooLarge: 'File too large (max 600 KB); use a SharePoint/Drive link',
     toastDocInvalidType: 'Unsupported file type — use PNG, JPG, JPEG, WEBP, or GIF',
     toastDocLoginRequired: 'Sign in with Google first to upload documentation images',
     fromKnowledge: 'From Knowledge', saveChanges: 'Save Changes',
@@ -1976,11 +1976,11 @@ const I18N = {
     fieldTargetParticipants: 'Target Peserta', fieldInvitation: 'Undangan', fieldAssignmentLetter: 'Surat Tugas',
     fieldObjectiveOutput: 'Tujuan / Output', fieldMaterials: 'Materi', fieldNotes: 'Catatan',
     fieldDocumentation: 'Dokumentasi',
-    docAddImages: '+ Tambah Gambar', docUploading: 'Mengunggah...', docNoFiles: 'Belum ada gambar',
-    docUploadHint: 'PNG, JPG, JPEG, WEBP, GIF · maks 5MB per file · bisa pilih beberapa file sekaligus',
+    docAddImages: '+ Tambah File', docUploading: 'Mengunggah...', docNoFiles: 'Belum ada file',
+    docUploadHint: 'Gambar, PDF, file Office, video, audio, ZIP, dan lainnya · maks 600 KB per file lokal · bisa pilih beberapa; gunakan link SharePoint/Drive untuk file besar',
     docRemoveTitle: 'Hapus gambar', docOpenTitle: 'Buka gambar penuh',
     toastDocUploaded: 'Gambar berhasil diunggah', toastDocRemoved: 'Gambar dihapus',
-    toastDocUploadFailed: 'Gagal mengunggah gambar', toastDocTooLarge: 'Ukuran file terlalu besar (maks 5MB)',
+    toastDocUploadFailed: 'Gagal mengunggah file', toastDocTooLarge: 'File terlalu besar (maks 600 KB); gunakan link SharePoint/Drive',
     toastDocInvalidType: 'Tipe file tidak didukung — gunakan PNG, JPG, JPEG, WEBP, atau GIF',
     toastDocLoginRequired: 'Login dengan Google dulu untuk mengunggah gambar dokumentasi',
     fromKnowledge: 'Dari Knowledge', saveChanges: 'Simpan Perubahan',
@@ -3546,8 +3546,8 @@ function fillSelect(id, options, defaultLabel, currentVal) {
 /* ============================================================
    RENDER: KPI
 ============================================================ */
-function renderKPI(targetId='overviewKpiGrid') {
-  const all = state.agendas;
+function renderKPI(targetId='overviewKpiGrid', sourceRows=null) {
+  const all = Array.isArray(sourceRows) ? sourceRows : state.agendas;
   const thisMonth = dayjs().format('YYYY-MM');
   const total = all.length;
   const bulanIniItems = all.filter(a => a.yearMonth === thisMonth);
@@ -4340,7 +4340,7 @@ function wireMatrixToggle() {
 ============================================================ */
 function renderAnalytics() {
   const container = document.getElementById('tab-analytics');
-  const filtered = state.agendas.slice();
+  const filtered = getFiltered();
   const axisTitle = (text) => ({ display:true, text, font:{ size:11.5, weight:'600' }, color:'#5D6785' });
   container.innerHTML = `<section class="kpi-grid overview-kpi-grid" id="overviewKpiGrid"></section><div class="analytics-grid">
     <div class="chart-card" style="--chart-accent:#1B3A73;"><h3>${t('chartTrendTitle')}</h3><div class="chart-box tall"><canvas id="chartTrend"></canvas></div></div>
@@ -4351,7 +4351,7 @@ function renderAnalytics() {
     <div class="chart-card" style="--chart-accent:#C3488B;"><h3>${t('chartUnitTitle')}</h3><div class="chart-box tall"><canvas id="chartUnit"></canvas></div></div>
   </div>`;
 
-  renderKPI('overviewKpiGrid');
+  renderKPI('overviewKpiGrid', filtered);
   Object.values(state.charts).forEach(c => c && c.destroy());
   state.charts = {};
 
@@ -5413,7 +5413,7 @@ function activityFilterCount(){
   if(f.dateFrom)n++;if(f.dateTo)n++;return n;
 }
 function contextFilterCount(tab=state.activeTab){
-  if(['table','calendar','kanban','matrix'].includes(tab))return activityFilterCount();
+  if(['analytics','table','calendar','kanban','matrix'].includes(tab))return activityFilterCount();
   if(tab==='knowledge'){const f=state.knowledgeFilters||{};return ['group','type'].filter(k=>f[k]&&f[k]!=='ALL').length;}
   if(tab==='contact'){const f=state.contactFilters||{};return ['sheet','peran','unit'].filter(k=>f[k]&&f[k]!=='ALL').length;}
   if(tab==='survey'){const f=cmSurveyState.uiFilters||{};return ['status','round','role','series'].filter(k=>f[k]&&f[k]!=='ALL').length;}
@@ -5424,14 +5424,14 @@ function updateFilterActiveBadge(){
   const n=contextFilterCount();badge.textContent=n;badge.classList.toggle('hidden',n===0);
 }
 function contextSearchValue(tab=state.activeTab){
-  if(['table','calendar','kanban','matrix'].includes(tab))return state.filters.search||'';
+  if(['analytics','table','calendar','kanban','matrix'].includes(tab))return state.filters.search||'';
   if(tab==='knowledge')return state.knowledgeFilters.search||'';
   if(tab==='contact')return state.contactFilters.search||'';
   if(tab==='survey')return cmSurveyState.uiFilters.search||'';
   return '';
 }
 function setContextSearchValue(value,tab=state.activeTab){
-  if(['table','calendar','kanban','matrix'].includes(tab)){state.filters.search=value;state.page=1;}
+  if(['analytics','table','calendar','kanban','matrix'].includes(tab)){state.filters.search=value;state.page=1;}
   else if(tab==='knowledge')state.knowledgeFilters.search=value;
   else if(tab==='contact')state.contactFilters.search=value;
   else if(tab==='survey')cmSurveyState.uiFilters.search=value;
@@ -5451,13 +5451,13 @@ function configureContextToolbar(tab=state.activeTab){
   const bar=document.getElementById('contextFilterBar'),body=document.getElementById('filterBarBody'),search=document.getElementById('searchInput'),toggle=document.getElementById('btnFilterToggle'),label=document.getElementById('contextFilterLabel');
   if(!bar||!body||!search||!toggle)return;
   const help=document.getElementById('cmContextHelp');if(help){const a=CM_USER_MANUAL_ARTICLES.find(x=>x.id===cmManualArticleForContext(tab));const ttl=a?`${uiText('Help','Bantuan')}: ${cmManualText(a.title)}`:uiText('Open contextual help','Buka bantuan kontekstual');help.title=ttl;help.setAttribute('aria-label',ttl);}
-  if(tab==='analytics'){bar.classList.add('hidden');return;}
+  if(tab==='analytics'){bar.classList.remove('hidden');}
   bar.classList.remove('hidden');
   search.placeholder=contextPlaceholder(tab);search.value=contextSearchValue(tab);
   const clear=document.getElementById('btnClearSearch');if(clear)clear.disabled=!search.value;
   label.textContent=uiText('Filters','Filter');
   let html='';
-  if(['table','calendar','kanban','matrix'].includes(tab)){
+  if(['analytics','table','calendar','kanban','matrix'].includes(tab)){
     html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}"><span class="filter-date-sep">${uiText('to','s/d')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}"><button class="btn btn-outline btn-sm context-reset" id="btnResetFilter">${uiText('Reset','Reset')}</button>`;
     body.innerHTML=html;populateFilterDropdowns();
     const map={filterKategori:'kategori',filterProgram:'program',filterStatus:'status',filterPic:'pic',filterUnit:'unit',filterLayanan:'layanan',filterTahun:'tahun',filterUnitType:'unitType'};
@@ -5565,7 +5565,7 @@ function cmActivityLogClip(v,max=120){v=String(v??'').trim();if(!v)return '—';
 const CM_ACTIVITY_AUDIT_FIELDS={
   namaKegiatan:'Agenda',tglMulai:'Tanggal Mulai',tglSelesai:'Tanggal Selesai',waktu:'Waktu',layanan:'Layanan',unitPemohon:'Unit Pemohon',kategori:'Kategori',programTerkait:'Program',tujuanOutput:'Tujuan / Output',unitAsalNarsum:'Unit Asal Narasumber',pesertaTarget:'Target Peserta',picTimCM:'PIC Tim CM',lokasiChannel:'Lokasi/Channel',estimasiBiaya:'Estimasi Biaya',catatan:'Catatan'
 };
-const CM_ACTIVITY_AUDIT_DOC_FIELDS={undangan:'Undangan',undanganUrl:'Link Undangan',suratTugas:'Surat Tugas',suratTugasUrl:'Link Surat Tugas',materi:'Materi / Link'};
+const CM_ACTIVITY_AUDIT_DOC_FIELDS={undangan:'Undangan',undanganUrl:'Link Undangan',undanganFiles:'Lampiran Undangan',suratTugas:'Surat Tugas',suratTugasUrl:'Link Surat Tugas',suratTugasFiles:'Lampiran Surat Tugas',materi:'Materi / Link',materiFiles:'Lampiran Materi'};
 function cmActivityAuditDiff(oldA,newA,fields){
   const out=[];Object.entries(fields).forEach(([k,label])=>{let ov=oldA?.[k]??'',nv=newA?.[k]??'';if(k==='estimasiBiaya'){ov=Number(ov)||0;nv=Number(nv)||0;}if(String(ov)!==String(nv))out.push(`${label}: ${cmActivityLogClip(ov)} → ${cmActivityLogClip(nv)}`);});return out;
 }
@@ -6017,10 +6017,10 @@ function openDetail(id) {
         <div class="detail-item"><div class="detail-label">${t('fieldCmPic')}</div><div class="detail-value">${escapeHtml(a.picTimCM||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldSpeakerUnit')}</div><div class="detail-value">${escapeHtml(a.unitAsalNarsum||'-')}</div></div>
         <div class="detail-item"><div class="detail-label">${t('fieldTargetParticipants')}</div><div class="detail-value">${escapeHtml(a.pesertaTarget||'-')}</div></div>
-        <div class="detail-item"><div class="detail-label">${t('fieldInvitation')}</div><div class="detail-value">${renderDocValue(a.undangan, a.undanganUrl)}</div></div>
-        <div class="detail-item"><div class="detail-label">${t('fieldAssignmentLetter')}</div><div class="detail-value">${renderDocValue(a.suratTugas, a.suratTugasUrl)}</div></div>
+        <div class="detail-item"><div class="detail-label">${t('fieldInvitation')}</div><div class="detail-value">${renderDocValue(a.undangan, a.undanganUrl)}${renderActivityFileList(a.undanganFiles)}</div></div>
+        <div class="detail-item"><div class="detail-label">${t('fieldAssignmentLetter')}</div><div class="detail-value">${renderDocValue(a.suratTugas, a.suratTugasUrl)}${renderActivityFileList(a.suratTugasFiles)}</div></div>
         <div class="detail-item full"><div class="detail-label">${t('fieldObjectiveOutput')}</div><div class="detail-value">${escapeHtml(a.tujuanOutput||'-')}</div></div>
-        <div class="detail-item full"><div class="detail-label">${t('fieldMaterials')}</div><div class="detail-value">${renderMateriValue(a.materi)}</div></div>
+        <div class="detail-item full"><div class="detail-label">${t('fieldMaterials')}</div><div class="detail-value">${renderMateriValue(a.materi)}${renderActivityFileList(a.materiFiles)}</div></div>
         ${cmIsEoEnabled(a.eoEnabled)?`<div class="detail-item full"><div class="detail-label">${uiText('EO / Event Organizer','EO / Event Organizer')}</div>${renderEoChecklistDetail(a)}</div>`:''}
         <div class="detail-item full"><div class="detail-label">${t('fieldNotes')}</div><div class="detail-value">${escapeHtml(a.catatan||'-')}</div></div>
         <div class="detail-item full"><div class="detail-label">${uiText('Meeting Notes / Minutes','Notula Rapat')}</div>${renderActivityNotulaDetail(a)}</div>
@@ -6036,6 +6036,7 @@ function openDetail(id) {
   </div>`;
   modal.classList.remove('hidden');
   hydrateDocThumbs(modal);
+  hydrateGenericActivityFiles(modal);
   document.getElementById('closeDetail').addEventListener('click', () => modal.classList.add('hidden'));
   modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
   modal.querySelectorAll('[data-inline-copy-link]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();copyActivityLocationLink(a);}));
@@ -6103,6 +6104,49 @@ function renderMateriValue(materi) {
     </a>`;
   }
   return escapeHtml(raw);
+}
+
+// Multi-file attachments for invitations, assignment letters and materials.
+// Legacy single text/URL fields remain supported and are shown together with these items.
+function parseActivityFiles(raw) {
+  if (!raw) return [];
+  try { const rows=typeof raw==='string'?JSON.parse(raw):raw; return Array.isArray(rows)?rows.filter(x=>x&&(x.url||x.refId)):[]; }
+  catch(e){ return []; }
+}
+function renderActivityFileList(raw) {
+  const rows=parseActivityFiles(raw);
+  if(!rows.length)return '';
+  return `<div class="activity-file-list">${rows.map((x,i)=>{
+    const label=escapeHtml(x.name||fileNameFromUrl(x.url||'')||`${uiText('File','File')} ${i+1}`);
+    if(x.url)return `<a class="doc-download-link" href="${escapeHtml(x.url)}" target="_blank" rel="noopener">${iconUpload()} ${label}</a>`;
+    return `<a class="doc-download-link" href="#" data-generic-ref="${escapeHtml(x.refId)}" data-name="${label}" data-mime="${escapeHtml(x.mime||'application/octet-stream')}">${iconUpload()} ${label}</a>`;
+  }).join('')}</div>`;
+}
+function activityFileEditorHtml(field,raw){
+  return `<input type="hidden" name="${field}" id="${field}Hidden" value="${escapeHtml(raw||'[]')}"><div class="activity-file-editor" data-file-editor="${field}"></div>`;
+}
+async function uploadGenericActivityFile(file,ownerId){
+  if(!isLoggedIn()||!window.fbDb)throw new Error('Not signed in');
+  if(file.size>600000)throw new Error('File too large');
+  const dataUrl=await readFileAsDataURL(file),refId=uid('FILE');
+  await window.fbSetDoc(window.fbDoc(window.fbDb,'dashboardImages',refId),{dataUrl,name:file.name,mime:file.type||'application/octet-stream',activityId:ownerId,createdAt:new Date().toISOString()});
+  _docImageCache.set(refId,dataUrl);return {refId,name:file.name,mime:file.type||'application/octet-stream'};
+}
+async function hydrateGenericActivityFiles(container){
+  const nodes=[...container.querySelectorAll('[data-generic-ref]')];
+  await Promise.all(nodes.map(async n=>{const url=await fetchDocImageDataUrl(n.dataset.genericRef);if(!url){n.classList.add('disabled');return;}n.href=url;n.download=n.dataset.name||'attachment';}));
+}
+function setupActivityFileEditors(ownerId){
+  document.querySelectorAll('[data-file-editor]').forEach(host=>{
+    const field=host.dataset.fileEditor,hidden=document.getElementById(field+'Hidden');let rows=parseActivityFiles(hidden?.value);
+    const sync=()=>{hidden.value=JSON.stringify(rows);};
+    const draw=()=>{host.innerHTML=`<div class="activity-file-list">${rows.map((x,i)=>`<div class="activity-file-row"><span title="${escapeHtml(x.name||x.url||'')}">${escapeHtml(x.name||fileNameFromUrl(x.url||'')||uiText('Attachment','Lampiran'))}</span><button type="button" class="icon-btn" data-remove-file="${i}" title="${uiText('Remove','Hapus')}">×</button></div>`).join('')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><input type="url" data-new-url placeholder="https://..." style="flex:1;min-width:220px"><button type="button" class="btn btn-outline btn-sm" data-add-url>+ ${uiText('Add link','Tambah link')}</button><button type="button" class="btn btn-outline btn-sm" data-add-file>+ ${uiText('Add file','Tambah file')}</button><input type="file" data-file-input multiple hidden></div><small style="color:var(--ink-500)">${uiText('Add multiple links/files. Local files max. 600 KB each.','Bisa tambah beberapa link/file. File lokal maks. 600 KB per file.')}</small>`;
+      host.querySelectorAll('[data-remove-file]').forEach(b=>b.onclick=async()=>{const old=rows[Number(b.dataset.removeFile)];rows.splice(Number(b.dataset.removeFile),1);sync();draw();if(old?.refId)try{await deleteDocImage(old.refId)}catch(e){}});
+      host.querySelector('[data-add-url]').onclick=()=>{const inp=host.querySelector('[data-new-url]'),url=inp.value.trim();if(!isUrlLike(url)){toast(uiText('Enter a valid URL.','Masukkan URL yang valid.'),'error');return;}const fixed=/^www\./i.test(url)?'https://'+url:url;rows.push({url:fixed,name:fileNameFromUrl(fixed)});sync();draw();};
+      host.querySelector('[data-add-file]').onclick=()=>host.querySelector('[data-file-input]').click();
+      host.querySelector('[data-file-input]').onchange=async e=>{for(const file of [...e.target.files]){try{rows.push(await uploadGenericActivityFile(file,ownerId));sync();draw();toast(uiText('File added.','File ditambahkan.'),'success');}catch(err){toast(err.message==='File too large'?uiText('File exceeds 600 KB. Use a SharePoint/Drive link for larger files.','File melebihi 600 KB. Gunakan link SharePoint/Drive untuk file yang lebih besar.'):uiText('File upload failed.','Upload file gagal.'),'error');}}};
+    };draw();
+  });
 }
 
 // Renders the Location/Channel field: a plain text value (room name, building, etc.)
@@ -6388,7 +6432,7 @@ function renderDocumentationGallery(raw) {
   const docs = parseDokumentasi(raw);
   if (!docs.length) return `<div class="detail-value">-</div>`;
   return `<div class="doc-gallery">${docs.map(d => `
-    <a href="#" class="doc-thumb" data-refid="${escapeHtml(d.refId)}" data-name="${escapeHtml(d.name || '')}" title="${escapeHtml(d.name || '')}">
+    <a href="#" class="doc-thumb" data-refid="${escapeHtml(d.refId)}" data-name="${escapeHtml(d.name || '')}" data-mime="${escapeHtml(d.mime||'image/jpeg')}" title="${escapeHtml(d.name || '')}">
       <div class="doc-thumb-spinner"></div>
     </a>`).join('')}</div>`;
 }
@@ -6404,11 +6448,8 @@ async function hydrateDocThumbs(container) {
       node.href = url;
       node.target = '_blank';
       node.rel = 'noopener';
-      node.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(node.dataset.name || 'documentation')}">`;
-      node.addEventListener('click', (e) => {
-        e.preventDefault();
-        openImageLightbox(url, node.dataset.name);
-      });
+      if(String(node.dataset.mime||'').startsWith('image/')){node.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(node.dataset.name || 'documentation')}">`;node.addEventListener('click',(e)=>{e.preventDefault();openImageLightbox(url,node.dataset.name);});}
+      else {node.download=node.dataset.name||'documentation';node.innerHTML=`<span style="padding:10px;text-align:center;font-size:10px;overflow-wrap:anywhere">📎<br>${escapeHtml(node.dataset.name||uiText('Document','Dokumen'))}</span>`;}
     } else {
       node.removeAttribute('href');
       node.innerHTML = `<span class="doc-thumb-error">!</span>`;
@@ -6534,6 +6575,7 @@ function openForm(id) {
               <input type="text" name="undanganUrl" value="${escapeHtml(v('undanganUrl'))}" placeholder="Document URL (optional)" style="flex:1;font-size:12px;">
               <button type="button" class="btn btn-outline btn-sm" id="btnPickUndanganFromKb" style="white-space:nowrap;">${t('fromKnowledge')}</button>
             </div>
+            ${activityFileEditorHtml('undanganFiles',v('undanganFiles','[]'))}
           </div>
           <div class="form-field">
             <label>${t('fieldAssignmentLetter')}</label>
@@ -6542,6 +6584,7 @@ function openForm(id) {
               <input type="text" name="suratTugasUrl" value="${escapeHtml(v('suratTugasUrl'))}" placeholder="Document URL (optional)" style="flex:1;font-size:12px;">
               <button type="button" class="btn btn-outline btn-sm" id="btnPickSuratTugasFromKb" style="white-space:nowrap;">${t('fromKnowledge')}</button>
             </div>
+            ${activityFileEditorHtml('suratTugasFiles',v('suratTugasFiles','[]'))}
           </div>
           <div class="form-field full">
             <label>${t('fieldObjectiveOutput')}</label>
@@ -6553,6 +6596,7 @@ function openForm(id) {
               <input type="text" name="materi" value="${escapeHtml(v('materi'))}" style="flex:1;">
               <button type="button" class="btn btn-outline btn-sm" id="btnPickMateriFromKb" style="white-space:nowrap;">${t('fromKnowledge')}</button>
             </div>
+            ${activityFileEditorHtml('materiFiles',v('materiFiles','[]'))}
           </div>
           <div class="form-field full">
             <label>${t('fieldNotes')}</label>
@@ -6563,7 +6607,7 @@ function openForm(id) {
             <label>${t('fieldDocumentation')}</label>
             <input type="hidden" name="dokumentasi" id="dokumentasiHidden" value="${escapeHtml(v('dokumentasi', '[]'))}">
             <div class="doc-thumb-grid" id="docThumbGrid"></div>
-            <input type="file" id="docFileInput" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" multiple class="hidden">
+            <input type="file" id="docFileInput" multiple class="hidden">
             <div class="doc-upload-hint">${t('docUploadHint')}</div>
           </div>
         </div>
@@ -6578,6 +6622,7 @@ function openForm(id) {
   modal.classList.remove('hidden');
 
   // End Date otomatis mengikuti Start Date selama belum diubah manual.
+  setupActivityFileEditors(state.editingId||uid('NEWACT'));
   // Jika pengguna memilih End Date yang berbeda, nilainya dipertahankan dan tetap dapat diedit.
   (function setupDateSync() {
     const startDateInput = document.querySelector('#agendaForm [name="tglMulai"]');
@@ -6732,15 +6777,15 @@ function openForm(id) {
     if (!grid || !fileInput || !hidden) return;
 
     const ownerId = state.editingId || uid('NEWACT');
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
-    const maxBytes = 5 * 1024 * 1024;
+    const imageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+    const maxBytes = 600000;
     // Pre-existing images only have a refId until their dataUrl is resolved from Firestore.
-    let items = parseDokumentasi(hidden.value).map(d => ({ status: 'resolving', refId: d.refId, name: d.name }));
+    let items = parseDokumentasi(hidden.value).map(d => ({ status: 'resolving', refId: d.refId, name: d.name, mime:d.mime||'image/jpeg' }));
     const sessionAddedRefIds = new Set();
 
     function syncHidden() {
       hidden.value = JSON.stringify(
-        items.filter(it => it.refId).map(({ refId, name }) => ({ refId, name }))
+        items.filter(it => it.refId).map(({ refId, name, mime }) => ({ refId, name, mime }))
       );
     }
 
@@ -6756,7 +6801,7 @@ function openForm(id) {
           </div>`;
         }
         return `<div class="doc-thumb-editor">
-          <img src="${escapeHtml(it.dataUrl)}" alt="${escapeHtml(it.name || 'documentation')}">
+          ${String(it.mime||'image/jpeg').startsWith('image/')?`<img src="${escapeHtml(it.dataUrl)}" alt="${escapeHtml(it.name || 'documentation')}">`:`<span style="padding:8px;text-align:center;font-size:10px;overflow-wrap:anywhere">📎<br>${escapeHtml(it.name||'document')}</span>`}
           <button type="button" class="doc-thumb-remove" data-refid="${escapeHtml(it.refId)}" title="${t('docRemoveTitle')}">&times;</button>
         </div>`;
       }).join('') + `<button type="button" class="doc-thumb-add" id="docAddBtn">
@@ -6799,7 +6844,6 @@ function openForm(id) {
       fileInput.value = '';
       if (!isLoggedIn()) { toast(t('toastDocLoginRequired'), 'error'); return; }
       for (const file of files) {
-        if (!allowedTypes.includes(file.type)) { toast(t('toastDocInvalidType'), 'error'); continue; }
         if (file.size > maxBytes) { toast(t('toastDocTooLarge'), 'error'); continue; }
         const tmpId = uid('TMP');
         items.push({ status: 'uploading', tmpId });
@@ -6807,7 +6851,7 @@ function openForm(id) {
         try {
           const { refId, name, dataUrl } = await uploadDocToFirestore(file, ownerId);
           const idx = items.findIndex(it => it.tmpId === tmpId);
-          if (idx > -1) items[idx] = { status: 'done', refId, name, dataUrl };
+          if (idx > -1) items[idx] = { status: 'done', refId, name, mime:file.type||'application/octet-stream', dataUrl };
           sessionAddedRefIds.add(refId);
           syncHidden();
           renderThumbs();
@@ -6884,13 +6928,13 @@ async function compressImageFile(file, maxDim = 1280, quality = 0.75) {
 // keeps working on networks that block Firebase Storage.
 async function uploadDocToFirestore(file, ownerId) {
   if (!isLoggedIn() || !window.fbDb) throw new Error('Not signed in');
-  const dataUrl = await compressImageFile(file);
+  const dataUrl = String(file.type||'').startsWith('image/') ? await compressImageFile(file) : await readFileAsDataURL(file);
   const approxBytes = Math.ceil((dataUrl.length * 3) / 4);
   if (approxBytes > 900000) throw new Error('Image still too large after compression');
   const refId = uid('IMG');
   const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
-  await window.fbSetDoc(ref, { dataUrl, name: file.name, activityId: ownerId, createdAt: new Date().toISOString() });
-  return { refId, name: file.name, dataUrl };
+  await window.fbSetDoc(ref, { dataUrl, name: file.name, mime:file.type||'application/octet-stream', activityId: ownerId, createdAt: new Date().toISOString() });
+  return { refId, name: file.name, mime:file.type||'application/octet-stream', dataUrl };
 }
 
 async function deleteDocImage(refId) {
