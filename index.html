@@ -1787,7 +1787,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.24-AI-CONTEXT-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.24-AI-CONTEXT-20260905</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -9253,7 +9253,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.23-EO-WORKSPACE-20260821';
+const CM_APP_BUILD='CM-DASHBOARD-V19.24-AI-CONTEXT-20260905';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
@@ -9388,10 +9388,21 @@ function cmAiFormatAnswer(text){
  closeList();return out.join('');
 }
 function cmAiAddMessage(role,text,source=''){const h=document.getElementById('cmAiMessages');if(!h)return;const d=document.createElement('div');d.className=`cm-ai-msg ${role}`;if(role==='assistant')d.innerHTML=cmAiFormatAnswer(text);else d.textContent=text;if(source){const s=document.createElement('span');s.className='cm-ai-source';s.textContent=source;d.appendChild(s);}h.appendChild(d);h.scrollTop=h.scrollHeight;return d;}
+let cmAiChatHistory=[];
+let cmAiConversationScope={date:'',activityIds:[]};
+function cmAiRemember(role,text){
+ if(!['user','assistant'].includes(role)||!text)return;
+ cmAiChatHistory.push({role,content:String(text).slice(0,1200)});
+ if(cmAiChatHistory.length>8)cmAiChatHistory=cmAiChatHistory.slice(-8);
+}
+function cmAiSetAgendaScope(intent){
+ const items=intent?cmAiAgendaItemsForDate(intent.date):[];
+ cmAiConversationScope={date:intent?.date||'',activityIds:items.map(a=>a.id).filter(Boolean)};
+}
 function cmAiWelcome(){const h=document.getElementById('cmAiMessages');if(!h||h.children.length)return;cmAiAddMessage('assistant',uiText('Hi. Ask me how to use Dashboard CM or ask any Change Management question. I will use the User Manual, Knowledge, CM Reference Library, and relevant dashboard context when available.','Halo. Tanya cara menggunakan Dashboard CM atau pertanyaan apa pun tentang Change Management. Saya akan menggunakan User Manual, Knowledge, CM Reference Library, dan konteks dashboard yang relevan jika tersedia.'),uiText('Source: User Manual + Dashboard context','Sumber: User Manual + konteks Dashboard'));}
 function cmAiOpen(){document.getElementById('cmAiPanel')?.classList.remove('hidden');cmAiRenderSuggestions();cmAiRefreshStatus();cmAiWelcome();setTimeout(()=>document.getElementById('cmAiInput')?.focus(),50);}
 function cmAiClose(){document.getElementById('cmAiPanel')?.classList.add('hidden');}
-function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
+function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiChatHistory=[];cmAiConversationScope={date:'',activityIds:[]};cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
 function cmAiSettings(){const current=cmAiWorkerUrl(),url=prompt(uiText('Paste your Cloudflare Worker URL. Leave blank to remove it.','Tempel URL Cloudflare Worker. Kosongkan untuk menghapus konfigurasi.'),current);if(url===null)return;if(url&& !/^https:\/\//i.test(url.trim())){toast(uiText('Worker URL must start with https://','URL Worker harus diawali https://'),'error');return;}cmAiSetWorkerUrl(url);if(url)toast(uiText('AI Worker URL saved in this browser.','URL AI Worker disimpan di browser ini.'),'success');}
 function cmAiScoreText(text,query){const q=normalizeActivitySearchText(query),tokens=q.split(' ').filter(x=>x.length>1),hay=normalizeActivitySearchText(text);let score=0;tokens.forEach(t=>{if(hay.includes(t))score++;});return score;}
 function cmAiDateAliases(value){
@@ -9460,12 +9471,14 @@ function cmAiActivityDetail(a){
 async function cmAiBuildContext(question){
  const sections=[],sources=[];
  const agendaIntent=cmAiAgendaIntent(question);
- const manuals=agendaIntent?[]:cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
+ const qNorm=normalizeActivitySearchText(question);
+ const activityFollowUp=!!cmAiConversationScope.date&&/(rapat|agenda|activity|aktivitas|kegiatan|notula|catatan|kesimpulan|yang tadi|yang itu|nadine|srikandi)/.test(qNorm);
+ const manuals=(agendaIntent||activityFollowUp)?[]:cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
  if(manuals.length){
    sources.push(uiText('User Manual','User Manual'));
    sections.push('USER MANUAL\n'+manuals.map(a=>`- ${cmManualText(a.title)}: ${cmManualText(a.summary)}\n  Steps: ${(cmManualText(a.steps)||[]).slice(0,4).join(' | ')}`).join('\n'));
  }
- const links=flattenKnowledgeItems()
+ const links=activityFollowUp?[]:flattenKnowledgeItems()
    .filter(k=>k.groupTitle!=='CM Reference Library'&&k.type!=='reference')
    .map(k=>({k,score:cmAiScoreText([k.title,k.desc,k.groupTitle,k.type,k.tags].join(' '),question)}))
    .filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,CM_AI_KNOWLEDGE_MAX);
@@ -9473,14 +9486,20 @@ async function cmAiBuildContext(question){
    sources.push('Knowledge');
    sections.push('KNOWLEDGE\n'+links.map(x=>`- ${x.k.groupTitle} / ${x.k.title}: ${String(x.k.desc||'').slice(0,500)}${x.k.url?' | '+x.k.url:''}`).join('\n'));
  }
- const allRefHits=await cmRefSearchRelevant(question),refHits=allRefHits.slice(0,CM_AI_REF_MAX_HITS);
+ const allRefHits=activityFollowUp?[]:await cmRefSearchRelevant(question),refHits=allRefHits.slice(0,CM_AI_REF_MAX_HITS);
  if(refHits.length){
    sources.push('CM Reference Library');
    sections.push('CM REFERENCE LIBRARY — MOST RELEVANT EXCERPTS\n'+refHits.map((h,i)=>`[REF ${i+1}] SOURCE: ${cmRefSourceLabel(h.doc,h.chunk)}\nCATEGORY: ${cmRefTaxLabel(h.doc.category)} | ACCESS: ${cmRefAccessLabel(h.doc.accessLevel)}\nEXCERPT: ${String(h.chunk.text||'').slice(0,CM_AI_REF_EXCERPT_CHARS)}`).join('\n\n'));
  }
  let privateIncluded=refHits.some(h=>h.doc.accessLevel!=='public');
  if(isLoggedIn()){
-   const requestedDates=cmAiRequestedDates(question),rankedActs=(state.agendas||[]).map(a=>({a,dateMatch:requestedDates.length&&cmAiActivityMatchesDate(a,requestedDates),score:cmAiScoreText(cmAiActivitySearchText(a),question)}));
+   const explicitDates=cmAiRequestedDates(question);
+   let requestedDates=explicitDates;
+   if(!requestedDates.length&&cmAiConversationScope.date){
+     const scoped=dayjs(cmAiConversationScope.date);
+     if(scoped.isValid())requestedDates=[{day:scoped.date(),month:scoped.month()+1,year:scoped.year()}];
+   }
+   const rankedActs=(state.agendas||[]).map(a=>({a,dateMatch:requestedDates.length&&cmAiActivityMatchesDate(a,requestedDates),score:cmAiScoreText(cmAiActivitySearchText(a),question)}));
    const datedActs=requestedDates.length?rankedActs.filter(x=>x.dateMatch):[],acts=(datedActs.length?datedActs:rankedActs.filter(x=>x.score>0)).sort((a,b)=>Number(b.dateMatch)-Number(a.dateMatch)||b.score-a.score).slice(0,CM_AI_ACTIVITY_MAX);
    if(acts.length){
      privateIncluded=true;sources.push('Activities');
@@ -9514,10 +9533,14 @@ async function cmAiSendQuestion(){
  const input=document.getElementById('cmAiInput'),send=document.getElementById('cmAiSend'),question=(input?.value||'').trim();
  if(!question)return;
  const worker=cmAiWorkerUrl();
- cmAiAddMessage('user',question);input.value='';send.disabled=true;
+ const priorHistory=cmAiChatHistory.slice(-6);
+ cmAiAddMessage('user',question);cmAiRemember('user',question);input.value='';send.disabled=true;
  const agendaIntent=cmAiAgendaIntent(question);
  if(agendaIntent){
-   cmAiAddMessage('assistant',cmAiAgendaDirectAnswer(agendaIntent),uiText('Live data: Activity agenda','Data langsung: agenda Activity'));
+   cmAiSetAgendaScope(agendaIntent);
+   const directAnswer=cmAiAgendaDirectAnswer(agendaIntent);
+   cmAiAddMessage('assistant',directAnswer,uiText('Live data: Activity agenda','Data langsung: agenda Activity'));
+   cmAiRemember('assistant',directAnswer);
    send.disabled=false;return;
  }
  if(!worker){
@@ -9531,7 +9554,7 @@ async function cmAiSendQuestion(){
  const loading=cmAiAddMessage('assistant',uiText('Thinking...','Sedang menganalisis...'));
  try{
    const built=await cmAiBuildContext(question),idToken=built.privateIncluded&&window.cmGetFirebaseIdToken?await window.cmGetFirebaseIdToken():'';
-   const res=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,locale:currentLang,currentTab:state.activeTab,context:built.context,responseStyle:'Natural human language. Direct answer first. Use short bold subheadings with regular body text. Prefer concise paragraphs or bullets. Tables only for real comparisons. Never return HTML or literal <br> tags.',privateContext:built.privateIncluded,idToken,clientVersion:CM_APP_BUILD})});
+   const res=await fetch(worker,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,history:priorHistory,conversationScope:cmAiConversationScope,locale:currentLang,currentTab:state.activeTab,context:built.context,responseStyle:'Natural human language. Direct answer first. Use short bold subheadings with regular body text. Prefer concise paragraphs or bullets. Tables only for real comparisons. Never return HTML or literal <br> tags.',privateContext:built.privateIncluded,idToken,clientVersion:CM_APP_BUILD})});
    const data=await res.json().catch(()=>({}));
    if(!res.ok){
      if(res.status===429){
@@ -9541,11 +9564,13 @@ async function cmAiSendQuestion(){
      throw new Error(data.error||`HTTP ${res.status}`);
    }
    loading.remove();
-   cmAiAddMessage('assistant',data.answer||uiText('No answer returned.','Tidak ada jawaban yang dikembalikan.'),[
+   const finalAnswer=data.answer||uiText('No answer returned.','Tidak ada jawaban yang dikembalikan.');
+   cmAiAddMessage('assistant',finalAnswer,[
      data.model?`Model: ${data.model}`:'',
      built.sources?.length?`${uiText('Context','Konteks')}: ${built.sources.join(' · ')}`:'',
      `${uiText('Lean client context','Konteks lean client')} ~${built.approxTokens} tok`
    ].filter(Boolean).join(' · '));
+   cmAiRemember('assistant',finalAnswer);
  }catch(e){
    loading.remove();
    const msg=String(e?.message||e);
