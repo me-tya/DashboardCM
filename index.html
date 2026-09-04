@@ -1787,7 +1787,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.24-AI-CONTEXT-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.24-AI-CONTEXT-20260905</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -9253,7 +9253,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.24-AI-CONTEXT-20260905';
+const CM_APP_BUILD='CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
@@ -9414,6 +9414,12 @@ function cmAiDateAliases(value){
 }
 function cmAiRequestedDates(query){
  const q=normalizeActivitySearchText(query),months={jan:1,januari:1,january:1,feb:2,februari:2,february:2,mar:3,maret:3,march:3,apr:4,april:4,mei:5,may:5,jun:6,juni:6,june:6,jul:7,juli:7,july:7,agu:8,agt:8,agustus:8,aug:8,august:8,sep:9,sept:9,september:9,okt:10,oktober:10,oct:10,october:10,nov:11,november:11,des:12,desember:12,dec:12,december:12},found=[];
+ let relative=null;
+ if(/(?:^|\s)(hari ini|hr ini|hariini|today|sekarang|skrg)(?:\s|$)/.test(q))relative=dayjs();
+ else if(/(?:^|\s)(besok|bsk|tomorrow)(?:\s|$)/.test(q))relative=dayjs().add(1,'day');
+ else if(/(?:^|\s)(lusa|day after tomorrow)(?:\s|$)/.test(q))relative=dayjs().add(2,'day');
+ else if(/(?:^|\s)(kemarin|kemaren|kmarin|kmrin|kmrn|yesterday)(?:\s|$)/.test(q))relative=dayjs().subtract(1,'day');
+ if(relative)found.push({day:relative.date(),month:relative.month()+1,year:relative.year()});
  let m;const named=/(?:tanggal\s+)?(\d{1,2})\s+([a-z]+)(?:\s+(20\d{2}))?/g;
  while((m=named.exec(q))){const month=months[m[2]];if(month)found.push({day:Number(m[1]),month,year:m[3]?Number(m[3]):null});}
  const numeric=/(?:tanggal\s+)?(\d{1,2})[\/-](\d{1,2})[\/-](20\d{2})/g;
@@ -9425,13 +9431,13 @@ function cmAiRequestedDates(query){
 function cmAiAgendaIntent(query){
  const q=normalizeActivitySearchText(query);
  const asksHow=/(?:^|\s)(cara|bagaimana cara|gimana cara|how to|how do i)(?:\s|$)/.test(q);
- const agendaWords=/(?:^|\s)(agenda|jadwal|kegiatan|rapat|meeting|event|activity|activities)(?:\s|$)/.test(q);
+ const agendaWords=/(?:^|\s)(agenda|agnda|jadwal|jdwl|kegiatan|rapat|meeting|event|activity|activities)(?:\s|$)/.test(q);
  if(asksHow||!agendaWords)return null;
  let target=null,label='';
- if(/(?:^|\s)(hari ini|today)(?:\s|$)/.test(q)){target=dayjs();label=uiText('today','hari ini');}
- else if(/(?:^|\s)(besok|tomorrow)(?:\s|$)/.test(q)){target=dayjs().add(1,'day');label=uiText('tomorrow','besok');}
+ if(/(?:^|\s)(hari ini|hr ini|hariini|today|sekarang|skrg)(?:\s|$)/.test(q)){target=dayjs();label=uiText('today','hari ini');}
+ else if(/(?:^|\s)(besok|bsk|tomorrow)(?:\s|$)/.test(q)){target=dayjs().add(1,'day');label=uiText('tomorrow','besok');}
  else if(/(?:^|\s)(lusa|day after tomorrow)(?:\s|$)/.test(q)){target=dayjs().add(2,'day');label=uiText('the day after tomorrow','lusa');}
- else if(/(?:^|\s)(kemarin|yesterday)(?:\s|$)/.test(q)){target=dayjs().subtract(1,'day');label=uiText('yesterday','kemarin');}
+ else if(/(?:^|\s)(kemarin|kemaren|kmarin|kmrin|kmrn|yesterday)(?:\s|$)/.test(q)){target=dayjs().subtract(1,'day');label=uiText('yesterday','kemarin');}
  else {
    const requested=cmAiRequestedDates(query)[0];
    if(requested){const year=requested.year||dayjs().year();target=dayjs(`${year}-${String(requested.month).padStart(2,'0')}-${String(requested.day).padStart(2,'0')}`);label=target.format('D MMMM YYYY');}
