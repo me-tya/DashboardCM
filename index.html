@@ -9364,7 +9364,7 @@ function cmManualDownloadPdf(){const blob=cmManualPdfBlobV20();if(!blob)return;c
 function cmAiWorkerUrl(){try{return localStorage.getItem(CM_AI_WORKER_STORAGE)||CM_AI_DEFAULT_WORKER}catch(e){return CM_AI_DEFAULT_WORKER}}
 function cmAiSetWorkerUrl(url){try{if(url)localStorage.setItem(CM_AI_WORKER_STORAGE,url.trim());else localStorage.removeItem(CM_AI_WORKER_STORAGE);}catch(e){}cmAiRefreshStatus();}
 function cmAiRefreshStatus(){const s=document.getElementById('cmAiStatus'),url=cmAiWorkerUrl();if(!s)return;s.textContent=url?uiText('AI Worker ready','AI Worker siap'):uiText('Worker not configured','Worker belum dikonfigurasi');s.classList.toggle('ready',!!url);}
-function cmAiSuggestionsForTab(){const tab=state.activeTab;if(tab==='survey')return [uiText('How do I create a QR for a CRA survey?','Gimana cara bikin QR untuk survei CRA?'),uiText('How do I read the readiness heatmap?','Gimana membaca readiness heatmap?'),uiText('Suggest actions for low Ability readiness','Rekomendasikan action untuk Ability rendah')];if(tab==='knowledge')return [uiText('How do I use the User Manual?','Gimana menggunakan User Manual?'),uiText('What is stakeholder engagement planning?','Apa itu stakeholder engagement plan?'),uiText('Find CM strategy materials','Cari materi strategi CM')];if(tab==='table')return [uiText('How do I search meeting notes?','Gimana mencari catatan rapat?'),uiText('How do I copy a meeting link?','Gimana copy link rapat?'),uiText('Summarize relevant activities','Ringkas activity yang relevan')];return [uiText('What can you help me with?','Kamu bisa bantu apa saja?'),uiText('Explain ADKAR briefly','Jelaskan ADKAR secara ringkas'),uiText('How do I use this dashboard?','Gimana cara menggunakan dashboard ini?')];}
+function cmAiSuggestionsForTab(){const tab=state.activeTab;if(tab==='survey')return [uiText('How do I create a QR for a CRA survey?','Gimana cara bikin QR untuk survei CRA?'),uiText('How do I read the readiness heatmap?','Gimana membaca readiness heatmap?'),uiText('Suggest actions for low Ability readiness','Rekomendasikan action untuk Ability rendah')];if(tab==='knowledge')return [uiText('How do I use the User Manual?','Gimana menggunakan User Manual?'),uiText('What is stakeholder engagement planning?','Apa itu stakeholder engagement plan?'),uiText('Find CM strategy materials','Cari materi strategi CM')];if(tab==='table')return [uiText("What's on today's agenda?",'Agenda hari ini apa saja?'),uiText('How do I search meeting notes?','Gimana mencari catatan rapat?'),uiText('Summarize relevant activities','Ringkas activity yang relevan')];return [uiText("What's on today's agenda?",'Agenda hari ini apa saja?'),uiText('Explain ADKAR briefly','Jelaskan ADKAR secara ringkas'),uiText('How do I use this dashboard?','Gimana cara menggunakan dashboard ini?')];}
 function cmAiRenderSuggestions(){const h=document.getElementById('cmAiSuggestions');if(!h)return;h.innerHTML=cmAiSuggestionsForTab().map(x=>`<button class="cm-ai-chip">${escapeHtml(x)}</button>`).join('');h.querySelectorAll('.cm-ai-chip').forEach(b=>b.onclick=()=>{document.getElementById('cmAiInput').value=b.textContent;cmAiSendQuestion();});}
 function cmAiInlineFormat(text){return escapeHtml(String(text||'')).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/__(.+?)__/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');}
 function cmAiFormatAnswer(text){
@@ -9411,6 +9411,37 @@ function cmAiRequestedDates(query){
  while((m=iso.exec(q)))found.push({day:Number(m[3]),month:Number(m[2]),year:Number(m[1])});
  return found;
 }
+function cmAiAgendaIntent(query){
+ const q=normalizeActivitySearchText(query);
+ const asksHow=/(?:^|\s)(cara|bagaimana cara|gimana cara|how to|how do i)(?:\s|$)/.test(q);
+ const agendaWords=/(?:^|\s)(agenda|jadwal|kegiatan|rapat|meeting|event|activity|activities)(?:\s|$)/.test(q);
+ if(asksHow||!agendaWords)return null;
+ let target=null,label='';
+ if(/(?:^|\s)(hari ini|today)(?:\s|$)/.test(q)){target=dayjs();label=uiText('today','hari ini');}
+ else if(/(?:^|\s)(besok|tomorrow)(?:\s|$)/.test(q)){target=dayjs().add(1,'day');label=uiText('tomorrow','besok');}
+ else if(/(?:^|\s)(lusa|day after tomorrow)(?:\s|$)/.test(q)){target=dayjs().add(2,'day');label=uiText('the day after tomorrow','lusa');}
+ else if(/(?:^|\s)(kemarin|yesterday)(?:\s|$)/.test(q)){target=dayjs().subtract(1,'day');label=uiText('yesterday','kemarin');}
+ else {
+   const requested=cmAiRequestedDates(query)[0];
+   if(requested){const year=requested.year||dayjs().year();target=dayjs(`${year}-${String(requested.month).padStart(2,'0')}-${String(requested.day).padStart(2,'0')}`);label=target.format('D MMMM YYYY');}
+ }
+ return target?.isValid()?{date:target.format('YYYY-MM-DD'),label}:null;
+}
+function cmAiAgendaItemsForDate(date){
+ return (state.agendas||[]).filter(a=>{const start=a.tglMulai||date,end=a.tglSelesai||start;return start<=date&&end>=date;})
+   .sort((a,b)=>String(a.waktu||'99:99').localeCompare(String(b.waktu||'99:99'))||String(a.namaKegiatan||'').localeCompare(String(b.namaKegiatan||'')));
+}
+function cmAiAgendaDirectAnswer(intent){
+ const items=intent?cmAiAgendaItemsForDate(intent.date):[];
+ const dateLabel=dayjs(intent.date).locale(currentLang).format('dddd, D MMMM YYYY');
+ if(!items.length)return uiText(`There is no agenda for ${intent.label} (${dateLabel}).`,`Tidak ada agenda ${intent.label} (${dateLabel}).`);
+ const heading=uiText(`There ${items.length===1?'is':'are'} ${items.length} agenda item${items.length===1?'':'s'} for ${intent.label} (${dateLabel}):`,`Ada ${items.length} agenda ${intent.label} (${dateLabel}):`);
+ const rows=items.map((a,i)=>{
+   const detail=[a.unitPemohon,a.kategori,a.lokasiChannel,a.picTimCM?`PIC: ${a.picTimCM}`:'',a.statusNorm].filter(Boolean).join(' · ');
+   return `${i+1}. **${a.waktu||uiText('All day','Seharian')} — ${a.namaKegiatan||'-'}**${detail?` — ${detail}`:''}`;
+ });
+ return `${heading}\n\n${rows.join('\n')}`;
+}
 function cmAiActivityMatchesDate(a,wanted){return wanted.some(x=>[a.tglMulai,a.tglSelesai].some(v=>{const d=dayjs(v);return d.isValid()&&d.date()===x.day&&d.month()+1===x.month&&(!x.year||d.year()===x.year);}));}
 function cmAiPrimitiveValues(value,depth=0){
  if(depth>3||value==null)return[];if(['string','number','boolean'].includes(typeof value)){const s=String(value);return /^data:/i.test(s)||s.length>5000?[]:[s];}
@@ -9428,7 +9459,8 @@ function cmAiActivityDetail(a){
 }
 async function cmAiBuildContext(question){
  const sections=[],sources=[];
- const manuals=cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
+ const agendaIntent=cmAiAgendaIntent(question);
+ const manuals=agendaIntent?[]:cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
  if(manuals.length){
    sources.push(uiText('User Manual','User Manual'));
    sections.push('USER MANUAL\n'+manuals.map(a=>`- ${cmManualText(a.title)}: ${cmManualText(a.summary)}\n  Steps: ${(cmManualText(a.steps)||[]).slice(0,4).join(' | ')}`).join('\n'));
@@ -9483,6 +9515,11 @@ async function cmAiSendQuestion(){
  if(!question)return;
  const worker=cmAiWorkerUrl();
  cmAiAddMessage('user',question);input.value='';send.disabled=true;
+ const agendaIntent=cmAiAgendaIntent(question);
+ if(agendaIntent){
+   cmAiAddMessage('assistant',cmAiAgendaDirectAnswer(agendaIntent),uiText('Live data: Activity agenda','Data langsung: agenda Activity'));
+   send.disabled=false;return;
+ }
  if(!worker){
    const matches=cmManualSearch(question);
    if(matches.length){
