@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.25-EO-ALIGN-REMINDER-20260821">
+<meta name="cm-build" content="CM-DASHBOARD-V19.27-AI-SMART-CONTEXT-20260905">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1787,7 +1787,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.27-AI-SMART-CONTEXT-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.27-AI-SMART-CONTEXT-20260905</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -9253,19 +9253,19 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.25-AI-CHAT-LANGUAGE-20260905';
+const CM_APP_BUILD='CM-DASHBOARD-V19.27-AI-SMART-CONTEXT-20260905';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
 const CM_AI_DEFAULT_WORKER='https://cm-assistant.ristya-onlineshop.workers.dev';
 // Ask T-Agent lean-context budget.
 // The browser sends only the most relevant excerpts instead of a near-maximum corpus payload on every question.
-const CM_AI_CONTEXT_MAX_CHARS=8000;
+const CM_AI_CONTEXT_MAX_CHARS=12000;
 const CM_AI_MANUAL_MAX=2;
 const CM_AI_KNOWLEDGE_MAX=3;
 const CM_AI_REF_MAX_HITS=3;
 const CM_AI_REF_EXCERPT_CHARS=1400;
-const CM_AI_ACTIVITY_MAX=3;
+const CM_AI_ACTIVITY_MAX=5;
 const CM_AI_NOTULA_EXCERPT_CHARS=1200;
 const CM_AI_CRA_MAX=1;
 function cmAiApproxTokens(text){return Math.ceil(String(text||'').length/4);}
@@ -9389,7 +9389,7 @@ function cmAiFormatAnswer(text){
 }
 function cmAiAddMessage(role,text,source=''){const h=document.getElementById('cmAiMessages');if(!h)return;const d=document.createElement('div');d.className=`cm-ai-msg ${role}`;if(role==='assistant')d.innerHTML=cmAiFormatAnswer(text);else d.textContent=text;if(source){const s=document.createElement('span');s.className='cm-ai-source';s.textContent=source;d.appendChild(s);}h.appendChild(d);h.scrollTop=h.scrollHeight;return d;}
 let cmAiChatHistory=[];
-let cmAiConversationScope={date:'',activityIds:[]};
+let cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};
 function cmAiRemember(role,text){
  if(!['user','assistant'].includes(role)||!text)return;
  cmAiChatHistory.push({role,content:String(text).slice(0,1200)});
@@ -9397,14 +9397,14 @@ function cmAiRemember(role,text){
 }
 function cmAiSetAgendaScope(intent){
  const items=intent?cmAiAgendaItemsForDate(intent.date):[];
- cmAiConversationScope={date:intent?.date||'',activityIds:items.map(a=>a.id).filter(Boolean)};
+ cmAiConversationScope={date:intent?.date||'',dateFrom:'',dateTo:'',period:'day',activityIds:items.map(a=>a.id).filter(Boolean)};
 }
 function cmAiWelcome(){const h=document.getElementById('cmAiMessages');if(!h||h.children.length)return;cmAiAddMessage('assistant',uiText('Hi. Ask me how to use Dashboard CM or ask any Change Management question. I will use the User Manual, Knowledge, CM Reference Library, and relevant dashboard context when available.','Halo. Tanya cara menggunakan Dashboard CM atau pertanyaan apa pun tentang Change Management. Saya akan menggunakan User Manual, Knowledge, CM Reference Library, dan konteks dashboard yang relevan jika tersedia.'),uiText('Source: User Manual + Dashboard context','Sumber: User Manual + konteks Dashboard'));}
 function cmAiOpen(){document.getElementById('cmAiPanel')?.classList.remove('hidden');cmAiRenderSuggestions();cmAiRefreshStatus();cmAiWelcome();setTimeout(()=>document.getElementById('cmAiInput')?.focus(),50);}
 function cmAiClose(){document.getElementById('cmAiPanel')?.classList.add('hidden');}
-function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiChatHistory=[];cmAiConversationScope={date:'',activityIds:[]};cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
+function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiChatHistory=[];cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
 function cmAiSettings(){const current=cmAiWorkerUrl(),url=prompt(uiText('Paste your Cloudflare Worker URL. Leave blank to remove it.','Tempel URL Cloudflare Worker. Kosongkan untuk menghapus konfigurasi.'),current);if(url===null)return;if(url&& !/^https:\/\//i.test(url.trim())){toast(uiText('Worker URL must start with https://','URL Worker harus diawali https://'),'error');return;}cmAiSetWorkerUrl(url);if(url)toast(uiText('AI Worker URL saved in this browser.','URL AI Worker disimpan di browser ini.'),'success');}
-function cmAiScoreText(text,query){const q=normalizeActivitySearchText(query),tokens=q.split(' ').filter(x=>x.length>1),hay=normalizeActivitySearchText(text);let score=0;tokens.forEach(t=>{if(hay.includes(t))score++;});return score;}
+function cmAiScoreText(text,query){const q=normalizeActivitySearchText(query),tokens=[...new Set(q.split(' ').filter(x=>x.length>1))],hay=normalizeActivitySearchText(text);let score=0;tokens.forEach(t=>{if(hay.includes(t))score+=t.length>=5?2:1;});if(q.length>=5&&hay.includes(q))score+=8;return score;}
 function cmAiDateAliases(value){
  const d=dayjs(value);if(!d.isValid())return'';
  const id=['januari','februari','maret','april','mei','juni','juli','agustus','september','oktober','november','desember'];
@@ -9444,9 +9444,48 @@ function cmAiAgendaIntent(query){
  }
  return target?.isValid()?{date:target.format('YYYY-MM-DD'),label}:null;
 }
+function cmAiAgendaRangeIntent(query){
+ const q=normalizeActivitySearchText(query),asksHow=/(?:^|\s)(cara|bagaimana cara|gimana cara|how to|how do i)(?:\s|$)/.test(q);
+ if(asksHow)return null;
+ const agendaWords=/(?:^|\s)(agenda|agnda|jadwal|jdwl|kegiatan|rapat|meeting|event|activity|activities)(?:\s|$)/.test(q);
+ const weekFollowUp=/(minggu depannya lagi|pekan depannya lagi|minggu berikutnya|pekan berikutnya|next week after that)/.test(q);
+ const monthFollowUp=/(bulan depannya lagi|bulan berikutnya|next month after that)/.test(q);
+ const followUp=weekFollowUp||monthFollowUp;
+ const priorFrom=dayjs(cmAiConversationScope.dateFrom),priorTo=dayjs(cmAiConversationScope.dateTo);
+ const hasPriorRange=priorFrom.isValid()&&priorTo.isValid();
+ if(!agendaWords&&!(followUp&&hasPriorRange))return null;
+ const today=dayjs().startOf('day'),thisMonday=today.subtract((today.day()+6)%7,'day');
+ let from=null,to=null,label='',period='';
+ if(weekFollowUp&&hasPriorRange){from=priorFrom.add(7,'day');to=priorTo.add(7,'day');label=uiText('the following week','minggu berikutnya');period='week';}
+ else if(monthFollowUp&&hasPriorRange){from=priorFrom.add(1,'month').startOf('month');to=from.endOf('month');label=uiText('the following month','bulan berikutnya');period='month';}
+ else if(/(?:dua|2)\s+(?:minggu|pekan)\s+(?:lagi|ke depan)/.test(q)){from=thisMonday.add(14,'day');to=from.add(6,'day');label=uiText('two weeks from now','dua minggu lagi');period='week';}
+ else if(/(?:minggu|pekan)\s+(?:lalu|kemarin)|last week/.test(q)){from=thisMonday.subtract(7,'day');to=from.add(6,'day');label=uiText('last week','minggu lalu');period='week';}
+ else if(/(?:minggu|pekan)\s+depan|next week/.test(q)){from=thisMonday.add(7,'day');to=from.add(6,'day');label=uiText('next week','minggu depan');period='week';}
+ else if(/(?:minggu|pekan)\s+ini|this week/.test(q)){from=thisMonday;to=from.add(6,'day');label=uiText('this week','minggu ini');period='week';}
+ else if(/bulan\s+(?:lalu|kemarin)|last month/.test(q)){from=today.subtract(1,'month').startOf('month');to=from.endOf('month');label=uiText('last month','bulan lalu');period='month';}
+ else if(/bulan\s+depan|next month/.test(q)){from=today.add(1,'month').startOf('month');to=from.endOf('month');label=uiText('next month','bulan depan');period='month';}
+ else if(/bulan\s+ini|this month/.test(q)){from=today.startOf('month');to=today.endOf('month');label=uiText('this month','bulan ini');period='month';}
+ return from&&to?{dateFrom:from.format('YYYY-MM-DD'),dateTo:to.format('YYYY-MM-DD'),label,period}:null;
+}
 function cmAiAgendaItemsForDate(date){
  return (state.agendas||[]).filter(a=>{const start=a.tglMulai||date,end=a.tglSelesai||start;return start<=date&&end>=date;})
    .sort((a,b)=>String(a.waktu||'99:99').localeCompare(String(b.waktu||'99:99'))||String(a.namaKegiatan||'').localeCompare(String(b.namaKegiatan||'')));
+}
+function cmAiAgendaItemsForRange(dateFrom,dateTo){
+ return (state.agendas||[]).filter(a=>{const start=a.tglMulai||dateFrom,end=a.tglSelesai||start;return start<=dateTo&&end>=dateFrom;})
+   .sort((a,b)=>String(a.tglMulai||'9999-99-99').localeCompare(String(b.tglMulai||'9999-99-99'))||String(a.waktu||'99:99').localeCompare(String(b.waktu||'99:99'))||String(a.namaKegiatan||'').localeCompare(String(b.namaKegiatan||'')));
+}
+function cmAiSetAgendaRangeScope(intent){
+ const items=intent?cmAiAgendaItemsForRange(intent.dateFrom,intent.dateTo):[];
+ cmAiConversationScope={date:'',dateFrom:intent?.dateFrom||'',dateTo:intent?.dateTo||'',period:intent?.period||'range',activityIds:items.map(a=>a.id).filter(Boolean)};
+}
+function cmAiAgendaRangeDirectAnswer(intent){
+ const items=intent?cmAiAgendaItemsForRange(intent.dateFrom,intent.dateTo):[];
+ const fromLabel=dayjs(intent.dateFrom).locale(currentLang).format('D MMMM YYYY'),toLabel=dayjs(intent.dateTo).locale(currentLang).format('D MMMM YYYY');
+ if(!items.length)return uiText(`There is no recorded agenda for ${intent.label} (${fromLabel}–${toLabel}).`,`Tidak ada agenda yang tercatat untuk ${intent.label} (${fromLabel}–${toLabel}).`);
+ const heading=uiText(`There ${items.length===1?'is':'are'} ${items.length} agenda item${items.length===1?'':'s'} for ${intent.label} (${fromLabel}–${toLabel}):`,`Ada ${items.length} agenda ${intent.label} (${fromLabel}–${toLabel}):`);
+ const rows=items.map((a,i)=>{const d=dayjs(a.tglMulai).locale(currentLang).format('dddd, D MMMM YYYY'),detail=[a.unitPemohon,a.kategori,a.lokasiChannel,a.picTimCM?`PIC: ${a.picTimCM}`:'',a.statusNorm].filter(Boolean).join(' · ');return `${i+1}. **${d} · ${a.waktu||uiText('All day','Seharian')} — ${a.namaKegiatan||'-'}**${detail?` — ${detail}`:''}`;});
+ return `${heading}\n\n${rows.join('\n')}`;
 }
 function cmAiAgendaDirectAnswer(intent){
  const items=intent?cmAiAgendaItemsForDate(intent.date):[];
@@ -9478,7 +9517,8 @@ async function cmAiBuildContext(question){
  const sections=[],sources=[];
  const agendaIntent=cmAiAgendaIntent(question);
  const qNorm=normalizeActivitySearchText(question);
- const activityFollowUp=!!cmAiConversationScope.date&&/(rapat|agenda|activity|aktivitas|kegiatan|notula|catatan|kesimpulan|yang tadi|yang itu|nadine|srikandi)/.test(qNorm);
+ const hasActivityScope=!!(cmAiConversationScope.date||(cmAiConversationScope.dateFrom&&cmAiConversationScope.dateTo));
+ const activityFollowUp=hasActivityScope&&/(rapat|agenda|activity|aktivitas|kegiatan|notula|catatan|kesimpulan|hasil|poin|tindak lanjut|follow up|yang tadi|yang itu|tersebut|nadine|srikandi|pic|siapa|kapan|jam berapa|dimana|di mana)/.test(qNorm);
  const manuals=(agendaIntent||activityFollowUp)?[]:cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
  if(manuals.length){
    sources.push(uiText('User Manual','User Manual'));
@@ -9505,9 +9545,11 @@ async function cmAiBuildContext(question){
      const scoped=dayjs(cmAiConversationScope.date);
      if(scoped.isValid())requestedDates=[{day:scoped.date(),month:scoped.month()+1,year:scoped.year()}];
    }
-   const rankedActs=(state.agendas||[]).map(a=>({a,dateMatch:requestedDates.length&&cmAiActivityMatchesDate(a,requestedDates),score:cmAiScoreText(cmAiActivitySearchText(a),question)}));
-   const datedActs=requestedDates.length?rankedActs.filter(x=>x.dateMatch):[],acts=(datedActs.length?datedActs:rankedActs.filter(x=>x.score>0)).sort((a,b)=>Number(b.dateMatch)-Number(a.dateMatch)||b.score-a.score).slice(0,CM_AI_ACTIVITY_MAX);
+   const scopedRange=!explicitDates.length&&cmAiConversationScope.dateFrom&&cmAiConversationScope.dateTo?{from:cmAiConversationScope.dateFrom,to:cmAiConversationScope.dateTo}:null;
+   const rankedActs=(state.agendas||[]).map(a=>{const start=a.tglMulai||'',end=a.tglSelesai||start,dateMatch=requestedDates.length?cmAiActivityMatchesDate(a,requestedDates):!!(scopedRange&&start<=scopedRange.to&&end>=scopedRange.from);return{a,dateMatch,score:cmAiScoreText(cmAiActivitySearchText(a),question)};});
+   const hasDateFilter=!!(requestedDates.length||scopedRange),datedActs=hasDateFilter?rankedActs.filter(x=>x.dateMatch):[],acts=(hasDateFilter?datedActs:rankedActs.filter(x=>x.score>0)).sort((a,b)=>Number(b.dateMatch)-Number(a.dateMatch)||b.score-a.score).slice(0,CM_AI_ACTIVITY_MAX);
    if(acts.length){
+     if(hasActivityScope)cmAiConversationScope.activityIds=acts.map(x=>x.a.id).filter(Boolean);
      privateIncluded=true;sources.push('Activities');
      const activityLines=[];
      for(const x of acts){
@@ -9516,6 +9558,9 @@ async function cmAiBuildContext(question){
        activityLines.push(`- ${cmAiActivityDetail(x.a)}${notulaExcerpt?`\nNOTULA CONTENT: ${notulaExcerpt}`:''}`);
      }
      sections.push('ACTIVITY DETAILS + NOTULA (authenticated context)\nIMPORTANT: These are live records from Activity Details. If the requested date has a matching record, answer from that record and do not claim it is absent. For meeting time/location questions, structured DATE, TIME and LOCATION/CHANNEL are the source of truth. Do not replace them with older notes/notula unless the user explicitly asks for historical changes.\n'+activityLines.join('\n\n'));
+   }else if(hasDateFilter){
+     sources.push('Activities');
+     sections.push(`ACTIVITY SEARCH RESULT\nNo Activity record matched the requested date/range (${cmAiConversationScope.date||`${scopedRange?.from||'-'} to ${scopedRange?.to||'-'}`}). Do not substitute a similar record from another date. Say that no matching record was found in the supplied Activity data.`);
    }
    const surveys=(cmSurveyState.surveys||[])
      .map(s=>({s,score:cmAiScoreText([s.title,s.systemName,s.series,s.round,s.status].join(' '),question)+(s.id===cmSurveyState.analyticsSurveyId||s.id===cmSurveyState.actionSurveyId?2:0)}))
@@ -9531,7 +9576,7 @@ async function cmAiBuildContext(question){
      }catch(e){console.warn('AI CRA context skipped',e);}
    }
  }
- sections.unshift(`RESPONSE STYLE\nWrite in natural, easy-to-understand ${currentLang==='id'?'Indonesian':'English'}. Lead with the direct answer. Use short bold subheadings and regular body text. Prefer short paragraphs or bullets; use a table only for a real comparison. Do not output HTML or literal <br> tags. Avoid stiff, bureaucratic, or robotic wording.\n\nCURRENT DASHBOARD\nBuild: ${CM_APP_BUILD}\nActive tab: ${state.activeTab}\nLanguage: ${currentLang}\nAuthenticated: ${isLoggedIn()?'yes':'no'}`);
+ sections.unshift(`RESPONSE STYLE\nWrite in natural, easy-to-understand ${currentLang==='id'?'Indonesian':'English'}. Lead with the direct answer. Use short bold subheadings and regular body text. Prefer short paragraphs or bullets; use a table only for a real comparison. Do not output HTML or literal <br> tags. Avoid stiff, bureaucratic, or robotic wording.\n\nCURRENT DASHBOARD\nBuild: ${CM_APP_BUILD}\nBrowser date: ${dayjs().format('YYYY-MM-DD')}\nActive tab: ${state.activeTab}\nLanguage: ${currentLang}\nAuthenticated: ${isLoggedIn()?'yes':'no'}\nConversation activity scope: ${JSON.stringify(cmAiConversationScope)}`);
  const context=sections.join('\n\n').slice(0,CM_AI_CONTEXT_MAX_CHARS);
  return {context,privateIncluded,sources:[...new Set(sources)],contextChars:context.length,approxTokens:cmAiApproxTokens(context)};
 }
@@ -9541,6 +9586,14 @@ async function cmAiSendQuestion(){
  const worker=cmAiWorkerUrl();
  const priorHistory=cmAiChatHistory.slice(-6);
  cmAiAddMessage('user',question);cmAiRemember('user',question);input.value='';send.disabled=true;
+ const rangeIntent=cmAiAgendaRangeIntent(question);
+ if(rangeIntent){
+   cmAiSetAgendaRangeScope(rangeIntent);
+   const directAnswer=cmAiAgendaRangeDirectAnswer(rangeIntent);
+   cmAiAddMessage('assistant',directAnswer,uiText('Live data: Activity agenda','Data langsung: agenda Activity'));
+   cmAiRemember('assistant',directAnswer);
+   send.disabled=false;return;
+ }
  const agendaIntent=cmAiAgendaIntent(question);
  if(agendaIntent){
    cmAiSetAgendaScope(agendaIntent);
