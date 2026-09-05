@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.28-AI-GROUNDED-RETRIEVAL-20260905">
+<meta name="cm-build" content="CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1787,7 +1787,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.28-AI-GROUNDED-RETRIEVAL-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.28-AI-GROUNDED-RETRIEVAL-20260905</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -9253,7 +9253,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.28-AI-GROUNDED-RETRIEVAL-20260905';
+const CM_APP_BUILD='CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
@@ -9509,6 +9509,28 @@ function cmAiAgendaDirectAnswer(intent){
  });
  return `${heading}\n\n${rows.join('\n')}`;
 }
+function cmAiPicAggregateIntent(query){
+ const q=normalizeActivitySearchText(query);
+ if(!/(berapa|jumlah|total|terlibat|keterlibatan|beban kerja|paling banyak|berapa kali)/.test(q)||!/(aktivitas|activity|agenda|kegiatan|rapat)/.test(q))return null;
+ const names=new Map();
+ (state.agendas||[]).forEach(a=>splitNames(a.picTimCM).forEach(name=>{const key=normalizeActivitySearchText(name);if(key&&!names.has(key))names.set(key,name);}));
+ const matched=[...names.entries()].sort((a,b)=>b[0].length-a[0].length).find(([key])=>new RegExp(`(?:^|\\s)${key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?:\\s|$)`).test(q));
+ return matched?{key:matched[0],name:matched[1]}:null;
+}
+function cmAiPicAggregateDirectAnswer(intent,query){
+ let items=[...(state.agendas||[])],periodLabel=uiText('across all Activity data','pada seluruh data Activity');
+ const range=cmAiAgendaRangeIntent(query);
+ if(range){items=items.filter(a=>{const start=a.tglMulai||range.dateFrom,end=a.tglSelesai||start;return start<=range.dateTo&&end>=range.dateFrom;});periodLabel=`${range.label} (${dayjs(range.dateFrom).locale(currentLang).format('D MMMM YYYY')}–${dayjs(range.dateTo).locale(currentLang).format('D MMMM YYYY')})`;}
+ else{
+   const dates=cmAiRequestedDates(query);
+   if(dates.length){items=items.filter(a=>cmAiActivityMatchesDate(a,dates));const d=dayjs(`${dates[0].year}-${String(dates[0].month).padStart(2,'0')}-${String(dates[0].day).padStart(2,'0')}`);periodLabel=d.locale(currentLang).format('D MMMM YYYY');}
+ }
+ const matched=items.filter(a=>splitNames(a.picTimCM).some(name=>normalizeActivitySearchText(name)===intent.key));
+ const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Cancelled:0};
+ matched.forEach(a=>{const status=a.statusNorm||normalizeStatus(a.status);counts[status]=(counts[status]||0)+1;});
+ const breakdown=Object.entries(counts).filter(([,n])=>n>0).map(([status,n])=>`${status}: ${n}`).join(' · ');
+ return uiText(`**${intent.name} is involved in ${matched.length} activities** ${periodLabel}, out of ${items.length} activities.${breakdown?`\n\nStatus: ${breakdown}`:''}`,`**${intent.name} terlibat dalam ${matched.length} aktivitas** ${periodLabel}, dari total ${items.length} aktivitas.${breakdown?`\n\nStatus: ${breakdown}`:''}`);
+}
 function cmAiActivityMatchesDate(a,wanted){return wanted.some(x=>[a.tglMulai,a.tglSelesai].some(v=>{const d=dayjs(v);return d.isValid()&&d.date()===x.day&&d.month()+1===x.month&&(!x.year||d.year()===x.year);}));}
 function cmAiPrimitiveValues(value,depth=0){
  if(depth>3||value==null)return[];if(['string','number','boolean'].includes(typeof value)){const s=String(value);return /^data:/i.test(s)||s.length>5000?[]:[s];}
@@ -9600,6 +9622,14 @@ async function cmAiSendQuestion(){
  const worker=cmAiWorkerUrl();
  const priorHistory=cmAiChatHistory.slice(-6);
  cmAiAddMessage('user',question);cmAiRemember('user',question);input.value='';send.disabled=true;
+ const picAggregateIntent=cmAiPicAggregateIntent(question);
+ if(picAggregateIntent){
+   cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};
+   const directAnswer=cmAiPicAggregateDirectAnswer(picAggregateIntent,question);
+   cmAiAddMessage('assistant',directAnswer,uiText('Live calculation: all Activity data','Perhitungan langsung: seluruh data Activity'));
+   cmAiRemember('assistant',directAnswer);
+   send.disabled=false;return;
+ }
  const rangeIntent=cmAiAgendaRangeIntent(question);
  if(rangeIntent){
    cmAiSetAgendaRangeScope(rangeIntent);
