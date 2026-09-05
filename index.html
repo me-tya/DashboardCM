@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905">
+<meta name="cm-build" content="CM-DASHBOARD-V19.30-AI-FOLLOWUP-STATS-20260905">
 <title>CM Team Agenda Dashboard — Pusmantap</title>
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1787,7 +1787,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V19.30-AI-FOLLOWUP-STATS-20260905">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.30-AI-FOLLOWUP-STATS-20260905</span></footer>
 
 <div id="detailModal" class="modal-overlay hidden"></div>
 <div id="kpiModal" class="modal-overlay hidden"></div>
@@ -9253,7 +9253,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V19.29-AI-AGGREGATE-STATS-20260905';
+const CM_APP_BUILD='CM-DASHBOARD-V19.30-AI-FOLLOWUP-STATS-20260905';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
@@ -9390,6 +9390,7 @@ function cmAiFormatAnswer(text){
 function cmAiAddMessage(role,text,source=''){const h=document.getElementById('cmAiMessages');if(!h)return;const d=document.createElement('div');d.className=`cm-ai-msg ${role}`;if(role==='assistant')d.innerHTML=cmAiFormatAnswer(text);else d.textContent=text;if(source){const s=document.createElement('span');s.className='cm-ai-source';s.textContent=source;d.appendChild(s);}h.appendChild(d);h.scrollTop=h.scrollHeight;return d;}
 let cmAiChatHistory=[];
 let cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};
+let cmAiLastAggregate={type:'',dateFrom:'',dateTo:'',label:''};
 function cmAiRemember(role,text){
  if(!['user','assistant'].includes(role)||!text)return;
  cmAiChatHistory.push({role,content:String(text).slice(0,1200)});
@@ -9402,7 +9403,7 @@ function cmAiSetAgendaScope(intent){
 function cmAiWelcome(){const h=document.getElementById('cmAiMessages');if(!h||h.children.length)return;cmAiAddMessage('assistant',uiText('Hi. Ask me how to use Dashboard CM or ask any Change Management question. I will use the User Manual, Knowledge, CM Reference Library, and relevant dashboard context when available.','Halo. Tanya cara menggunakan Dashboard CM atau pertanyaan apa pun tentang Change Management. Saya akan menggunakan User Manual, Knowledge, CM Reference Library, dan konteks dashboard yang relevan jika tersedia.'),uiText('Source: User Manual + Dashboard context','Sumber: User Manual + konteks Dashboard'));}
 function cmAiOpen(){document.getElementById('cmAiPanel')?.classList.remove('hidden');cmAiRenderSuggestions();cmAiRefreshStatus();cmAiWelcome();setTimeout(()=>document.getElementById('cmAiInput')?.focus(),50);}
 function cmAiClose(){document.getElementById('cmAiPanel')?.classList.add('hidden');}
-function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiChatHistory=[];cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
+function cmAiClearChat(){const h=document.getElementById('cmAiMessages');if(!h)return;h.innerHTML='';cmAiChatHistory=[];cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};cmAiLastAggregate={type:'',dateFrom:'',dateTo:'',label:''};cmAiWelcome();toast(uiText('Ask T-Agent chat cleared.','Chat Ask T-Agent dibersihkan.'),'success');}
 function cmAiSettings(){const current=cmAiWorkerUrl(),url=prompt(uiText('Paste your Cloudflare Worker URL. Leave blank to remove it.','Tempel URL Cloudflare Worker. Kosongkan untuk menghapus konfigurasi.'),current);if(url===null)return;if(url&& !/^https:\/\//i.test(url.trim())){toast(uiText('Worker URL must start with https://','URL Worker harus diawali https://'),'error');return;}cmAiSetWorkerUrl(url);if(url)toast(uiText('AI Worker URL saved in this browser.','URL AI Worker disimpan di browser ini.'),'success');}
 function cmAiScoreText(text,query){const q=normalizeActivitySearchText(query),tokens=[...new Set(q.split(' ').filter(x=>x.length>1))],hay=normalizeActivitySearchText(text);let score=0;tokens.forEach(t=>{if(hay.includes(t))score+=t.length>=5?2:1;});if(q.length>=5&&hay.includes(q))score+=8;return score;}
 function cmAiDateAliases(value){
@@ -9511,11 +9512,13 @@ function cmAiAgendaDirectAnswer(intent){
 }
 function cmAiPicAggregateIntent(query){
  const q=normalizeActivitySearchText(query);
- if(!/(berapa|jumlah|total|terlibat|keterlibatan|beban kerja|paling banyak|berapa kali)/.test(q)||!/(aktivitas|activity|agenda|kegiatan|rapat)/.test(q))return null;
  const names=new Map();
  (state.agendas||[]).forEach(a=>splitNames(a.picTimCM).forEach(name=>{const key=normalizeActivitySearchText(name);if(key&&!names.has(key))names.set(key,name);}));
  const matched=[...names.entries()].sort((a,b)=>b[0].length-a[0].length).find(([key])=>new RegExp(`(?:^|\\s)${key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?:\\s|$)`).test(q));
- return matched?{key:matched[0],name:matched[1]}:null;
+ if(!matched)return null;
+ const explicit=/(berapa|jumlah|total|terlibat|keterlibatan|beban kerja|paling banyak|berapa kali)/.test(q)&&/(aktivitas|activity|agenda|kegiatan|rapat)/.test(q);
+ const escaped=matched[0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),followUp=cmAiLastAggregate.type==='pic_count'&&new RegExp(`^(?:(?:kalau|kalo|untuk|terus|dan)\\s+)?${escaped}(?:\\s+(?:berapa|nya))?[?]*$`).test(q);
+ return explicit||followUp?{key:matched[0],name:matched[1],followUp}:null;
 }
 function cmAiPicAggregateDirectAnswer(intent,query){
  let items=[...(state.agendas||[])],periodLabel=uiText('across all Activity data','pada seluruh data Activity');
@@ -9524,11 +9527,13 @@ function cmAiPicAggregateDirectAnswer(intent,query){
  else{
    const dates=cmAiRequestedDates(query);
    if(dates.length){items=items.filter(a=>cmAiActivityMatchesDate(a,dates));const d=dayjs(`${dates[0].year}-${String(dates[0].month).padStart(2,'0')}-${String(dates[0].day).padStart(2,'0')}`);periodLabel=d.locale(currentLang).format('D MMMM YYYY');}
+   else if(intent.followUp&&cmAiLastAggregate.dateFrom&&cmAiLastAggregate.dateTo){items=items.filter(a=>{const start=a.tglMulai||cmAiLastAggregate.dateFrom,end=a.tglSelesai||start;return start<=cmAiLastAggregate.dateTo&&end>=cmAiLastAggregate.dateFrom;});periodLabel=cmAiLastAggregate.label;}
  }
  const matched=items.filter(a=>splitNames(a.picTimCM).some(name=>normalizeActivitySearchText(name)===intent.key));
  const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Cancelled:0};
  matched.forEach(a=>{const status=a.statusNorm||normalizeStatus(a.status);counts[status]=(counts[status]||0)+1;});
  const breakdown=Object.entries(counts).filter(([,n])=>n>0).map(([status,n])=>`${status}: ${n}`).join(' · ');
+ cmAiLastAggregate={type:'pic_count',dateFrom:range?.dateFrom||'',dateTo:range?.dateTo||'',label:range?periodLabel:''};
  return uiText(`**${intent.name} is involved in ${matched.length} activities** ${periodLabel}, out of ${items.length} activities.${breakdown?`\n\nStatus: ${breakdown}`:''}`,`**${intent.name} terlibat dalam ${matched.length} aktivitas** ${periodLabel}, dari total ${items.length} aktivitas.${breakdown?`\n\nStatus: ${breakdown}`:''}`);
 }
 function cmAiActivityMatchesDate(a,wanted){return wanted.some(x=>[a.tglMulai,a.tglSelesai].some(v=>{const d=dayjs(v);return d.isValid()&&d.date()===x.day&&d.month()+1===x.month&&(!x.year||d.year()===x.year);}));}
@@ -9630,6 +9635,7 @@ async function cmAiSendQuestion(){
    cmAiRemember('assistant',directAnswer);
    send.disabled=false;return;
  }
+ cmAiLastAggregate={type:'',dateFrom:'',dateTo:'',label:''};
  const rangeIntent=cmAiAgendaRangeIntent(question);
  if(rangeIntent){
    cmAiSetAgendaRangeScope(rangeIntent);
