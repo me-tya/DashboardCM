@@ -9253,7 +9253,7 @@ window.onDashboardLogout = function () {
    USER MANUAL + ASK T-AGENT (v19.3 hardened)
    Manual is the single source used by Knowledge search + PDF export + AI retrieval.
 ============================================================ */
-const CM_APP_BUILD='CM-DASHBOARD-V20.0-AI-UNIVERSAL-RAG-20260907';
+const CM_APP_BUILD='CM-DASHBOARD-V20.2-AI-FULL-DASHBOARD-R60907';
 const CM_MANUAL_VERSION='20.0';
 const CM_MANUAL_UPDATED='27 August 2026';
 const CM_AI_WORKER_STORAGE='cm_ai_worker_url_v1';
@@ -9582,7 +9582,25 @@ function cmAiActivityDetail(a){
 const cmAiAttachmentTextCache=new Map();
 function cmAiComponentQuestion(query){
  const q=normalizeActivitySearchText(query);
- return /(?:squad|tim squad|anggota tim|anggota squad|ketua tim|ketua squad|jabatan|kontak|contact|workboard|kanban|matrix|matriks|overview|ringkasan|total activity|total aktivitas|bulan ini|selesai|terjadwal|layanan|cra|survey|survei|action plan|reminder|pengingat)/.test(q);
+ return /(?:hari libur|libur nasional|cuti bersama|holiday|squad|tim squad|anggota tim|anggota squad|ketua tim|ketua squad|jabatan|kontak|contact|workboard|kanban|matrix|matriks|overview|ringkasan|total activity|total aktivitas|bulan ini|selesai|terjadwal|layanan|cra|survey|survei|action plan|reminder|pengingat)/.test(q);
+}
+function cmAiHolidayIntent(query){
+ const q=normalizeActivitySearchText(query);
+ if(!/(?:hari libur|libur nasional|cuti bersama|tanggal merah|holiday|collective leave)/.test(q))return null;
+ const months={januari:1,jan:1,january:1,februari:2,feb:2,february:2,maret:3,mar:3,march:3,april:4,apr:4,mei:5,may:5,juni:6,jun:6,june:6,juli:7,jul:7,july:7,agustus:8,agu:8,agt:8,aug:8,august:8,september:9,sep:9,sept:9,oktober:10,okt:10,oct:10,october:10,november:11,nov:11,desember:12,des:12,dec:12,december:12};
+ const monthEntry=Object.entries(months).sort((a,b)=>b[0].length-a[0].length).find(([name])=>new RegExp(`(?:^|\\s)${name}(?:\\s|$)`).test(q));
+ const explicitYear=q.match(/\b(20\d{2})\b/),calendar=String(state.calMonth||dayjs().format('YYYY-MM')).split('-');
+ return {month:monthEntry?monthEntry[1]:Number(calendar[1])||dayjs().month()+1,year:explicitYear?Number(explicitYear[1]):Number(calendar[0])||dayjs().year()};
+}
+async function cmAiHolidayDirectAnswer(intent){
+ let entry=cmHolidayGetYearEntry(intent.year);
+ if(!entry||!cmHolidayEntryFresh(entry))entry=await cmHolidaySyncYear(intent.year,{force:false,notify:false})||entry;
+ const prefix=`${intent.year}-${String(intent.month).padStart(2,'0')}-`,items=Object.entries(entry?.items||{}).filter(([date])=>date.startsWith(prefix)).sort((a,b)=>a[0].localeCompare(b[0]));
+ const monthLabel=dayjs(`${prefix}01`).locale(currentLang).format('MMMM YYYY');
+ if(!items.length)return uiText(`No holiday or collective-leave data was found for ${monthLabel}.`,`Tidak ditemukan data hari libur atau cuti bersama untuk ${monthLabel}.`);
+ const rows=items.map(([date,h],i)=>`${i+1}. **${dayjs(date).locale(currentLang).format('dddd, D MMMM YYYY')}** — ${cmIndonesiaHolidayLabel(h)} (${h.type==='collective'?uiText('Collective Leave','Cuti Bersama'):uiText('National Holiday','Libur Nasional')})`);
+ const source=entry?.sourceLabel||entry?.sourceUrl||entry?.source||'-',status=entry?.official?uiText('official data','data resmi'):entry?.estimated?uiText('estimate—not yet official','estimasi—belum resmi'):uiText('calendar data','data kalender');
+ return `${uiText(`Holidays and collective leave in ${monthLabel}:`,`Hari libur dan cuti bersama pada ${monthLabel}:`)}\n\n${rows.join('\n')}\n\n**${uiText('Source','Sumber')}:** ${source} · ${status}`;
 }
 function cmAiContactHits(question){
  return (state.contacts||[]).map(c=>({c,score:cmAiScoreText([c.nama,c.jabatan,c.peran,c.unitEselonI,c.squadTeam,c.sheet,c.sheetTitle].join(' '),question)}))
@@ -9595,6 +9613,13 @@ function cmAiComponentContext(question){
    const month=dayjs().format('YYYY-MM'),thisMonth=agendas.filter(a=>String(a.tglMulai||'').slice(0,7)===month).length;
    const status={};agendas.forEach(a=>{const k=a.statusNorm||normalizeStatus(a.status)||'Unknown';status[k]=(status[k]||0)+1;});
    rows.push(`OVERVIEW / WORKBOARD / MATRIX SOURCE | Total activities=${agendas.length} | Current month ${month}=${thisMonth} | Status=${Object.entries(status).map(([k,v])=>`${k}:${v}`).join(', ')} | Service=${agendas.filter(a=>String(a.layanan||'').toLowerCase()==='yes').length} | Requesting units=${new Set(agendas.map(a=>a.unitPemohon).filter(Boolean)).size}. Workboard and Matrix are views/aggregations of these same Activity records.`);
+ }
+ if(/(?:kategori|category|jenis kegiatan)/.test(q))rows.push(`MANAGED ACTIVITY CATEGORIES | ${(state.categoryList||[]).map(x=>typeof x==='string'?x:(x.name||x.label||x.value||'')).filter(Boolean).join(' | ')||'-'}`);
+ if(/(?:unit apa|daftar unit|semua unit|unit pemohon|requesting unit|nomenklatur)/.test(q))rows.push(`MANAGED REQUESTING UNITS | ${(state.unitList||[]).map(x=>typeof x==='string'?x:(x.name||x.label||x.value||'')).filter(Boolean).join(' | ')||'-'}`);
+ if(/(?:hari libur|libur nasional|cuti bersama|tanggal merah|holiday)/.test(q)){
+   const requested=cmAiHolidayIntent(question),entry=cmHolidayGetYearEntry(requested?.year||cmHolidayYear()),month=requested?.month;
+   const holidays=Object.entries(entry?.items||{}).filter(([date])=>!month||Number(date.slice(5,7))===month).sort((a,b)=>a[0].localeCompare(b[0]));
+   rows.push(`HOLIDAY CALENDAR | ${holidays.map(([date,h])=>`${date}=${h.id||h.en} [${h.type}]`).join(' | ')||'No matching holiday record'} | Source=${entry?.sourceLabel||entry?.sourceUrl||entry?.source||'-'} | Official=${entry?.official?'yes':'no'}`);
  }
  cmAiContactHits(question).forEach(({c})=>rows.push(`SQUAD TEAM | Name=${c.nama||'-'} | Role=${c.peran||'-'} | Position=${c.jabatan||'-'} | Unit=${c.unitEselonI||'-'} | Squad=${c.squadTeam||c.sheetTitle||c.sheet||'-'}`));
  const reminders=typeof cmReminderLoad==='function'?cmReminderLoad():[];
@@ -9638,6 +9663,7 @@ async function cmAiBuildContext(question){
  if(knowledgeQuestion)cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};
  const componentQuestion=cmAiComponentQuestion(question);
  const activityWords=/(rapat|agenda|activity|aktivitas|kegiatan|notula|notulen|catatan|kesimpulan|hasil|poin|undangan|surat tugas|materi|dokumentasi|tindak lanjut|follow up|yang tadi|yang itu|tersebut|nadine|srikandi|pic|siapa|kapan|jam berapa|dimana|di mana)/.test(qNorm);
+ const dashboardLookup=componentQuestion||(/(?:berapa|siapa|apa saja|daftar|cari|carikan|tampilkan|jelaskan data|rekap|ringkas)/.test(qNorm)&&activityWords);
  const activityFollowUp=!knowledgeQuestion&&usePriorScope&&activityWords,activityDataQuestion=!knowledgeQuestion&&!!(agendaIntent||activityFollowUp||newActivitySearch||cmAiNeedsActivityEvidence(question));
  const manuals=(activityDataQuestion||knowledgeQuestion)?[]:cmManualSearch(question).slice(0,CM_AI_MANUAL_MAX);
  if(manuals.length){
@@ -9661,7 +9687,7 @@ async function cmAiBuildContext(question){
  if(isLoggedIn()){
   const componentRows=cmAiComponentContext(question);
   if(componentRows.length){sources.push('Dashboard components');sections.push('DASHBOARD COMPONENT SEARCH (authenticated; NIP excluded)\n'+componentRows.join('\n'));privateIncluded=true;}
-  if(activityDataQuestion){
+  if(activityDataQuestion||dashboardLookup){
    await cmActivityNotulaHydrateSearchIndex(null,false,false);
    const explicitDates=cmAiRequestedDates(question);
    let requestedDates=explicitDates;
@@ -9704,7 +9730,7 @@ async function cmAiBuildContext(question){
  }
  sections.unshift(`RESPONSE STYLE\nWrite in natural, easy-to-understand ${currentLang==='id'?'Indonesian':'English'}. Lead with the direct answer. Use short bold subheadings and regular body text. Prefer short paragraphs or bullets; use a table only for a real comparison. Do not output HTML or literal <br> tags. Avoid stiff, bureaucratic, or robotic wording.\n\nCURRENT DASHBOARD\nBuild: ${CM_APP_BUILD}\nBrowser date: ${dayjs().format('YYYY-MM-DD')}\nActive tab: ${state.activeTab}\nLanguage: ${currentLang}\nAuthenticated: ${isLoggedIn()?'yes':'no'}\nConversation activity scope: ${JSON.stringify(cmAiConversationScope)}`);
  const context=sections.join('\n\n').slice(0,CM_AI_CONTEXT_MAX_CHARS);
- return {context,privateIncluded,sources:[...new Set(sources)],routeHint:knowledgeQuestion?'knowledge':activityDataQuestion?'activity':componentQuestion?'dashboard':'general',contextChars:context.length,approxTokens:cmAiApproxTokens(context)};
+ return {context,privateIncluded,sources:[...new Set(sources)],routeHint:knowledgeQuestion?'knowledge':activityDataQuestion?'activity':dashboardLookup?'dashboard':'general',contextChars:context.length,approxTokens:cmAiApproxTokens(context)};
 }
 async function cmAiSendQuestion(){
  const input=document.getElementById('cmAiInput'),send=document.getElementById('cmAiSend'),question=(input?.value||'').trim();
@@ -9712,6 +9738,10 @@ async function cmAiSendQuestion(){
  const worker=cmAiWorkerUrl();
  const priorHistory=cmAiChatHistory.slice(-6);
  cmAiAddMessage('user',question);cmAiRemember('user',question);input.value='';send.disabled=true;
+ const holidayIntent=cmAiHolidayIntent(question);
+ if(holidayIntent){
+   try{const directAnswer=await cmAiHolidayDirectAnswer(holidayIntent);cmAiAddMessage('assistant',directAnswer,uiText('Live data: Holiday Calendar','Data langsung: Kalender Hari Libur'));cmAiRemember('assistant',directAnswer);}catch(e){cmAiAddMessage('system',`${uiText('Holiday data could not be loaded','Data hari libur gagal dimuat')}: ${e.message||e}`);}finally{send.disabled=false;}return;
+ }
  const picLeaderboardIntent=cmAiPicLeaderboardIntent(question);
  if(picLeaderboardIntent){
    cmAiConversationScope={date:'',dateFrom:'',dateTo:'',period:'',activityIds:[]};
