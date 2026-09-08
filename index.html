@@ -662,24 +662,28 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .modal-body{padding:22px;}
 .modal-foot{padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;}
 
-/* ===== MEETING MODE — clear progressive disclosure ===== */
-.meeting-mode-field{grid-column:1/-1;}
-.meeting-mode-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:7px;}
-.meeting-mode-option{position:relative;cursor:pointer;}
+/* ===== MEETING MODE — compact two-column pattern ===== */
+.meeting-mode-row{grid-column:1/-1;display:grid;grid-template-columns:minmax(250px,.68fr) minmax(0,1.32fr);gap:16px;align-items:end;}
+.meeting-mode-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--gray-bg);}
+.meeting-mode-option{position:relative;cursor:pointer;min-width:0;}
 .meeting-mode-option input{position:absolute;opacity:0;pointer-events:none;}
-.meeting-mode-card{min-height:58px;border:1px solid var(--border);border-radius:10px;background:#fff;display:flex;align-items:center;gap:9px;padding:10px 12px;transition:border-color .16s,background .16s,box-shadow .16s;}
-.meeting-mode-card svg{width:20px;height:20px;flex:0 0 auto;color:var(--ink-500);}
-.meeting-mode-card strong{display:block;font-size:12px;color:var(--ink-800);line-height:1.25;}
-.meeting-mode-card small{display:block;margin-top:2px;font-size:10px;font-weight:500;color:var(--ink-500);line-height:1.25;}
-.meeting-mode-option:hover .meeting-mode-card{border-color:#9FB2D4;background:#FAFCFF;}
-.meeting-mode-option input:focus-visible + .meeting-mode-card{outline:3px solid rgba(45,116,216,.2);outline-offset:2px;}
-.meeting-mode-option input:checked + .meeting-mode-card{border-color:var(--navy-700);background:#F2F6FD;box-shadow:0 0 0 1px var(--navy-700);}
-.meeting-mode-option input:checked + .meeting-mode-card svg,.meeting-mode-option input:checked + .meeting-mode-card strong{color:var(--navy-800);}
-.meeting-detail-fields{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.meeting-mode-card{height:42px;border-right:1px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;padding:0 9px;transition:background .15s,color .15s;}
+.meeting-mode-option:last-child .meeting-mode-card{border-right:0;}
+.meeting-mode-card strong{font-size:11.5px;color:var(--ink-600);line-height:1;white-space:nowrap;}
+.meeting-mode-card svg,.meeting-mode-card small{display:none;}
+.meeting-mode-option:hover .meeting-mode-card{background:#F6F8FC;}
+.meeting-mode-option input:focus-visible + .meeting-mode-card{outline:3px solid rgba(45,116,216,.2);outline-offset:-3px;}
+.meeting-mode-option input:checked + .meeting-mode-card{background:var(--navy-800);}
+.meeting-mode-option input:checked + .meeting-mode-card strong{color:#fff;}
+.meeting-detail-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0;}
 .meeting-detail-fields.single{grid-template-columns:1fr;}
-.meeting-mode-help{font-size:10px;color:var(--ink-500);font-weight:500;margin-top:6px;line-height:1.4;}
+.meeting-input-wrap{display:flex;align-items:center;border:1px solid var(--border);border-radius:9px;background:var(--gray-bg);overflow:hidden;min-width:0;}
+.meeting-input-wrap input{border:0!important;border-radius:0!important;background:transparent!important;min-width:0;flex:1;}
+.meeting-copy-btn{width:40px;height:42px;flex:0 0 40px;border:0;border-left:1px solid var(--border);background:#fff;color:var(--ink-500);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.meeting-copy-btn:hover{background:var(--blue-bg);color:var(--navy-800);}
+.meeting-copy-btn svg{width:16px;height:16px;}
 .meeting-detail-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:#EEF3FC;color:var(--navy-700);font-size:10px;font-weight:800;margin-right:6px;}
-@media(max-width:640px){.meeting-mode-options,.meeting-detail-fields{grid-template-columns:1fr}.meeting-mode-card{min-height:50px}.meeting-detail-fields{gap:10px}}
+@media(max-width:760px){.meeting-mode-row{grid-template-columns:1fr;gap:10px}.meeting-detail-fields{grid-template-columns:1fr}.meeting-mode-card{height:40px}}
 
 /* ===== ACTIVITY LOG v19.16 — MOCKUP-ALIGNED, NO HORIZONTAL SCROLL ===== */
 .modal-box.activity-log-modal{
@@ -6625,18 +6629,19 @@ function openForm(id) {
             <label>${t('fieldCmPic')}</label>
             <input type="text" name="picTimCM" placeholder="Names, comma separated" value="${escapeHtml(v('picTimCM'))}">
           </div>
-          <div class="form-field meeting-mode-field">
+          <div class="meeting-mode-row">
+           <div class="form-field meeting-mode-field">
             <label>${uiText('Meeting mode','Metode Pelaksanaan')}</label>
             <div class="meeting-mode-options" role="radiogroup" aria-label="${uiText('Meeting mode','Metode pelaksanaan')}">
               <label class="meeting-mode-option"><input type="radio" name="meetingMode" value="online" ${initialMeetingMode==='online'?'checked':''}><span class="meeting-mode-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="13" rx="2"/><path d="M8 21h8M12 18v3"/></svg><span><strong>Online</strong><small>${uiText('Video meeting or webinar','Tautan rapat virtual')}</small></span></span></label>
               <label class="meeting-mode-option"><input type="radio" name="meetingMode" value="offline" ${initialMeetingMode==='offline'?'checked':''}><span class="meeting-mode-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span><strong>Offline</strong><small>${uiText('Physical meeting room','Lokasi tatap muka')}</small></span></span></label>
               <label class="meeting-mode-option"><input type="radio" name="meetingMode" value="hybrid" ${initialMeetingMode==='hybrid'?'checked':''}><span class="meeting-mode-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18v-7a3 3 0 0 1 3-3h3M14 5h6v11h-6z"/><path d="M7 21h10M12 18v3"/></svg><span><strong>Hybrid</strong><small>${uiText('On-site and online','Lokasi dan tautan')}</small></span></span></label>
             </div>
-            <div class="meeting-mode-help">${uiText('Only relevant fields are shown based on your selection.','Field yang relevan akan tampil sesuai pilihan.')}</div>
-          </div>
-          <div class="meeting-detail-fields" id="meetingDetailFields">
-            <div class="form-field" id="meetingLocationField"><label>${uiText('Meeting location','Lokasi Rapat')} <span class="req">*</span></label><input type="text" name="meetingLocation" placeholder="${uiText('e.g. Meeting Room 5A, 5th Floor','Contoh: R.R. 5A, Lantai 5')}" value="${escapeHtml(initialMeetingLocation)}"></div>
-            <div class="form-field" id="meetingLinkField"><label>${uiText('Meeting link','Link Rapat')} <span class="req">*</span></label><input type="text" inputmode="url" name="meetingLink" placeholder="https://teams.microsoft.com/..." value="${escapeHtml(initialMeetingLink)}"></div>
+           </div>
+           <div class="meeting-detail-fields" id="meetingDetailFields">
+            <div class="form-field" id="meetingLocationField"><label>${uiText('Meeting location','Lokasi Rapat')} <span class="req">*</span></label><div class="meeting-input-wrap" id="meetingLocationWrap" title="${escapeHtml(initialMeetingLocation)}"><input type="text" name="meetingLocation" placeholder="${uiText('e.g. Meeting Room 5A, 5th Floor','Contoh: R.R. 5A, Lantai 5')}" value="${escapeHtml(initialMeetingLocation)}"><button type="button" class="meeting-copy-btn" data-copy-meeting="location" title="${uiText('Copy meeting location','Salin lokasi rapat')}" aria-label="${uiText('Copy meeting location','Salin lokasi rapat')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg></button></div></div>
+            <div class="form-field" id="meetingLinkField"><label>${uiText('Meeting link','Link Rapat')} <span class="req">*</span></label><div class="meeting-input-wrap" id="meetingLinkWrap" title="${escapeHtml(initialMeetingLink)}"><input type="text" inputmode="url" name="meetingLink" placeholder="https://teams.microsoft.com/..." value="${escapeHtml(initialMeetingLink)}"><button type="button" class="meeting-copy-btn" data-copy-meeting="link" title="${uiText('Copy meeting link','Salin link rapat')}" aria-label="${uiText('Copy meeting link','Salin link rapat')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg></button></div></div>
+           </div>
           </div>
           <div class="form-field">
             <label>${t('fieldSpeakerUnit')} <button type="button" id="btnManageUnits2" class="btn-manage-cat" title="${t('manageUnits')}">${t('manageCategoriesShort')}</button></label>
@@ -6714,8 +6719,12 @@ function openForm(id) {
 
   (function setupMeetingMode(){
     const radios=[...document.querySelectorAll('#agendaForm [name="meetingMode"]')],locationField=document.getElementById('meetingLocationField'),linkField=document.getElementById('meetingLinkField'),detailFields=document.getElementById('meetingDetailFields'),locationInput=document.querySelector('#agendaForm [name="meetingLocation"]'),linkInput=document.querySelector('#agendaForm [name="meetingLink"]');
-    const sync=()=>{const mode=radios.find(r=>r.checked)?.value||'offline',showLocation=mode==='offline'||mode==='hybrid',showLink=mode==='online'||mode==='hybrid';locationField.classList.toggle('hidden',!showLocation);linkField.classList.toggle('hidden',!showLink);locationInput.required=showLocation;linkInput.required=showLink;detailFields.classList.toggle('single',mode!=='hybrid');};
+    const locationWrap=document.getElementById('meetingLocationWrap'),linkWrap=document.getElementById('meetingLinkWrap');
+    const syncTitles=()=>{locationWrap.title=locationInput.value;linkWrap.title=linkInput.value;};
+    const sync=()=>{const mode=radios.find(r=>r.checked)?.value||'offline',showLocation=mode==='offline'||mode==='hybrid',showLink=mode==='online'||mode==='hybrid';locationField.classList.toggle('hidden',!showLocation);linkField.classList.toggle('hidden',!showLink);locationInput.required=showLocation;linkInput.required=showLink;detailFields.classList.toggle('single',mode!=='hybrid');syncTitles();};
     radios.forEach(r=>r.addEventListener('change',sync));sync();
+    locationInput.addEventListener('input',syncTitles);linkInput.addEventListener('input',syncTitles);
+    document.querySelectorAll('#agendaForm [data-copy-meeting]').forEach(btn=>btn.addEventListener('click',async()=>{const input=btn.dataset.copyMeeting==='location'?locationInput:linkInput;if(!input.value){toast(uiText('Nothing to copy yet.','Belum ada isi yang dapat disalin.'),'error');return;}try{await navigator.clipboard.writeText(input.value);}catch(e){input.select();document.execCommand('copy');}toast(btn.dataset.copyMeeting==='location'?uiText('Meeting location copied.','Lokasi rapat disalin.'):uiText('Meeting link copied.','Link rapat disalin.'),'success');}));
   })();
 
   // End Date otomatis mengikuti Start Date selama belum diubah manual.
