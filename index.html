@@ -450,6 +450,8 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
 .table-date-value + .table-date-value{margin-top:1px;}
 .table-date-time{display:block;margin-top:4px;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.3;color:var(--ink-500);font-weight:600;}
 .table-meta{font-size:11.5px;color:var(--ink-500);}
+.meeting-display{display:grid;gap:2px;min-width:0;}
+.meeting-location-text{color:var(--ink-500);white-space:normal;overflow-wrap:anywhere;}
 .table-updated-by{font-size:10px;color:var(--ink-300);margin-top:2px;}
 .row-actions{display:flex;gap:6px;}
 .icon-btn{
@@ -3717,8 +3719,8 @@ function cmRenderTodayAgenda(){
   const maxRows=5, shown=items.slice(0,maxRows);
   const rows=shown.map(a=>{
     const cs=getCategoryStyle(a.kategori), ss=STATUS_STYLES[a.statusNorm]||STATUS_STYLES['Scheduled'];
-    const rawLocation=String(a.lokasiChannel||'').trim();
-    const meetingUrl=isUrlLike(rawLocation)?(/^www\./i.test(rawLocation)?'https://'+rawLocation:rawLocation):'';
+    const rawLink=getMeetingLink(a).trim();
+    const meetingUrl=isUrlLike(rawLink)?(/^www\./i.test(rawLink)?'https://'+rawLink:rawLink):'';
     const rowTip=uiText('Open Activity Details','Buka Detail Activity');
     const linkTip=uiText('Open meeting / activity link','Buka link rapat / activity');
     return `<div class="today-agenda-row" role="button" tabindex="0" data-today-id="${escapeHtml(a.id)}" title="${escapeHtml(rowTip)}" data-tooltip="${escapeHtml(rowTip)}">
@@ -3805,7 +3807,7 @@ function renderTable() {
       <td class="mono" style="white-space:nowrap;width:1%;">${formatActivityDateCell(a)}</td>
       <td style="max-width:280px;">
         <div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
-        ${a.lokasiChannel ? `<div class="table-meta">${renderLocationWithCopy(a.lokasiChannel,true,a.id)}</div>` : ''}
+        ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
       <td><span class="unit-badge ${getUnitType(a.unitPemohon) === 'internal' ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
@@ -3919,7 +3921,7 @@ async function shareActivityWhatsApp(a){
 }
 function iconCopyLink(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>`;}
 async function copyActivityLocationLink(a){
-  const raw=String(a?.lokasiChannel||'').trim();
+  const raw=getMeetingLink(a).trim();
   if(!isUrlLike(raw)){toast(uiText('No link available to copy','Tidak ada link yang dapat disalin'),'info');return;}
   const url=/^www\./i.test(raw)?'https://'+raw:raw;
   try{await copyTextToClipboard(url);toast(uiText('Meeting link copied','Link rapat disalin'),'success');}
@@ -6249,6 +6251,12 @@ function renderLocationWithCopy(lokasi, compact=false, activityId='') {
   return `<span class="activity-link-wrap">${renderLocationValue(raw,compact)}<button type="button" class="activity-link-copy" data-inline-copy-link="${escapeHtml(activityId)}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${iconCopyLink()}</button></span>`;
 }
 
+function renderMeetingLocationAndLink(a,compact=false){
+  const location=getMeetingLocation(a).trim(),link=getMeetingLink(a).trim();
+  if(!location&&!link)return '-';
+  return `<span class="meeting-display">${location?`<span class="meeting-location-text" title="${escapeHtml(location)}">${escapeHtml(location)}</span>`:''}${link?renderLocationWithCopy(link,compact,a.id):''}</span>`;
+}
+
 
 /* ============================================================
    ACTIVITY NOTULA — PDF/DOCX upload + search + Ask T-Agent corpus
@@ -7061,7 +7069,7 @@ async function submitForm(options={}) {
   obj.meetingMode = obj.meetingMode || 'offline';
   obj.meetingLocation = String(obj.meetingLocation || '').trim();
   obj.meetingLink = String(obj.meetingLink || '').trim();
-  obj.lokasiChannel = obj.meetingMode === 'online' ? obj.meetingLink : obj.meetingMode === 'offline' ? obj.meetingLocation : [obj.meetingLocation,obj.meetingLink].filter(Boolean).join(' | ');
+  obj.lokasiChannel = obj.meetingMode === 'online' ? obj.meetingLink : obj.meetingMode === 'offline' ? obj.meetingLocation : [obj.meetingLocation,obj.meetingLink].filter(Boolean).join('\n');
 
   if (obj.kategori && !state.categoryList.includes(obj.kategori.trim())) {
     await addCategoryIfNew(obj.kategori);
