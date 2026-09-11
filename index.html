@@ -422,6 +422,11 @@ html[data-access="guest"] #btnAdd{display:none!important;}
   font-size:11.5px;font-weight:600;white-space:nowrap;
 }
 .status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
+.status-update-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:800;background:#FFF0E5;color:#B54708;border:1px solid #FFD6B2;white-space:nowrap;}
+.status-help{display:block;margin-top:5px;font-size:10.5px;line-height:1.45;color:var(--ink-500);}
+.status-update-panel{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;margin:-4px 0 16px;background:#FFF8F1;border:1px solid #FFD6B2;border-radius:10px;color:#8A3E08;font-size:11.5px;line-height:1.45;}
+.status-update-panel>div:last-child{display:flex;gap:7px;flex-shrink:0;}
+@media(max-width:640px){.status-update-panel{align-items:flex-start;flex-direction:column}.status-update-panel>div:last-child{width:100%}.status-update-panel .btn{flex:1;justify-content:center}}
 .unit-badge{
   display:inline-flex;align-items:center;padding:3px 10px;border-radius:7px;
   font-size:11.5px;font-weight:700;white-space:nowrap;background:var(--navy-800);color:#fff;
@@ -2172,21 +2177,49 @@ function getCategoryStyle(kategori) {
   return CATEGORY_STYLES.DEFAULT;
 }
 
-// Normalize free-text status into canonical buckets
+// Normalize legacy/free-text status into canonical buckets.
 function normalizeStatus(raw) {
   const s = (raw || '').toLowerCase();
   if (s.includes('batal') || s.includes('cancel')) return 'Cancelled';
   if (s.includes('done') || s.includes('selesai')) return 'Completed';
-  if (s.includes('menunggu') || s.includes('tunda') || s.includes('pending')) return 'Pending';
-  if (s.includes('confirm') || s.includes('berjalan') || s.includes('proses')) return 'Ongoing';
+  if (s.includes('tunda') || s.includes('postpone')) return 'Postponed';
+  if (s.includes('menunggu') || s.includes('pending')) return 'Pending';
+  if (s.includes('ongoing') || s.includes('berjalan') || s.includes('berlangsung') || s.includes('proses')) return 'Ongoing';
   if (!s) return 'Scheduled';
   return 'Scheduled';
+}
+function activityStatusLabel(status) {
+  const labels={
+    Scheduled:uiText('Scheduled','Terjadwal'), Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),
+    Ongoing:uiText('Ongoing','Sedang Berlangsung'), Completed:uiText('Completed','Selesai'),
+    Postponed:uiText('Postponed','Ditunda'), Cancelled:uiText('Cancelled','Dibatalkan')
+  };
+  return labels[status]||status||'-';
+}
+function parseActivityClock(value,which='start') {
+  const direct=String(value||'').match(/^(?:[01]\d|2[0-3]):[0-5]\d$/);if(direct)return direct[0];
+  const times=[...String(value||'').matchAll(/(?:^|\D)([01]?\d|2[0-3])[:.]([0-5]\d)(?=\D|$)/g)].map(m=>`${String(m[1]).padStart(2,'0')}:${m[2]}`);
+  return which==='end'?(times[1]||''):(times[0]||'');
+}
+function activityTimingState(item,manualStatus) {
+  const status=manualStatus||normalizeStatus(item?.status);
+  if(['Completed','Cancelled','Pending','Postponed'].includes(status))return {status,needsUpdate:false,automatic:false};
+  const startClock=item?.jamMulai||parseActivityClock(item?.waktu,'start');
+  const endClock=item?.jamSelesai||parseActivityClock(item?.waktu,'end');
+  const endDate=item?.tglSelesai||item?.tglMulai;
+  if(!item?.tglMulai||!endDate||!startClock||!endClock)return {status,needsUpdate:false,automatic:false};
+  const start=dayjs(`${item.tglMulai}T${startClock}`),end=dayjs(`${endDate}T${endClock}`),now=dayjs();
+  if(!start.isValid()||!end.isValid()||end.isBefore(start))return {status,needsUpdate:false,automatic:false};
+  if(now.isBefore(start))return {status:status==='Ongoing'?'Ongoing':'Scheduled',needsUpdate:false,automatic:false};
+  if(now.isAfter(end))return {status:'Ongoing',needsUpdate:true,automatic:status==='Scheduled'};
+  return {status:'Ongoing',needsUpdate:false,automatic:status==='Scheduled'};
 }
 const STATUS_STYLES = {
   'Completed':  { bg:'#E7ECF6', fg:'#12275A' },
   'Scheduled':  { bg:'#EBF1FA', fg:'#254A8C' },
   'Ongoing':    { bg:'#F6EFDC', fg:'#C8A84B' },
   'Pending':    { bg:'#F3E7C9', fg:'#8A6A1B' },
+  'Postponed':  { bg:'#F1ECFF', fg:'#7157BE' },
   'Cancelled':  { bg:'var(--red-bg)',    fg:'var(--red)' },
 };
 
@@ -2583,6 +2616,8 @@ function preprocess(list) {
     // Support current Notes field plus legacy/import aliases. Keep this value canonical
     // so Activity Detail/Edit/Search all read the same note regardless of source format.
     const catatan = item.catatan ?? item.notes ?? item.note ?? item.keterangan ?? item.followUp ?? item.followup ?? item['follow up'] ?? '';
+    const manualStatus = normalizeStatus(item.status);
+    const timingState = activityTimingState(item,manualStatus);
     const normalizedItem = {
       ...item,
       id: item.id || uid('AGD'),
@@ -2590,6 +2625,8 @@ function preprocess(list) {
       tglMulai,
       tglSelesai: item.tglSelesai || tglMulai,
       waktu: item.waktu || '',
+      jamMulai: item.jamMulai || parseActivityClock(item.waktu,'start'),
+      jamSelesai: item.jamSelesai || parseActivityClock(item.waktu,'end'),
       namaKegiatan: item.namaKegiatan || 'Unnamed',
       layanan: normalizeLayanan(item.layanan),
       unitPemohon: item.unitPemohon || '-',
@@ -2607,7 +2644,10 @@ function preprocess(list) {
       lokasiChannel: item.lokasiChannel || '',
       estimasiBiaya: Number(item.estimasiBiaya) || 0,
       status: item.status || '',
-      statusNorm: normalizeStatus(item.status),
+      statusNorm: timingState.status,
+      statusManual: manualStatus,
+      statusNeedsUpdate: timingState.needsUpdate,
+      statusAutomatic: timingState.automatic,
       catatan: String(catatan || ''),
       dokumentasi: item.dokumentasi || '[]',
       // Notula is stored as lightweight JSON metadata on the Activity. The original
@@ -3558,7 +3598,7 @@ function populateFilterDropdowns() {
   fillSelect('filterTahun', years, t('allYears'), state.filters.tahun);
   fillSelect('filterKategori', kategoris, t('allCategories'), state.filters.kategori);
   fillSelect('filterProgram', programs, t('allPrograms'), state.filters.program);
-  fillSelect('filterStatus', statuses, t('allStatus'), state.filters.status);
+  (function fillStatusSelect(){const el=document.getElementById('filterStatus');if(!el)return;const prev=state.filters.status||el.value||'ALL';el.innerHTML=`<option value="ALL">${t('allStatus')}</option>`+statuses.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(activityStatusLabel(o))}</option>`).join('');el.value=statuses.includes(prev)?prev:'ALL';})();
   fillSelect('filterPic', pics, t('allPic'), state.filters.pic);
   fillSelect('filterUnit', units, t('allUnits'), state.filters.unit);
   fillSelect('filterLayanan', ['Yes', 'No'], t('allLayanan'), state.filters.layanan);
@@ -3656,7 +3696,7 @@ function openKpiList(card) {
               <div class="kpi-list-meta">${fmtDate(a.tglMulai)} · ${escapeHtml(a.unitPemohon)}</div>
             </div>
             <span class="cat-badge" style="background:${cs.bg};color:${cs.fg};flex-shrink:0;">${escapeHtml(a.kategori)}</span>
-            <span class="status-badge" style="background:${ss.bg};color:${ss.fg};flex-shrink:0;">${a.statusNorm}</span>
+            <span class="status-badge" style="background:${ss.bg};color:${ss.fg};flex-shrink:0;">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?`<span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}
           </div>`;
         }).join('') + `</div>`
       : emptyState('No matching activities', '');
@@ -3728,7 +3768,7 @@ function cmRenderTodayAgenda(){
       <span class="today-main"><span class="today-title-line"><b>${escapeHtml(a.namaKegiatan)}</b>${meetingUrl?`<a class="today-open-link" data-today-link href="${escapeHtml(meetingUrl)}" target="_blank" rel="noopener" title="${escapeHtml(linkTip)}" data-tooltip="${escapeHtml(linkTip)}" aria-label="${escapeHtml(linkTip)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M10 14L21 3M21 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5"/></svg></a>`:''}</span><small>${escapeHtml(a.unitPemohon||'-')}</small></span>
       <span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span>
       <span class="today-pic">${escapeHtml(a.picTimCM||'-')}</span>
-      <span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(a.statusNorm)}</span>
+      <span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?`<span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}
     </div>`;
   }).join('');
   return `<section class="today-agenda ${collapsed?'collapsed':''}" id="todayAgendaModule">
@@ -3814,7 +3854,7 @@ function renderTable() {
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
       <td style="max-width:160px;">${escapeHtml(a.programTerkait)}</td>
       <td style="max-width:150px;">${escapeHtml(a.picTimCM)}</td>
-      <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${a.statusNorm}</span></td>
+      <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?` <span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}</td>
       <td>
         <div class="row-actions">
           <button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>
@@ -4286,8 +4326,8 @@ function renderCalendar() {
    RENDER: KANBAN TAB
 ============================================================ */
 function renderKanban() {
-  const container=document.getElementById('tab-kanban'),filtered=getFiltered(),cols=['Scheduled','Ongoing','Pending','Completed','Cancelled'];
-  const labels={Scheduled:uiText('Scheduled','Terjadwal'),Ongoing:uiText('Ongoing','Berjalan'),Pending:uiText('Pending','Menunggu'),Completed:uiText('Completed','Selesai'),Cancelled:uiText('Cancelled','Dibatalkan')};
+  const container=document.getElementById('tab-kanban'),filtered=getFiltered(),cols=['Pending','Scheduled','Ongoing','Postponed','Completed','Cancelled'];
+  const labels={Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),Scheduled:uiText('Scheduled','Terjadwal'),Ongoing:uiText('Ongoing','Sedang Berlangsung'),Postponed:uiText('Postponed','Ditunda'),Completed:uiText('Completed','Selesai'),Cancelled:uiText('Cancelled','Dibatalkan')};
   const present=cols.filter(c=>filtered.some(a=>a.statusNorm===c)),finalCols=present.length?present:cols.slice(0,1);
   let html='<div class="kanban-wrap">';
   finalCols.forEach(col=>{const items=filtered.filter(a=>a.statusNorm===col).sort((a,b)=>a.tglMulai.localeCompare(b.tglMulai)),ss=STATUS_STYLES[col]||STATUS_STYLES.Scheduled;
@@ -5458,6 +5498,16 @@ function refreshAll() {
   renderActiveTab();
   updateFilterActiveBadge();
 }
+function refreshAutomaticActivityStatuses(){
+  const before=state.agendas.map(a=>`${a.id}:${a.statusNorm}:${a.statusNeedsUpdate?'1':'0'}`).join('|');
+  const next=preprocess(state.agendas);
+  const after=next.map(a=>`${a.id}:${a.statusNorm}:${a.statusNeedsUpdate?'1':'0'}`).join('|');
+  if(before===after)return;
+  state.agendas=next;
+  configureContextToolbar(state.activeTab);
+  renderActiveTab();
+  updateFilterActiveBadge();
+}
 
 function activityFilterCount(){
   const f=state.filters;let n=0;
@@ -6056,6 +6106,13 @@ async function cmToggleEoChecklistItem(activityId,itemId){
   await cmActivityLogRecord(saved,'eo_checklist_changed',[`${item.done?'Selesai':'Dibuka kembali'}: ${cmActivityLogClip(item.task,100)}`,`Progress EO: ${cmEoProgress(saved.eoChecklist).done}/${cmEoProgress(saved.eoChecklist).total}`],{category:'ACTIVITY'});
   refreshAll();openDetail(activityId);toast(item.done?uiText('EO checklist item completed','Item checklist EO selesai'):uiText('EO checklist item reopened','Item checklist EO dibuka kembali'),'success');
 }
+async function cmQuickCompleteActivity(activityId){
+  const idx=state.agendas.findIndex(x=>x.id===activityId);if(idx<0)return;
+  const previous=state.agendas[idx],saved=preprocess([{...previous,status:'Completed',updatedBy:getCurrentUserEmail()||null,updatedAt:new Date().toISOString()}])[0];
+  state.agendas[idx]=saved;await persist();
+  await cmActivityLogRecord(saved,'status_changed',[`Status: ${activityStatusLabel(previous.statusNorm)} → ${activityStatusLabel('Completed')}`],{category:'STATUS',source:'quick_action'});
+  refreshAll();openDetail(activityId);toast(uiText('Activity marked completed.','Activity ditandai selesai.'),'success');
+}
 
 /* ============================================================
    DETAIL MODAL
@@ -6075,9 +6132,11 @@ function openDetail(id) {
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <span class="status-badge" style="background:${a.layanan==='Yes'?'var(--blue-bg)':'var(--gold-100)'};color:${a.layanan==='Yes'?'var(--navy-700)':'#8A6A1B'};">${a.layanan==='Yes'?t('serviceBadgeCheck'):t('nonServiceBadge')}</span>
         <span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span>
-        <span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${a.statusNorm}${a.status && a.status !== a.statusNorm ? ' · '+escapeHtml(a.status) : ''}</span>
+        <span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}${a.statusAutomatic?` · ${uiText('Automatic','Otomatis')}`:''}</span>
+        ${a.statusNeedsUpdate?`<span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}
         ${cmIsEoEnabled(a.eoEnabled)?`<span class="eo-mini-badge" style="margin-left:0;">EO · ${cmEoProgress(a.eoChecklist).pct}%</span>`:''}
       </div>
+      ${a.statusNeedsUpdate?`<div class="status-update-panel"><div><b>${uiText('The activity time has passed.','Waktu kegiatan sudah lewat.')}</b><br>${uiText('Confirm whether this activity is completed or update its status.','Konfirmasi apakah activity sudah selesai atau perbarui statusnya.')}</div><div><button type="button" class="btn btn-gold btn-sm" id="detailQuickComplete">${uiText('Mark Completed','Tandai Selesai')}</button><button type="button" class="btn btn-outline btn-sm" id="detailQuickStatus">${uiText('Update Status','Ubah Status')}</button></div></div>`:''}
       <h3 style="font-family:'Sora',sans-serif;font-size:18px;margin:0 0 4px;color:var(--ink-900);">${escapeHtml(a.namaKegiatan)}</h3>
       <div style="height:8px;"></div>
       <div class="detail-grid">
@@ -6119,6 +6178,8 @@ function openDetail(id) {
   modal.querySelectorAll('[data-eo-detail-toggle]').forEach(btn=>btn.addEventListener('click',async e=>{e.preventDefault();e.stopPropagation();btn.disabled=true;await cmToggleEoChecklistItem(id,btn.dataset.eoDetailToggle);}));
   document.getElementById('detailHistory')?.addEventListener('click',()=>{modal.classList.add('hidden');openActivityLog(id,{returnToDetail:true,activity:a});});
   document.getElementById('detailManageEvent')?.addEventListener('click',()=>{modal.classList.add('hidden');openEoWorkspace(id,{returnToDetail:true});});
+  document.getElementById('detailQuickComplete')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;await cmQuickCompleteActivity(id);});
+  document.getElementById('detailQuickStatus')?.addEventListener('click',()=>{modal.classList.add('hidden');openForm(id);});
   document.getElementById('detailEdit').addEventListener('click', () => { modal.classList.add('hidden'); openForm(id); });
   document.getElementById('detailDelete').addEventListener('click', () => { modal.classList.add('hidden'); openConfirmDelete(id); });
   // Note: no click handler on .doc-download-link — it's a plain native <a href target="_blank">.
@@ -6579,6 +6640,9 @@ function openForm(id) {
   const initialMeetingMode = getMeetingMode(a);
   const initialMeetingLocation = a?.meetingLocation ?? (initialMeetingMode === 'offline' ? (a?.lokasiChannel || '') : '');
   const initialMeetingLink = a?.meetingLink ?? (initialMeetingMode === 'online' ? (a?.lokasiChannel || '') : '');
+  const initialStartClock = v('jamMulai',parseActivityClock(v('waktu'),'start'));
+  const initialEndClock = v('jamSelesai',parseActivityClock(v('waktu'),'end'));
+  const initialStatus = normalizeStatus(v('status','Scheduled'));
 
   modal.innerHTML = `<div class="modal-box eo-form-modal">
     <div class="modal-head">
@@ -6601,8 +6665,14 @@ function openForm(id) {
             <input type="date" name="tglSelesai" value="${v('tglSelesai', v('tglMulai', dayjs().format('YYYY-MM-DD')))}">
           </div>
           <div class="form-field">
-            <label>${t('fieldTime')}</label>
-            <input type="text" name="waktu" placeholder="09:00 - 11:00" value="${escapeHtml(v('waktu'))}">
+            <label>${uiText('Start Time','Jam Mulai')} ${(!a||initialStartClock||initialEndClock)?'<span class="req">*</span>':''}</label>
+            <input type="time" name="jamMulai" ${(!a||initialStartClock||initialEndClock)?'required':''} value="${escapeHtml(initialStartClock)}">
+          </div>
+          <div class="form-field">
+            <label>${uiText('End Time','Jam Selesai')} ${(!a||initialStartClock||initialEndClock)?'<span class="req">*</span>':''}</label>
+            <input type="time" name="jamSelesai" ${(!a||initialStartClock||initialEndClock)?'required':''} value="${escapeHtml(initialEndClock)}">
+            <input type="hidden" name="waktuLegacy" value="${escapeHtml(v('waktu'))}">
+            <small class="status-help">${a&&!initialStartClock&&!initialEndClock&&v('waktu')?`${uiText('Legacy time retained','Waktu lama tetap dipertahankan')}: <b>${escapeHtml(v('waktu'))}</b>. ${uiText('Enter both times to enable automation.','Isi kedua jam untuk mengaktifkan otomatisasi.')}`:uiText('Complete both times to enable automatic status.','Isi kedua jam agar status otomatis dapat berjalan.')}</small>
           </div>
           <div class="form-field">
             <label>${t('fieldService')}</label>
@@ -6629,9 +6699,16 @@ function openForm(id) {
             <datalist id="programList">${uniqueSorted(state.agendas,'programTerkait').map(k=>`<option value="${escapeHtml(k)}">`).join('')}</datalist>
           </div>
           <div class="form-field">
-            <label>${t('fieldStatus')}</label>
-            <input type="text" name="status" list="statusList" placeholder="Done / Scheduled" value="${escapeHtml(v('status'))}">
-            <datalist id="statusList"><option value="Done"><option value="Scheduled"><option value="Confirmed"><option value="Cancelled"></datalist>
+            <label>${t('fieldStatus')} <span class="req">*</span></label>
+            <select name="status" required>
+              <option value="Pending" ${initialStatus==='Pending'?'selected':''}>${uiText('Awaiting Confirmation','Menunggu Konfirmasi')}</option>
+              <option value="Scheduled" ${initialStatus==='Scheduled'?'selected':''}>${uiText('Scheduled','Terjadwal')}</option>
+              <option value="Ongoing" ${initialStatus==='Ongoing'?'selected':''}>${uiText('Ongoing','Sedang Berlangsung')}</option>
+              <option value="Completed" ${initialStatus==='Completed'?'selected':''}>${uiText('Completed','Selesai')}</option>
+              <option value="Postponed" ${initialStatus==='Postponed'?'selected':''}>${uiText('Postponed','Ditunda')}</option>
+              <option value="Cancelled" ${initialStatus==='Cancelled'?'selected':''}>${uiText('Cancelled','Dibatalkan')}</option>
+            </select>
+            <small class="status-help">${uiText('Scheduled changes automatically to Ongoing during the activity time.','Terjadwal otomatis menjadi Sedang Berlangsung saat memasuki waktu kegiatan.')}</small>
           </div>
           <div class="form-field">
             <label>${t('fieldCmPic')}</label>
@@ -7066,6 +7143,13 @@ async function submitForm(options={}) {
   const fd = new FormData(form);
   const obj = {};
   fd.forEach((val, key) => obj[key] = val);
+  obj.jamMulai=String(obj.jamMulai||'').trim();
+  obj.jamSelesai=String(obj.jamSelesai||'').trim();
+  obj.waktu=(obj.jamMulai&&obj.jamSelesai)?`${obj.jamMulai} - ${obj.jamSelesai}`:(obj.waktuLegacy||'');
+  delete obj.waktuLegacy;
+  if(Boolean(obj.jamMulai)!==Boolean(obj.jamSelesai)){toast(uiText('Start Time and End Time must be completed together.','Jam Mulai dan Jam Selesai harus diisi keduanya.'),'error');return;}
+  if(obj.tglSelesai&&obj.tglMulai&&obj.tglSelesai<obj.tglMulai){toast(uiText('End Date cannot be before Start Date.','Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai.'),'error');return;}
+  if(obj.tglSelesai===obj.tglMulai&&obj.jamMulai&&obj.jamSelesai&&obj.jamSelesai<=obj.jamMulai){toast(uiText('End Time must be later than Start Time.','Jam Selesai harus lebih besar dari Jam Mulai.'),'error');return;}
   obj.meetingMode = obj.meetingMode || 'offline';
   obj.meetingLocation = String(obj.meetingLocation || '').trim();
   obj.meetingLink = String(obj.meetingLink || '').trim();
@@ -9363,6 +9447,7 @@ const CM_USER_MANUAL_ARTICLES=[
 {id:'squad',category:{en:'Squad Team',id:'Squad Team'},title:{en:'Searching and Filtering Squad Team',id:'Mencari dan Memfilter Squad Team'},summary:{en:'Find team members by name, NIP, position, role, unit, squad, and other stored member metadata.',id:'Temukan anggota tim berdasarkan nama, NIP, jabatan, role, unit, squad, dan metadata anggota lainnya.'},keywords:['squad team','contact','NIP','role','unit','member','team'],steps:{en:['Open Squad Team.','Use search for name, NIP, position, role, unit, squad/team, and member metadata.','Use contextual filters for Team/Squad, Role, and Unit.','Open team sections to review members and their roles.'],id:['Buka Squad Team.','Gunakan search untuk nama, NIP, jabatan, role, unit, squad/team, dan metadata anggota.','Gunakan filter kontekstual untuk Team/Squad, Role, dan Unit.','Buka bagian tim untuk melihat anggota dan perannya.']}},
 {id:'backup',category:{en:'Data & Backup',id:'Data & Backup'},title:{en:'Backup and Restore',id:'Backup dan Restore'},summary:{en:'Create and restore dashboard backups including Activity audit logs while preserving the separation between dashboard data and the external AI service.',id:'Buat dan pulihkan backup dashboard termasuk Activity audit log sambil menjaga pemisahan data dashboard dengan layanan AI eksternal.'},keywords:['backup','restore','json','data'],steps:{en:['Use Backup All in the header to create a backup of supported dashboard data.','Store the backup file in an approved secure location.','Use Restore All to restore supported data from a backup file or supported text-code flow.','Review counts and scope in the confirmation dialog before restoring.'],id:['Gunakan Backup All di header untuk membuat backup data dashboard yang didukung.','Simpan file backup pada lokasi yang aman dan sesuai ketentuan.','Gunakan Restore All untuk memulihkan data yang didukung dari file backup atau alur text-code yang tersedia.','Review jumlah dan scope data pada dialog konfirmasi sebelum restore.']}},
 {id:'ai-assistant',category:{en:'AI',id:'AI'},title:{en:'Using Ask T-Agent',id:'Menggunakan Ask T-Agent'},summary:{en:'Ask questions about Dashboard CM procedures, current dashboard context, or general Change Management concepts.',id:'Ajukan pertanyaan tentang cara menggunakan Dashboard CM, konteks dashboard yang tersedia, atau konsep Change Management umum.'},keywords:['AI','assistant','Groq','Cloudflare Worker','question','help','change management'],steps:{en:['Click the floating Ask T-Agent button at the bottom-right of the dashboard.','Ask a procedural question such as “How do I generate a QR for a CRA survey?” or a CM question such as “What is the difference between stakeholder engagement and communication planning?”','The assistant retrieves relevant User Manual and Knowledge content locally before sending context to the configured Worker.','When signed in, the assistant can include relevant Activity and CRA summaries; private dashboard context is sent only with a Firebase ID token for Worker validation.','Use Clear Chat in the Ask T-Agent header when you want to reset only the visible conversation. It does not delete Activity, CRA, Knowledge, or AI Reference data.','The Dashboard CM Worker endpoint is preconfigured in this build. Use AI Settings only if the Worker URL changes or you need to point to another environment.'],id:['Klik tombol floating Ask T-Agent di kanan bawah dashboard.','Ajukan pertanyaan prosedural seperti “Gimana bikin QR untuk survei CRA?” atau pertanyaan CM seperti “Apa beda stakeholder engagement dan communication planning?”','Assistant mencari konteks User Manual dan Knowledge secara lokal sebelum mengirim konteks ke Worker yang dikonfigurasi.','Saat login, assistant dapat menyertakan ringkasan Activity dan CRA yang relevan; konteks private dikirim bersama Firebase ID token untuk validasi Worker.','Gunakan Clear Chat di header Ask T-Agent untuk mengosongkan percakapan yang tampil saja. Fitur ini tidak menghapus Activity, CRA, Knowledge, atau data AI Reference.','Endpoint Worker Dashboard CM sudah diprakonfigurasi pada build ini. Gunakan AI Settings hanya jika URL Worker berubah atau perlu diarahkan ke environment lain.']},note:{en:'The Groq API key is never stored in this HTML; keep it as a Cloudflare Worker Secret.',id:'Groq API key tidak pernah disimpan di HTML ini; simpan sebagai Cloudflare Worker Secret.'}},
+{id:'activity-auto-status',category:{en:'Activity',id:'Activity'},title:{en:'Using Automatic Activity Status',id:'Menggunakan Status Otomatis Activity'},summary:{en:'Activity status follows its scheduled date and time while manual exception statuses remain protected.',id:'Status Activity mengikuti tanggal dan jam pelaksanaan, sedangkan status pengecualian manual tetap dipertahankan.'},keywords:['activity status','automatic','ongoing','needs update','scheduled','jam mulai','jam selesai','perlu update'],steps:{en:['In Add/Edit Activity, enter Start Date, End Date, Start Time, and End Time.','Choose Scheduled for a confirmed future activity, or Awaiting Confirmation when the schedule is not final.','At the start time, Scheduled changes automatically to Ongoing.','After the end time, the activity remains Ongoing and receives a Needs Update badge.','Open Activity Details and choose Mark Completed, or choose Update Status to set another status.','Awaiting Confirmation, Postponed, Completed, and Cancelled are never changed automatically.'],id:['Pada Tambah/Edit Activity, isi Tanggal Mulai, Tanggal Selesai, Jam Mulai, dan Jam Selesai.','Pilih Terjadwal untuk kegiatan yang jadwalnya sudah pasti, atau Menunggu Konfirmasi jika belum final.','Saat jam mulai tiba, status Terjadwal otomatis berubah menjadi Sedang Berlangsung.','Setelah jam selesai lewat, status tetap Sedang Berlangsung dan mendapat badge Perlu Update.','Buka Detail Activity lalu pilih Tandai Selesai, atau pilih Ubah Status untuk menetapkan status lain.','Status Menunggu Konfirmasi, Ditunda, Selesai, dan Dibatalkan tidak pernah diubah otomatis.']},note:{en:'Both time fields are required for accurate automatic status calculation.',id:'Kedua field jam wajib diisi agar status otomatis dihitung dengan akurat.'}},
 {id:'crud-guide',category:{en:'Data Management',id:'Pengelolaan Data'},title:{en:'Adding, Editing, Deleting, Importing, and Exporting Data',id:'Menambah, Mengedit, Menghapus, Import, dan Export Data'},summary:{en:'Understand the common data-management pattern used across Activity, Knowledge, Squad Team, categories, units, and survey configuration.',id:'Pahami pola pengelolaan data yang digunakan pada Activity, Knowledge, Squad Team, kategori, unit, dan konfigurasi survei.'},keywords:['CRUD','add','edit','delete','import','export','excel','undo','data management','tambah','ubah','hapus'],steps:{en:['Sign in before changing shared data.','Open the menu containing the record. Use Search and Filters to verify that the record does not already exist.','Click Add, complete required fields marked with *, then save.','To change data, open Details or use the Edit icon, update only the required fields, then save and verify the result.','Before deleting, confirm the exact record name and review whether linked data or evidence must be retained.','Use Import only with the supported template/format and review the preview or confirmation scope.','Use Export or Backup before a large update so recovery remains possible.'],id:['Login sebelum mengubah data bersama.','Buka menu tempat record berada. Gunakan Search dan Filter untuk memastikan record belum tersedia.','Klik Add/Tambah, lengkapi field wajib bertanda *, lalu simpan.','Untuk mengubah data, buka Detail atau gunakan ikon Edit, ubah hanya field yang diperlukan, lalu simpan dan periksa hasilnya.','Sebelum menghapus, pastikan nama record yang tepat dan periksa apakah data terhubung atau evidence perlu dipertahankan.','Gunakan Import hanya dengan template/format yang didukung dan periksa preview atau scope konfirmasi.','Gunakan Export atau Backup sebelum perubahan massal agar data dapat dipulihkan.']},note:{en:'Deletion can be difficult to reverse. Use the confirmation dialog as a final target check.',id:'Penghapusan dapat sulit dipulihkan. Gunakan dialog konfirmasi sebagai pemeriksaan target terakhir.'}},
 {id:'ai-reference-library',category:{en:'Knowledge',id:'Knowledge'},title:{en:'Managing the CM Reference Library for AI Search',id:'Mengelola CM Reference Library untuk Pencarian AI'},summary:{en:'Upload and maintain authoritative CM documents so extracted text can be searched from Knowledge and used as grounded Ask T-Agent context.',id:'Upload dan kelola dokumen CM otoritatif agar teks hasil ekstraksi dapat dicari dari Knowledge dan digunakan sebagai konteks Ask T-Agent yang ter-grounding.'},keywords:['CM Reference Library','AI reference','framework CM Kemenkeu','upload PDF','DOCX','PPTX','XLSX','version','archive','chunks'],steps:{en:['Sign in and open Knowledge.','Open CM Reference Library and click Upload Reference.','Select one or several supported files: PDF, DOCX, PPTX, XLSX/XLS, TXT, MD, HTML, or JSON.','Review the extracted title, category, access level, description, tags, source URL, and extraction preview.','Correct metadata before publishing; use a clear source URL so users can return to the authoritative original.','Click Publish to AI and wait for indexing to finish.','Search the document by title, tag, distinctive phrase, or framework term.','Use Upload New Version for a revision. The previous active version is archived instead of silently overwritten.','Use Preview to inspect extracted chunks, Edit for metadata, and Delete only after confirming the exact version.'],id:['Login dan buka Knowledge.','Buka CM Reference Library lalu klik Upload Reference.','Pilih satu atau beberapa file yang didukung: PDF, DOCX, PPTX, XLSX/XLS, TXT, MD, HTML, atau JSON.','Periksa judul hasil ekstraksi, kategori, level akses, deskripsi, tag, URL sumber, dan preview ekstraksi.','Perbaiki metadata sebelum publish; gunakan URL sumber yang jelas agar pengguna dapat kembali ke dokumen asli yang otoritatif.','Klik Publish to AI lalu tunggu indexing selesai.','Cari dokumen berdasarkan judul, tag, frasa khas, atau istilah framework.','Gunakan Upload New Version untuk revisi. Versi aktif sebelumnya diarsipkan, bukan ditimpa diam-diam.','Gunakan Preview untuk memeriksa chunk, Edit untuk metadata, dan Delete hanya setelah memastikan versi yang tepat.']}},
 {id:'reminders',category:{en:'Notifications',id:'Notifikasi'},title:{en:'Creating and Managing Personal Reminders',id:'Membuat dan Mengelola Reminder Pribadi'},summary:{en:'Create due-date reminders with H-minus timing, recurrence, running text, banner, popup, and automatic Notification Center listing.',id:'Buat reminder jatuh tempo dengan waktu H-minus, pengulangan, running text, banner, popup, dan daftar otomatis di Pusat Notifikasi.'},keywords:['reminder','notification','bell','H-minus','running text','banner','popup','repeat','jatuh tempo','lonceng'],steps:{en:['Click the bell icon in the header.','Click Create Reminder.','Enter Name/recipient, Message, Due Date, and Start Reminder at H-minus.','Choose a repeat pattern, or Custom to set the interval and stopping rule.','Select optional Running Text, Banner, and/or Popup. Every reminder is listed in Notification Center even if none is selected.','Review the live preview and scheduling summary.','Click Save Reminder. The bell turns gold and shows a count when notifications are scheduled today.','Open Notification Center to edit, mark completed/reactivate, or delete a reminder.'],id:['Klik ikon lonceng pada header.','Klik Buat Reminder.','Isi Nama/penerima, Pesan, Tanggal jatuh tempo, dan Reminder mulai H-.','Pilih pola pengulangan, atau Kustom untuk menentukan interval dan aturan berhenti.','Pilih Running Text, Banner, dan/atau Pop-up bila diperlukan. Semua reminder tetap masuk Pusat Notifikasi meskipun tidak ada tipe tambahan yang dipilih.','Periksa live preview dan ringkasan jadwal.','Klik Simpan Reminder. Lonceng berubah gold dan menampilkan angka saat ada notifikasi yang terjadwal hari ini.','Buka Pusat Notifikasi untuk edit, tandai selesai/aktifkan kembali, atau hapus reminder.']}},
@@ -9631,7 +9716,7 @@ function cmAiPicAggregateDirectAnswer(intent,query){
    else if(intent.followUp&&cmAiLastAggregate.dateFrom&&cmAiLastAggregate.dateTo){items=items.filter(a=>{const start=a.tglMulai||cmAiLastAggregate.dateFrom,end=a.tglSelesai||start;return start<=cmAiLastAggregate.dateTo&&end>=cmAiLastAggregate.dateFrom;});periodLabel=cmAiLastAggregate.label;}
  }
  const matched=items.filter(a=>splitNames(a.picTimCM).some(name=>normalizeActivitySearchText(name)===intent.key));
- const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Cancelled:0};
+ const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Postponed:0,Cancelled:0};
  matched.forEach(a=>{const status=a.statusNorm||normalizeStatus(a.status);counts[status]=(counts[status]||0)+1;});
  const breakdown=Object.entries(counts).filter(([,n])=>n>0).map(([status,n])=>`${status}: ${n}`).join(' · ');
  cmAiLastAggregate={type:'pic_count',dateFrom:range?.dateFrom||'',dateTo:range?.dateTo||'',label:range?periodLabel:''};
@@ -9927,6 +10012,7 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
   await loadUnitListInitial();
   populateFilterDropdowns();
   refreshAll();
+  setInterval(refreshAutomaticActivityStatuses,30000);
   cmMaybeShowHelpSelfTest();
   switchTab('analytics'); // landing page = tab Analytics
 })();
