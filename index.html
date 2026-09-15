@@ -4330,6 +4330,35 @@ const CM_INDONESIA_HOLIDAYS_2026={
   '2026-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'}
 };
 
+const CM_INDONESIA_HOLIDAYS_2027={
+  '2027-01-01':{type:'national',id:'Tahun Baru 2027 Masehi',en:'New Year 2027'},
+  '2027-01-05':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. 1448 H',en:"Prophet Muhammad's Isra Mi'raj 1448 H"},
+  '2027-02-05':{type:'collective',id:'Cuti Bersama Tahun Baru Imlek 2578 Kongzili',en:'Collective Leave — Chinese New Year 2578 Kongzili'},
+  '2027-02-06':{type:'national',id:'Tahun Baru Imlek 2578 Kongzili',en:'Chinese New Year 2578 Kongzili'},
+  '2027-03-08':{type:'national',id:'Hari Suci Nyepi (Tahun Baru Saka 1949)',en:'Nyepi (Saka New Year 1949)'},
+  '2027-03-09':{type:'collective',id:'Cuti Bersama Idulfitri 1448 H',en:'Collective Leave — Eid al-Fitr 1448 H'},
+  '2027-03-10':{type:'national',id:'Idulfitri 1448 H',en:'Eid al-Fitr 1448 H'},
+  '2027-03-11':{type:'national',id:'Idulfitri 1448 H',en:'Eid al-Fitr 1448 H'},
+  '2027-03-12':{type:'collective',id:'Cuti Bersama Idulfitri 1448 H',en:'Collective Leave — Eid al-Fitr 1448 H'},
+  '2027-03-15':{type:'collective',id:'Cuti Bersama Idulfitri 1448 H',en:'Collective Leave — Eid al-Fitr 1448 H'},
+  '2027-03-25':{type:'collective',id:'Cuti Bersama Wafat Yesus Kristus',en:'Collective Leave — Good Friday'},
+  '2027-03-26':{type:'national',id:'Wafat Yesus Kristus',en:'Good Friday'},
+  '2027-03-28':{type:'national',id:'Kebangkitan Yesus Kristus (Paskah)',en:'Easter Sunday'},
+  '2027-05-01':{type:'national',id:'Hari Buruh Internasional',en:'International Labour Day'},
+  '2027-05-06':{type:'national',id:'Kenaikan Yesus Kristus',en:'Ascension of Jesus Christ'},
+  '2027-05-17':{type:'national',id:'Iduladha 1448 H',en:'Eid al-Adha 1448 H'},
+  '2027-05-18':{type:'collective',id:'Cuti Bersama Iduladha 1448 H',en:'Collective Leave — Eid al-Adha 1448 H'},
+  '2027-05-19':{type:'collective',id:'Cuti Bersama Hari Raya Waisak 2571 BE',en:'Collective Leave — Vesak Day 2571 BE'},
+  '2027-05-20':{type:'national',id:'Hari Raya Waisak 2571 BE',en:'Vesak Day 2571 BE'},
+  '2027-06-01':{type:'national',id:'Hari Lahir Pancasila',en:'Pancasila Day'},
+  '2027-06-06':{type:'national',id:'1 Muharam Tahun Baru Islam 1449 H',en:'Islamic New Year 1449 H'},
+  '2027-08-15':{type:'national',id:'Maulid Nabi Muhammad saw.',en:"Prophet Muhammad's Birthday"},
+  '2027-08-17':{type:'national',id:'Proklamasi Kemerdekaan',en:'Independence Day'},
+  '2027-12-24':{type:'collective',id:'Cuti Bersama Kelahiran Yesus Kristus',en:'Collective Leave — Christmas'},
+  '2027-12-25':{type:'national',id:'Kelahiran Yesus Kristus',en:'Christmas Day'},
+  '2027-12-26':{type:'national',id:'Isra Mikraj Nabi Muhammad saw. 1449 H',en:"Prophet Muhammad's Isra Mi'raj 1449 H"}
+};
+
 
 /* Provisional internet estimates for planning only. These are NOT official SKB 3 Menteri data.
    The Holiday Sync Worker remains authoritative and replaces these estimates automatically
@@ -4430,7 +4459,7 @@ function cmHolidayEstimateEntry(year,stamp=0){
   return e?{year:Number(year),items:{...e.items},source:'internet-estimate',sourceUrl:e.sourceUrl,sourceLabel:e.sourceLabel,official:false,estimated:true,fetchedAt:stamp,available:true}:null;
 }
 
-const CM_HOLIDAY_CACHE_PREFIX='cm_indonesia_holiday_cache_v3_';
+const CM_HOLIDAY_CACHE_PREFIX='cm_indonesia_holiday_cache_v4_';
 const CM_HOLIDAY_CACHE_TTL_MS=7*24*60*60*1000;
 const CM_HOLIDAY_EMPTY_TTL_MS=12*60*60*1000;
 const CM_HOLIDAY_PUBLIC_API='https://tanggalmerah.upset.dev/api/holidays';
@@ -4438,7 +4467,7 @@ const CM_HOLIDAY_WORKER_STORAGE='cm_holiday_worker_url_v1';
 const CM_HOLIDAY_DEFAULT_WORKER='https://cm-holiday-sync.ristya-onlineshop.workers.dev/holidays';
 const CM_HOLIDAY_RUNTIME={
   2026:{year:2026,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',sourceUrl:'Kemensetneg — SKB 3 Menteri 2026',official:true,estimated:false,fetchedAt:Date.now(),available:true},
-  2027:cmHolidayEstimateEntry(2027,0),
+  2027:{year:2027,items:{...CM_INDONESIA_HOLIDAYS_2027},source:'embedded-official',sourceUrl:'SKB 3 Menteri Nomor 1205, 3, dan 2 Tahun 2026',sourceLabel:'SKB Hari Libur Nasional dan Cuti Bersama Tahun 2027',official:true,estimated:false,fetchedAt:Date.now(),available:true},
   2028:cmHolidayEstimateEntry(2028,0),
   2029:cmHolidayEstimateEntry(2029,0),
   2030:cmHolidayEstimateEntry(2030,0)
@@ -4518,6 +4547,7 @@ function cmIndonesiaHolidayForDate(dateStr){
   const year=Number(String(dateStr).slice(0,4)),entry=cmHolidayGetYearEntry(year);
   if(entry?.items?.[dateStr])return entry.items[dateStr];
   if(year===2026)return CM_INDONESIA_HOLIDAYS_2026[dateStr]||null;
+  if(year===2027)return CM_INDONESIA_HOLIDAYS_2027[dateStr]||null;
   return null;
 }
 function cmIndonesiaHolidayLabel(item){return item?(currentLang==='id'?item.id:item.en||item.id):'';}
@@ -4533,6 +4563,10 @@ async function cmHolidayFetchJson(url,timeoutMs=9000){
 async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
   year=Number(year); if(!year||year<2020||year>2100)return null;
   const existing=cmHolidayGetYearEntry(year);
+  if(existing?.source==='embedded-official'){
+    if(notify)toast(uiText(`Holiday calendar ${year} is already synchronized with the latest official SKB.`,`Kalender libur ${year} sudah sinkron dengan SKB resmi terbaru.`),'success');
+    return existing;
+  }
   if(!force&&cmHolidayEntryFresh(existing))return existing;
   if(CM_HOLIDAY_FETCHING[year])return CM_HOLIDAY_FETCHING[year];
   CM_HOLIDAY_FETCHING[year]=(async()=>{
