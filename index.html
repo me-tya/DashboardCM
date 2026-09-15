@@ -423,18 +423,22 @@ html[data-role="public_guest"] .cm-superadmin-only{display:none!important}
 .cm-access-note{margin-top:12px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#F8FAFD;font-size:11px;color:var(--ink-500);line-height:1.5}
 
 /* ===== TABS ===== */
-.tabs-row{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
-.tabs-row .tabs{margin-bottom:0;flex:1;min-width:0;}
+.tabs-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.tabs-row .tabs{margin-bottom:0;flex:1 1 auto;min-width:0;}
 .tabs-row .btn{flex-shrink:0;}
 .tabs{
-  display:flex;align-items:center;gap:6px;margin-bottom:18px;padding:6px;overflow-x:auto;
+  display:flex;align-items:center;gap:4px;margin-bottom:18px;padding:6px;overflow:visible;
   background:var(--surface);border:1px solid var(--border);border-radius:13px;box-shadow:var(--shadow-sm);
 }
 .tab-btn{
-  padding:10px 18px;font-size:13px;font-weight:700;color:var(--ink-500);background:transparent;border:none;
-  cursor:pointer;border-radius:9px;display:flex;align-items:center;gap:8px;white-space:nowrap;
+  flex:1 1 0;min-width:0;padding:10px 8px;font-size:clamp(11px,.82vw,13px);font-weight:700;color:var(--ink-500);background:transparent;border:none;
+  cursor:pointer;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;
   font-family:'Inter',sans-serif;transition:background .15s ease,color .15s ease,transform .1s ease;
 }
+.tab-btn > span:not(.count-badge){min-width:0;overflow:hidden;text-overflow:ellipsis;}
+.tabs .count-badge{padding:2px 7px;}
+.btn-add-icon{width:38px;height:38px;padding:0!important;justify-content:center;border-radius:10px;}
+.btn-add-icon .icon{width:17px;height:17px;}
 .tab-btn:hover{color:var(--navy-800);background:var(--gold-100);}
 .tab-btn:active{transform:scale(.97);}
 .tab-btn.active{
@@ -1271,6 +1275,9 @@ footer.app-footer{text-align:center;padding:22px;color:var(--ink-500);font-size:
   .modal-head{padding:14px 16px;}
   .modal-foot{padding:12px 16px;flex-wrap:wrap;}
   .tabs-row{flex-wrap:wrap;}
+  .tabs-row .tabs{width:100%;flex:1 0 100%;flex-wrap:wrap;overflow:visible;}
+  .tab-btn{flex:1 1 calc(33.333% - 6px);font-size:11px;padding:9px 7px;}
+  .tabs-row #btnAdd{margin-left:auto;}
 }
 
 @media print{header.topbar,.filter-bar,.tabs-row,.row-actions,footer{display:none;}}
@@ -1849,9 +1856,8 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
     </button>
     <button type="button" class="cm-context-help cm-menu-help" id="cmContextHelp" title="Open contextual help" aria-label="Open contextual help">?</button>
   </nav>
-  <button class="btn btn-gold btn-sm hidden" id="btnAdd">
+  <button class="btn btn-gold btn-sm btn-add-icon hidden" id="btnAdd" data-i18n-title="addActivity" data-i18n-aria-label="addActivity" title="Add Activity" aria-label="Add Activity">
     <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
-    <span data-i18n="addActivity">Add Activity</span>
   </button>
   </div>
 
