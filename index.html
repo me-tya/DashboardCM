@@ -105,9 +105,9 @@
     const pill = document.getElementById('userPill');
     if (loginBtn) loginBtn.classList.add('hidden');
     if (pill) pill.classList.remove('hidden');
-    const emailText = user?.email || user?.displayName || 'User';
+    const displayName = String(user?.displayName || '').trim() || String(user?.email || '').split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g, c => c.toUpperCase()) || 'User';
     const nameEl = document.getElementById('userName');
-    if (nameEl) { nameEl.textContent = emailText; nameEl.title = emailText; }
+    if (nameEl) { nameEl.textContent = displayName; nameEl.title = displayName; }
     cmApplyShellAuthState(user);
     setTimeout(() => { if (window.cmRefreshAccessRole) window.cmRefreshAccessRole(); }, 0);
   }
