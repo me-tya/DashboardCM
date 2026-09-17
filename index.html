@@ -503,7 +503,9 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
 .table-date-day{display:block;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.25;color:var(--ink-300);font-weight:600;margin-bottom:2px;}
 .table-date-value{display:block;line-height:1.35;}
 .table-date-value + .table-date-value{margin-top:1px;}
-.table-date-time{display:block;margin-top:4px;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.3;color:var(--ink-500);font-weight:600;}
+.table-date-time{display:block;margin-top:4px;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.35;color:var(--ink-500);font-weight:600;white-space:normal;overflow-wrap:anywhere;}
+.table-date-time-line{display:block;white-space:nowrap;}
+.table-date-time-line+.table-date-time-line{margin-top:2px;}
 .table-date-schedule{display:grid;gap:7px;}
 .table-date-slot{display:block;}
 .table-date-slot+.table-date-slot{padding-top:7px;border-top:1px dashed var(--border-soft);}
@@ -2442,6 +2444,15 @@ function compactActivityDateRange(startDate,endDate){
   if(s.year()===e.year())return `${s.format('DD MMM')}–${e.format('DD MMM YYYY')}`;
   return `${s.format('DD MMM YYYY')}–${e.format('DD MMM YYYY')}`;
 }
+function formatActivityTimeLines(value){
+  const raw=String(value||'').trim();if(!raw)return '';
+  const dayPattern='Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday';
+  const timePattern='(?:[01]?\\d|2[0-3])[:.][0-5]\\d';
+  const re=new RegExp(`\\b(${dayPattern})\\b\\s*[:,-]?\\s*(${timePattern})\\s*(?:-|–|—|s\\/?d|to)\\s*(${timePattern})`,'gi');
+  const rows=[...raw.matchAll(re)];
+  if(rows.length>1)return rows.map(m=>`<span class="table-date-time-line">${escapeHtml(m[1])} ${escapeHtml(m[2].replace('.',':'))}–${escapeHtml(m[3].replace('.',':'))}</span>`).join('');
+  return `<span class="table-date-time-line">${escapeHtml(raw)}</span>`;
+}
 function formatActivityDateCell(activity) {
   const startDate = activity.tglMulai;
   const endDate = activity.tglSelesai;
@@ -2465,7 +2476,7 @@ function formatActivityDateCell(activity) {
     : `<span class="table-date-value">${fmtDate(startDate)}</span>`;
 
   const timeLine = activity.waktu
-    ? `<span class="table-date-time">${escapeHtml(activity.waktu)}</span>`
+    ? `<span class="table-date-time">${formatActivityTimeLines(activity.waktu)}</span>`
     : '';
   return `<span class="table-date-day">${dayText}</span>${dateLines}${timeLine}`;
 }
@@ -4221,7 +4232,7 @@ function renderTable() {
     const ls = a.layanan === 'Yes' ? { bg:'var(--blue-bg)', fg:'var(--navy-700)' } : { bg:'var(--gold-100)', fg:'#8A6A1B' };
     html += `<tr data-id="${a.id}">
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
-      <td class="mono" style="white-space:nowrap;">${formatActivityDateCell(a)}</td>
+      <td class="mono">${formatActivityDateCell(a)}</td>
       <td>
         <div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
         ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
