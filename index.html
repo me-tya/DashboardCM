@@ -477,7 +477,18 @@ html[data-role="public_guest"] .cm-superadmin-only{display:none!important}
 
 /* ===== TABLE ===== */
 .table-wrap{overflow-x:auto;}
-table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px;}
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1450px;table-layout:fixed;}
+table.data-table th,table.data-table td{overflow-wrap:anywhere;word-break:normal;}
+table.data-table col.col-no{width:60px;}
+table.data-table col.col-date{width:190px;}
+table.data-table col.col-activity{width:250px;}
+table.data-table col.col-service{width:85px;}
+table.data-table col.col-unit{width:110px;}
+table.data-table col.col-category{width:120px;}
+table.data-table col.col-program{width:165px;}
+table.data-table col.col-pic{width:150px;}
+table.data-table col.col-status{width:135px;}
+table.data-table col.col-actions{width:185px;}
 table.data-table thead th{
   text-align:left;padding:11px 14px;background:var(--bg);color:var(--ink-500);
   font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
@@ -493,6 +504,19 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
 .table-date-value{display:block;line-height:1.35;}
 .table-date-value + .table-date-value{margin-top:1px;}
 .table-date-time{display:block;margin-top:4px;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.3;color:var(--ink-500);font-weight:600;}
+.table-date-schedule{display:grid;gap:7px;}
+.table-date-slot{display:block;}
+.table-date-slot+.table-date-slot{padding-top:7px;border-top:1px dashed var(--border-soft);}
+.table-date-slot .table-date-time{margin-top:2px;}
+.daily-time-mode{border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:#FAFBFD;}
+.daily-time-toggle{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ink-700);cursor:pointer;}
+.daily-time-toggle input{width:16px;height:16px;accent-color:var(--navy-700);}
+.daily-time-help{display:block;margin-top:4px;font-size:10.5px;line-height:1.45;color:var(--ink-500);}
+.daily-time-list{display:grid;gap:8px;margin-top:10px;}
+.daily-time-row{display:grid;grid-template-columns:minmax(155px,1fr) minmax(115px,.7fr) minmax(115px,.7fr);gap:9px;align-items:end;padding:9px;border:1px solid var(--border-soft);border-radius:9px;background:#fff;}
+.daily-time-date b{display:block;font-size:11.5px;color:var(--ink-800);}.daily-time-date small{display:block;margin-top:2px;font-size:10px;color:var(--ink-400);}
+.daily-time-field label{display:block;margin-bottom:4px;font-size:10px;font-weight:700;color:var(--ink-500);}.daily-time-field input{width:100%;}
+@media(max-width:640px){.daily-time-row{grid-template-columns:1fr 1fr}.daily-time-date{grid-column:1/-1}}
 .table-meta{font-size:11.5px;color:var(--ink-500);}
 .meeting-display{display:grid;gap:2px;min-width:0;}
 .meeting-location-text{color:var(--ink-500);white-space:normal;overflow-wrap:anywhere;}
@@ -2403,15 +2427,41 @@ function fmtDate(d, format) {
   if (!dj.isValid()) return d;
   return dj.format(format || 'DD MMM YYYY');
 }
+function activityDateList(startDate,endDate){
+  const start=dayjs(startDate),end=dayjs(endDate||startDate);if(!start.isValid()||!end.isValid()||end.isBefore(start))return [];
+  const dates=[];let cursor=start.startOf('day'),guard=0;while(!cursor.isAfter(end,'day')&&guard<370){dates.push(cursor.format('YYYY-MM-DD'));cursor=cursor.add(1,'day');guard++;}return dates;
+}
+function normalizeActivityDailySchedule(raw){
+  let rows=raw;if(typeof rows==='string'){try{rows=JSON.parse(rows||'[]')}catch(e){rows=[]}}
+  return (Array.isArray(rows)?rows:[]).map(r=>({date:String(r?.date||''),start:String(r?.start||''),end:String(r?.end||'')})).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
+}
+function compactActivityDateRange(startDate,endDate){
+  const s=dayjs(startDate),e=dayjs(endDate||startDate);if(!s.isValid()||!e.isValid())return [startDate,endDate].filter(Boolean).join(' - ');
+  if(s.isSame(e,'day'))return s.format('DD MMM YYYY');
+  if(s.year()===e.year()&&s.month()===e.month())return `${s.format('DD')}–${e.format('DD MMM YYYY')}`;
+  if(s.year()===e.year())return `${s.format('DD MMM')}–${e.format('DD MMM YYYY')}`;
+  return `${s.format('DD MMM YYYY')}–${e.format('DD MMM YYYY')}`;
+}
 function formatActivityDateCell(activity) {
   const startDate = activity.tglMulai;
   const endDate = activity.tglSelesai;
   const isMultiDay = Boolean(endDate && endDate !== startDate);
+  const daily=normalizeActivityDailySchedule(activity.jadwalHarian);
+  if(isMultiDay&&daily.length){
+    const expected=activityDateList(startDate,endDate),byDate=new Map(daily.map(r=>[r.date,r]));
+    const complete=expected.length&&expected.every(d=>byDate.has(d)&&byDate.get(d).start&&byDate.get(d).end);
+    if(complete){
+      const rows=expected.map(d=>byDate.get(d));
+      const sameTime=rows.every(r=>r.start===rows[0].start&&r.end===rows[0].end);
+      if(sameTime)return `<span class="table-date-day">${fmtDate(startDate,'dddd')} - ${fmtDate(endDate,'dddd')}</span><span class="table-date-value">${compactActivityDateRange(startDate,endDate)}</span><span class="table-date-time">${escapeHtml(rows[0].start)}–${escapeHtml(rows[0].end)}</span>`;
+      return `<span class="table-date-schedule">${rows.map(r=>`<span class="table-date-slot"><span class="table-date-day">${fmtDate(r.date,'dddd')}</span><span class="table-date-value">${fmtDate(r.date)}</span><span class="table-date-time">${escapeHtml(r.start)}–${escapeHtml(r.end)}</span></span>`).join('')}</span>`;
+    }
+  }
   const dayText = isMultiDay
     ? `${fmtDate(startDate, 'dddd')} - ${fmtDate(endDate, 'dddd')}`
     : fmtDate(startDate, 'dddd');
   const dateLines = isMultiDay
-    ? `<span class="table-date-value">${fmtDate(startDate)} -</span><span class="table-date-value">${fmtDate(endDate)}</span>`
+    ? `<span class="table-date-value">${compactActivityDateRange(startDate,endDate)}</span>`
     : `<span class="table-date-value">${fmtDate(startDate)}</span>`;
 
   const timeLine = activity.waktu
@@ -4157,10 +4207,13 @@ function renderTable() {
   ];
   const sortInd = k => state.sortKey === k ? `<span class="sort-ind">${state.sortDir === 'asc' ? '▲' : '▼'}</span>` : '';
 
-  let html = `<div class="table-wrap"><table class="data-table"><thead><tr>`;
-  html += `<th style="width:48px;">No</th>`;
+  let html = `<div class="table-wrap"><table class="data-table"><colgroup>
+    <col class="col-no"><col class="col-date"><col class="col-activity"><col class="col-service"><col class="col-unit">
+    <col class="col-category"><col class="col-program"><col class="col-pic"><col class="col-status"><col class="col-actions">
+  </colgroup><thead><tr>`;
+  html += `<th>No</th>`;
   cols.forEach(c => { html += `<th data-sort="${c.key}">${c.label}${sortInd(c.key)}</th>`; });
-  html += `<th style="width:164px;">${uiText('Actions','Aksi')}</th></tr></thead><tbody>`;
+  html += `<th>${uiText('Actions','Aksi')}</th></tr></thead><tbody>`;
 
   pageItems.forEach((a, idx) => {
     const cs = getCategoryStyle(a.kategori);
@@ -4168,16 +4221,16 @@ function renderTable() {
     const ls = a.layanan === 'Yes' ? { bg:'var(--blue-bg)', fg:'var(--navy-700)' } : { bg:'var(--gold-100)', fg:'#8A6A1B' };
     html += `<tr data-id="${a.id}">
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
-      <td class="mono" style="white-space:nowrap;width:1%;">${formatActivityDateCell(a)}</td>
-      <td style="max-width:280px;">
+      <td class="mono" style="white-space:nowrap;">${formatActivityDateCell(a)}</td>
+      <td>
         <div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
         ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
       <td><span class="unit-badge ${getUnitType(a.unitPemohon) === 'internal' ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
-      <td style="max-width:160px;">${escapeHtml(a.programTerkait)}</td>
-      <td style="max-width:150px;">${escapeHtml(a.picTimCM)}</td>
+      <td>${escapeHtml(a.programTerkait)}</td>
+      <td>${escapeHtml(a.picTimCM)}</td>
       <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?` <span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}</td>
       <td>
         <div class="row-actions">
@@ -5096,6 +5149,18 @@ function renderActiveTab() {
   else if (state.activeTab === 'survey') renderSurveyHub();
 }
 
+// Keep navigation badges in sync even when their tabs have not been opened yet.
+// Previously each badge was only updated inside its own tab renderer, leaving
+// the initial values at 0 while the Overview had already loaded the data.
+function updateNavigationCounts() {
+  const activityBadge = document.getElementById('cntTable');
+  const surveyBadge = document.getElementById('cntSurvey');
+  const contactBadge = document.getElementById('cntContact');
+  if (activityBadge) activityBadge.textContent = String((state.agendas || []).length);
+  if (surveyBadge) surveyBadge.textContent = String((cmSurveyState?.surveys || []).filter(s => s.status === 'active').length);
+  if (contactBadge) contactBadge.textContent = String((state.contacts || []).length);
+}
+
 /* ============================================================
    RENDER: KNOWLEDGE TAB
 ============================================================ */
@@ -5650,6 +5715,7 @@ function attachContactsLiveSync() {
     const normalized = normalizeContactList(remote);
     if (JSON.stringify(normalized) !== JSON.stringify(state.contacts)) {
       state.contacts = normalized;
+      updateNavigationCounts();
       populateContactFilterDropdowns();
       renderContactResults();
       toast(t('toastSquadTeamUpdated'), 'success');
@@ -5858,6 +5924,7 @@ function renderContact() {
 
 function refreshAll() {
   state.page = 1;
+  updateNavigationCounts();
   configureContextToolbar(state.activeTab);
   renderActiveTab();
   updateFilterActiveBadge();
@@ -7008,6 +7075,8 @@ function openForm(id) {
   const initialMeetingLink = a?.meetingLink ?? (initialMeetingMode === 'online' ? (a?.lokasiChannel || '') : '');
   const initialStartClock = v('jamMulai',parseActivityClock(v('waktu'),'start'));
   const initialEndClock = v('jamSelesai',parseActivityClock(v('waktu'),'end'));
+  const initialDailySchedule = normalizeActivityDailySchedule(v('jadwalHarian',[]));
+  const initialDifferentDailyTime = Boolean(a?.jamBerbedaPerHari && initialDailySchedule.length);
   const initialStatus = normalizeStatus(v('status','Scheduled'));
 
   modal.innerHTML = `<div class="modal-box eo-form-modal">
@@ -7022,11 +7091,11 @@ function openForm(id) {
             <label>${t('fieldActivityName')} <span class="req">*</span></label>
             <input type="text" name="namaKegiatan" required value="${escapeHtml(v('namaKegiatan'))}">
           </div>
-          <div class="form-field">
+          <div class="form-field" id="activityStartTimeField">
             <label>${t('fieldStartDate')} <span class="req">*</span></label>
             <input type="date" name="tglMulai" required value="${v('tglMulai', dayjs().format('YYYY-MM-DD'))}">
           </div>
-          <div class="form-field">
+          <div class="form-field" id="activityEndTimeField">
             <label>${t('fieldEndDate')}</label>
             <input type="date" name="tglSelesai" value="${v('tglSelesai', v('tglMulai', dayjs().format('YYYY-MM-DD')))}">
           </div>
@@ -7039,6 +7108,12 @@ function openForm(id) {
             <input type="time" name="jamSelesai" ${(!a||initialStartClock||initialEndClock)?'required':''} value="${escapeHtml(initialEndClock)}">
             <input type="hidden" name="waktuLegacy" value="${escapeHtml(v('waktu'))}">
             <small class="status-help">${a&&!initialStartClock&&!initialEndClock&&v('waktu')?`${uiText('Legacy time retained','Waktu lama tetap dipertahankan')}: <b>${escapeHtml(v('waktu'))}</b>. ${uiText('Enter both times to enable automation.','Isi kedua jam untuk mengaktifkan otomatisasi.')}`:uiText('Complete both times to enable automatic status.','Isi kedua jam agar status otomatis dapat berjalan.')}</small>
+          </div>
+          <div class="form-field full daily-time-mode" id="dailyTimeModeField">
+            <label class="daily-time-toggle"><input type="checkbox" id="dailyTimeDifferent" ${initialDifferentDailyTime?'checked':''}> <span>${uiText('Different times for each day','Jam berbeda setiap hari')}</span></label>
+            <small class="daily-time-help">${uiText('Use this only for a multi-day activity whose start and end times differ by date.','Gunakan hanya untuk activity lintas hari dengan jam mulai dan selesai yang berbeda pada setiap tanggal.')}</small>
+            <input type="hidden" name="jadwalHarianJson" id="jadwalHarianJson" value="${escapeHtml(JSON.stringify(initialDailySchedule))}">
+            <div class="daily-time-list ${initialDifferentDailyTime?'':'hidden'}" id="dailyTimeList"></div>
           </div>
           <div class="form-field">
             <label>${t('fieldService')}</label>
@@ -7213,6 +7288,24 @@ function openForm(id) {
     };
     endDateInput.addEventListener('input', markEndDateChange);
     endDateInput.addEventListener('change', markEndDateChange);
+  })();
+
+  (function setupDailyTimeSchedule(){
+    const startDate=document.querySelector('#agendaForm [name="tglMulai"]'),endDate=document.querySelector('#agendaForm [name="tglSelesai"]'),toggle=document.getElementById('dailyTimeDifferent'),list=document.getElementById('dailyTimeList'),hidden=document.getElementById('jadwalHarianJson'),startField=document.getElementById('activityStartTimeField'),endField=document.getElementById('activityEndTimeField'),startClock=document.querySelector('#agendaForm [name="jamMulai"]'),endClock=document.querySelector('#agendaForm [name="jamSelesai"]');
+    if(!startDate||!endDate||!toggle||!list||!hidden)return;
+    const saved=normalizeActivityDailySchedule(hidden.value),savedMap=new Map(saved.map(r=>[r.date,r])),baseTimeRequired=startClock.required||endClock.required;
+    const readCurrent=()=>{const map=new Map();list.querySelectorAll('[data-daily-date]').forEach(row=>map.set(row.dataset.dailyDate,{date:row.dataset.dailyDate,start:row.querySelector('[data-daily-start]')?.value||'',end:row.querySelector('[data-daily-end]')?.value||''}));return map;};
+    const syncHidden=()=>{const rows=[];list.querySelectorAll('[data-daily-date]').forEach(row=>rows.push({date:row.dataset.dailyDate,start:row.querySelector('[data-daily-start]')?.value||'',end:row.querySelector('[data-daily-end]')?.value||''}));hidden.value=JSON.stringify(rows);};
+    const render=()=>{
+      const dates=activityDateList(startDate.value,endDate.value||startDate.value),multi=dates.length>1,current=readCurrent();
+      toggle.disabled=!multi;if(!multi)toggle.checked=false;
+      startField.classList.toggle('hidden',toggle.checked);endField.classList.toggle('hidden',toggle.checked);list.classList.toggle('hidden',!toggle.checked);
+      startClock.required=!toggle.checked&&baseTimeRequired;endClock.required=!toggle.checked&&baseTimeRequired;
+      if(!toggle.checked){hidden.value='[]';list.innerHTML='';return;}
+      list.innerHTML=dates.map(date=>{const old=current.get(date)||savedMap.get(date)||{start:startClock.value,end:endClock.value};return `<div class="daily-time-row" data-daily-date="${date}"><div class="daily-time-date"><b>${fmtDate(date,'dddd')}</b><small>${fmtDate(date)}</small></div><div class="daily-time-field"><label>${uiText('Start Time','Jam Mulai')} <span class="req">*</span></label><input type="time" data-daily-start required value="${escapeHtml(old.start||'')}"></div><div class="daily-time-field"><label>${uiText('End Time','Jam Selesai')} <span class="req">*</span></label><input type="time" data-daily-end required value="${escapeHtml(old.end||'')}"></div></div>`}).join('');
+      list.querySelectorAll('input').forEach(input=>input.addEventListener('input',syncHidden));syncHidden();
+    };
+    toggle.addEventListener('change',render);startDate.addEventListener('change',render);endDate.addEventListener('change',render);render();
   })();
 
   // Populate & wire the Category dropdown (referensi T-House + custom, dengan opsi tambah baru)
@@ -7509,9 +7602,28 @@ async function submitForm(options={}) {
   const fd = new FormData(form);
   const obj = {};
   fd.forEach((val, key) => obj[key] = val);
+  let dailySchedule=normalizeActivityDailySchedule(obj.jadwalHarianJson);
+  delete obj.jadwalHarianJson;
+  const expectedDailyDates=activityDateList(obj.tglMulai,obj.tglSelesai||obj.tglMulai);
+  const usesDailySchedule=expectedDailyDates.length>1&&dailySchedule.length>0;
+  if(usesDailySchedule){
+    const byDate=new Map(dailySchedule.map(r=>[r.date,r]));
+    dailySchedule=expectedDailyDates.map(d=>byDate.get(d)||{date:d,start:'',end:''});
+    const invalid=dailySchedule.find(r=>!r.start||!r.end||r.end<=r.start);
+    if(invalid){toast(uiText('Complete valid start and end times for every date.','Lengkapi Jam Mulai dan Jam Selesai yang valid untuk setiap tanggal.'),'error');return;}
+    obj.jadwalHarian=dailySchedule;
+    obj.jamBerbedaPerHari=true;
+    obj.jamMulai=dailySchedule[0].start;
+    obj.jamSelesai=dailySchedule[dailySchedule.length-1].end;
+  }else{
+    obj.jadwalHarian=[];
+    obj.jamBerbedaPerHari=false;
+  }
   obj.jamMulai=String(obj.jamMulai||'').trim();
   obj.jamSelesai=String(obj.jamSelesai||'').trim();
-  obj.waktu=(obj.jamMulai&&obj.jamSelesai)?`${obj.jamMulai} - ${obj.jamSelesai}`:(obj.waktuLegacy||'');
+  obj.waktu=usesDailySchedule
+    ? dailySchedule.map(r=>`${fmtDate(r.date,'DD MMM')}: ${r.start} - ${r.end}`).join('; ')
+    : (obj.jamMulai&&obj.jamSelesai)?`${obj.jamMulai} - ${obj.jamSelesai}`:(obj.waktuLegacy||'');
   delete obj.waktuLegacy;
   if(Boolean(obj.jamMulai)!==Boolean(obj.jamSelesai)){toast(uiText('Start Time and End Time must be completed together.','Jam Mulai dan Jam Selesai harus diisi keduanya.'),'error');return;}
   if(obj.tglSelesai&&obj.tglMulai&&obj.tglSelesai<obj.tglMulai){toast(uiText('End Date cannot be before Start Date.','Tanggal Selesai tidak boleh lebih awal dari Tanggal Mulai.'),'error');return;}
@@ -10460,6 +10572,8 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
   resourceLoad();
   await loadCategoryListInitial();
   await loadUnitListInitial();
+  // Start CRA live sync on first load so its badge does not wait for the CRA tab to be opened.
+  await cmEnsureSurveyListener();
   populateFilterDropdowns();
   refreshAll();
   setInterval(refreshAutomaticActivityStatuses,30000);
