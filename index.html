@@ -1803,6 +1803,36 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   box-sizing:border-box;
   max-width:100%;
 }
+
+/* Activity table: fit the available panel width without horizontal scrolling. */
+#tab-table .table-wrap{width:100%;max-width:100%;overflow-x:hidden;}
+#tab-table table.data-table{width:100%;min-width:0;table-layout:fixed;font-size:11.5px;}
+#tab-table table.data-table col.col-no{width:3.5%;}
+#tab-table table.data-table col.col-date{width:10.5%;}
+#tab-table table.data-table col.col-activity{width:21%;}
+#tab-table table.data-table col.col-service{width:6%;}
+#tab-table table.data-table col.col-unit{width:8%;}
+#tab-table table.data-table col.col-category{width:9.5%;}
+#tab-table table.data-table col.col-program{width:10.5%;}
+#tab-table table.data-table col.col-pic{width:9%;}
+#tab-table table.data-table col.col-status{width:9.5%;}
+#tab-table table.data-table col.col-actions{width:12.5%;}
+#tab-table table.data-table thead th{padding:9px 6px;font-size:10px;letter-spacing:.025em;}
+#tab-table table.data-table tbody td{padding:10px 6px;}
+#tab-table .row-actions{gap:4px;flex-wrap:wrap;align-content:flex-start;}
+#tab-table .icon-btn{width:25px;height:25px;border-radius:7px;flex:0 0 25px;}
+#tab-table .status-badge,
+#tab-table .cat-badge,
+#tab-table .unit-badge{padding-left:6px;padding-right:6px;font-size:10px;white-space:normal;line-height:1.25;}
+#tab-table .table-title{font-size:11.5px;line-height:1.35;}
+#tab-table .table-meta{font-size:10px;line-height:1.35;}
+
+@media(max-width:1100px){
+  #tab-table table.data-table{font-size:10.5px;}
+  #tab-table table.data-table thead th{padding:8px 4px;font-size:9px;}
+  #tab-table table.data-table tbody td{padding:9px 4px;}
+  #tab-table .icon-btn{width:23px;height:23px;flex-basis:23px;}
+}
 </style>
 
 </head>
