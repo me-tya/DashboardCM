@@ -7332,13 +7332,14 @@ function openForm(id) {
   })();
 
   (function setupDailyTimeSchedule(){
-    const startDate=document.querySelector('#agendaForm [name="tglMulai"]'),endDate=document.querySelector('#agendaForm [name="tglSelesai"]'),toggle=document.getElementById('dailyTimeDifferent'),list=document.getElementById('dailyTimeList'),hidden=document.getElementById('jadwalHarianJson'),startField=document.getElementById('activityStartTimeField'),endField=document.getElementById('activityEndTimeField'),startClock=document.querySelector('#agendaForm [name="jamMulai"]'),endClock=document.querySelector('#agendaForm [name="jamSelesai"]');
-    if(!startDate||!endDate||!toggle||!list||!hidden)return;
+    const startDate=document.querySelector('#agendaForm [name="tglMulai"]'),endDate=document.querySelector('#agendaForm [name="tglSelesai"]'),modeField=document.getElementById('dailyTimeModeField'),toggle=document.getElementById('dailyTimeDifferent'),list=document.getElementById('dailyTimeList'),hidden=document.getElementById('jadwalHarianJson'),startField=document.getElementById('activityStartTimeField'),endField=document.getElementById('activityEndTimeField'),startClock=document.querySelector('#agendaForm [name="jamMulai"]'),endClock=document.querySelector('#agendaForm [name="jamSelesai"]');
+    if(!startDate||!endDate||!modeField||!toggle||!list||!hidden)return;
     const saved=normalizeActivityDailySchedule(hidden.value),savedMap=new Map(saved.map(r=>[r.date,r])),baseTimeRequired=startClock.required||endClock.required;
     const readCurrent=()=>{const map=new Map();list.querySelectorAll('[data-daily-date]').forEach(row=>map.set(row.dataset.dailyDate,{date:row.dataset.dailyDate,start:row.querySelector('[data-daily-start]')?.value||'',end:row.querySelector('[data-daily-end]')?.value||''}));return map;};
     const syncHidden=()=>{const rows=[];list.querySelectorAll('[data-daily-date]').forEach(row=>rows.push({date:row.dataset.dailyDate,start:row.querySelector('[data-daily-start]')?.value||'',end:row.querySelector('[data-daily-end]')?.value||''}));hidden.value=JSON.stringify(rows);};
     const render=()=>{
       const dates=activityDateList(startDate.value,endDate.value||startDate.value),multi=dates.length>1,current=readCurrent();
+      modeField.classList.toggle('hidden',!multi);
       toggle.disabled=!multi;if(!multi)toggle.checked=false;
       startField.classList.toggle('hidden',toggle.checked);endField.classList.toggle('hidden',toggle.checked);list.classList.toggle('hidden',!toggle.checked);
       startClock.required=!toggle.checked&&baseTimeRequired;endClock.required=!toggle.checked&&baseTimeRequired;
@@ -7346,7 +7347,10 @@ function openForm(id) {
       list.innerHTML=dates.map(date=>{const old=current.get(date)||savedMap.get(date)||{start:startClock.value,end:endClock.value};return `<div class="daily-time-row" data-daily-date="${date}"><div class="daily-time-date"><b>${fmtDate(date,'dddd')}</b><small>${fmtDate(date)}</small></div><div class="daily-time-field"><label>${uiText('Start Time','Jam Mulai')} <span class="req">*</span></label><input type="time" data-daily-start required value="${escapeHtml(old.start||'')}"></div><div class="daily-time-field"><label>${uiText('End Time','Jam Selesai')} <span class="req">*</span></label><input type="time" data-daily-end required value="${escapeHtml(old.end||'')}"></div></div>`}).join('');
       list.querySelectorAll('input').forEach(input=>input.addEventListener('input',syncHidden));syncHidden();
     };
-    toggle.addEventListener('change',render);startDate.addEventListener('change',render);endDate.addEventListener('change',render);render();
+    toggle.addEventListener('change',render);
+    startDate.addEventListener('input',render);startDate.addEventListener('change',render);
+    endDate.addEventListener('input',render);endDate.addEventListener('change',render);
+    render();
   })();
 
   // Populate & wire the Category dropdown (referensi T-House + custom, dengan opsi tambah baru)
