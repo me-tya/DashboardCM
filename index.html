@@ -5969,22 +5969,27 @@ function renderContactResults() {
 ============================================================ */
 const REVIEW_STORAGE_KEY='cm-review-pmo-cmo-v1';
 const REVIEW_SEED=[
- ['SETJEN','Aji Intern','Fatim','+62 877-3892-0608','Pak Budi','','Kabag; dapat dihubungi melalui PMO Fatim'],
- ['ITJEN','Aji Intern','Disya','+62 858-1680-1183','Supriyanto','+62 857-7226-6734',''],
- ['BPPK','Aji Intern','Ridwan','+62 856-4764-2302','Rame','+62 813-2415-3163',''],
- ['DJPK','Atitya Pritasari','Haris','+62 813-1844-7824','Nurteja','+62 857-5809-5359',''],
- ['DJPB','Atitya Pritasari','Khiyar','+62 859-2175-4744','Tonny','+628118384282',''],
- ['DJPPR','Sarah Khairina','','','Arum','+62 856-9744-7588','PMO belum dicatat'],
- ['DJSPSK','Sarah Khairina','Wulan','+62817838526','Pak Teddy','','Kabag; dapat dihubungi melalui PMO Wulan'],
- ['DJBC','Sarah Khairina','Naufal','+62 812-4780-9760','Pak Tejo','+62 812-1342-3042','PMO alternatif: Ali, 081247627842'],
- ['DJSEF','Dina Septiani','','','Cahya','+62 856-2605-445','PMO belum dicatat'],
- ['DJP','Dina Septiani','Choi','+62 857-4366-8988','Pak Ichan','+62 816-1114-086',''],
- ['DJKN','Ainurrisya Zafirah','Guntur','+62 851-2329-6489','Dimas','','Nomor CMO belum diisi'],
+ ['SETJEN','Aji Intern','Siti Fatimah','+62 877-3892-0608','Pak Budi','','Kabag; dapat dihubungi melalui PMO Fatim'],
+ ['ITJEN','Aji Intern','Disya Fatya Rahmah','+62 858-1680-1183','Supriyanto','+62 857-7226-6734',''],
+ ['BPPK','Aji Intern','Ridwan','+62 856-4764-2302','Rame Priyanto','+62 813-2415-3163',''],
+ ['DJPK','Atitya Pritasari','Haris Dwi Faisal','+62 813-1844-7824','Nurteja Andaya','+62 857-5809-5359',''],
+ ['DJPB','Atitya Pritasari','Khiyarunnas','+62 859-2175-4744','Tonny Wahyu Poernomo','+628118384282',''],
+ ['DJPPR','Sarah Khairina','','','Aldillah Arumandani','+62 856-9744-7588','PMO belum dicatat'],
+ ['DJSPSK','Sarah Khairina','Wulan Ayu Marza','+62817838526','Teddy Imam Saputro','','Kabag; dapat dihubungi melalui PMO Wulan'],
+ ['DJBC','Sarah Khairina','Naufal Ghifari','+62 812-4780-9760','Pak Tejo','+62 812-1342-3042','PMO alternatif: Muhammad Ali Ridlo, 081247627842'],
+ ['DJSEF','Dina Septiani','','','Cahya Gumilar','+62 856-2605-445','PMO belum dicatat'],
+ ['DJP','Dina Septiani','Choirul Amanah','+62 857-4366-8988','Pak Ichan','+62 816-1114-086',''],
+ ['DJKN','Ainurrisya Zafirah','Guntur Priadi','+62 851-2329-6489','Dimas Imam Apriliyawan','','Nomor CMO belum diisi'],
  ['DJA','Ainurrisya Zafirah','','','Alamsyah','+62 856-8083-523','PMO belum dicatat'],
- ['LNSW','Ainurrisya Zafirah','Arief','08191553647','Awaludin Majid','+62 878-7861-8268','']
+ ['LNSW','Ainurrisya Zafirah','Arief Tirtana','08191553647','Awaludin Majid','+62 878-7861-8268','']
 ].map((x,i)=>({id:'RV-'+(i+1),unit:x[0],pic:x[1],pmo:x[2],pmoPhone:x[3],cmo:x[4],cmoPhone:x[5],note:x[6],picPhone:''}));
+const REVIEW_NAME_UPDATES={
+ pmo:{SETJEN:{Fatim:'Siti Fatimah'},ITJEN:{Disya:'Disya Fatya Rahmah'},DJPK:{Haris:'Haris Dwi Faisal'},DJPB:{Khiyar:'Khiyarunnas'},DJSPSK:{Wulan:'Wulan Ayu Marza'},DJBC:{Naufal:'Naufal Ghifari'},DJP:{Choi:'Choirul Amanah'},DJKN:{Guntur:'Guntur Priadi'},LNSW:{Arief:'Arief Tirtana'}},
+ cmo:{BPPK:{Rame:'Rame Priyanto'},DJPK:{Nurteja:'Nurteja Andaya'},DJPB:{Tonny:'Tonny Wahyu Poernomo'},DJPPR:{Arum:'Aldillah Arumandani'},DJSPSK:{'Pak Teddy':'Teddy Imam Saputro'},DJSEF:{Cahya:'Cahya Gumilar'},DJKN:{Dimas:'Dimas Imam Apriliyawan'}}
+};
+function reviewNormalizeRows(rows){return rows.map(row=>{const r={...row};for(const field of ['pmo','cmo'])r[field]=REVIEW_NAME_UPDATES[field]?.[r.unit]?.[r[field]]||r[field];if(r.unit==='DJBC'&&r.note==='PMO alternatif: Ali, 081247627842')r.note='PMO alternatif: Muhammad Ali Ridlo, 081247627842';return r;});}
 let reviewRows=null,reviewUi={search:'',pic:'ALL',unit:'ALL',selected:''},reviewUnsub=null;
-function reviewLoad(){if(reviewRows)return;try{const raw=localStorage.getItem(REVIEW_STORAGE_KEY);const arr=JSON.parse(raw);reviewRows=Array.isArray(arr)?arr:REVIEW_SEED.map(x=>({...x}));}catch(e){reviewRows=REVIEW_SEED.map(x=>({...x}));}if(isLoggedIn()&&window.fbDb){firestoreGet(REVIEW_STORAGE_KEY).then(raw=>{if(raw){try{const arr=JSON.parse(raw);if(Array.isArray(arr)){reviewRows=arr;localStorage.setItem(REVIEW_STORAGE_KEY,raw);renderReviewDirectory();}}catch(e){}}else firestoreSet(REVIEW_STORAGE_KEY,JSON.stringify(reviewRows));}).catch(()=>{});if(!reviewUnsub){reviewUnsub=window.fbOnSnapshot(window.fbDoc(window.fbDb,'dashboard',REVIEW_STORAGE_KEY),snap=>{if(!snap.exists())return;try{const arr=JSON.parse(snap.data().value||'[]');if(Array.isArray(arr)){reviewRows=arr;localStorage.setItem(REVIEW_STORAGE_KEY,JSON.stringify(arr));renderReviewDirectory();}}catch(e){}});}}}
+function reviewLoad(){if(reviewRows)return;try{const raw=localStorage.getItem(REVIEW_STORAGE_KEY);const arr=JSON.parse(raw);reviewRows=reviewNormalizeRows(Array.isArray(arr)?arr:REVIEW_SEED.map(x=>({...x})));}catch(e){reviewRows=reviewNormalizeRows(REVIEW_SEED.map(x=>({...x})));}if(isLoggedIn()&&window.fbDb){firestoreGet(REVIEW_STORAGE_KEY).then(raw=>{if(raw){try{const arr=JSON.parse(raw);if(Array.isArray(arr)){reviewRows=reviewNormalizeRows(arr);localStorage.setItem(REVIEW_STORAGE_KEY,JSON.stringify(reviewRows));renderReviewDirectory();}}catch(e){}}else firestoreSet(REVIEW_STORAGE_KEY,JSON.stringify(reviewRows));}).catch(()=>{});if(!reviewUnsub){reviewUnsub=window.fbOnSnapshot(window.fbDoc(window.fbDb,'dashboard',REVIEW_STORAGE_KEY),snap=>{if(!snap.exists())return;try{const arr=JSON.parse(snap.data().value||'[]');if(Array.isArray(arr)){reviewRows=reviewNormalizeRows(arr);localStorage.setItem(REVIEW_STORAGE_KEY,JSON.stringify(reviewRows));renderReviewDirectory();}}catch(e){}});}}}
 async function reviewPersist(){if(!cmCanMutate())return cmDenyMutation();const data=JSON.stringify(reviewRows);localStorage.setItem(REVIEW_STORAGE_KEY,data);try{await firestoreSet(REVIEW_STORAGE_KEY,data);await recordLastUpdate();}catch(e){console.error(e);toast(uiText('Could not sync contacts','Kontak belum berhasil disinkronkan'),'error');}renderReviewDirectory();}
 function reviewPicName(row){const members=state.resources||[],saved=String(row.pic||'').toLowerCase(),alias=saved==='tya'?'atitya':saved;let match=members.find(r=>String(r.nama||'').toLowerCase()===alias)||members.find(r=>String(r.nama||'').toLowerCase().startsWith(alias+' '));if(!match&&saved==='aji intern')match=members.find(r=>/^nailun\b/i.test(String(r.nama||'')))||members.find(r=>typeof resourceMemberType==='function'&&resourceMemberType(r)==='intern');return match?match.nama:(saved==='aji intern'?uiText('PIC not listed in CM Team','PIC belum terdata di Tim CM'):(row.pic||uiText('Unassigned','Belum ditunjuk')));}
 function reviewPicPhone(row){const name=reviewPicName(row),member=(state.resources||[]).find(x=>x.nama===name);return String(row?.picPhone||member?.noHp||'').trim();}
