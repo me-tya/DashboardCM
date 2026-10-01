@@ -1781,6 +1781,8 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 @media(max-width:760px){.review-layout{grid-template-columns:1fr}}
 .rv-owners-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px}.rv-owners-head h3{margin:4px 7px!important;line-height:1.35}.rv-edit-pic{border:1px solid #dbe3f0;border-radius:7px;background:#fff;color:#234b88;padding:5px 9px;cursor:pointer;font:700 11px/1.2 'Inter',sans-serif;white-space:nowrap}.rv-edit-pic:hover{background:#f0f4fa;border-color:#c9d5e8}
 @media(max-width:560px){.review-details-head{flex-wrap:wrap;gap:8px}.review-details-head .review-unit-actions{width:100%;justify-content:flex-end}}
+
+.cm-title-row{display:flex;align-items:center;gap:10px;min-width:0}.cm-title-row h1{min-width:0}.cm-title-edit{flex-shrink:0;border:0;background:transparent;color:#fff;cursor:pointer;font-size:20px;padding:4px 6px;border-radius:6px;line-height:1}.cm-title-edit:hover,.cm-title-edit:focus-visible{background:rgba(255,255,255,.15)}
 </style>
 
 <style id="cm-overflow-guard-v1">
@@ -1944,8 +1946,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   <div class="brand">
     <div class="brand-mark">CM</div>
     <div class="brand-text">
-      <h1 id="cmDashboardTitle">Dashboard Master Agenda Change Management Pusat</h1>
-      <button id="cmEditDashboardTitle" type="button" class="btn btn-outline btn-sm hidden" style="margin-top:5px" title="Edit judul dashboard">✎ Edit judul</button>
+      <div class="cm-title-row"><h1 id="cmDashboardTitle">Dashboard Master Agenda Change Management Pusat</h1><button id="cmEditDashboardTitle" type="button" class="cm-title-edit hidden" title="Edit judul dashboard" aria-label="Edit judul dashboard">✎</button></div>
       <p>Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</p>
     </div>
   </div>
@@ -2479,6 +2480,7 @@ function getCategoryStyle(kategori) {
 // Normalize legacy/free-text status into canonical buckets.
 function normalizeStatus(raw) {
   const s = (raw || '').toLowerCase();
+  if (/not\s*attended|tidak\s*dihadiri/.test(s)) return 'Not Attended';
   if (s.includes('batal') || s.includes('cancel')) return 'Cancelled';
   if (s.includes('complete') || s.includes('done') || s.includes('selesai')) return 'Completed';
   if (s.includes('tunda') || s.includes('postpone')) return 'Postponed';
@@ -2491,7 +2493,7 @@ function activityStatusLabel(status) {
   const labels={
     Scheduled:uiText('Scheduled','Terjadwal'), Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),
     Ongoing:uiText('Ongoing','Sedang Berlangsung'), Completed:uiText('Completed','Selesai'),
-    Postponed:uiText('Postponed','Ditunda'), Cancelled:uiText('Cancelled','Dibatalkan')
+    Postponed:uiText('Postponed','Ditunda'), Cancelled:uiText('Cancelled','Dibatalkan'), 'Not Attended':uiText('Not Attended','Tidak Dihadiri')
   };
   return labels[status]||status||'-';
 }
@@ -2502,7 +2504,7 @@ function parseActivityClock(value,which='start') {
 }
 function activityTimingState(item,manualStatus) {
   const status=manualStatus||normalizeStatus(item?.status);
-  if(['Completed','Cancelled','Pending','Postponed'].includes(status))return {status,needsUpdate:false,automatic:false};
+  if(['Completed','Cancelled','Not Attended','Pending','Postponed'].includes(status))return {status,needsUpdate:false,automatic:false};
   const startClock=item?.jamMulai||parseActivityClock(item?.waktu,'start');
   const endClock=item?.jamSelesai||parseActivityClock(item?.waktu,'end');
   const endDate=item?.tglSelesai||item?.tglMulai;
@@ -2519,6 +2521,7 @@ const STATUS_STYLES = {
   'Ongoing':    { bg:'#F6EFDC', fg:'#C8A84B' },
   'Pending':    { bg:'#F3E7C9', fg:'#8A6A1B' },
   'Postponed':  { bg:'#F1ECFF', fg:'#7157BE' },
+  'Not Attended': { bg:'#EDEFF3', fg:'#49566B' },
   'Cancelled':  { bg:'var(--red-bg)',    fg:'var(--red)' },
 };
 
@@ -4904,8 +4907,8 @@ function renderCalendar() {
    RENDER: KANBAN TAB
 ============================================================ */
 function renderKanban() {
-  const container=document.getElementById('tab-kanban'),filtered=getFiltered(),cols=['Pending','Scheduled','Ongoing','Postponed','Completed','Cancelled'];
-  const labels={Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),Scheduled:uiText('Scheduled','Terjadwal'),Ongoing:uiText('Ongoing','Sedang Berlangsung'),Postponed:uiText('Postponed','Ditunda'),Completed:uiText('Completed','Selesai'),Cancelled:uiText('Cancelled','Dibatalkan')};
+  const container=document.getElementById('tab-kanban'),filtered=getFiltered(),cols=['Pending','Scheduled','Ongoing','Postponed','Completed','Cancelled','Not Attended'];
+  const labels={Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),Scheduled:uiText('Scheduled','Terjadwal'),Ongoing:uiText('Ongoing','Sedang Berlangsung'),Postponed:uiText('Postponed','Ditunda'),Completed:uiText('Completed','Selesai'),Cancelled:uiText('Cancelled','Dibatalkan'), 'Not Attended':uiText('Not Attended','Tidak Dihadiri')};
   const present=cols.filter(c=>filtered.some(a=>a.statusNorm===c)),finalCols=present.length?present:cols.slice(0,1);
   let html='<div class="kanban-wrap">';
   finalCols.forEach(col=>{const items=filtered.filter(a=>a.statusNorm===col).sort((a,b)=>a.tglMulai.localeCompare(b.tglMulai)),ss=STATUS_STYLES[col]||STATUS_STYLES.Scheduled;
@@ -7405,6 +7408,7 @@ function openForm(id) {
               <option value="Ongoing" ${initialStatus==='Ongoing'?'selected':''}>${uiText('Ongoing','Sedang Berlangsung')}</option>
               <option value="Completed" ${initialStatus==='Completed'?'selected':''}>${uiText('Completed','Selesai')}</option>
               <option value="Postponed" ${initialStatus==='Postponed'?'selected':''}>${uiText('Postponed','Ditunda')}</option>
+              <option value="Not Attended" ${initialStatus==='Not Attended'?'selected':''}>${uiText('Not Attended','Tidak Dihadiri')}</option>
               <option value="Cancelled" ${initialStatus==='Cancelled'?'selected':''}>${uiText('Cancelled','Dibatalkan')}</option>
             </select>
             <small class="status-help">${uiText('Scheduled changes automatically to Ongoing during the activity time.','Terjadwal otomatis menjadi Sedang Berlangsung saat memasuki waktu kegiatan.')}</small>
@@ -10546,7 +10550,7 @@ function cmAiPicAggregateDirectAnswer(intent,query){
    else if(intent.followUp&&cmAiLastAggregate.dateFrom&&cmAiLastAggregate.dateTo){items=items.filter(a=>{const start=a.tglMulai||cmAiLastAggregate.dateFrom,end=a.tglSelesai||start;return start<=cmAiLastAggregate.dateTo&&end>=cmAiLastAggregate.dateFrom;});periodLabel=cmAiLastAggregate.label;}
  }
  const matched=items.filter(a=>splitNames(a.picTimCM).some(name=>normalizeActivitySearchText(name)===intent.key));
- const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Postponed:0,Cancelled:0};
+ const counts={Completed:0,Scheduled:0,Ongoing:0,Pending:0,Postponed:0,Cancelled:0,'Not Attended':0};
  matched.forEach(a=>{const status=a.statusNorm||normalizeStatus(a.status);counts[status]=(counts[status]||0)+1;});
  const breakdown=Object.entries(counts).filter(([,n])=>n>0).map(([status,n])=>`${status}: ${n}`).join(' · ');
  cmAiLastAggregate={type:'pic_count',dateFrom:range?.dateFrom||'',dateTo:range?.dateTo||'',label:range?periodLabel:''};
