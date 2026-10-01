@@ -1940,7 +1940,8 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   <div class="brand">
     <div class="brand-mark">CM</div>
     <div class="brand-text">
-      <h1>Dashboard Master Agenda Change Management Pusat</h1>
+      <h1 id="cmDashboardTitle">Dashboard Master Agenda Change Management Pusat</h1>
+      <button id="cmEditDashboardTitle" type="button" class="btn btn-outline btn-sm hidden" style="margin-top:5px" title="Edit judul dashboard">✎ Edit judul</button>
       <p>Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</p>
     </div>
   </div>
@@ -3107,6 +3108,7 @@ async function cmLoadRoleOverrides(){
 }
 function cmApplyRoleUi(role){
   document.documentElement.dataset.role=role;
+  document.getElementById('cmEditDashboardTitle')?.classList.toggle('hidden',role!==CM_ROLE_SUPERADMIN);
   document.documentElement.dataset.access=role;
   const badge=document.getElementById('cmRoleBadge');
   if(badge){badge.textContent=cmRoleLabel(role);badge.className=`cm-role-badge ${role}`;}
@@ -3162,6 +3164,52 @@ function cmOpenAccessManager(){
   };
 }
 document.addEventListener('click',e=>{if(e.target?.closest?.('#btnAccessAdmin')){e.preventDefault();cmOpenAccessManager();}});
+const CM_DASHBOARD_TITLE_KEY='cm_dashboard_title_v1';
+const CM_DASHBOARD_TITLE_DEFAULT='Dashboard Master Agenda Change Management Pusat';
+let cmDashboardTitle=CM_DASHBOARD_TITLE_DEFAULT;
+let cmDashboardTitleUnsub=null;
+function cmApplyDashboardTitle(value){
+  cmDashboardTitle=String(value||'').trim()||CM_DASHBOARD_TITLE_DEFAULT;
+  const heading=document.getElementById('cmDashboardTitle');
+  if(heading)heading.textContent=cmDashboardTitle;
+  document.title=cmDashboardTitle;
+  try{localStorage.setItem(CM_DASHBOARD_TITLE_KEY,cmDashboardTitle);}catch(e){}
+}
+async function cmLoadDashboardTitle(){
+  try{cmApplyDashboardTitle(localStorage.getItem(CM_DASHBOARD_TITLE_KEY));}catch(e){cmApplyDashboardTitle(cmDashboardTitle);}
+  const remote=await firestoreGet(CM_DASHBOARD_TITLE_KEY);
+  if(remote)cmApplyDashboardTitle(remote);
+  if(isLoggedIn()&&window.fbDb&&!cmDashboardTitleUnsub){
+    cmDashboardTitleUnsub=window.fbOnSnapshot(window.fbDoc(window.fbDb,'dashboard',CM_DASHBOARD_TITLE_KEY),snap=>{
+      if(snap.exists())cmApplyDashboardTitle(snap.data().value);
+    });
+  }
+}
+function cmOpenDashboardTitleEditor(){
+  if(!cmCanManageReferences())return cmDenyReference();
+  const modal=document.getElementById('kpiModal');
+  modal.innerHTML=`<div class="modal-box" style="max-width:620px"><div class="modal-head"><h2>Edit judul dashboard</h2><button class="modal-close" id="cmTitleClose">&times;</button></div><div class="modal-body"><div class="form-field full"><label for="cmTitleInput">Judul dashboard <span style="color:red">*</span></label><input id="cmTitleInput" type="text" maxlength="160" required></div></div><div class="modal-foot"><button class="btn btn-outline btn-sm" id="cmTitleCancel">Batal</button><button class="btn btn-gold btn-sm" id="cmTitleSave">Simpan</button></div></div>`;
+  const input=document.getElementById('cmTitleInput');input.value=cmDashboardTitle;
+  const close=()=>modal.classList.add('hidden');
+  document.getElementById('cmTitleClose').onclick=close;
+  document.getElementById('cmTitleCancel').onclick=close;
+  document.getElementById('cmTitleSave').onclick=async()=>{
+    if(!cmCanManageReferences())return cmDenyReference();
+    const title=input.value.trim();
+    if(!title){input.setCustomValidity('Judul wajib diisi.');input.reportValidity();return;}
+    input.setCustomValidity('');
+    const button=document.getElementById('cmTitleSave');button.disabled=true;
+    try{
+      const synced=await firestoreSet(CM_DASHBOARD_TITLE_KEY,title);
+      cmApplyDashboardTitle(title);close();
+      toast(synced?'Judul dashboard berhasil disimpan.':'Judul tersimpan di perangkat ini; sinkronisasi gagal. Coba simpan lagi saat koneksi tersedia.',synced?'success':'warning');
+    }finally{button.disabled=false;}
+  };
+  input.oninput=()=>input.setCustomValidity('');
+  modal.classList.remove('hidden');input.focus();
+}
+document.addEventListener('click',e=>{if(e.target?.closest?.('#cmEditDashboardTitle'))cmOpenDashboardTitleEditor();});
+
 async function firestoreGet(key) {
   if (!isLoggedIn() || !window.fbDb) return null;
   try {
@@ -3175,7 +3223,7 @@ async function firestoreGet(key) {
 }
 async function firestoreSet(key, value, options={}) {
   if (!isLoggedIn() || !window.fbDb) return false;
-  const protectedReferenceKey=String(key||'').startsWith('cm_reference_index_v2')||String(key||'').startsWith('cm_reference_doc_v2_');
+  const protectedReferenceKey=key===CM_DASHBOARD_TITLE_KEY||String(key||'').startsWith('cm_reference_index_v2')||String(key||'').startsWith('cm_reference_doc_v2_');
   if(options.allowRoleRegistry){
     if(!cmCanManageReferences())return false;
   }else if(protectedReferenceKey){
@@ -3246,6 +3294,7 @@ async function persist() {
 
 async function loadInitial() {
   await waitForFirebaseAuthReady();
+  await cmLoadDashboardTitle();
   let loaded = null;
   try {
     const remote = await firestoreGet(STORAGE_KEY);
@@ -10079,6 +10128,7 @@ function wireEvents() {
    masing-masing loadInitial()/loadKnowledgeInitial()/loadContactsInitial()).
 ============================================================ */
 window.onDashboardLogin = async function () {
+  await cmLoadDashboardTitle();
   showLoading('Connecting to Firestore...');
   try {
     // Activity
@@ -10143,6 +10193,7 @@ window.onDashboardLogin = async function () {
 };
 
 window.onDashboardLogout = function () {
+  if(cmDashboardTitleUnsub){cmDashboardTitleUnsub();cmDashboardTitleUnsub=null;}
   detachAgendaLiveSync();
   detachKnowledgeLiveSync();
   cmRefDetachLiveSync();
