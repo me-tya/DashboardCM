@@ -53,6 +53,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
   const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
 
   window.fbAuth = auth;
   window.fbDb = db;
