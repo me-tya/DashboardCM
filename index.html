@@ -1826,7 +1826,34 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .today-pic .pic-list{font-size:10.5px}.today-pic{white-space:normal!important;overflow:visible!important}
 .pic-check-field{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:#FAFBFE}.pic-check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:2px 10px}.pic-check span{flex:1;min-width:0;line-height:1.25}
 .pic-check{display:flex!important;align-items:center;justify-content:flex-start!important;text-align:left;gap:7px;width:auto!important;margin:0!important;font-size:12.5px;font-weight:500;cursor:pointer;padding:3px 2px;border-radius:6px}.pic-check:hover{background:#EEF3FF}.pic-check input{width:15px;height:15px;margin:0;flex:none}
-.pic-other{margin-top:7px;width:100%}.pic-inactive span{color:var(--ink-500)}.pic-inactive em{font-style:normal;font-size:11px;color:#C53030}.pic-count{display:block;margin-top:4px;color:var(--ink-500);font-size:11px}
+.pic-other{margin-top:7px;width:100%}.pic-inactive span{color:var(--ink-500)}.pic-inactive em{font-style:normal;font-size:11px;color:#C53030}.pic-count{display:block;color:var(--ink-500);font-size:11px}
+.pic-field-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px}.pic-field-actions{display:flex;gap:6px;flex-wrap:wrap}
+.pic-tool{border:1px solid var(--border);background:#fff;color:#1F3A8A;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:7px;cursor:pointer;line-height:1.2;width:auto}.pic-tool:hover{background:#EEF3FF;border-color:#C7D3F2}
+.pic-hiddensel span{color:var(--ink-500)}.pic-hiddensel em{font-style:normal;font-size:11px;color:#8A94A6}.pic-field{border:1px solid var(--border);border-radius:10px;padding:9px 10px;background:#FAFBFE}.pic-field .pic-field-bar{margin:8px 0 0}
+.pic-chips{display:flex;flex-wrap:wrap;gap:5px}.pic-chip{display:inline-flex;align-items:center;gap:4px}.pic-chip-x{border:0;background:none;color:#1F3A8A;opacity:.6;cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 2px;width:auto}.pic-chip-x:hover{opacity:1;color:#C53030}
+.pic-tool.primary{background:#1F3A8A;border-color:#1F3A8A;color:#fff}.pic-tool.primary:hover{background:#172E6E;border-color:#172E6E}
+.pic-pick-box{width:min(560px,100%);height:min(640px,calc(100vh - 32px))}.pic-pick-search{padding:0 18px 10px}.pic-pick-search input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px}
+.pic-pick-list{overscroll-behavior:contain;scroll-behavior:smooth}.pic-pick-head{position:sticky;top:0;z-index:1;background:#F4F6FB;margin:0 -12px;padding:6px 18px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#475467;border-bottom:1px solid var(--border)}.pic-pick-head span{background:#fff;border:1px solid var(--border);border-radius:999px;padding:0 7px;margin-left:4px;font-weight:600}
+.pic-pick-row{display:flex!important;align-items:center;gap:10px;padding:8px 6px!important;margin:0!important;border-bottom:1px solid #F1F3F8;cursor:pointer;font-size:13px;font-weight:500;border-radius:6px}.pic-pick-row:hover{background:#F5F8FF}.pic-pick-row.on{background:#EEF3FF}.pic-pick-row input{width:16px;height:16px;margin:0;flex:none}.pic-pick-row em{font-style:normal;font-size:11px;color:#8A94A6}
+.pic-pick-other{padding:10px 18px 0}.pic-pick-other label{display:block;font-size:11.5px;color:var(--ink-500);margin-bottom:4px}.pic-pick-other input{width:100%;box-sizing:border-box}
+.pic-pick-count{margin-right:auto;color:var(--ink-500);font-size:12px;align-self:center}.pic-mgr-foot{align-items:center}
+.pic-mgr-add select{padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:13px;width:auto}.tag-staff{background:#E7F7F1;color:#0F7A5C}
+.pic-chip{background:#EAF0FF;color:#1F3A8A;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}.pic-chip-empty{font-size:12px;color:var(--ink-500);font-style:italic}.pic-empty{grid-column:1/-1;font-size:12px;color:var(--ink-500);padding:6px 2px}
+.pic-mgr-overlay{position:fixed;inset:0;z-index:9000;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.pic-mgr-box{background:#fff;border-radius:14px;width:min(520px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(15,23,42,.25);overflow:hidden}
+.pic-mgr-head,.pic-mgr-add,.pic-mgr-tools,.pic-pick-search,.pic-pick-other,.pic-mgr-note,.pic-mgr-foot{flex:none}.pic-mgr-head{display:flex;justify-content:space-between;gap:12px;padding:16px 18px 10px}.pic-mgr-head h3{margin:0 0 3px;font-size:17px;color:#12275A}.pic-mgr-head p{margin:0;font-size:12.5px;color:var(--ink-500);line-height:1.45}
+.pic-mgr-x{border:0;background:none;font-size:24px;line-height:1;color:var(--ink-500);cursor:pointer;width:auto;padding:0 4px}
+.pic-mgr-add{display:flex;gap:8px;padding:4px 18px 10px}.pic-mgr-add input{flex:1;min-width:0}.pic-mgr-add .btn{white-space:nowrap}
+.pic-mgr-tools{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:0 18px 8px;color:var(--ink-500)}.pic-mgr-tools span{display:flex;gap:6px}
+.pic-mgr-list{overflow-y:auto;overflow-x:hidden;min-height:0;padding:0 12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex:1}
+.pic-mgr-row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-bottom:1px solid #F1F3F8}.pic-mgr-row:last-child{border-bottom:0}.pic-mgr-row label{display:flex!important;align-items:center;gap:9px;flex:1;min-width:0;margin:0!important;cursor:pointer;font-size:13px;font-weight:500}.pic-mgr-row label input{width:16px;height:16px;margin:0;flex:none}.pic-mgr-row.off label span{color:#98A2B3;text-decoration:line-through}
+.pic-mgr-row em{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;white-space:nowrap}.tag-team{background:#EEF3FF;color:#1F3A8A}.tag-extra{background:#FFF4E0;color:#8A5A00}
+.pic-mgr-acts{display:flex;gap:2px;width:56px;flex:none;justify-content:flex-end}.pic-mgr-move{border:1px solid var(--border);background:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap;width:auto;line-height:1.3}.pic-mgr-move.in{color:#1F3A8A}.pic-mgr-move.in:hover{background:#EEF3FF;border-color:#C7D3F2}.pic-mgr-move.out{color:#8A5A00}.pic-mgr-move.out:hover{background:#FFF4E0;border-color:#F2D29B}
+.pic-mgr-del,.pic-mgr-edit,.pic-mgr-ok{border:0;background:none;font-size:15px;line-height:1;cursor:pointer;width:26px;height:26px;padding:0;border-radius:6px;display:grid;place-items:center}
+.pic-mgr-del{color:#C53030}.pic-mgr-edit{color:#1F3A8A}.pic-mgr-ok{color:#16A37F;font-weight:700}.pic-mgr-del:hover{background:#FDECEC}.pic-mgr-edit:hover{background:#EEF3FF}.pic-mgr-ok:hover{background:#E7F7F1}
+.pic-mgr-row.editing{background:#FFFBF0}.pic-mgr-row.editing input{flex:1;min-width:0;padding:6px 8px;border:1px solid #C8A84B;border-radius:7px;font-size:13px}
+.pic-mgr-note{margin:0;padding:10px 18px 0;font-size:11.5px;color:var(--ink-500);line-height:1.45}.pic-mgr-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px}
+@media(max-width:600px){.pic-mgr-overlay{padding:8px}.pic-pick-box{height:calc(100vh - 16px)}.pic-mgr-add{flex-wrap:wrap}.pic-mgr-add input{flex-basis:100%;order:-1}}
 </style>
 
 <style id="cm-overflow-guard-v1">
@@ -1924,18 +1951,22 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 /* Activity table: fit the available panel width without horizontal scrolling. */
 #tab-table .table-wrap{width:100%;max-width:100%;overflow-x:hidden;}
 #tab-table table.data-table{width:100%;min-width:0;table-layout:fixed;font-size:11.5px;}
-#tab-table table.data-table col.col-no{width:3.5%;}
-#tab-table table.data-table col.col-date{width:10.5%;}
+#tab-table table.data-table col.col-no{width:3%;}
+#tab-table table.data-table col.col-date{width:9.5%;}
 #tab-table table.data-table col.col-activity{width:21%;}
-#tab-table table.data-table col.col-service{width:6%;}
-#tab-table table.data-table col.col-unit{width:8%;}
-#tab-table table.data-table col.col-category{width:9.5%;}
-#tab-table table.data-table col.col-program{width:6%;}
-#tab-table table.data-table col.col-pic{width:9%;}
-#tab-table table.data-table col.col-status{width:9.5%;}
-#tab-table table.data-table col.col-actions{width:17%;}
-#tab-table table.data-table thead th{padding:9px 6px;font-size:10px;letter-spacing:.025em;}
-#tab-table table.data-table tbody td{padding:10px 6px;}
+#tab-table table.data-table col.col-service{width:5.5%;}
+#tab-table table.data-table col.col-unit{width:7.5%;}
+#tab-table table.data-table col.col-category{width:8.5%;}
+#tab-table table.data-table col.col-program{width:10%;}
+#tab-table table.data-table col.col-pic{width:12.5%;}
+#tab-table table.data-table col.col-status{width:9%;}
+#tab-table table.data-table col.col-actions{width:13.5%;}
+#tab-table table.data-table thead th{padding:9px 10px;font-size:10px;letter-spacing:.025em;}
+#tab-table table.data-table tbody td{padding:10px 10px;}
+#tab-table table.data-table thead th:first-child,#tab-table table.data-table tbody td:first-child{padding-left:12px;padding-right:4px;}
+#tab-table .pic-list{gap:3px;}
+#tab-table .pic-name{white-space:normal;overflow-wrap:normal;word-break:normal;line-height:1.3;}
+#tab-table .row-actions{flex-wrap:wrap!important;row-gap:4px;}
 #tab-table .row-actions{gap:4px;flex-wrap:nowrap;align-items:flex-start;align-content:flex-start;white-space:nowrap;}
 #tab-table .icon-btn{width:25px;height:25px;border-radius:7px;flex:0 0 25px;}
 #tab-table .program-cell{white-space:normal;overflow-wrap:normal;word-break:normal;line-height:1.3;}
@@ -1949,8 +1980,8 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 
 @media(max-width:1100px){
   #tab-table table.data-table{font-size:10.5px;}
-  #tab-table table.data-table thead th{padding:8px 4px;font-size:9px;}
-  #tab-table table.data-table tbody td{padding:9px 4px;}
+  #tab-table table.data-table thead th{padding:8px 6px;font-size:9px;}
+  #tab-table table.data-table tbody td{padding:9px 6px;}
   #tab-table .icon-btn{width:23px;height:23px;flex-basis:23px;}
 }
 </style>
@@ -2660,6 +2691,8 @@ const CM_PIC_ALIASES={'tya':'Atitya Pritasari','atitya':'Atitya Pritasari','sara
 function cmPicCanon(name){
   const raw=String(name||'').trim().replace(/\s+/g,' ');if(!raw)return '';
   const low=raw.toLowerCase(),bare=low.replace(/^(pak|bapak|bu|ibu|mas|mbak)\s+/,'');
+  let rn={};try{rn=cmPicPrefs().renames||{};}catch(e){}
+  if(rn[low]||rn[bare])return rn[low]||rn[bare];
   const hit=CM_PIC_ALIASES[low]||CM_PIC_ALIASES[bare];if(hit)return hit;
   const full=CM_PIC_ROSTER.find(n=>n.toLowerCase()===low||n.toLowerCase()===bare);return full||raw;
 }
@@ -2667,30 +2700,167 @@ function cmPicList(str){const out=[],add=c=>{if(c&&!out.some(x=>x.toLowerCase()=
 function cmPicNormalize(str){return cmPicList(str).join(', ');}
 function cmPicHtml(str,empty='-'){const ns=cmPicList(str);if(!ns.length)return escapeHtml(empty);return `<span class="pic-list">${ns.map(n=>`<span class="pic-name">${escapeHtml(n)}</span>`).join('')}</span>`;}
 function cmPicInactiveSet(){const set=new Set();(state.resources||[]).forEach(r=>{if(typeof resourceIsInactive==='function'&&resourceIsInactive(r)){const c=cmPicCanon(r.nama);if(c)set.add(c.toLowerCase());}});return set;}
-function cmPicRoster(){
-  const inactive=cmPicInactiveSet(),out=[];
-  const res=(state.resources||[]).map(r=>String(r.nama||'').trim()).filter(Boolean);
-  [...CM_PIC_ROSTER,...res].forEach(n=>{const c=cmPicCanon(n);if(c&&!inactive.has(c.toLowerCase())&&!out.some(x=>x.toLowerCase()===c.toLowerCase()))out.push(c);});
+/* PIC picker — pop-up picker + "Kelola PIC" manager.
+   Groups: Tim CM (CM_PIC_ROSTER + Resource Tim CM), Pegawai Pusmantap (prefs.staff), Tambahan (prefs.extra).
+   Preferences only shape the picker list; activity data, Tim CM data, filters and reports stay unchanged
+   (except renames, which act as display aliases so a corrected name shows everywhere). */
+const CM_PIC_PREFS_KEY='pusmantap-cm-pic-prefs-v1';
+const CM_PUSMANTAP_STAFF_SEED_ID='pusmantap-staff-2026-10';
+const CM_PUSMANTAP_STAFF=['Wawan Juswanto','Arifudin Miftakhul Huda','Zalik Fakri','Sasmika Kusuma','Alfarisi Muslim','Atitya Pritasari','Andos Heriyanto Hutahaean','Winny Irmarooke','Rahmatullah Priyo Kusuma','Meida Embrianto','Astika Trisnawati Suprapto','Dhanang Jaka Purwandaru','Dina Septiani','Sarah Khairina','Daryan Ciptadi','Kurniawan Jabar Malik','W Friendica M Aprilawan Putera','Anggi Maulana Ciptadi','Selly Galvani'];
+let cmPicPrefsCache=null,cmPicPrefsRemoteChecked=false;
+function cmPicPrefsNormalize(p){
+  p=p&&typeof p==='object'?p:{};
+  const clean=a=>{const out=[];(Array.isArray(a)?a:[]).forEach(x=>{x=String(x||'').trim().replace(/\s+/g,' ');if(x&&!out.some(y=>y.toLowerCase()===x.toLowerCase()))out.push(x);});return out;};
+  const rn={};Object.entries(p.renames&&typeof p.renames==='object'?p.renames:{}).forEach(([k,v])=>{k=String(k||'').trim().toLowerCase().replace(/\s+/g,' ');v=String(v||'').trim().replace(/\s+/g,' ');if(k&&v&&k!==v.toLowerCase())rn[k]=v;});
+  const out={hidden:clean(p.hidden),extra:clean(p.extra),staff:clean(p.staff),teamAdd:clean(p.teamAdd),teamRemove:clean(p.teamRemove),renames:rn,seeded:clean(p.seeded)};
+  // one-time seed of Pusmantap employees (kept editable/deletable afterwards)
+  if(!out.seeded.includes(CM_PUSMANTAP_STAFF_SEED_ID)){CM_PUSMANTAP_STAFF.forEach(n=>{if(!out.staff.some(x=>x.toLowerCase()===n.toLowerCase())&&!out.extra.some(x=>x.toLowerCase()===n.toLowerCase()))out.staff.push(n);});out.seeded.push(CM_PUSMANTAP_STAFF_SEED_ID);}
   return out;
 }
+function cmPicUsage(name){const l=String(name||'').toLowerCase();return (state.agendas||[]).filter(a=>splitNames(a.picTimCM).some(x=>cmPicCanon(x).toLowerCase()===l)).length;}
+function cmPicPrefs(){if(cmPicPrefsCache)return cmPicPrefsCache;try{cmPicPrefsCache=cmPicPrefsNormalize(JSON.parse(localStorage.getItem(CM_PIC_PREFS_KEY)||'{}'));}catch(e){cmPicPrefsCache=cmPicPrefsNormalize({});}return cmPicPrefsCache;}
+async function cmPicPrefsSave(p){cmPicPrefsCache=cmPicPrefsNormalize(p);try{localStorage.setItem(CM_PIC_PREFS_KEY,JSON.stringify(cmPicPrefsCache));}catch(e){}try{if(typeof isLoggedIn==='function'&&isLoggedIn()&&typeof firestoreSet==='function')await firestoreSet(CM_PIC_PREFS_KEY,JSON.stringify(cmPicPrefsCache));}catch(e){console.warn('PIC prefs sync failed',e)}}
+function cmPicPrefsPullRemote(){if(cmPicPrefsRemoteChecked||typeof firestoreGet!=='function'||typeof isLoggedIn!=='function'||!isLoggedIn())return;cmPicPrefsRemoteChecked=true;firestoreGet(CM_PIC_PREFS_KEY).then(raw=>{if(!raw)return;let p;try{p=cmPicPrefsNormalize(JSON.parse(raw));}catch(e){return}if(JSON.stringify(p)===JSON.stringify(cmPicPrefs()))return;cmPicPrefsCache=p;try{localStorage.setItem(CM_PIC_PREFS_KEY,JSON.stringify(p));}catch(e){}cmPicRefreshFields();}).catch(()=>{});}
+function cmPicIsHidden(n,prefs){const l=String(n||'').toLowerCase();return (prefs||cmPicPrefs()).hidden.some(x=>x.toLowerCase()===l);}
+// Groups of active names (inactive Tim CM members excluded), each name appears once
+function cmPicGroups(prefs){
+  const saved=cmPicPrefsCache;if(prefs)cmPicPrefsCache=prefs; // evaluate canon/renames against a draft when given
+  try{
+    const inactive=cmPicInactiveSet(),seen=new Set(),mk=list=>{const out=[];list.forEach(n=>{const c=cmPicCanon(n),l=c.toLowerCase();if(c&&!inactive.has(l)&&!seen.has(l)){seen.add(l);out.push(c);}});return out;};
+    const P=cmPicPrefs(),resNames=(state.resources||[]).map(r=>String(r.nama||'').trim());
+    // "Tim CM" = only names that match the Squad Team › Tim CM sheet (ST CM / Tim Pengelola Perubahan)
+    const stcm=cmPicSquadCmNames(),stSet=new Set(stcm.map(n=>cmPicCanon(n).toLowerCase()));
+    const pool=[...CM_PIC_ROSTER,...resNames,...P.staff,...P.extra].map(n=>cmPicCanon(n)).filter(n=>n&&stSet.has(n.toLowerCase()));
+    // manual override from "Kelola PIC": teamAdd forces a name into Tim CM, teamRemove takes it out
+    const rem=new Set(P.teamRemove.map(n=>cmPicCanon(n).toLowerCase()));
+    const team=mk([...stcm.map(n=>cmPicCanon(n)).filter(n=>pool.some(x=>x.toLowerCase()===n.toLowerCase())),...P.teamAdd].map(n=>cmPicCanon(n)).filter(n=>!rem.has(n.toLowerCase())));
+    return [
+      {key:'team',label:uiText('CM Team','Tim CM'),names:team},
+      {key:'staff',label:uiText('Pusmantap employees','Pegawai Pusmantap'),names:mk([...P.staff,...CM_PIC_ROSTER,...resNames])},
+      {key:'extra',label:uiText('Additional','Tambahan'),names:mk(P.extra)}];
+  }finally{cmPicPrefsCache=saved;}
+}
+function cmPicSquadCmNames(){
+  const out=[];(state.contacts||[]).forEach(c=>{if(String(c.sheet||'').toUpperCase()==='ST CM'||/tim pengelola perubahan/i.test(String(c.sheetTitle||''))){const n=String(c.nama||'').trim();if(n&&!out.some(x=>x.toLowerCase()===n.toLowerCase()))out.push(n);}});
+  return out;
+}
+function cmPicInSquadCm(n){const l=cmPicCanon(n).toLowerCase();return cmPicSquadCmNames().some(x=>cmPicCanon(x).toLowerCase()===l);}
+function cmPicEditable(n,prefs){const P=prefs||cmPicPrefs(),l=String(n||'').toLowerCase(),m=x=>x.toLowerCase()===l||cmPicCanonWith(P,x).toLowerCase()===l;return P.staff.some(m)||P.extra.some(m)||P.teamAdd.some(m);}
+function cmPicRosterAll(){return cmPicGroups().flatMap(g=>g.names);}
+function cmPicRoster(){return cmPicRosterAll().filter(n=>!cmPicIsHidden(n));}
+function cmPicChipsHtml(sel){return sel.length?sel.map(n=>`<span class="pic-chip">${escapeHtml(n)}<button type="button" class="pic-chip-x" data-name="${escapeHtml(n)}" onclick="cmPicRemove(this)" title="${escapeHtml(uiText('Remove','Hapus')+' '+n)}" aria-label="${escapeHtml(uiText('Remove','Hapus')+' '+n)}">&times;</button></span>`).join(''):`<span class="pic-chip-empty">${uiText('No PIC selected yet','Belum ada PIC dipilih')}</span>`;}
 function cmPicFieldHtml(value){
-  const sel=cmPicList(value),roster=cmPicRoster(),inactive=cmPicInactiveSet();
-  const keepInactive=sel.filter(n=>inactive.has(n.toLowerCase())&&!roster.some(r=>r.toLowerCase()===n.toLowerCase()));
-  const others=sel.filter(n=>!roster.some(r=>r.toLowerCase()===n.toLowerCase())&&!keepInactive.includes(n));
-  const box=(n,off)=>`<label class="pic-check${off?' pic-inactive':''}" ${off?`title="${escapeHtml(uiText('Inactive member — kept because already assigned to this activity','Anggota nonaktif — tetap ditampilkan karena sudah tercatat di activity ini'))}"`:''}><input type="checkbox" data-pic-opt value="${escapeHtml(n)}" ${sel.some(x=>x.toLowerCase()===n.toLowerCase())?'checked':''} onchange="cmPicFieldSync(this)"><span>${escapeHtml(n)}${off?` <em>(${uiText('inactive','nonaktif')})</em>`:''}</span></label>`;
-  return `<div class="pic-check-field" data-pic-field><input type="hidden" name="picTimCM" value="${escapeHtml(sel.join(', '))}">
-  <div class="pic-check-grid">${roster.map(n=>box(n,false)).join('')}${keepInactive.map(n=>box(n,true)).join('')}</div>
-  <input type="text" class="pic-other" data-pic-other placeholder="${uiText('Other PIC (optional, comma separated)','PIC lainnya (opsional, pisahkan dengan koma)')}" value="${escapeHtml(others.join(', '))}" oninput="cmPicFieldSync(this)">
-  <small class="pic-count">${sel.length} ${uiText('selected','dipilih')}</small></div>`;
+  cmPicPrefsPullRemote();
+  const sel=cmPicList(value);
+  return `<div class="pic-field" data-pic-field><input type="hidden" name="picTimCM" value="${escapeHtml(sel.join(', '))}">
+  <div class="pic-chips">${cmPicChipsHtml(sel)}</div>
+  <div class="pic-field-bar"><small class="pic-count">${sel.length} ${uiText('selected','dipilih')}</small><div class="pic-field-actions">
+    <button type="button" class="pic-tool primary" onclick="cmPicOpenPicker(this)">+ ${uiText('Select PIC','Pilih PIC')}</button>
+    <button type="button" class="pic-tool" onclick="cmPicOpenManager()">⚙ ${uiText('Manage PIC','Kelola PIC')}</button></div></div></div>`;
 }
-function cmPicFieldSync(el){
-  const box=el.closest('[data-pic-field]');if(!box)return;
-  const picked=[...box.querySelectorAll('[data-pic-opt]:checked')].map(x=>x.value);
-  const all=cmPicList([...picked,box.querySelector('[data-pic-other]')?.value||''].join(', '));
-  box.querySelector('input[name="picTimCM"]').value=all.join(', ');
-  const c=box.querySelector('.pic-count');if(c)c.textContent=`${all.length} ${uiText('selected','dipilih')}`;
+function cmPicSetField(box,names){
+  const sel=cmPicList(names.join(', '));
+  box.querySelector('input[name="picTimCM"]').value=sel.join(', ');
+  const ch=box.querySelector('.pic-chips');if(ch)ch.innerHTML=cmPicChipsHtml(sel);
+  const c=box.querySelector('.pic-count');if(c)c.textContent=`${sel.length} ${uiText('selected','dipilih')}`;
+  box.querySelector('input[name="picTimCM"]').dispatchEvent(new Event('change',{bubbles:true}));
 }
-window.cmPicFieldSync=cmPicFieldSync;
+function cmPicRemove(btn){const box=btn.closest('[data-pic-field]');if(!box)return;const n=String(btn.dataset.name||'').toLowerCase();cmPicSetField(box,cmPicList(box.querySelector('input[name="picTimCM"]').value).filter(x=>x.toLowerCase()!==n));}
+// Re-render chips of every open PIC field (names re-canonicalised after renames)
+function cmPicRefreshFields(){document.querySelectorAll('[data-pic-field]').forEach(box=>{const v=box.querySelector('input[name="picTimCM"]');if(v)cmPicSetField(box,cmPicList(v.value));});}
+function cmPicOverlay(id){document.getElementById(id)?.remove();const ov=document.createElement('div');ov.id=id;ov.className='pic-mgr-overlay';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});ov.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();e.preventDefault();ov.remove();}});document.body.appendChild(ov);return ov;}
+
+/* ---- Pop-up picker ---- */
+function cmPicOpenPicker(btn){
+  const box=btn.closest('[data-pic-field]');if(!box)return;
+  const has=(arr,n)=>arr.some(r=>r.toLowerCase()===String(n).toLowerCase());
+  const groups=cmPicGroups(),all=groups.flatMap(g=>g.names),inactive=cmPicInactiveSet();
+  let picked=cmPicList(box.querySelector('input[name="picTimCM"]').value);
+  // names already on this activity but no longer in any active list
+  const offList=picked.filter(n=>!has(all,n)&&inactive.has(n.toLowerCase()));
+  let others=picked.filter(n=>!has(all,n)&&!offList.includes(n));
+  const ov=cmPicOverlay('cmPicPicker');
+  const row=(n,note)=>`<label class="pic-pick-row${has(picked,n)?' on':''}" data-search="${escapeHtml(n.toLowerCase())}"><input type="checkbox" value="${escapeHtml(n)}" ${has(picked,n)?'checked':''}><span>${escapeHtml(n)}${note?` <em>(${note})</em>`:''}</span></label>`;
+  const sections=groups.map(g=>{const names=g.names.filter(n=>!cmPicIsHidden(n)||has(picked,n));if(!names.length)return '';return `<div class="pic-pick-group" data-group><div class="pic-pick-head">${escapeHtml(g.label)} <span>${names.length}</span></div>${names.map(n=>row(n,cmPicIsHidden(n)?uiText('hidden','disembunyikan'):'')).join('')}</div>`;}).join('')
+    +(offList.length?`<div class="pic-pick-group" data-group><div class="pic-pick-head">${uiText('Inactive','Nonaktif')} <span>${offList.length}</span></div>${offList.map(n=>row(n,uiText('inactive','nonaktif'))).join('')}</div>`:'');
+  ov.innerHTML=`<div class="pic-mgr-box pic-pick-box"><div class="pic-mgr-head"><div><h3>${uiText('Select CM Team PIC','Pilih PIC Tim CM')}</h3><p>${uiText('Tick one or more names. The list scrolls when it is long.','Centang satu atau beberapa nama. Daftar dapat di-scroll bila panjang.')}</p></div><button type="button" class="pic-mgr-x" data-x aria-label="${uiText('Close','Tutup')}">&times;</button></div>
+    <div class="pic-pick-search"><input type="search" data-q placeholder="${uiText('Search name…','Cari nama…')}" aria-label="${uiText('Search name','Cari nama')}"></div>
+    <div class="pic-mgr-list pic-pick-list">${sections||`<div class="pic-empty">${uiText('The PIC list is empty. Use “Manage PIC” to add names.','Daftar PIC kosong. Gunakan “Kelola PIC” untuk menambah nama.')}</div>`}<div class="pic-empty" data-nores hidden>${uiText('No name matches the search.','Tidak ada nama yang cocok.')}</div></div>
+    <div class="pic-pick-other"><label>${uiText('Other PIC (optional, comma separated)','PIC lainnya (opsional, pisahkan dengan koma)')}</label><input type="text" data-other value="${escapeHtml(others.join(', '))}"></div>
+    <div class="pic-mgr-foot"><small class="pic-pick-count" data-count></small><button type="button" class="pic-tool" data-clear>${uiText('Clear','Kosongkan')}</button><button type="button" class="btn btn-outline btn-sm" data-x>${uiText('Cancel','Batal')}</button><button type="button" class="btn btn-gold btn-sm" data-apply>${uiText('Apply','Terapkan')}</button></div></div>`;
+  const checks=()=>[...ov.querySelectorAll('.pic-pick-row input')];
+  const current=()=>cmPicList([...checks().filter(c=>c.checked).map(c=>c.value),ov.querySelector('[data-other]').value].join(', '));
+  const upd=()=>{ov.querySelector('[data-count]').textContent=`${current().length} ${uiText('selected','dipilih')}`;checks().forEach(c=>c.closest('.pic-pick-row').classList.toggle('on',c.checked));};
+  checks().forEach(c=>c.onchange=upd);ov.querySelector('[data-other]').oninput=upd;
+  ov.querySelector('[data-q]').oninput=e=>{const q=e.target.value.trim().toLowerCase();let any=false;ov.querySelectorAll('[data-group]').forEach(g=>{let vis=0;g.querySelectorAll('.pic-pick-row').forEach(r=>{const m=!q||r.dataset.search.includes(q);r.hidden=!m;if(m)vis++;});g.hidden=!vis;if(vis)any=true;});const nr=ov.querySelector('[data-nores]');if(nr)nr.hidden=any||!checks().length;};
+  ov.querySelector('[data-q]').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();const vis=checks().filter(c=>!c.closest('.pic-pick-row').hidden&&!c.closest('[data-group]').hidden);if(vis.length===1){vis[0].checked=!vis[0].checked;upd();}}};
+  ov.querySelector('[data-clear]').onclick=()=>{checks().forEach(c=>c.checked=false);ov.querySelector('[data-other]').value='';upd();};
+  ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>ov.remove());
+  ov.querySelector('[data-apply]').onclick=()=>{cmPicSetField(box,current());ov.remove();btn.focus();};
+  upd();ov.querySelector('[data-q]').focus();
+}
+
+/* ---- Kelola PIC ---- */
+function cmPicOpenManager(){
+  if(typeof cmCanMutate==='function'&&!cmCanMutate())return typeof cmDenyMutation==='function'?cmDenyMutation():undefined;
+  const draft=cmPicPrefsNormalize(JSON.parse(JSON.stringify(cmPicPrefs())));
+  const ov=cmPicOverlay('cmPicManager');
+  let editing=null,addGroup='staff';
+  const listKey=g=>g==='extra'?'extra':'staff';
+  const render=()=>{
+    const groups=cmPicGroups(draft),all=groups.flatMap(g=>g.names),isHid=n=>cmPicIsHidden(n,draft),shown=all.filter(n=>!isHid(n)).length;
+    const tag={team:['tag-team',uiText('CM Team','Tim CM')],staff:['tag-staff','Pusmantap'],extra:['tag-extra',uiText('Additional','Tambahan')]};
+    const rowHtml=(n,g)=>{const esc=escapeHtml(n),editable=cmPicEditable(n,draft)&&!(g==='team'&&cmPicInSquadCm(n)),mv=g==='team'?`<button type="button" class="pic-mgr-move out" data-team-out="${esc}" title="${uiText('Move out of the CM Team group','Keluarkan dari kelompok Tim CM')}">${uiText('Remove from CM Team','Keluarkan')}</button>`:`<button type="button" class="pic-mgr-move in" data-team-in="${esc}" title="${uiText('Move into the CM Team group','Masukkan ke kelompok Tim CM')}">+ Tim CM</button>`;
+      if(editable&&editing&&editing.toLowerCase()===n.toLowerCase())return `<div class="pic-mgr-row editing"><input type="text" data-edit-input value="${esc}" aria-label="${uiText('PIC name','Nama PIC')}"><button type="button" class="pic-mgr-ok" data-edit-ok title="${uiText('Save name','Simpan nama')}">✓</button><button type="button" class="pic-mgr-del" data-edit-cancel title="${uiText('Cancel','Batal')}">&times;</button></div>`;
+      return `<div class="pic-mgr-row${isHid(n)?' off':''}"><label><input type="checkbox" data-show value="${esc}" ${isHid(n)?'':'checked'}><span>${esc}</span></label>${mv}<em class="${tag[g][0]}" ${editable?'':`title="${escapeHtml(g==='team'?uiText('From Squad Team › CM Team (name managed there)','Dari Squad Team › Tim CM (nama dikelola di sana)'):uiText('From the CM Team tab (name managed there)','Dari tab Tim CM (nama dikelola di sana)'))}"`}>${tag[g][1]}</em>${editable?`<span class="pic-mgr-acts"><button type="button" class="pic-mgr-edit" data-edit="${esc}" data-g="${g}" title="${uiText('Edit name','Edit nama')}">✎</button><button type="button" class="pic-mgr-del" data-del="${esc}" data-g="${g}" title="${uiText('Delete from list','Hapus dari daftar')}">🗑</button></span>`:'<span class="pic-mgr-acts"></span>'}</div>`;};
+    ov.innerHTML=`<div class="pic-mgr-box"><div class="pic-mgr-head"><div><h3>${uiText('Manage PIC','Kelola PIC')}</h3><p>${uiText('Choose which names appear in the PIC picker, and add, edit or delete Pusmantap employees and additional PICs.','Atur nama yang tampil di pilihan PIC, serta tambah, edit, atau hapus pegawai Pusmantap dan PIC tambahan.')}</p></div><button type="button" class="pic-mgr-x" data-x aria-label="${uiText('Close','Tutup')}">&times;</button></div>
+      <div class="pic-mgr-add"><select data-addg aria-label="${uiText('Group','Kelompok')}"><option value="team" ${addGroup==='team'?'selected':''}>${uiText('CM Team','Tim CM')}</option><option value="staff" ${addGroup==='staff'?'selected':''}>Pusmantap</option><option value="extra" ${addGroup==='extra'?'selected':''}>${uiText('Additional','Tambahan')}</option></select><input type="text" data-new placeholder="${uiText('New PIC full name','Nama lengkap PIC baru')}"><button type="button" class="btn btn-gold btn-sm" data-add>+ ${uiText('Add','Tambah')}</button></div>
+      <div class="pic-mgr-tools"><small>${shown} ${uiText('of','dari')} ${all.length} ${uiText('shown in picker','tampil di pilihan')}</small><span><button type="button" class="pic-tool" data-all="1">${uiText('Show all','Tampilkan semua')}</button><button type="button" class="pic-tool" data-all="0">${uiText('Hide all','Sembunyikan semua')}</button></span></div>
+      <div class="pic-mgr-list">${groups.filter(g=>g.names.length).map(g=>`<div class="pic-pick-head">${escapeHtml(g.label)} <span>${g.names.length}</span></div>${g.names.map(n=>rowHtml(n,g.key)).join('')}`).join('')}</div>
+      <p class="pic-mgr-note">${uiText('The “CM Team” group follows Squad Team › CM Team by default; use “+ CM Team” / “Remove from CM Team” to adjust it here without changing Squad Team data. Hiding a name only removes it from the picker; activities, filters and reports are unchanged.','Kelompok “Tim CM” awalnya mengikuti Squad Team › Tim CM; gunakan “+ Tim CM” / “Keluarkan” untuk mengaturnya di sini tanpa mengubah data Squad Team. Menyembunyikan nama hanya menghapusnya dari pilihan; data kegiatan, filter, dan laporan tidak berubah.')}</p>
+      <div class="pic-mgr-foot"><button type="button" class="btn btn-outline btn-sm" data-x>${uiText('Cancel','Batal')}</button><button type="button" class="btn btn-gold btn-sm" data-save>${uiText('Save','Simpan')}</button></div></div>`;
+    const inp=ov.querySelector('[data-new]');ov.querySelector('[data-addg]').onchange=e=>{addGroup=e.target.value;};
+    const add=()=>{const n=String(inp.value||'').trim().replace(/\s+/g,' ');if(!n)return inp.focus();const c=cmPicCanon(n);
+      const cl=c.toLowerCase(),exists=all.some(x=>x.toLowerCase()===cl);
+      draft.hidden=draft.hidden.filter(x=>x.toLowerCase()!==cl);
+      if(addGroup==='team'){draft.teamRemove=draft.teamRemove.filter(x=>cmPicCanonWith(draft,x).toLowerCase()!==cl);if(!groups[0].names.some(x=>x.toLowerCase()===cl)&&!draft.teamAdd.some(x=>x.toLowerCase()===cl))draft.teamAdd.push(exists?c:n);if(exists&&typeof toast==='function')toast(uiText(`${c} moved into CM Team`,`${c} dimasukkan ke Tim CM`),'info');}
+      else if(exists){if(typeof toast==='function')toast(uiText(`${c} is already in the list`,`${c} sudah ada di daftar`),'info');}
+      else draft[listKey(addGroup)].push(n);
+      render();ov.querySelector('[data-new]')?.focus();};
+    ov.querySelector('[data-add]').onclick=add;inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();add();}};
+    ov.querySelectorAll('[data-show]').forEach(c=>c.onchange=()=>{const n=c.value;draft.hidden=draft.hidden.filter(x=>x.toLowerCase()!==n.toLowerCase());if(!c.checked)draft.hidden.push(n);render();});
+    ov.querySelectorAll('[data-all]').forEach(b=>b.onclick=()=>{draft.hidden=b.dataset.all==='1'?[]:[...all];render();});
+    const sameAs=(x,l)=>x.toLowerCase()===l||cmPicCanonWith(draft,x).toLowerCase()===l;
+    ov.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const name=b.dataset.del,n=name.toLowerCase(),used=cmPicUsage(name);
+      if(!confirm(used?uiText(`Delete ${name} from the PIC list?\n\n${used} activities still record this name. Their data stays unchanged; the name will appear under “Other PIC” when edited.`,`Hapus ${name} dari daftar PIC?\n\n${used} kegiatan masih mencatat nama ini. Data kegiatan tidak diubah; nama akan muncul di kolom “PIC lainnya” saat kegiatan tersebut diedit.`):uiText(`Delete ${name} from the PIC list?`,`Hapus ${name} dari daftar PIC?`)))return;
+      draft.staff=draft.staff.filter(x=>!sameAs(x,n));draft.extra=draft.extra.filter(x=>!sameAs(x,n));draft.teamAdd=draft.teamAdd.filter(x=>!sameAs(x,n));draft.hidden=draft.hidden.filter(x=>x.toLowerCase()!==n);if(editing&&editing.toLowerCase()===n)editing=null;render();});
+    ov.querySelectorAll('[data-team-in]').forEach(b=>b.onclick=()=>{const n=b.dataset.teamIn,l=n.toLowerCase();draft.teamRemove=draft.teamRemove.filter(x=>!sameAs(x,l));if(!cmPicInSquadCm(n)&&!draft.teamAdd.some(x=>sameAs(x,l)))draft.teamAdd.push(n);render();});
+    ov.querySelectorAll('[data-team-out]').forEach(b=>b.onclick=()=>{const n=b.dataset.teamOut,l=n.toLowerCase();const manual=draft.teamAdd.some(x=>sameAs(x,l));draft.teamAdd=draft.teamAdd.filter(x=>!sameAs(x,l));
+      // a manually added name that has no other home is kept under “Tambahan” so it is not lost
+      if(manual&&!draft.staff.some(x=>sameAs(x,l))&&!draft.extra.some(x=>sameAs(x,l))&&!CM_PIC_ROSTER.concat((state.resources||[]).map(r=>r.nama)).some(x=>cmPicCanon(x).toLowerCase()===l))draft.extra.push(n);
+      if(cmPicInSquadCm(n)&&!draft.teamRemove.some(x=>sameAs(x,l)))draft.teamRemove.push(n);render();});
+    ov.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{editing=b.dataset.edit;render();const i=ov.querySelector('[data-edit-input]');if(i){i.focus();i.select();}});
+    const ei=ov.querySelector('[data-edit-input]');
+    if(ei){const done=()=>{const old=editing,nv=String(ei.value||'').trim().replace(/\s+/g,' ');if(!nv){ei.focus();return;}
+        const ol=old.toLowerCase(),nl=nv.toLowerCase();
+        if(nl!==ol&&all.some(x=>x.toLowerCase()===nl)){if(typeof toast==='function')toast(uiText(`${nv} is already in the list`,`${nv} sudah ada di daftar`),'error');ei.focus();return;}
+        if(nv!==old){
+          draft.staff=draft.staff.map(x=>sameAs(x,ol)?nv:x);draft.teamAdd=draft.teamAdd.map(x=>sameAs(x,ol)?nv:x);draft.teamRemove=draft.teamRemove.map(x=>sameAs(x,ol)?nv:x);draft.extra=draft.extra.map(x=>sameAs(x,ol)?nv:x);
+          draft.hidden=draft.hidden.map(x=>x.toLowerCase()===ol?nv:x);
+          Object.keys(draft.renames).forEach(k=>{if(draft.renames[k].toLowerCase()===ol)draft.renames[k]=nv;});
+          if(nl!==ol)draft.renames[ol]=nv;delete draft.renames[nl];
+          const used=cmPicUsage(old);if(used&&typeof toast==='function')toast(uiText(`${used} activities with “${old}” will show as “${nv}” after saving`,`${used} kegiatan dengan nama “${old}” akan tampil sebagai “${nv}” setelah disimpan`),'info');
+        }
+        editing=null;render();};
+      ov.querySelector('[data-edit-ok]').onclick=done;ov.querySelector('[data-edit-cancel]').onclick=()=>{editing=null;render();};
+      ei.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done();}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();editing=null;render();}};}
+    ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>ov.remove());
+    ov.querySelector('[data-save]').onclick=async()=>{if(editing){if(typeof toast==='function')toast(uiText('Finish editing the name first','Selesaikan edit nama terlebih dahulu'),'error');return;}await cmPicPrefsSave(draft);ov.remove();cmPicRefreshFields();if(typeof toast==='function')toast(uiText('PIC list updated','Daftar PIC diperbarui'),'success');};
+  };
+  render();ov.querySelector('[data-new]')?.focus();
+}
+function cmPicCanonWith(prefs,n){const saved=cmPicPrefsCache;cmPicPrefsCache=prefs;try{return cmPicCanon(n);}finally{cmPicPrefsCache=saved;}}
+window.cmPicOpenPicker=cmPicOpenPicker;window.cmPicOpenManager=cmPicOpenManager;window.cmPicRemove=cmPicRemove;
 
 // Unit classification. Manage Units is the authoritative source.
 // The hard-coded list below is only a default for a unit that has not yet been saved in Manage Units.
@@ -4807,6 +4977,84 @@ async function cmRptThemeChart(list,lang,title){
   return cmRptChart(cmRptBarCfg(e.map(x=>x[0]),e.map(x=>x[1].n),{horizontal:true,colors:e.map(x=>x[1].c)}),560,Math.max(200,70+e.length*40));
 }
 
+/* ---------- chart narratives (auto-generated explanation under every chart) ---------- */
+function cmRptJoin(arr,lang){const a=arr.filter(Boolean);if(a.length<2)return a.join('');return a.slice(0,-1).join(', ')+(lang==='en'?' and ':' dan ')+a[a.length-1];}
+function cmRptFmt1(n,lang){const v=Math.round(n*10)/10;return lang==='en'?String(v):String(v).replace('.',',');}
+function cmRptNarrTrend(st,lang){
+  const L=(i,e)=>cmRptT(lang,i,e),ml=m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMMM YYYY');
+  const ms=Object.keys(st.byMonth).sort();if(!ms.length)return '';
+  const dn=m=>st.byMonthDone[m]||0,curM=dayjs().format('YYYY-MM');
+  if(ms.length===1){const m=ms[0];return L(`Seluruh kegiatan pada periode ini berlangsung di bulan **${ml(m)}**, yaitu ${st.byMonth[m]} kegiatan, dengan ${dn(m)} di antaranya sudah selesai.`,`All activities in this period fall in **${ml(m)}**: ${st.byMonth[m]} activities, ${dn(m)} of them completed.`);}
+  const sum=ms.reduce((s,m)=>s+st.byMonth[m],0),avg=sum/ms.length;
+  const peak=[...ms].sort((a,b)=>st.byMonth[b]-st.byMonth[a])[0],low=[...ms].sort((a,b)=>st.byMonth[a]-st.byMonth[b])[0];
+  const f=ms[0],l=ms[ms.length-1],fv=st.byMonth[f],lv=st.byMonth[l];
+  const lastOpen=l>=curM,dir=(lv>fv?L('meningkat','increased'):lv<fv?L('menurun','decreased'):L('sama','unchanged'))+(lastOpen?L(' (catatan: bulan tersebut masih berjalan atau belum tiba, sehingga angkanya dapat bertambah)',' (note: that month is current or upcoming, so the figure may still grow)'):'');
+  const gaps=ms.map(m=>[m,st.byMonth[m]-dn(m)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  let gapTxt;
+  if(!gaps.length)gapTxt=L('Garis kegiatan selesai berimpit dengan batang di setiap bulan, artinya seluruh kegiatan per bulan sudah selesai.','The completed line matches the bars every month, so all activities are completed.');
+  else{const g=gaps[0],ongoing=g[0]>=curM&&!(lastOpen&&g[0]===l);gapTxt=L(`Selisih terbesar antara batang (total) dan garis (selesai) terdapat pada **${ml(g[0])}**, dengan ${g[1]} kegiatan belum berstatus selesai${ongoing?', yang wajar karena bulan tersebut masih berjalan atau belum tiba':''}.`,`The largest gap between bars (total) and line (completed) is in **${ml(g[0])}**, with ${g[1]} activities not yet completed${ongoing?', which is expected as that month is current or upcoming':''}.`);}
+  return L(`Dalam ${ms.length} bulan, rata-rata terdapat ${cmRptFmt1(avg,lang)} kegiatan per bulan. Puncak kegiatan terjadi pada **${ml(peak)}** (${st.byMonth[peak]} kegiatan)${peak!==low?`, sedangkan yang paling sedikit pada ${ml(low)} (${st.byMonth[low]} kegiatan)`:''}. Dibandingkan ${ml(f)} (${fv} kegiatan), jumlah kegiatan pada ${ml(l)} (${lv} kegiatan) ${dir==='sama'?'tetap sama':dir}. ${gapTxt}`,
+    `Over ${ms.length} months there were on average ${cmRptFmt1(avg,lang)} activities per month. The peak was **${ml(peak)}** (${st.byMonth[peak]})${peak!==low?`, the lowest ${ml(low)} (${st.byMonth[low]})`:''}. Compared with ${ml(f)} (${fv}), ${ml(l)} (${lv}) ${dir}. ${gapTxt}`);
+}
+function cmRptNarrStatus(st,total,lang){
+  const L=(i,e)=>cmRptT(lang,i,e),e=Object.entries(st.byStatusKey).sort((a,b)=>b[1]-a[1]);if(!e.length)return '';
+  const g=k=>st.byStatusKey[k]||0,done=g('Completed'),up=g('Scheduled')+g('Ongoing'),del=g('Pending')+g('Postponed'),cx=g('Cancelled')+g('Not Attended');
+  const top=e[0];let t=(top[0]!=='Completed'?L(`Status terbanyak adalah **${cmRptStatus(top[0])}** (${top[1]} kegiatan, ${cmRptPct(top[1],total)}%). `,`The most common status is **${cmRptStatus(top[0])}** (${top[1]}, ${cmRptPct(top[1],total)}%). `):'')+L(`Dari ${total} kegiatan, **${done} (${cmRptPct(done,total)}%) sudah selesai**`,`Of ${total} activities, **${done} (${cmRptPct(done,total)}%) are completed**`);
+  const parts=[];if(up)parts.push(L(`${up} masih terjadwal atau berlangsung`,`${up} scheduled or ongoing`));if(del)parts.push(L(`${del} menunggu konfirmasi atau ditunda dan perlu dipantau`,`${del} awaiting confirmation or postponed and need monitoring`));if(cx)parts.push(L(`${cx} dibatalkan atau tidak dihadiri`,`${cx} cancelled or not attended`));
+  t+=(parts.length?(lang==='en'?'; ':', sementara ')+cmRptJoin(parts,lang):'')+'.';
+  if(st.needsUpdate)t+=L(` Terdapat ${st.needsUpdate} kegiatan yang tanggalnya sudah lewat tetapi statusnya belum diperbarui, sehingga capaian sebenarnya bisa lebih tinggi dari yang tampak di grafik.`,` ${st.needsUpdate} past activities have not had their status updated, so actual completion may be higher than shown.`);
+  return t;
+}
+function cmRptNarrDist(obj,total,lang,o){
+  // o: {noun:['kategori','category'], shown:8}
+  const L=(i,e)=>cmRptT(lang,i,e),noun=lang==='en'?o.noun[1]:o.noun[0],all=Object.entries(obj).filter(([k])=>k!=='-').sort((a,b)=>b[1]-a[1]);
+  const blank=obj['-']||0,blankTxt=blank?L(` Sebanyak ${blank} kegiatan belum mencantumkan ${noun}.`,` ${blank} activities have no ${noun} recorded.`):'';
+  if(!all.length)return L(`Belum ada data ${noun} yang dapat dipetakan.`,`No ${noun} data to map yet.`)+blankTxt;
+  const n=all.length,top=all[0];
+  if(n===1)return L(`Seluruh kegiatan yang tercatat (${top[1]}) berasal dari ${noun} **${top[0]}**.`,`All recorded activities (${top[1]}) come from ${noun} **${top[0]}**.`)+blankTxt;
+  const k=Math.min(3,n),topK=all.slice(0,k),share=cmRptPct(topK.reduce((s,x)=>s+x[1],0),total);
+  const rest=all.slice(1,k).map(x=>`${x[0]} (${x[1]})`);
+  let t=L(`Terdapat ${n} ${noun} yang tercatat. **${top[0]}** paling menonjol dengan ${top[1]} kegiatan (${cmRptPct(top[1],total)}% dari total)${rest.length?`, disusul ${cmRptJoin(rest,lang)}`:''}.`,`${n} ${noun} values are recorded. **${top[0]}** leads with ${top[1]} activities (${cmRptPct(top[1],total)}%)${rest.length?`, followed by ${cmRptJoin(rest,lang)}`:''}.`);
+  if(n>3)t+=L(` ${k} ${noun} teratas mencakup ${share}% kegiatan, ${share>=70?'menunjukkan kegiatan terkonsentrasi pada sedikit '+noun:'menunjukkan sebaran yang relatif merata'}.`,` The top ${k} account for ${share}% of activities, ${share>=70?'showing a strong concentration':'showing a fairly even spread'}.`);
+  if(o.shown&&n>o.shown)t+=L(` Grafik menampilkan ${o.shown} ${noun} teratas; ${n-o.shown} lainnya tidak ditampilkan.`,` The chart shows the top ${o.shown}; ${n-o.shown} others are omitted.`);
+  return t+blankTxt;
+}
+function cmRptNarrPic(st,total,lang){
+  const L=(i,e)=>cmRptT(lang,i,e),all=Object.entries(st.byPic).sort((a,b)=>b[1]-a[1]);if(!all.length)return L('Belum ada PIC yang tercatat pada kegiatan periode ini.','No PICs recorded in this period.');
+  const n=all.length,sum=all.reduce((s,x)=>s+x[1],0),avg=sum/n,top=all[0],minV=all[n-1][1],lows=all.filter(x=>x[1]===minV).map(x=>x[0]);
+  let t=L(`Sebanyak ${n} PIC terlibat, dengan rata-rata ${cmRptFmt1(avg,lang)} kegiatan per orang. **${top[0]}** paling banyak terlibat (${top[1]} kegiatan atau ${cmRptPct(top[1],total)}% dari seluruh kegiatan)`,`${n} PICs were involved, averaging ${cmRptFmt1(avg,lang)} activities each. **${top[0]}** was most involved (${top[1]}, ${cmRptPct(top[1],total)}% of all activities)`);
+  t+=n>1&&top[1]>=avg*1.5?L(', cukup jauh di atas rata-rata sehingga pemerataan beban kerja perlu diperhatikan.',', well above average, so workload balance deserves attention.'):L('; beban kerja antar-PIC relatif seimbang.','; workload is fairly balanced.');
+  if(n>1&&minV<top[1])t+=L(` Keterlibatan paling sedikit: ${cmRptJoin(lows.slice(0,4),lang)}${lows.length>4?` dan ${lows.length-4} lainnya`:''} (${minV} kegiatan).`,` Least involved: ${cmRptJoin(lows.slice(0,4),lang)}${lows.length>4?` and ${lows.length-4} others`:''} (${minV}).`);
+  return t;
+}
+function cmRptNarrDocs(have,miss,base,lang,done){
+  const L=(i,e)=>cmRptT(lang,i,e),lab=CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),idx=lab.map((_,i)=>i);
+  const best=[...idx].sort((a,b)=>have[b]-have[a])[0],worst=[...idx].sort((a,b)=>miss[b]-miss[a])[0];
+  const full=idx.filter(i=>have[i]===base).map(i=>lab[i]),zero=idx.filter(i=>have[i]===0).map(i=>lab[i]);
+  const unitTxt=done?L('kegiatan selesai','completed activities'):L('kegiatan','activities');
+  if(!idx.some(i=>miss[i]))return L(`Seluruh ${base} ${unitTxt} sudah dilengkapi kelima jenis dokumen.`,`All ${base} ${unitTxt} have all five document types.`);
+  let t=full.length?L(`${cmRptJoin(full,lang)} sudah tersedia di seluruh ${base} ${unitTxt}. `,`${cmRptJoin(full,lang)} is available for all ${base} ${unitTxt}. `):(have[best]?L(`Dokumen yang paling banyak tersedia adalah **${lab[best]}** (${have[best]} dari ${base} ${unitTxt}). `,`The most available document is **${lab[best]}** (${have[best]} of ${base}). `):'');
+  if(zero.length)t+=L(`**${cmRptJoin(zero,lang)}** belum tersedia sama sekali. `,`**${cmRptJoin(zero,lang)}** is not available for any activity. `);
+  const others=idx.filter(i=>miss[i]>0&&have[i]>0).sort((a,b)=>miss[b]-miss[a]);
+  if(others.length)t+=L(`Kekurangan lainnya: ${cmRptJoin(others.map(i=>`${lab[i]} (${miss[i]} belum ada)`),lang)}.`,`Other gaps: ${cmRptJoin(others.map(i=>`${lab[i]} (${miss[i]} missing)`),lang)}.`);
+  else if(!zero.length)t+=L(`Kekurangan terbanyak ada pada **${lab[worst]}** (${miss[worst]} belum ada).`,`The largest gap is **${lab[worst]}** (${miss[worst]} missing).`);
+  return t.trim();
+}
+function cmRptNarrIssues(K,lang,unitEntries){
+  const L=(i,e)=>cmRptT(lang,i,e),c={};K.forEach(x=>{const n=cmRptThemeName(x.theme,lang);c[n]=(c[n]||0)+1});
+  const e=Object.entries(c).sort((a,b)=>b[1]-a[1]);if(!e.length)return '';
+  const hi=K.filter(x=>x.priority==='Tinggi').length;
+  let t=L(`Kendala paling banyak terkait aspek **${e[0][0]}** (${e[0][1]} dari ${K.length} kendala, ${cmRptPct(e[0][1],K.length)}%)${e[1]?`, disusul aspek ${e[1][0]} (${e[1][1]})`:''}.`,`Most issues relate to **${e[0][0]}** (${e[0][1]} of ${K.length}, ${cmRptPct(e[0][1],K.length)}%)${e[1]?`, followed by ${e[1][0]} (${e[1][1]})`:''}.`);
+  if(unitEntries&&unitEntries.length)t+=unitEntries.length===1?L(` Seluruh kendala berasal dari kegiatan ${unitEntries[0][0]}.`,` All issues come from ${unitEntries[0][0]}.`):L(` Dari sisi unit, **${unitEntries[0][0]}** mencatat kendala terbanyak (${unitEntries[0][1]}), diikuti ${unitEntries[1][0]} (${unitEntries[1][1]}).`,` By unit, **${unitEntries[0][0]}** has the most issues (${unitEntries[0][1]}), followed by ${unitEntries[1][0]} (${unitEntries[1][1]}).`);
+  if(hi)t+=L(` Sebanyak ${hi} kendala berprioritas tinggi perlu ditangani lebih dahulu.`,` ${hi} high-priority issues should be addressed first.`);
+  return t;
+}
+function cmRptNarrClarity(clear,actorOnly,unclear,lang){
+  const L=(i,e)=>cmRptT(lang,i,e),n=clear+actorOnly+unclear;if(!n)return '';
+  return L(`Dari ${n} tindak lanjut, ${clear} sudah jelas pihak dan target waktunya${actorOnly?`, ${actorOnly} baru jelas pihaknya`:''}${unclear?`, dan ${unclear} belum menyebutkan penanggung jawab`:''}.${actorOnly||unclear?' Tindak lanjut yang belum lengkap perlu dikonfirmasi pada koordinasi berikutnya agar dapat dipantau.':' Seluruh tindak lanjut sudah siap dipantau.'}`,
+    `Of ${n} follow-ups, ${clear} have an owner and timeline${actorOnly?`, ${actorOnly} have an owner only`:''}${unclear?`, and ${unclear} have no owner`:''}.${actorOnly||unclear?' Incomplete ones should be confirmed at the next coordination meeting.':' All follow-ups are ready to be monitored.'}`);
+}
+
 /* ---------- report models ---------- */
 function cmRptStatusCell(key,lang){const c=CM_RPT_STATUS_COLOR[key]||'#5B6B82';return {text:cmRptStatus(key||'Scheduled'),color:'#FFFFFF',fill:c.replace('#',''),bold:true,align:'center'};}
 async function cmRptBuildRangeModel(items,opts){
@@ -4838,8 +5086,8 @@ async function cmRptBuildRangeModel(items,opts){
     highlights.push(L(`Tingkat penyelesaian kegiatan ${rate}% (${done} dari ${total}).`,`Completion rate ${rate}% (${done} of ${total}).`));
     if(st.topKategori[0]!=='-')highlights.push(L(`Jenis kegiatan paling sering: ${st.topKategori[0]} (${st.topKategori[1]} kegiatan).`,`Most frequent activity type: ${st.topKategori[0]} (${st.topKategori[1]}).`));
     if(st.topPic[0]!=='-')highlights.push(L(`PIC paling aktif: ${st.topPic[0]} (${st.topPic[1]} kegiatan).`,`Most active PIC: ${st.topPic[0]} (${st.topPic[1]} activities).`));
-    const notulaPct=cmRptPct(st.docsDone.notula,done),fotoPct=cmRptPct(st.docsDone.dokumentasi,done);
-    if(done)highlights.push(L(`Kelengkapan bukti kegiatan selesai: notula ${notulaPct}%, dokumentasi foto ${fotoPct}%.`,`Evidence for completed activities: minutes ${notulaPct}%, photos ${fotoPct}%.`));
+    const notulaN=st.docsDone.notula||0,fotoN=st.docsDone.dokumentasi||0;
+    if(done)highlights.push(L(`Bukti dari ${done} kegiatan selesai: notula tersedia di ${notulaN} kegiatan, dokumentasi foto di ${fotoN} kegiatan.`,`Evidence for ${done} completed activities: minutes in ${notulaN}, photos in ${fotoN}.`));
     blocks.push({t:'callout',tone:'info',title:L('Poin penting','Key points'),lines:highlights});
   }
   if(total&&inc.charts!==false){
@@ -4853,28 +5101,40 @@ async function cmRptBuildRangeModel(items,opts){
     const sk=Object.keys(st.byStatusKey).sort((a,b)=>st.byStatusKey[b]-st.byStatusKey[a]);
     const status=await cmRptChart(cmRptDoughnutCfg(sk.map(k=>cmRptStatus(k)),sk.map(k=>st.byStatusKey[k]),sk.map(k=>CM_RPT_STATUS_COLOR[k]||'#5B6B82'),[`${rate}%`,L('selesai','completed')]),620,320);
     blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per bulan','Activities per month'),img:trend,caption:L('Batang = total kegiatan; garis = kegiatan selesai.','Bars = total; line = completed.')}]});
+    blocks.push({t:'p',text:cmRptNarrTrend(st,lang)});
     blocks.push({t:'charts',items:[{title:L('Komposisi status kegiatan','Status composition'),img:status,caption:L('Persentase dihitung dari seluruh kegiatan pada periode laporan.','Percentages of all activities in the period.')}]});
+    blocks.push({t:'p',text:cmRptNarrStatus(st,total,lang)});
     // 3. Sebaran
     blocks.push({t:'h1',text:L('Sebaran Kegiatan','Activity Distribution')});
     const kat=cmRptTop(st.byKategori,8);
     const katImg=await cmRptChart(cmRptBarCfg(kat.map(x=>x[0]),kat.map(x=>x[1]),{horizontal:true}),660,Math.max(220,60+kat.length*38));
     blocks.push({t:'charts',items:[{title:L('Kegiatan menurut jenis / kategori','Activities by category'),img:katImg}]});
-    if(subj.focus!=='unit'){const un=cmRptTop(st.byUnit,8);const unImg=await cmRptChart(cmRptBarCfg(un.map(x=>x[0]),un.map(x=>x[1]),{horizontal:true,colors:un.map((_,i)=>['#7C5CE0','#9B84EA','#B6A6F0'][Math.min(i,2)])}),660,Math.max(220,60+un.length*38));blocks.push({t:'charts',items:[{title:L('Unit pemohon dengan kegiatan terbanyak','Top requesting units'),img:unImg}]});}
-    if(subj.focus!=='program'){const pr=cmRptTop(st.byProgram,8);const prImg=await cmRptChart(cmRptBarCfg(pr.map(x=>String(x[0]).slice(0,42)),pr.map(x=>x[1]),{horizontal:true,colors:pr.map((_,i)=>['#1BA7C9','#4DBCD6','#82D1E3'][Math.min(i,2)])}),660,Math.max(220,60+pr.length*38));blocks.push({t:'charts',items:[{title:L('Program dengan kegiatan terbanyak','Top programs'),img:prImg}]});}
+    blocks.push({t:'p',text:cmRptNarrDist(st.byKategori,total,lang,{noun:['jenis kegiatan','activity types'],shown:8})});
+    if(subj.focus!=='unit'){const un=cmRptTop(st.byUnit,8);const unImg=await cmRptChart(cmRptBarCfg(un.map(x=>x[0]),un.map(x=>x[1]),{horizontal:true,colors:un.map((_,i)=>['#7C5CE0','#9B84EA','#B6A6F0'][Math.min(i,2)])}),660,Math.max(220,60+un.length*38));blocks.push({t:'charts',items:[{title:L('Unit pemohon dengan kegiatan terbanyak','Top requesting units'),img:unImg}]});
+      blocks.push({t:'p',text:cmRptNarrDist(st.byUnit,total,lang,{noun:['unit pemohon','requesting units'],shown:8})});}
+    if(subj.focus!=='program'){const pr=cmRptTop(st.byProgram,8);const prImg=await cmRptChart(cmRptBarCfg(pr.map(x=>String(x[0]).slice(0,42)),pr.map(x=>x[1]),{horizontal:true,colors:pr.map((_,i)=>['#1BA7C9','#4DBCD6','#82D1E3'][Math.min(i,2)])}),660,Math.max(220,60+pr.length*38));blocks.push({t:'charts',items:[{title:L('Program dengan kegiatan terbanyak','Top programs'),img:prImg}]});
+      blocks.push({t:'p',text:cmRptNarrDist(st.byProgram,total,lang,{noun:['program','programs'],shown:8})});}
     // 4. PIC
     blocks.push({t:'h1',text:L('Keterlibatan Tim (PIC)','Team Involvement (PIC)')});
     const pc=cmRptTop(st.byPic,10);
     const pcImg=await cmRptChart(cmRptBarCfg(pc.map(x=>x[0]),pc.map(x=>x[1]),{horizontal:true,colors:pc.map(()=> '#F2A93B')}),660,Math.max(220,70+pc.length*38));
     blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per PIC','Activities per PIC'),img:pcImg,caption:L('Satu kegiatan dapat melibatkan lebih dari satu PIC.','One activity may involve several PICs.')}]});
+    blocks.push({t:'p',text:cmRptNarrPic(st,total,lang)});
   }
   if(total&&inc.docs!==false){
     blocks.push({t:'h1',text:L('Kelengkapan Dokumen dan Bukti Kegiatan','Document and Evidence Completeness')});
     const base=done||total,src=done?st.docsDone:st.docs;
-    const vals=CM_RPT_DOC_KEYS.map(k=>cmRptPct(src[k],base));
-    const docImg=await cmRptChart(cmRptBarCfg(CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),vals,{horizontal:true,pct:true,max:100,colors:vals.map(v=>v>=80?'#16A37F':v>=50?'#F2A93B':'#E25563')}),660,280);
-    blocks.push({t:'p',text:L(`Grafik berikut menunjukkan persentase ${done?'kegiatan selesai':'kegiatan'} yang sudah dilengkapi setiap jenis dokumen. Hijau berarti ≥80%, kuning 50–79%, merah di bawah 50%.`,`The chart shows the share of ${done?'completed ':''}activities with each document type. Green ≥80%, amber 50–79%, red below 50%.`)});
-    blocks.push({t:'charts',items:[{title:L('Persentase kelengkapan dokumen','Document completeness (%)'),img:docImg}]});
-    blocks.push({t:'table',head:[L('Jenis dokumen','Document'),L('Kegiatan lengkap','Activities with document'),L('Persentase','Share')],widths:[45,30,25],rows:CM_RPT_DOC_KEYS.map((k,i)=>[cmRptDocLabel(k,lang),`${src[k]} / ${base}`,{text:vals[i]+'%',bold:true,color:vals[i]>=80?'16A37F':vals[i]>=50?'B7791F':'C53030',align:'center'}])});
+    const have=CM_RPT_DOC_KEYS.map(k=>Math.min(src[k]||0,base)),miss=have.map(v=>base-v);
+    const docCfg={type:'bar',data:{labels:CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),datasets:[
+        {label:L('Sudah ada','Available'),data:have,backgroundColor:'#2F5BD3',maxBarThickness:28,datalabels:{color:'#ffffff',anchor:'center',align:'center',font:{weight:'bold',size:15},formatter:v=>v>0?v:''}},
+        {label:L('Belum ada','Not yet'),data:miss,backgroundColor:'#E4E8F0',maxBarThickness:28,datalabels:{color:'#5B6B82',anchor:'center',align:'center',font:{weight:'bold',size:15},formatter:v=>v>0?v:''}}]},
+      options:{indexAxis:'y',plugins:{legend:{position:'top',align:'start'}},
+        scales:{x:{stacked:true,beginAtZero:true,max:base,grid:{color:'#EEF1F6'},ticks:{precision:0,color:'#344054',font:{size:15}}},y:{stacked:true,grid:{display:false},ticks:{color:'#344054',font:{size:15}}}}}};
+    const docImg=await cmRptChart(docCfg,660,300);
+    blocks.push({t:'p',text:L(`Grafik berikut menunjukkan jumlah ${done?'kegiatan selesai':'kegiatan'} yang sudah dan belum dilengkapi setiap jenis dokumen, dari total ${base} ${done?'kegiatan selesai':'kegiatan'}.`,`The chart shows how many ${done?'completed ':''}activities already have each document type and how many do not, out of ${base}.`)});
+    blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan menurut kelengkapan dokumen','Activities by document availability'),img:docImg}]});
+    blocks.push({t:'p',text:cmRptNarrDocs(have,miss,base,lang,!!done)});
+    blocks.push({t:'table',head:[L('Jenis dokumen','Document'),L('Sudah ada','Available'),L('Belum ada','Not yet')],widths:[50,25,25],rows:CM_RPT_DOC_KEYS.map((k,i)=>[cmRptDocLabel(k,lang),{text:String(have[i]),bold:true,align:'center'},{text:String(miss[i]),align:'center'}])});
   }
   if(total&&inc.list!==false){
     blocks.push({t:'h1',text:L('Daftar Kegiatan','Activity List')});
@@ -4917,6 +5177,7 @@ async function cmRptBuildRangeModel(items,opts){
       const uc={};K.forEach(x=>uc[x.unit]=(uc[x.unit]||0)+1);const ue=Object.entries(uc).filter(x=>x[0]!=='-').sort((a,b)=>b[1]-a[1]).slice(0,8);
       const uImg=ue.length?await cmRptChart(cmRptBarCfg(ue.map(x=>x[0]),ue.map(x=>x[1]),{horizontal:true,colors:ue.map(()=> '#E25563')}),560,Math.max(200,70+ue.length*40)):null;
       blocks.push({t:'charts',items:[{title:L('Kendala menurut aspek','Issues by aspect'),img:kImg},...(uImg?[{title:L('Kendala menurut unit','Issues by unit'),img:uImg}]:[])]});
+      blocks.push({t:'p',text:cmRptNarrIssues(K,lang,ue)});
       const sorted=[...K].sort((a,b)=>(b.priority==='Tinggi')-(a.priority==='Tinggi')||String(b.date).localeCompare(String(a.date)));
       blocks.push({t:'table',small:true,head:['No',L('Kegiatan','Activity'),L('Kendala','Issue'),L('Aspek','Aspect'),L('Prioritas','Priority')],widths:[5,24,45,15,11],rows:sorted.slice(0,30).map((x,i)=>[String(i+1),x.act,x.text,cmRptThemeName(x.theme,lang),cmRptPriorityCell(x.priority,lang)])});
       if(K.length>30)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 30 dari ${K.length} kendala (prioritas tinggi didahulukan).`,`Showing 30 of ${K.length} issues.`)});
@@ -5020,7 +5281,9 @@ async function cmRptBuildSingleModel(a,opts){
     const kImg=kendala.length?await cmRptThemeChart(kendala,lang):null;
     const tImg=tl.length?await cmRptChart(cmRptDoughnutCfg([L('Pihak & target jelas','Owner & timeline'),L('Pihak saja','Owner only'),L('Belum jelas','Unclear')],[clear,actorOnly,unclear],['#16A37F','#F2A93B','#E25563'],[`${cmRptPct(clear,tl.length)}%`,L('jelas','clear')]),560,280):null;
     const items=[];if(kImg)items.push({title:L('Kendala menurut aspek','Issues by aspect'),img:kImg});if(tImg)items.push({title:L('Kejelasan tindak lanjut','Follow-up clarity'),img:tImg});
-    if(items.length)blocks.push({t:'charts',items});
+    if(items.length){blocks.push({t:'charts',items});
+      const nk=kImg?cmRptNarrIssues(kendala,lang,null):'',nt=tImg?cmRptNarrClarity(clear,actorOnly,unclear,lang):'';
+      if(nk||nt)blocks.push({t:'p',text:[nk,nt].filter(Boolean).join(' ')});}
   }
   blocks.push({t:'h1',text:L('Identifikasi Kendala','Issue Identification')});
   if(kendala.length){
@@ -5037,15 +5300,24 @@ async function cmRptBuildSingleModel(a,opts){
   const docImg=await cmRptChart(cmRptDoughnutCfg([L('Sudah ada','Available'),L('Belum ada','Missing')],[CM_RPT_DOC_KEYS.filter(k=>flags[k]).length,CM_RPT_DOC_KEYS.filter(k=>!flags[k]).length],['#16A37F','#E4E7EC'],[`${docPct}%`,L('lengkap','complete')]),560,280);
   const docBars=await cmRptChart(cmRptBarCfg(CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),CM_RPT_DOC_KEYS.map(k=>flags[k]?100:0),{horizontal:true,pct:true,max:100,colors:CM_RPT_DOC_KEYS.map(k=>flags[k]?'#16A37F':'#E25563')}),560,260);
   blocks.push({t:'charts',items:[{title:L('Kelengkapan dokumen kegiatan','Document completeness'),img:docImg},{title:L('Status per jenis dokumen','Status per document'),img:docBars,caption:L('Hijau = tersedia, merah = belum ada.','Green = available, red = missing.')}]});
+  {const okL=CM_RPT_DOC_KEYS.filter(k=>flags[k]).map(k=>cmRptDocLabel(k,lang)),noL=CM_RPT_DOC_KEYS.filter(k=>!flags[k]).map(k=>cmRptDocLabel(k,lang)),isDone=a.statusNorm==='Completed';
+    blocks.push({t:'p',text:!noL.length?L('Kelima jenis dokumen kegiatan (undangan, surat tugas, materi, notula, dan dokumentasi foto) sudah tersedia di dashboard.','All five document types are available in the dashboard.')
+      :!okL.length?L(`Belum ada satu pun dokumen kegiatan yang diunggah ke dashboard.${isDone?' Karena kegiatan sudah selesai, bukti dukung perlu segera dilengkapi.':' Dokumen dapat dilengkapi seiring persiapan dan pelaksanaan kegiatan.'}`,`No documents have been uploaded yet.${isDone?' As the activity is completed, evidence should be uploaded soon.':''}`)
+      :L(`Sebanyak ${okL.length} dari 5 jenis dokumen sudah tersedia, yaitu ${cmRptJoin(okL,lang)}. Dokumen yang belum ada: **${cmRptJoin(noL,lang)}**.${isDone?' Karena kegiatan sudah selesai, dokumen tersebut perlu segera dilengkapi sebagai bukti dukung.':' Dokumen tersebut dapat dilengkapi seiring persiapan dan pelaksanaan kegiatan.'}`,`${okL.length} of 5 document types are available: ${cmRptJoin(okL,lang)}. Missing: **${cmRptJoin(noL,lang)}**.${isDone?' As the activity is completed, these should be uploaded soon.':''}`)});}
   if(cmIsEoEnabled(a.eoEnabled)){
     const p=cmEoProgress(a.eoChecklist),phases=['Planning','Execution','Post Event'];
     if(p.total){const eoImg=await cmRptChart({type:'bar',data:{labels:phases.map(x=>cmEoPhaseLabel(x)),datasets:[{label:L('Selesai','Done'),data:phases.map(ph=>p.items.filter(x=>x.phase===ph&&x.done).length),backgroundColor:'#16A37F',borderRadius:5},{label:L('Belum','Open'),data:phases.map(ph=>p.items.filter(x=>x.phase===ph&&!x.done).length),backgroundColor:'#F2A93B',borderRadius:5}]},options:{plugins:{legend:{position:'top'},datalabels:{color:'#fff',font:{weight:'bold'},formatter:v=>v||''}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}},660,280);
-      blocks.push({t:'charts',items:[{title:L(`Progres checklist EO (${p.pct}% selesai)`,`EO checklist progress (${p.pct}% done)`),img:eoImg}]});}
+      blocks.push({t:'charts',items:[{title:L(`Progres checklist EO (${p.pct}% selesai)`,`EO checklist progress (${p.pct}% done)`),img:eoImg}]});
+      const open=phases.map(ph=>[ph,p.items.filter(x=>x.phase===ph&&!x.done).length]).sort((x,y)=>y[1]-x[1]),today=dayjs().format('YYYY-MM-DD'),over=p.items.filter(x=>!x.done&&x.dueDate&&x.dueDate<today).length;
+      blocks.push({t:'p',text:p.done===p.total?L(`Seluruh ${p.total} item checklist EO sudah selesai di semua tahap.`,`All ${p.total} EO checklist items are done.`)
+        :L(`Checklist EO berisi ${p.total} item, ${p.done} di antaranya sudah selesai (${p.pct}%). Item yang belum selesai paling banyak berada pada tahap **${cmEoPhaseLabel(open[0][0])}** (${open[0][1]} item).${over?` Sebanyak ${over} item sudah melewati tenggat dan perlu segera ditindaklanjuti.`:''}`,`The EO checklist has ${p.total} items, ${p.done} done (${p.pct}%). Most open items are in **${cmEoPhaseLabel(open[0][0])}** (${open[0][1]}).${over?` ${over} items are overdue.`:''}`)});}
   }
   if(prog){
     const y=String(start||'').slice(0,4),same=(state.agendas||[]).filter(x=>x.programTerkait===prog&&String(x.tglMulai||'').slice(0,4)===y),mo=Array.from({length:12},(_,i)=>`${y}-${String(i+1).padStart(2,'0')}`),cur=String(start||'').slice(0,7);
     if(same.length>1){const ctxImg=await cmRptChart(cmRptBarCfg(mo.map(m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMM')),mo.map(m=>same.filter(x=>String(x.tglMulai||'').slice(0,7)===m).length),{colors:mo.map(m=>m===cur?'#F2A93B':'#C7D3F2')}),660,260);
-      blocks.push({t:'charts',items:[{title:L(`Posisi kegiatan dalam ${prog} sepanjang ${y}`,`This activity within ${prog} in ${y}`),img:ctxImg,caption:L(`Batang oranye = bulan kegiatan ini. Total ${same.length} kegiatan ${prog} pada ${y}.`,`Orange bar = this activity's month. ${same.length} ${prog} activities in ${y}.`)}]});}
+      blocks.push({t:'charts',items:[{title:L(`Posisi kegiatan dalam ${prog} sepanjang ${y}`,`This activity within ${prog} in ${y}`),img:ctxImg,caption:L(`Batang oranye = bulan kegiatan ini. Total ${same.length} kegiatan ${prog} pada ${y}.`,`Orange bar = this activity's month. ${same.length} ${prog} activities in ${y}.`)}]});
+      const cnt=mo.map(m=>[m,same.filter(x=>String(x.tglMulai||'').slice(0,7)===m).length]),act=cnt.filter(x=>x[1]>0),pk=[...cnt].sort((p,q)=>q[1]-p[1])[0],curN=(cnt.find(x=>x[0]===cur)||[cur,0])[1],mn=m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMMM');
+      blocks.push({t:'p',text:L(`Sepanjang ${y}, ${prog} memiliki ${same.length} kegiatan yang tersebar di ${act.length} bulan. Pada bulan kegiatan ini (${mn(cur)}) terdapat ${curN} kegiatan program${curN===pk[1]?', menjadikannya bulan tersibuk untuk program ini':`, sedangkan bulan tersibuk adalah ${mn(pk[0])} dengan ${pk[1]} kegiatan`}.`,`In ${y}, ${prog} has ${same.length} activities across ${act.length} months. This activity's month (${mn(cur)}) has ${curN}${curN===pk[1]?', the busiest month for the program':`; the busiest is ${mn(pk[0])} with ${pk[1]}`}.`)});}
   }
   // documents
   blocks.push({t:'h1',text:L('Dokumen dan Notula','Documents and Minutes')});
