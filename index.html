@@ -1810,6 +1810,13 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .cm-report-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
 .cm-report-kpi{border:1px solid var(--border);border-radius:10px;padding:12px;background:#FAFBFE}.cm-report-kpi b{display:block;font-size:22px;color:var(--navy-800)}
 .cm-report-table{width:100%;border-collapse:collapse;font-size:11px}.cm-report-table th,.cm-report-table td{border:1px solid var(--border);padding:7px;text-align:left;vertical-align:top}.cm-report-table th{background:var(--navy-800);color:#fff}
+.cm-rpt2-title{background:linear-gradient(120deg,#12275A,#2F5BD3);color:#fff;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}.cm-rpt2-title small{opacity:.8;font-size:11px;text-transform:uppercase;letter-spacing:.5px}.cm-rpt2-title b{font-size:15px;line-height:1.35}.cm-rpt2-title em{font-size:11px;opacity:.85;font-style:normal}
+.cm-rpt2-ai{display:flex;gap:10px;align-items:flex-start;margin-top:14px;border:1px solid #D9CCFF;background:#F7F3FF;border-radius:10px;padding:10px 12px;cursor:pointer}.cm-rpt2-ai small{display:block;color:#6B5BA8;font-size:11.5px}.cm-rpt2-ai.disabled{opacity:.6;cursor:not-allowed}
+.cm-rpt2-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}.cm-rpt2-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600}.cm-rpt2-grid input,.cm-rpt2-grid select{padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-weight:400}
+.cm-rpt2-modal .modal-box{max-width:1100px;width:96vw}.cm-rpt2-toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.cm-rpt2-toolbar label{display:flex;gap:6px;align-items:center;font-weight:600;font-size:12.5px}.cm-rpt2-toolbar label.disabled{opacity:.55}.cm-rpt2-toolbar select{padding:6px 8px;border:1px solid var(--border);border-radius:8px}
+.cm-rpt2-frame-wrap{position:relative;height:72vh;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#E9EDF3}.cm-rpt2-frame{width:100%;height:100%;border:0;display:block}.cm-rpt2-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(233,237,243,.92);font-weight:600;color:#12275A;z-index:2}.cm-rpt2-spin{width:22px;height:22px;border:3px solid #C7D3F2;border-top-color:#2F5BD3;border-radius:50%;animation:cmRptSpin .8s linear infinite}@keyframes cmRptSpin{to{transform:rotate(360deg)}}
+.cm-rpt2-status{word-break:break-word}
+@media(max-width:700px){.cm-rpt2-grid{grid-template-columns:1fr}.cm-report-checks{grid-template-columns:1fr}.cm-rpt2-frame-wrap{height:64vh}}
 @media(max-width:1100px){.tab-btn{padding:7px 8px}.tab-btn>span:not(.count-badge){font-size:10px}.tabs{overflow-x:auto}.tab-btn{min-width:88px;flex:0 0 auto}}
 
 </style>
@@ -4376,7 +4383,13 @@ function cmWireTodayAgenda(){
 }
 
 
-/* ===== Activity Report Generator ===== */
+/* ===== Activity Report Generator v2 — Monev Report Studio (2026-10-05) =====
+   One report model -> two renderers (HTML preview/print-to-PDF and native DOCX).
+   Range report title follows the active date filter (Bulan / Triwulan / Semester / Tahun / Periode);
+   document name follows Program / Unit filters. Per-activity report includes detail + images.
+*/
+let cmRptLangCur='';
+function cmRptStatus(k){const lang=cmRptLangCur||currentLang;const id={Scheduled:'Terjadwal',Pending:'Menunggu Konfirmasi',Ongoing:'Sedang Berlangsung',Completed:'Selesai',Postponed:'Ditunda',Cancelled:'Dibatalkan','Not Attended':'Tidak Dihadiri'},en={Scheduled:'Scheduled',Pending:'Awaiting Confirmation',Ongoing:'Ongoing',Completed:'Completed',Postponed:'Postponed',Cancelled:'Cancelled','Not Attended':'Not Attended'};const key=k||'Scheduled';return (lang==='en'?en:id)[key]||(typeof activityStatusLabel==='function'?activityStatusLabel(key):key);}
 function cmReportSafe(v){return String(v??'').trim()||'-'}
 function cmReportFilterContext(items=[]){
   const f=state.filters||{};
@@ -4404,110 +4417,614 @@ function cmReportFilterSummary(items,lang='id'){
   if(c.search)parts.push(`${lang==='id'?'Pencarian':'Search'}: "${c.search}"`);
   return parts;
 }
+function cmRptHas(v){const s=String(v??'').trim();return !!s&&!/^[-–—]$/.test(s);}
+function cmRptDocFlags(a){
+  return {
+    undangan:cmRptHas(a.undangan)||cmRptHas(a.undanganUrl)||parseActivityFiles(a.undanganFiles).length>0,
+    suratTugas:cmRptHas(a.suratTugas)||cmRptHas(a.suratTugasUrl)||parseActivityFiles(a.suratTugasFiles).length>0,
+    materi:cmRptHas(a.materi)||parseActivityFiles(a.materiFiles).length>0,
+    notula:parseActivityNotula(a.notula).length>0,
+    dokumentasi:parseDokumentasi(a.dokumentasi).length>0
+  };
+}
+const CM_RPT_DOC_KEYS=['undangan','suratTugas','materi','notula','dokumentasi'];
+function cmRptDocLabel(k,lang){const id={undangan:'Undangan',suratTugas:'Surat Tugas',materi:'Materi',notula:'Notula',dokumentasi:'Dokumentasi Foto'},en={undangan:'Invitation',suratTugas:'Assignment Letter',materi:'Materials',notula:'Minutes',dokumentasi:'Photo Documentation'};return (lang==='en'?en:id)[k]||k;}
+function cmRptDocPct(a){const f=cmRptDocFlags(a);return Math.round(CM_RPT_DOC_KEYS.filter(k=>f[k]).length/CM_RPT_DOC_KEYS.length*100);}
 function cmReportStats(items){
-  const byStatus={},byMonth={},byProgram={},byUnit={},byPic={};
+  const byStatus={},byStatusKey={},byMonth={},byMonthDone={},byProgram={},byUnit={},byPic={},byKategori={},byLayanan={};
+  const docs={undangan:0,suratTugas:0,materi:0,notula:0,dokumentasi:0},docsDone={undangan:0,suratTugas:0,materi:0,notula:0,dokumentasi:0};
+  let completed=0,needsUpdate=0;
   items.forEach(a=>{
-    const st=activityStatusLabel(a.statusNorm||'Scheduled');byStatus[st]=(byStatus[st]||0)+1;
-    const mo=(a.tglMulai||'').slice(0,7);if(mo)byMonth[mo]=(byMonth[mo]||0)+1;
+    const key=a.statusNorm||'Scheduled',st=cmRptStatus(key);byStatus[st]=(byStatus[st]||0)+1;byStatusKey[key]=(byStatusKey[key]||0)+1;
+    const mo=(a.tglMulai||'').slice(0,7);if(mo){byMonth[mo]=(byMonth[mo]||0)+1;if(key==='Completed')byMonthDone[mo]=(byMonthDone[mo]||0)+1;}
     const pr=cmReportSafe(a.programTerkait);byProgram[pr]=(byProgram[pr]||0)+1;
     const un=cmReportSafe(a.unitPemohon);byUnit[un]=(byUnit[un]||0)+1;
+    const kt=cmReportSafe(a.kategori);byKategori[kt]=(byKategori[kt]||0)+1;
+    const ly=cmReportSafe(a.layanan);byLayanan[ly]=(byLayanan[ly]||0)+1;
     String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean).forEach(x=>byPic[x]=(byPic[x]||0)+1);
+    if(key==='Completed')completed++;
+    if(a.statusNeedsUpdate)needsUpdate++;
+    const f=cmRptDocFlags(a);CM_RPT_DOC_KEYS.forEach(k=>{if(f[k]){docs[k]++;if(key==='Completed')docsDone[k]++;}});
   });
-  const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0]||['-',0];
-  return {byStatus,byMonth,byProgram,byUnit,byPic,topMonth:top(byMonth),topProgram:top(byProgram),topUnit:top(byUnit),topPic:top(byPic)};
+  const top=o=>Object.entries(o).filter(([k])=>k!=='-').sort((a,b)=>b[1]-a[1])[0]||['-',0];
+  return {byStatus,byStatusKey,byMonth,byMonthDone,byProgram,byUnit,byPic,byKategori,byLayanan,docs,docsDone,completed,needsUpdate,
+    topMonth:top(byMonth),topProgram:top(byProgram),topUnit:top(byUnit),topPic:top(byPic),topKategori:top(byKategori)};
 }
 function cmReportNarrative(items,stats,lang=currentLang){
   if(!items.length)return lang==='id'?'Tidak ada activity yang sesuai filter aktif.':'No activities match the current filters.';
-  const done=Object.entries(stats.byStatus).filter(([k])=>/complete|selesai/i.test(k)).reduce((s,x)=>s+x[1],0);
+  const done=stats.completed;
   const topMonth=stats.topMonth[0]!=='-'?dayjs(stats.topMonth[0]+'-01').locale(lang==='id'?'id':'en').format('MMMM YYYY'):'-';
   const period=cmReportDateRange(items);
   return lang==='id'
-   ?`Pada periode filter ${period}, terdapat ${items.length} activity yang sesuai seluruh filter aktif. ${done} activity berstatus selesai. Aktivitas terbanyak tercatat pada ${topMonth} sebanyak ${stats.topMonth[1]} activity. Program dengan frekuensi activity tertinggi adalah ${stats.topProgram[0]} (${stats.topProgram[1]} activity), sedangkan unit pemohon dengan activity terbanyak adalah ${stats.topUnit[0]} (${stats.topUnit[1]} activity). Narasi ini hanya merangkum pola yang tersedia pada data Agenda dan tidak menilai efektivitas substantif kegiatan.`
-   :`For the filtered period ${period}, ${items.length} activities match all active filters. ${done} activities are completed. The busiest month is ${topMonth} with ${stats.topMonth[1]} activities. The most active program is ${stats.topProgram[0]} (${stats.topProgram[1]} activities), while ${stats.topUnit[0]} is the requesting unit with the most activities (${stats.topUnit[1]}). This narrative only summarizes patterns available in Agenda data and does not assess substantive effectiveness.`;
-}
-function cmOpenActivityReportBuilder(){
-  try{
-  const items=getFiltered(),stats=cmReportStats(items),filterLines=cmReportFilterSummary(items,currentLang);let type='monitoring';
-  const host=document.createElement('div');host.className='modal-overlay cm-report-modal';host.innerHTML=`<div class="modal-box"><div class="modal-head"><div><h2>${uiText('Generate Activity Report','Generate Activity Report')}</h2><p>${items.length} ${uiText('activities match the current filters','activity sesuai filter aktif')}</p><div class="cm-report-filter-context"><b>${uiText('Active report scope','Cakupan laporan aktif')}:</b> ${filterLines.map(escapeHtml).join(' • ')||uiText('All Agenda data','Seluruh data Agenda')}</div></div><button class="modal-close" data-close>&times;</button></div><div class="modal-body"><b>${uiText('Report Type','Jenis Laporan')}</b><div class="cm-report-types"><label class="cm-report-type"><input type="radio" name="cmrt" value="executive"> Executive Summary</label><label class="cm-report-type active"><input type="radio" name="cmrt" value="monitoring" checked> Monitoring Report</label><label class="cm-report-type"><input type="radio" name="cmrt" value="insight"> AI Insight Report</label></div><div style="margin-top:18px"><b>Include</b><div class="cm-report-checks"><label><input type="checkbox" data-inc="summary" checked> Executive Summary</label><label><input type="checkbox" data-inc="charts" checked> Charts & Statistics</label><label><input type="checkbox" data-inc="list" checked> Activity List</label><label><input type="checkbox" data-inc="insights" checked> AI Findings</label><label><input type="checkbox" data-inc="recs" checked> Recommendations</label></div></div><div style="margin-top:18px"><b>Language</b><select id="cmReportLang" style="width:100%;margin-top:8px"><option value="id" ${currentLang==='id'?'selected':''}>Bahasa Indonesia</option><option value="en" ${currentLang==='en'?'selected':''}>English</option></select></div></div><div class="modal-foot"><button class="btn btn-outline" data-close>Cancel</button><button class="btn btn-gold" id="cmPreviewReport">Preview Report</button></div></div>`;
-  document.body.appendChild(host);host.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>host.remove());host.onclick=e=>{if(e.target===host)return;};
-  host.querySelectorAll('[name="cmrt"]').forEach(r=>r.onchange=()=>{type=r.value;host.querySelectorAll('.cm-report-type').forEach(x=>x.classList.toggle('active',x.contains(r)))});
-  host.querySelector('#cmPreviewReport').onclick=()=>{const inc={};host.querySelectorAll('[data-inc]').forEach(x=>inc[x.dataset.inc]=x.checked);const lang=host.querySelector('#cmReportLang').value;host.remove();cmShowReportPreview(items,type,inc,lang)};
-  }catch(err){
-    console.error('Open activity report builder failed:',err);
-    toast(uiText('Unable to open Activity Report: ','Gagal membuka Activity Report: ')+(err?.message||String(err)),'error');
-  }
-}
-window.cmOpenActivityReportBuilder=cmOpenActivityReportBuilder;
-function cmShowReportPreview(items,type,inc,lang){
-  const stats=cmReportStats(items); const narrative=cmReportNarrative(items,stats,lang); const filterLines=cmReportFilterSummary(items,lang);
-  const topStatuses=Object.entries(stats.byStatus).sort((a,b)=>b[1]-a[1]);
-  const rows=items.slice(0,200).map((a,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(fmtDate(a.tglMulai))}</td><td>${escapeHtml(a.namaKegiatan)}</td><td>${escapeHtml(cmReportSafe(a.programTerkait))}</td><td>${escapeHtml(cmReportSafe(a.unitPemohon))}</td><td>${escapeHtml(cmReportSafe(a.picTimCM))}</td><td>${escapeHtml(activityStatusLabel(a.statusNorm))}</td></tr>`).join('');
-  const host=document.createElement('div');host.className='modal-overlay';host.innerHTML=`<div class="modal-box cm-report-preview"><div class="modal-head"><div><h2>${lang==='id'?'Preview Laporan Activity':'Activity Report Preview'}</h2><p>${type==='monitoring'?'Monitoring Report':type==='executive'?'Executive Summary':'AI Insight Report'} • ${items.length} activities</p></div><button class="modal-close" data-close>&times;</button></div><div class="modal-body"><div class="cm-report-paper" id="cmReportPaper"><h2 style="color:var(--navy-800);margin-top:0">${lang==='id'?'LAPORAN MONITORING KEGIATAN CHANGE MANAGEMENT':'CHANGE MANAGEMENT ACTIVITY MONITORING REPORT'}</h2><p><b>${lang==='id'?'Periode sesuai filter':'Filtered period'}:</b> ${escapeHtml(cmReportDateRange(items))}</p><div class="cm-report-scope-box"><b>${lang==='id'?'Filter yang digunakan':'Filters used'}:</b> ${filterLines.map(escapeHtml).join(' • ')||'-'}</div>${inc.summary?`<h3>${lang==='id'?'Ringkasan Eksekutif':'Executive Summary'}</h3><p>${escapeHtml(narrative)}</p>`:''}${inc.charts?`<h3>${lang==='id'?'Statistik Kegiatan':'Activity Statistics'}</h3><div class="cm-report-kpis"><div class="cm-report-kpi"><small>Total Activities</small><b>${items.length}</b></div><div class="cm-report-kpi"><small>${lang==='id'?'Bulan Teraktif':'Busiest Month'}</small><b>${stats.topMonth[1]}</b><span>${escapeHtml(stats.topMonth[0])}</span></div><div class="cm-report-kpi"><small>${lang==='id'?'Program Teraktif':'Top Program'}</small><b>${stats.topProgram[1]}</b><span>${escapeHtml(stats.topProgram[0])}</span></div><div class="cm-report-kpi"><small>${lang==='id'?'PIC Teraktif':'Top PIC'}</small><b>${stats.topPic[1]}</b><span>${escapeHtml(stats.topPic[0])}</span></div><table class="cm-report-table"><thead><tr><th>Status</th><th>Jumlah</th><th>%</th></tr></thead><tbody>${topStatuses.map(([k,v])=>`<tr><td>${escapeHtml(k)}</td><td>${v}</td><td>${Math.round(v/items.length*100)}%</td></tr>`).join('')}</tbody></table>`:''}${inc.insights?`<h3>AI Insights</h3><ol><li>${lang==='id'?'Bulan dengan activity terbanyak':'Busiest month'}: <b>${escapeHtml(stats.topMonth[0])}</b> (${stats.topMonth[1]}).</li><li>${lang==='id'?'Program dengan activity terbanyak':'Most active program'}: <b>${escapeHtml(stats.topProgram[0])}</b> (${stats.topProgram[1]}).</li><li>${lang==='id'?'PIC dengan keterlibatan terbanyak':'Most involved PIC'}: <b>${escapeHtml(stats.topPic[0])}</b> (${stats.topPic[1]}).</li></ol><p><i>${lang==='id'?'Insight hanya berdasarkan pola data Agenda; tidak menilai efektivitas kegiatan.':'Insights are based only on Agenda data patterns and do not assess activity effectiveness.'}</i></p>`:''}${inc.recs?`<h3>${lang==='id'?'Catatan Tindak Lanjut':'Follow-up Notes'}</h3><p>${lang==='id'?'Tinjau activity yang statusnya belum selesai atau memerlukan pembaruan, serta pastikan data dukung pada activity yang telah selesai telah dilengkapi.':'Review activities that are not yet completed or need updates, and ensure completed activities have supporting evidence attached.'}</p>`:''}${inc.list?`<h3>${lang==='id'?'Daftar Activity':'Activity List'}</h3><table class="cm-report-table"><thead><tr><th>No</th><th>${lang==='id'?'Tanggal':'Date'}</th><th>Activity</th><th>Program</th><th>Unit</th><th>PIC</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`:''}</div></div><div class="modal-foot"><button class="btn btn-outline" id="cmRegenerate">Regenerate</button><span style="flex:1"></span><button class="btn btn-outline" id="cmExportPdf">Export PDF</button><button class="btn btn-gold" id="cmExportWord">Export Word</button></div></div>`;
-  document.body.appendChild(host);host.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>host.remove());host.querySelector('#cmRegenerate').onclick=()=>{host.remove();cmOpenActivityReportBuilder()};host.querySelector('#cmExportWord').onclick=()=>cmExportReportDocx(items,lang);host.querySelector('#cmExportPdf').onclick=()=>cmExportReportPdf(items,lang);
-}
-function cmDownloadWordFallbackDoc(items,lang='id',singleTitle=''){
-  try{
-    if(!Array.isArray(items)||!items.length){toast(lang==='id'?'Tidak ada activity untuk dibuatkan laporan.':'No activities available for report.','warning');return false;}
-    const stats=cmReportStats(items),title=singleTitle||(lang==='id'?'Laporan Monitoring Kegiatan Change Management':'Change Management Activity Monitoring Report');
-    const h=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const one=items.length===1?items[0]:null;
-    const detail=one?`<table><tr><th>Activity</th><td>${h(cmReportSafe(one.namaKegiatan))}</td></tr><tr><th>${lang==='id'?'Tanggal':'Date'}</th><td>${h(fmtDate(one.tglMulai))}${one.tglSelesai&&one.tglSelesai!==one.tglMulai?' - '+h(fmtDate(one.tglSelesai)):''}</td></tr><tr><th>${lang==='id'?'Waktu':'Time'}</th><td>${h(cmReportSafe(one.waktu))}</td></tr><tr><th>Program</th><td>${h(cmReportSafe(one.programTerkait))}</td></tr><tr><th>${lang==='id'?'Kategori':'Category'}</th><td>${h(cmReportSafe(one.kategori))}</td></tr><tr><th>${lang==='id'?'Unit Pemohon':'Requesting Unit'}</th><td>${h(cmReportSafe(one.unitPemohon))}</td></tr><tr><th>PIC Tim CM</th><td>${h(cmReportSafe(one.picTimCM))}</td></tr><tr><th>${lang==='id'?'Lokasi/Channel':'Location/Channel'}</th><td>${h(cmReportSafe(one.lokasiChannel))}</td></tr><tr><th>Status</th><td>${h(activityStatusLabel(one.statusNorm))}</td></tr><tr><th>${lang==='id'?'Tujuan/Output':'Objective/Output'}</th><td>${h(cmReportSafe(one.tujuanOutput))}</td></tr><tr><th>${lang==='id'?'Catatan':'Notes'}</th><td>${h(cmReportSafe(one.catatan))}</td></tr></table>`:'';
-    const list=!one?`<table><thead><tr><th>No</th><th>${lang==='id'?'Tanggal':'Date'}</th><th>Activity</th><th>Program</th><th>Unit</th><th>PIC</th><th>Status</th></tr></thead><tbody>${items.map((a,i)=>`<tr><td>${i+1}</td><td>${h(fmtDate(a.tglMulai))}</td><td>${h(a.namaKegiatan)}</td><td>${h(cmReportSafe(a.programTerkait))}</td><td>${h(cmReportSafe(a.unitPemohon))}</td><td>${h(cmReportSafe(a.picTimCM))}</td><td>${h(activityStatusLabel(a.statusNorm))}</td></tr>`).join('')}</tbody></table>`:'';
-    const html=`<!doctype html><html><head><meta charset="utf-8"><title>${h(title)}</title><style>@page{size:A4;margin:20mm}body{font-family:Arial,sans-serif;font-size:11pt;color:#222}h1{color:#12275A;font-size:20pt}h2{color:#1B3A73;font-size:14pt;margin-top:18pt}table{width:100%;border-collapse:collapse;margin-top:10pt}th,td{border:1px solid #D7DCE7;padding:7px;vertical-align:top}th{background:#12275A;color:#fff;text-align:left}.meta{background:#F3F5FA;padding:10px;border:1px solid #E3E7F1}</style></head><body><h1>${h(title)}</h1><div class="meta"><b>${lang==='id'?'Periode':'Period'}:</b> ${h(cmReportDateRange(items))}<br><b>${lang==='id'?'Filter yang digunakan':'Filters used'}:</b> ${h(cmReportFilterSummary(items,lang).join(' | ')||'-')}</div><h2>${lang==='id'?'Ringkasan':'Summary'}</h2><p>${h(cmReportNarrative(items,stats,lang))}</p>${detail}${list}</body></html>`;
-    const blob=new Blob(['\ufeff',html],{type:'application/msword'}),url=URL.createObjectURL(blob),a=document.createElement('a');
-    a.href=url;a.download=(one?'Laporan_Activity_'+String(one.namaKegiatan||'activity').replace(/[^a-z0-9]+/gi,'_').slice(0,55):'Laporan_Activity_Filter')+'.doc';a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);return true;
-  }catch(err){console.error('Word fallback generation failed:',err);toast((lang==='id'?'Gagal membuat file Word: ':'Failed to create Word file: ')+(err?.message||String(err)),'error');return false;}
+   ?`Pada periode ${period}, terdapat ${items.length} activity yang sesuai filter aktif. ${done} activity berstatus selesai. Aktivitas terbanyak tercatat pada ${topMonth} (${stats.topMonth[1]} activity). Program paling aktif adalah ${stats.topProgram[0]} (${stats.topProgram[1]} activity), dan unit pemohon terbanyak adalah ${stats.topUnit[0]} (${stats.topUnit[1]} activity).`
+   :`For the period ${period}, ${items.length} activities match the active filters. ${done} are completed. The busiest month is ${topMonth} (${stats.topMonth[1]} activities). The most active program is ${stats.topProgram[0]} (${stats.topProgram[1]}), and the top requesting unit is ${stats.topUnit[0]} (${stats.topUnit[1]}).`;
 }
 
-async function cmExportReportDocx(items,lang='id',singleTitle=''){
-  try{
-    if(!Array.isArray(items)||!items.length){toast(lang==='id'?'Tidak ada activity untuk dibuatkan laporan.':'No activities available for report.','warning');return false;}
-    if(typeof JSZip==='undefined'){return cmDownloadWordFallbackDoc(items,lang,singleTitle);}
-  const stats=cmReportStats(items),title=singleTitle||(lang==='id'?'Laporan Monitoring Kegiatan Change Management':'Change Management Activity Monitoring Report');
-  const esc=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const paras=[title,`${lang==='id'?'Periode':'Period'}: ${cmReportDateRange(items)}`,cmReportNarrative(items,stats,lang),`${lang==='id'?'Filter yang digunakan':'Filters used'}: ${cmReportFilterSummary(items,lang).join(' | ')||'-'}`,'',...(items.length===1?[`Activity: ${cmReportSafe(items[0].namaKegiatan)}`,`Tanggal: ${fmtDate(items[0].tglMulai)}${items[0].tglSelesai&&items[0].tglSelesai!==items[0].tglMulai?' - '+fmtDate(items[0].tglSelesai):''}`,`Waktu: ${cmReportSafe(items[0].waktu)}`,`Program: ${cmReportSafe(items[0].programTerkait)}`,`Kategori: ${cmReportSafe(items[0].kategori)}`,`Unit Pemohon: ${cmReportSafe(items[0].unitPemohon)}`,`PIC Tim CM: ${cmReportSafe(items[0].picTimCM)}`,`Lokasi/Channel: ${cmReportSafe(items[0].lokasiChannel)}`,`Status: ${activityStatusLabel(items[0].statusNorm)}`,`Tujuan/Output: ${cmReportSafe(items[0].tujuanOutput)}`,`Catatan: ${cmReportSafe(items[0].catatan)}`]:[])];
-  const body=paras.map((x,i)=>`<w:p><w:r>${i===0?'<w:rPr><w:b/><w:sz w:val="32"/></w:rPr>':''}<w:t xml:space="preserve">${esc(x)}</w:t></w:r></w:p>`).join('') + (items.length>1?items.map((a,i)=>`<w:p><w:r><w:t>${i+1}. ${esc(a.namaKegiatan)} | ${esc(fmtDate(a.tglMulai))} | ${esc(cmReportSafe(a.unitPemohon))} | ${esc(activityStatusLabel(a.statusNorm))}</w:t></w:r></w:p>`).join(''):'');
-  const zip=new JSZip();zip.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');zip.folder('_rels').file('.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');zip.folder('word').file('document.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`);
-  const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-  const link=document.createElement('a');
-  const objectUrl=URL.createObjectURL(blob);
-  link.href=objectUrl;
-  link.download=(items.length===1?'Laporan_Activity_'+String(items[0].namaKegiatan||'activity').replace(/[^a-z0-9]+/gi,'_').slice(0,55):'Laporan_Activity_Filter')+'.docx';
-  link.style.display='none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(()=>URL.revokeObjectURL(objectUrl),4000);
-  return true;
-  }catch(err){
-    console.error('Activity report DOCX generation failed:',err);
-    console.warn('DOCX generation failed; using Word-compatible .doc fallback.',err);
-    return cmDownloadWordFallbackDoc(items,lang,singleTitle);
+/* ---------- labels, period & naming ---------- */
+const CM_RPT_ROMAN=['I','II','III','IV'];
+const CM_RPT_PALETTE=['#2F5BD3','#F2A93B','#16A37F','#E25563','#7C5CE0','#1BA7C9','#E66AA8','#7FB43A','#F07C3A','#5B6B82'];
+const CM_RPT_STATUS_COLOR={Completed:'#16A37F',Scheduled:'#2F5BD3',Ongoing:'#F2A93B',Pending:'#C28A1E',Postponed:'#7C5CE0','Not Attended':'#8A94A6',Cancelled:'#E25563'};
+const CM_RPT_ORG=['KEMENTERIAN KEUANGAN REPUBLIK INDONESIA','Badan Teknologi, Informasi, dan Intelijen Keuangan','Pusat Manajemen Transformasi dan Perubahan'];
+function cmRptT(lang,id,en){return lang==='en'?en:id}
+function cmRptLongDate(d,lang){const x=dayjs(d);return x.isValid()?x.locale(lang==='en'?'en':'id').format('D MMMM YYYY'):cmReportSafe(d);}
+function cmRptPeriodFromRange(from,to,lang){
+  const a=dayjs(from),b=dayjs(to),L=(i,e)=>cmRptT(lang,i,e),loc=lang==='en'?'en':'id';
+  const range=from===to?cmRptLongDate(from,lang):`${cmRptLongDate(from,lang)} – ${cmRptLongDate(to,lang)}`;
+  const base={from,to,range};
+  if(!a.isValid()||!b.isValid())return {...base,kind:'custom',label:L(`Periode ${range}`,`Period ${range}`),short:range};
+  const fullStart=a.date()===1,fullEnd=b.date()===b.daysInMonth(),sameYear=a.year()===b.year(),months=sameYear?b.month()-a.month()+1:-1,y=a.year();
+  if(fullStart&&fullEnd&&sameYear){
+    if(months===1){const m=a.locale(loc).format('MMMM YYYY');return {...base,kind:'month',label:L(`Bulan ${m}`,m),short:m};}
+    if(months===3&&a.month()%3===0){const q=CM_RPT_ROMAN[a.month()/3];return {...base,kind:'quarter',label:L(`Triwulan ${q} ${y}`,`Quarter ${q} ${y}`),short:L(`Triwulan ${q} ${y}`,`Q${a.month()/3+1} ${y}`)};}
+    if(months===6&&a.month()%6===0){const s=a.month()===0?'I':'II';return {...base,kind:'semester',label:L(`Semester ${s} ${y}`,`Semester ${s} ${y}`),short:`Semester ${s} ${y}`};}
+    if(months===12){return {...base,kind:'year',label:L(`Tahun ${y}`,`Year ${y}`),short:String(y)};}
   }
+  if(from===to)return {...base,kind:'day',label:L(`Tanggal ${range}`,range),short:range};
+  return {...base,kind:'custom',label:L(`Periode ${range}`,`Period ${range}`),short:range};
+}
+function cmRptPeriod(items,lang){
+  const f=state.filters||{};let from=f.dateFrom||'',to=f.dateTo||'';
+  if(!from&&!to&&f.tahun&&f.tahun!=='ALL')return cmRptPeriodFromRange(`${f.tahun}-01-01`,`${f.tahun}-12-31`,lang);
+  if(!from&&!to){
+    const ds=(items||[]).map(a=>a.tglMulai).filter(Boolean).sort();
+    if(!ds.length)return {kind:'all',label:cmRptT(lang,'Seluruh Periode','All Periods'),short:cmRptT(lang,'Seluruh Periode','All Periods'),from:'',to:'',range:'-'};
+    const r=cmRptPeriodFromRange(ds[0],ds[ds.length-1],lang);
+    return {...r,kind:'all',label:cmRptT(lang,'Seluruh Periode','All Periods'),short:cmRptT(lang,'Seluruh Periode','All Periods')};
+  }
+  if(!from)from=to;if(!to)to=from;
+  return cmRptPeriodFromRange(from,to,lang);
+}
+function cmRptSubject(lang){
+  const f=state.filters||{},L=(i,e)=>cmRptT(lang,i,e);
+  const prog=f.program&&f.program!=='ALL'?f.program:'',unit=f.unit&&f.unit!=='ALL'?f.unit:'';
+  const base=L('Monitoring dan Evaluasi','Monitoring and Evaluation');
+  if(prog&&unit)return {text:`${base} ${L('Proyek','Project')} ${prog} — ${L('Unit','Unit')} ${unit}`,focus:'program'};
+  if(prog)return {text:`${base} ${L('Proyek','Project')} ${prog}`,focus:'program'};
+  if(unit)return {text:`${base} ${L('Proyek Unit','Projects of Unit')} ${unit}`,focus:'unit'};
+  return {text:`${base} ${L('Kegiatan Change Management','Change Management Activities')}`,focus:'all'};
+}
+function cmRptFileName(s){return String(s||'Laporan').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,150);}
+function cmRptSigner(){try{return Object.assign({name:'',title:''},JSON.parse(localStorage.getItem('cmRptSigner')||'{}'))}catch(e){return {name:'',title:''}}}
+function cmRptSaveSigner(s){try{localStorage.setItem('cmRptSigner',JSON.stringify(s||{}))}catch(e){}}
+function cmRptPrefs(){try{return Object.assign({ai:false,lang:'id',inc:{summary:true,charts:true,docs:true,list:true,gallery:true,recs:true}},JSON.parse(localStorage.getItem('cmRptPrefs')||'{}'))}catch(e){return {ai:false,lang:'id',inc:{summary:true,charts:true,docs:true,list:true,gallery:true,recs:true}}}}
+function cmRptSavePrefs(p){try{localStorage.setItem('cmRptPrefs',JSON.stringify(p||{}))}catch(e){}}
+function cmRptTop(obj,n=8){return Object.entries(obj||{}).filter(([k])=>k!=='-').sort((a,b)=>b[1]-a[1]).slice(0,n);}
+function cmRptPct(n,d){return d?Math.round(n/d*100):0;}
+
+/* ---------- media helpers ---------- */
+async function cmRptChart(cfg,w=720,h=340){
+  if(typeof Chart==='undefined')return null;
+  const holder=document.createElement('div');holder.style.cssText=`position:fixed;left:-12000px;top:0;width:${w}px;height:${h}px;pointer-events:none`;
+  const c=document.createElement('canvas');c.style.width=w+'px';c.style.height=h+'px';c.width=w*2;c.height=h*2;holder.appendChild(c);document.body.appendChild(holder);
+  const font={family:"'Segoe UI', Arial, sans-serif",size:15};
+  cfg.options=Object.assign({responsive:false,animation:false,devicePixelRatio:2,maintainAspectRatio:false,layout:{padding:{top:14,right:18,bottom:6,left:6}}},cfg.options||{});
+  cfg.options.plugins=Object.assign({legend:{labels:{font,color:'#344054',boxWidth:14}}},cfg.options.plugins||{});
+  const plugins=[...(cfg.plugins||[])];if(window.ChartDataLabels)plugins.push(window.ChartDataLabels);
+  plugins.push({id:'cmRptBg',beforeDraw(ch){const x=ch.ctx;x.save();x.globalCompositeOperation='destination-over';x.fillStyle='#ffffff';x.fillRect(0,0,ch.width,ch.height);x.restore();}});
+  cfg.plugins=plugins;
+  let chart=null;
+  try{const prevFont=Chart.defaults.font.family;Chart.defaults.font.family=font.family;chart=new Chart(c.getContext('2d'),cfg);Chart.defaults.font.family=prevFont;return {src:c.toDataURL('image/png'),w,h};}
+  catch(e){console.warn('Report chart failed',e);return null;}
+  finally{try{chart&&chart.destroy()}catch(e){}holder.remove();}
+}
+function cmRptBarCfg(labels,data,{horizontal=false,colors,label='',max,pct=false}={}){
+  const bg=colors||labels.map((_,i)=>CM_RPT_PALETTE[i%CM_RPT_PALETTE.length]);
+  return {type:'bar',data:{labels,datasets:[{label,data,backgroundColor:bg,borderRadius:6,maxBarThickness:horizontal?26:46}]},
+    options:{indexAxis:horizontal?'y':'x',plugins:{legend:{display:false},datalabels:{anchor:'end',align:horizontal?'right':'top',color:'#1d2433',font:{weight:'bold',size:15},formatter:v=>pct?v+'%':v}},
+      scales:{x:{grid:{display:!horizontal?false:true,color:'#EEF1F6'},ticks:{color:'#344054',font:{size:15}},max:horizontal?max:undefined,beginAtZero:true},y:{grid:{color:'#EEF1F6',display:horizontal?false:true},ticks:{color:'#344054',font:{size:15},precision:0},beginAtZero:true,max:horizontal?undefined:max}}}};
+}
+function cmRptDoughnutCfg(labels,data,colors,center){
+  const total=data.reduce((s,v)=>s+v,0);
+  return {type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderColor:'#fff',borderWidth:3}]},
+    options:{cutout:'58%',plugins:{legend:{position:'right',labels:{font:{size:15},color:'#344054',boxWidth:16,padding:14}},datalabels:{color:'#fff',font:{weight:'bold',size:15},formatter:v=>total&&v/total>=0.06?Math.round(v/total*100)+'%':''}}},
+    plugins:[{id:'cmRptCenter',afterDraw(ch){if(!center)return;const {ctx,chartArea:a}=ch;const cx=(a.left+a.right)/2,cy=(a.top+a.bottom)/2;ctx.save();ctx.textAlign='center';ctx.fillStyle='#12275A';ctx.font="bold 34px 'Segoe UI', Arial";ctx.fillText(center[0],cx,cy+4);ctx.font="15px 'Segoe UI', Arial";ctx.fillStyle='#667085';ctx.fillText(center[1],cx,cy+24);ctx.restore();}}]};
+}
+async function cmRptNormalizeImage(src,maxW=1400){
+  return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>{try{const s=Math.min(1,maxW/(im.naturalWidth||maxW));const c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.naturalWidth*s));c.height=Math.max(1,Math.round(im.naturalHeight*s));const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);res({src:c.toDataURL('image/jpeg',0.86),w:c.width,h:c.height});}catch(e){res(null)}};im.onerror=()=>res(null);im.src=src;});
+}
+function cmRptQr(text){
+  try{
+    if(typeof QRCode==='undefined')return null;
+    const div=document.createElement('div');div.style.cssText='position:fixed;left:-9999px;top:0';document.body.appendChild(div);
+    new QRCode(div,{text:String(text||'TTE').slice(0,200),width:256,height:256,colorDark:'#12275A',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+    const cv=div.querySelector('canvas');const url=cv?cv.toDataURL('image/png'):null;div.remove();
+    return url?{src:url,w:256,h:256}:null;
+  }catch(e){return null}
+}
+async function cmRptImagesFor(a,max=12){
+  const docs=parseDokumentasi(a.dokumentasi).slice(0,max),out=[];
+  if(!docs.length||typeof fetchDocImageDataUrl!=='function')return out;
+  for(const d of docs){try{const url=await fetchDocImageDataUrl(d.refId);if(!url)continue;const img=await cmRptNormalizeImage(url);if(img)out.push({...img,caption:d.name||''});}catch(e){}}
+  return out;
+}
+
+/* ---------- AI analysis via existing Cloudflare Worker (optional) ---------- */
+function cmRptAiAvailable(){try{return typeof cmAiWorkerUrl==='function'&&/^https:\/\//i.test(cmAiWorkerUrl()||'')}catch(e){return false}}
+async function cmRptAi(contextText,lang,kind){
+  if(!cmRptAiAvailable())return null;
+  const question=lang==='en'
+    ?`Act as a Change Management monitoring & evaluation analyst. Using ONLY the data provided in context, write the analysis section of a ${kind==='single'?'single-activity':'periodic'} M&E report in plain, formal English that readers of all generations can follow. Use exactly these bold subheadings: **Key Achievements**, **Main Findings**, **Recommendations**. Under each, give 2–5 short bullet points starting with "- ". Do not invent numbers. No HTML, no tables.`
+    :`Bertindaklah sebagai analis Monitoring & Evaluasi Change Management. Hanya dengan data pada konteks, tulis bagian analisis untuk laporan monev ${kind==='single'?'satu kegiatan':'periodik'} dalam Bahasa Indonesia formal yang sederhana dan mudah dipahami semua generasi. Gunakan persis subjudul tebal berikut: **Capaian Utama**, **Temuan Utama**, **Rekomendasi**. Di bawah tiap subjudul tulis 2–5 butir singkat diawali "- ". Jangan mengarang angka di luar data. Tanpa HTML dan tanpa tabel.`;
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),60000);
+  try{
+    const res=await fetch(cmAiWorkerUrl(),{method:'POST',headers:{'Content-Type':'application/json'},signal:ctrl.signal,body:JSON.stringify({question,history:[],conversationScope:'report',routeHint:'report-analysis',locale:lang,currentTab:state.activeTab,context:contextText,responseStyle:'Bold subheadings and "- " bullet points only. No HTML.',privateContext:false,idToken:'',clientVersion:typeof CM_APP_BUILD!=='undefined'?CM_APP_BUILD:''})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.answer)throw new Error(data.error||`HTTP ${res.status}`);
+    return cmRptParseAi(String(data.answer));
+  }catch(e){console.warn('AI report analysis failed',e);toast(cmRptT(lang,'Analisis AI tidak tersedia, laporan memakai analisis otomatis.','AI analysis unavailable; using automatic analysis.'),'warning');return null;}
+  finally{clearTimeout(timer);}
+}
+function cmRptParseAi(text){
+  const sections=[];let cur=null;
+  String(text).replace(/<br\s*\/?>/gi,'\n').split(/\r?\n/).forEach(raw=>{
+    const line=raw.trim();if(!line)return;
+    const h=line.match(/^(?:#+\s*)?\*\*(.+?)\*\*:?\s*$/)||line.match(/^#+\s*(.+)$/);
+    if(h){cur={title:h[1].replace(/\*\*/g,'').trim(),bullets:[],paras:[]};sections.push(cur);return;}
+    if(!cur){cur={title:'',bullets:[],paras:[]};sections.push(cur);}
+    const b=line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if(b)cur.bullets.push(b[1]);else cur.paras.push(line);
+  });
+  return sections.filter(s=>s.title||s.bullets.length||s.paras.length);
+}
+
+/* ---------- report models ---------- */
+function cmRptStatusCell(key,lang){const c=CM_RPT_STATUS_COLOR[key]||'#5B6B82';return {text:cmRptStatus(key||'Scheduled'),color:'#FFFFFF',fill:c.replace('#',''),bold:true,align:'center'};}
+async function cmRptBuildRangeModel(items,opts){
+  cmRptLangCur=opts.lang;const lang=opts.lang,L=(i,e)=>cmRptT(lang,i,e),st=cmReportStats(items),per=cmRptPeriod(items,lang),subj=cmRptSubject(lang),inc=opts.inc||{};
+  const total=items.length,done=st.completed,rate=cmRptPct(done,total);
+  const upcoming=(st.byStatusKey.Scheduled||0)+(st.byStatusKey.Ongoing||0),delayed=(st.byStatusKey.Pending||0)+(st.byStatusKey.Postponed||0);
+  const units=Object.keys(st.byUnit).filter(k=>k!=='-').length,programs=Object.keys(st.byProgram).filter(k=>k!=='-').length,pics=Object.keys(st.byPic).length;
+  const title=L('LAPORAN MONITORING DAN EVALUASI','MONITORING AND EVALUATION REPORT');
+  const fileName=cmRptFileName(`${subj.text} - ${per.short}`);
+  const signer=opts.signer||{};
+  const blocks=[];
+  const monthLabel=m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMMM YYYY');
+  // 1. Ringkasan
+  blocks.push({t:'h1',text:L('Ringkasan Eksekutif','Executive Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Total kegiatan','Total activities'),value:total,sub:per.short,color:'2F5BD3'},
+    {label:L('Selesai','Completed'),value:done,sub:`${rate}% ${L('dari total','of total')}`,color:'16A37F'},
+    {label:L('Terjadwal / berjalan','Scheduled / ongoing'),value:upcoming,sub:L('belum selesai','not yet completed'),color:'F2A93B'},
+    {label:L('Tertunda','Delayed'),value:delayed,sub:L('pending / ditunda','pending / postponed'),color:'E25563'},
+    {label:L('Unit dilayani','Units served'),value:units,sub:`${programs} ${L('program','programs')}`,color:'7C5CE0'},
+    {label:L('PIC terlibat','PICs involved'),value:pics,sub:L('anggota tim CM','CM team members'),color:'1BA7C9'}]});
+  if(!total){blocks.push({t:'callout',tone:'warn',title:L('Tidak ada data','No data'),lines:[L('Tidak ada kegiatan yang sesuai filter aktif.','No activities match the active filters.')]});}
+  else{
+    const tm=st.topMonth[0]!=='-'?monthLabel(st.topMonth[0]):'-';
+    blocks.push({t:'p',text:L(
+      `Selama **${per.label}**, tercatat **${total} kegiatan** dalam lingkup ${subj.text.replace(/^Monitoring dan Evaluasi /,'').toLowerCase().startsWith('kegiatan')?'kegiatan Change Management':subj.text.replace(/^Monitoring dan Evaluasi /,'')}. Sebanyak **${done} kegiatan (${rate}%) telah selesai**, ${upcoming} masih terjadwal atau berjalan, dan ${delayed} tertunda. Bulan paling padat adalah **${tm}** dengan ${st.topMonth[1]} kegiatan.${subj.focus!=='unit'?` Unit yang paling banyak dilayani adalah **${st.topUnit[0]}** (${st.topUnit[1]} kegiatan).`:''}${subj.focus!=='program'?` Program dengan kegiatan terbanyak adalah **${st.topProgram[0]}** (${st.topProgram[1]} kegiatan).`:''}`,
+      `During **${per.label}**, **${total} activities** were recorded. **${done} (${rate}%) are completed**, ${upcoming} are scheduled or ongoing, and ${delayed} are delayed. The busiest month was **${tm}** with ${st.topMonth[1]} activities.${subj.focus!=='unit'?` The most served unit was **${st.topUnit[0]}** (${st.topUnit[1]}).`:''}${subj.focus!=='program'?` The most active program was **${st.topProgram[0]}** (${st.topProgram[1]}).`:''}`)});
+    const highlights=[];
+    highlights.push(L(`Tingkat penyelesaian kegiatan ${rate}% (${done} dari ${total}).`,`Completion rate ${rate}% (${done} of ${total}).`));
+    if(st.topKategori[0]!=='-')highlights.push(L(`Jenis kegiatan paling sering: ${st.topKategori[0]} (${st.topKategori[1]} kegiatan).`,`Most frequent activity type: ${st.topKategori[0]} (${st.topKategori[1]}).`));
+    if(st.topPic[0]!=='-')highlights.push(L(`PIC paling aktif: ${st.topPic[0]} (${st.topPic[1]} kegiatan).`,`Most active PIC: ${st.topPic[0]} (${st.topPic[1]} activities).`));
+    const notulaPct=cmRptPct(st.docsDone.notula,done),fotoPct=cmRptPct(st.docsDone.dokumentasi,done);
+    if(done)highlights.push(L(`Kelengkapan bukti kegiatan selesai: notula ${notulaPct}%, dokumentasi foto ${fotoPct}%.`,`Evidence for completed activities: minutes ${notulaPct}%, photos ${fotoPct}%.`));
+    blocks.push({t:'callout',tone:'info',title:L('Poin penting','Key points'),lines:highlights});
+  }
+  // AI
+  if(opts.ai&&total){
+    const ctx=cmRptRangeContext(items,st,per,subj,lang);
+    const ai=await cmRptAi(ctx,lang,'range');
+    if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Disusun otomatis oleh asisten AI dari data dashboard; mohon ditelaah sebelum digunakan.','Generated by the AI assistant from dashboard data; please review before use.'),sections:ai});
+  }
+  if(total&&inc.charts!==false){
+    // 2. Tren & status
+    blocks.push({t:'h1',text:L('Tren dan Status Kegiatan','Activity Trend and Status')});
+    const months=Object.keys(st.byMonth).sort();
+    const trend=await cmRptChart({type:'bar',data:{labels:months.map(m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMM YY')),datasets:[
+      {type:'bar',label:L('Total kegiatan','Total'),data:months.map(m=>st.byMonth[m]),backgroundColor:'#2F5BD3',borderRadius:6,maxBarThickness:46,order:2},
+      {type:'line',label:L('Selesai','Completed'),data:months.map(m=>st.byMonthDone[m]||0),borderColor:'#16A37F',backgroundColor:'#16A37F',borderWidth:3,pointRadius:5,tension:.3,order:1,datalabels:{display:false}}]},
+      options:{plugins:{legend:{position:'top'},datalabels:{anchor:'end',align:'top',color:'#12275A',font:{weight:'bold',size:15}}},scales:{x:{grid:{display:false},ticks:{color:'#344054',font:{size:15}}},y:{beginAtZero:true,ticks:{precision:0,color:'#344054',font:{size:15}},grid:{color:'#EEF1F6'}}}}},660,320);
+    const sk=Object.keys(st.byStatusKey).sort((a,b)=>st.byStatusKey[b]-st.byStatusKey[a]);
+    const status=await cmRptChart(cmRptDoughnutCfg(sk.map(k=>cmRptStatus(k)),sk.map(k=>st.byStatusKey[k]),sk.map(k=>CM_RPT_STATUS_COLOR[k]||'#5B6B82'),[`${rate}%`,L('selesai','completed')]),620,320);
+    blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per bulan','Activities per month'),img:trend,caption:L('Batang = total kegiatan; garis = kegiatan selesai.','Bars = total; line = completed.')}]});
+    blocks.push({t:'charts',items:[{title:L('Komposisi status kegiatan','Status composition'),img:status,caption:L('Persentase dihitung dari seluruh kegiatan pada periode laporan.','Percentages of all activities in the period.')}]});
+    // 3. Sebaran
+    blocks.push({t:'h1',text:L('Sebaran Kegiatan','Activity Distribution')});
+    const kat=cmRptTop(st.byKategori,8);
+    const katImg=await cmRptChart(cmRptBarCfg(kat.map(x=>x[0]),kat.map(x=>x[1]),{horizontal:true}),660,Math.max(220,60+kat.length*38));
+    blocks.push({t:'charts',items:[{title:L('Kegiatan menurut jenis / kategori','Activities by category'),img:katImg}]});
+    if(subj.focus!=='unit'){const un=cmRptTop(st.byUnit,8);const unImg=await cmRptChart(cmRptBarCfg(un.map(x=>x[0]),un.map(x=>x[1]),{horizontal:true,colors:un.map((_,i)=>['#7C5CE0','#9B84EA','#B6A6F0'][Math.min(i,2)])}),660,Math.max(220,60+un.length*38));blocks.push({t:'charts',items:[{title:L('Unit pemohon dengan kegiatan terbanyak','Top requesting units'),img:unImg}]});}
+    if(subj.focus!=='program'){const pr=cmRptTop(st.byProgram,8);const prImg=await cmRptChart(cmRptBarCfg(pr.map(x=>String(x[0]).slice(0,42)),pr.map(x=>x[1]),{horizontal:true,colors:pr.map((_,i)=>['#1BA7C9','#4DBCD6','#82D1E3'][Math.min(i,2)])}),660,Math.max(220,60+pr.length*38));blocks.push({t:'charts',items:[{title:L('Program dengan kegiatan terbanyak','Top programs'),img:prImg}]});}
+    // 4. PIC
+    blocks.push({t:'h1',text:L('Keterlibatan Tim (PIC)','Team Involvement (PIC)')});
+    const pc=cmRptTop(st.byPic,10);
+    const pcImg=await cmRptChart(cmRptBarCfg(pc.map(x=>x[0]),pc.map(x=>x[1]),{colors:pc.map(()=> '#F2A93B')}),660,300);
+    blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per PIC','Activities per PIC'),img:pcImg,caption:L('Satu kegiatan dapat melibatkan lebih dari satu PIC.','One activity may involve several PICs.')}]});
+  }
+  if(total&&inc.docs!==false){
+    blocks.push({t:'h1',text:L('Kelengkapan Dokumen dan Bukti Kegiatan','Document and Evidence Completeness')});
+    const base=done||total,src=done?st.docsDone:st.docs;
+    const vals=CM_RPT_DOC_KEYS.map(k=>cmRptPct(src[k],base));
+    const docImg=await cmRptChart(cmRptBarCfg(CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),vals,{horizontal:true,pct:true,max:100,colors:vals.map(v=>v>=80?'#16A37F':v>=50?'#F2A93B':'#E25563')}),660,280);
+    blocks.push({t:'p',text:L(`Grafik berikut menunjukkan persentase ${done?'kegiatan selesai':'kegiatan'} yang sudah dilengkapi setiap jenis dokumen. Hijau berarti ≥80%, kuning 50–79%, merah di bawah 50%.`,`The chart shows the share of ${done?'completed ':''}activities with each document type. Green ≥80%, amber 50–79%, red below 50%.`)});
+    blocks.push({t:'charts',items:[{title:L('Persentase kelengkapan dokumen','Document completeness (%)'),img:docImg}]});
+    blocks.push({t:'table',head:[L('Jenis dokumen','Document'),L('Kegiatan lengkap','Activities with document'),L('Persentase','Share')],widths:[45,30,25],rows:CM_RPT_DOC_KEYS.map((k,i)=>[cmRptDocLabel(k,lang),`${src[k]} / ${base}`,{text:vals[i]+'%',bold:true,color:vals[i]>=80?'16A37F':vals[i]>=50?'B7791F':'C53030',align:'center'}])});
+  }
+  if(total&&inc.list!==false){
+    blocks.push({t:'h1',text:L('Daftar Kegiatan','Activity List')});
+    const shown=items.slice(0,300);
+    blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Kegiatan','Activity'),L('Unit','Unit'),'Program','PIC','Status',L('Dok.','Docs')],widths:[5,12,30,10,14,12,11,6],
+      rows:shown.map((a,i)=>[String(i+1),fmtDate(a.tglMulai),cmReportSafe(a.namaKegiatan),cmReportSafe(a.unitPemohon),cmReportSafe(a.programTerkait),cmReportSafe(a.picTimCM),cmRptStatusCell(a.statusNorm,lang),{text:cmRptDocPct(a)+'%',align:'center'}])});
+    if(items.length>shown.length)blocks.push({t:'p',text:L(`Ditampilkan 300 dari ${items.length} kegiatan.`,`Showing 300 of ${items.length} activities.`),muted:true});
+  }
+  if(total&&inc.gallery!==false){
+    const cand=items.filter(a=>parseDokumentasi(a.dokumentasi).length).sort((a,b)=>(b.statusNorm==='Completed')-(a.statusNorm==='Completed')).slice(0,8),imgs=[];
+    for(const a of cand){const r=await cmRptImagesFor(a,1);if(r[0])imgs.push({...r[0],caption:`${fmtDate(a.tglMulai)} · ${cmReportSafe(a.namaKegiatan).slice(0,70)}`});}
+    if(imgs.length){blocks.push({t:'h1',text:L('Dokumentasi Kegiatan','Activity Documentation')});blocks.push({t:'gallery',images:imgs});}
+  }
+  if(total&&inc.recs!==false){
+    blocks.push({t:'h1',text:L('Catatan dan Rekomendasi','Notes and Recommendations')});
+    const recs=[],today=dayjs().format('YYYY-MM-DD');
+    if(st.needsUpdate)recs.push(L(`**${st.needsUpdate} kegiatan perlu pembaruan status.** Mohon PIC memutakhirkan status agar laporan mencerminkan kondisi terkini.`,`**${st.needsUpdate} activities need a status update.** PICs should update them.`));
+    const noNotula=items.filter(a=>a.statusNorm==='Completed'&&!cmRptDocFlags(a).notula).length,noFoto=items.filter(a=>a.statusNorm==='Completed'&&!cmRptDocFlags(a).dokumentasi).length;
+    if(noNotula)recs.push(L(`**Lengkapi notula untuk ${noNotula} kegiatan yang sudah selesai**, sebagai bukti dukung dan bahan tindak lanjut.`,`**Upload minutes for ${noNotula} completed activities.**`));
+    if(noFoto)recs.push(L(`**Unggah dokumentasi foto untuk ${noFoto} kegiatan selesai** agar capaian mudah diverifikasi.`,`**Upload photos for ${noFoto} completed activities.**`));
+    if(delayed)recs.push(L(`**Tinjau ulang ${delayed} kegiatan yang tertunda**, tetapkan jadwal pengganti atau alasan pembatalan.`,`**Review ${delayed} delayed activities** and reschedule or close them.`));
+    if(st.topPic[1]&&total>=8&&st.topPic[1]/total>=0.35)recs.push(L(`**Pertimbangkan pemerataan beban kerja.** ${st.topPic[0]} terlibat pada ${cmRptPct(st.topPic[1],total)}% kegiatan.`,`**Consider balancing workload.** ${st.topPic[0]} is involved in ${cmRptPct(st.topPic[1],total)}% of activities.`));
+    if(per.to&&per.to<today&&rate<60)recs.push(L(`**Tingkat penyelesaian ${rate}% untuk periode yang sudah berakhir.** Identifikasi hambatan bersama unit pemohon.`,`**Completion is ${rate}% for a closed period.** Identify blockers with requesting units.`));
+    if(!recs.length)recs.push(L('Pelaksanaan kegiatan sudah berjalan baik. Pertahankan ritme kerja dan kelengkapan bukti dukung.','Execution is on track. Keep the pace and evidence completeness.'));
+    blocks.push({t:'bullets',items:recs});
+    blocks.push({t:'p',text:L('Laporan ini disusun otomatis dari data Dashboard Master Agenda Change Management sesuai filter yang dipilih, sebagai bahan monitoring dan evaluasi pimpinan.','This report is generated automatically from the Change Management Master Agenda dashboard based on the selected filters.'),muted:true});
+  }
+  const qr=cmRptQr(`TTE-PLACEHOLDER | ${title} ${per.label} | ${subj.text}`);
+  return {kind:'range',lang,fileName,title:`${title} ${per.label.toUpperCase()}`,
+    cover:{kicker:title,title:per.label.toUpperCase(),subject:subj.text,chips:[`${total} ${L('kegiatan','activities')}`,`${rate}% ${L('selesai','completed')}`],
+      scope:cmReportFilterSummary(items,lang),meta:[[L('Periode laporan','Report period'),per.range||per.label],[L('Lingkup','Scope'),subj.text],[L('Jumlah kegiatan','Activities'),String(total)],[L('Disusun oleh','Prepared by'),'Pusmantap — BaTii (CMO Kemenkeu)'],[L('Tanggal penyusunan','Prepared on'),cmRptLongDate(dayjs().format('YYYY-MM-DD'),lang)]],
+      tte:{qr,name:signer.name,title:signer.title,date:cmRptLongDate(dayjs().format('YYYY-MM-DD'),lang)}},
+    header:`${subj.text} · ${per.short}`,blocks};
+}
+function cmRptRangeContext(items,st,per,subj,lang){
+  const lines=[`REPORT: ${subj.text} | PERIOD: ${per.label} (${per.range||'-'}) | TOTAL=${items.length} | COMPLETED=${st.completed} | NEEDS_STATUS_UPDATE=${st.needsUpdate}`,
+    `BY_STATUS: ${Object.entries(st.byStatus).map(([k,v])=>k+'='+v).join(', ')}`,
+    `BY_MONTH: ${Object.entries(st.byMonth).sort().map(([k,v])=>k+'='+v).join(', ')}`,
+    `BY_CATEGORY: ${cmRptTop(st.byKategori,10).map(([k,v])=>k+'='+v).join(', ')}`,
+    `BY_UNIT: ${cmRptTop(st.byUnit,10).map(([k,v])=>k+'='+v).join(', ')}`,
+    `BY_PROGRAM: ${cmRptTop(st.byProgram,10).map(([k,v])=>k+'='+v).join(', ')}`,
+    `BY_PIC: ${cmRptTop(st.byPic,10).map(([k,v])=>k+'='+v).join(', ')}`,
+    `DOCS_ON_COMPLETED: ${CM_RPT_DOC_KEYS.map(k=>k+'='+st.docsDone[k]+'/'+st.completed).join(', ')}`,
+    'ACTIVITIES:'];
+  items.slice(0,80).forEach(a=>lines.push(`- ${a.tglMulai} | ${cmReportSafe(a.namaKegiatan).slice(0,120)} | ${cmReportSafe(a.kategori)} | ${cmReportSafe(a.unitPemohon)} | ${cmReportSafe(a.programTerkait)} | ${cmRptStatus(a.statusNorm)} | output: ${String(a.tujuanOutput||'-').slice(0,160)}`));
+  return lines.join('\n');
+}
+async function cmRptBuildSingleModel(a,opts){
+  cmRptLangCur=opts.lang;const lang=opts.lang,L=(i,e)=>cmRptT(lang,i,e),signer=opts.signer||{};
+  const flags=cmRptDocFlags(a),docPct=cmRptDocPct(a),start=a.tglMulai,end=a.tglSelesai||a.tglMulai;
+  const days=Math.max(1,dayjs(end).diff(dayjs(start),'day')+1||1),pics=String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const dateText=start===end?cmRptLongDate(start,lang):`${cmRptLongDate(start,lang)} – ${cmRptLongDate(end,lang)}`;
+  const prog=cmRptHas(a.programTerkait)?a.programTerkait:'';
+  const lokRaw=String(a.lokasiChannel||'').trim(),lokIsUrl=/^https?:\/\//i.test(lokRaw),lokText=lokIsUrl?L('Daring','Online')+(/teams\./i.test(lokRaw)?' (Microsoft Teams)':/zoom\./i.test(lokRaw)?' (Zoom)':''):lokRaw;
+  const subject=prog?`${L('Monitoring dan Evaluasi Proyek','Monitoring and Evaluation of Project')} ${prog}`:L('Monitoring dan Evaluasi Kegiatan Change Management','Monitoring and Evaluation of Change Management Activity');
+  const blocks=[];
+  blocks.push({t:'h1',text:L('Ringkasan Kegiatan','Activity Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Tanggal','Date'),value:dayjs(start).isValid()?dayjs(start).locale(lang==='en'?'en':'id').format('D MMM'):'-',sub:dayjs(start).isValid()?dayjs(start).format('YYYY'):'',color:'2F5BD3'},
+    {label:L('Waktu','Time'),value:cmReportSafe(a.waktu).split(/\s*-\s*/)[0]||'-',sub:cmRptHas(a.waktu)?a.waktu:L('Seharian','All day'),color:'1BA7C9'},
+    {label:L('Durasi','Duration'),value:days,sub:L('hari','day(s)'),color:'7C5CE0'},
+    {label:'Status',value:cmRptStatus(a.statusNorm),sub:a.statusNeedsUpdate?L('perlu pembaruan','needs update'):L('terkini','current'),color:(CM_RPT_STATUS_COLOR[a.statusNorm]||'#5B6B82').replace('#','')},
+    {label:'PIC',value:pics.length||'-',sub:L('anggota tim','team members'),color:'F2A93B'},
+    {label:L('Kelengkapan dokumen','Document completeness'),value:docPct+'%',sub:`${CM_RPT_DOC_KEYS.filter(k=>flags[k]).length} / 5`,color:docPct>=80?'16A37F':docPct>=50?'C28A1E':'E25563'}]});
+  blocks.push({t:'p',text:L(
+    `Kegiatan **${cmReportSafe(a.namaKegiatan)}** dilaksanakan pada **${dateText}**${cmRptHas(a.waktu)?` pukul ${a.waktu}`:''}${cmRptHas(lokText)?(lokIsUrl?` secara ${lokText.toLowerCase().replace('(microsoft teams)','melalui Microsoft Teams').replace('(zoom)','melalui Zoom')}`:` di ${lokText}`):''}. Kegiatan ini diajukan oleh **${cmReportSafe(a.unitPemohon)}**${prog?` dalam rangka **${prog}**`:''}, dengan PIC tim CM ${pics.length?pics.join(', '):'-'}. Status saat ini: **${cmRptStatus(a.statusNorm)}**.`,
+    `**${cmReportSafe(a.namaKegiatan)}** took place on **${dateText}**${cmRptHas(a.waktu)?` at ${a.waktu}`:''}${cmRptHas(lokText)?` (${lokText})`:''}, requested by **${cmReportSafe(a.unitPemohon)}**${prog?` for **${prog}**`:''}, with CM PIC(s) ${pics.join(', ')||'-'}. Current status: **${cmRptStatus(a.statusNorm)}**.`)});
+  blocks.push({t:'h1',text:L('Detail Kegiatan','Activity Details')});
+  const link=typeof getMeetingLink==='function'?getMeetingLink(a):'';
+  blocks.push({t:'kv',rows:[[L('Nama kegiatan','Activity'),cmReportSafe(a.namaKegiatan)],[L('Kategori','Category'),cmReportSafe(a.kategori)],['Program',cmReportSafe(a.programTerkait)],[L('Layanan','Service'),cmReportSafe(a.layanan)],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],[L('Unit asal narasumber','Speaker unit'),cmReportSafe(a.unitAsalNarsum)],[L('Peserta / sasaran','Target participants'),cmReportSafe(a.pesertaTarget)],[L('Tanggal & waktu','Date & time'),`${dateText}${cmRptHas(a.waktu)?' · '+a.waktu:''}`],[L('Lokasi / kanal','Location / channel'),cmReportSafe(lokText)],...(cmRptHas(link)||lokIsUrl?[[L('Tautan rapat','Meeting link'),cmRptHas(link)?link:lokRaw]]:[]),['PIC Tim CM',cmReportSafe(a.picTimCM)],...(Number(a.estimasiBiaya)>0?[[L('Estimasi biaya','Estimated cost'),fmtRupiah(a.estimasiBiaya)]]:[])]});
+  if(cmRptHas(a.tujuanOutput))blocks.push({t:'callout',tone:'good',title:L('Tujuan dan output','Objective and output'),lines:[a.tujuanOutput]});
+  if(cmRptHas(a.catatan))blocks.push({t:'callout',tone:'info',title:L('Catatan','Notes'),lines:[a.catatan]});
+  // charts
+  blocks.push({t:'h1',text:L('Gambaran Visual','Visual Overview')});
+  const docImg=await cmRptChart(cmRptDoughnutCfg([L('Sudah ada','Available'),L('Belum ada','Missing')],[CM_RPT_DOC_KEYS.filter(k=>flags[k]).length,CM_RPT_DOC_KEYS.filter(k=>!flags[k]).length],['#16A37F','#E4E7EC'],[`${docPct}%`,L('lengkap','complete')]),560,280);
+  const docBars=await cmRptChart(cmRptBarCfg(CM_RPT_DOC_KEYS.map(k=>cmRptDocLabel(k,lang)),CM_RPT_DOC_KEYS.map(k=>flags[k]?100:0),{horizontal:true,pct:true,max:100,colors:CM_RPT_DOC_KEYS.map(k=>flags[k]?'#16A37F':'#E25563')}),560,260);
+  blocks.push({t:'charts',items:[{title:L('Kelengkapan dokumen kegiatan','Document completeness'),img:docImg},{title:L('Status per jenis dokumen','Status per document'),img:docBars,caption:L('Hijau = tersedia, merah = belum ada.','Green = available, red = missing.')}]});
+  if(cmIsEoEnabled(a.eoEnabled)){
+    const p=cmEoProgress(a.eoChecklist),phases=['Planning','Execution','Post Event'];
+    if(p.total){const eoImg=await cmRptChart({type:'bar',data:{labels:phases.map(x=>cmEoPhaseLabel(x)),datasets:[{label:L('Selesai','Done'),data:phases.map(ph=>p.items.filter(x=>x.phase===ph&&x.done).length),backgroundColor:'#16A37F',borderRadius:5},{label:L('Belum','Open'),data:phases.map(ph=>p.items.filter(x=>x.phase===ph&&!x.done).length),backgroundColor:'#F2A93B',borderRadius:5}]},options:{plugins:{legend:{position:'top'},datalabels:{color:'#fff',font:{weight:'bold'},formatter:v=>v||''}},scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}},660,280);
+      blocks.push({t:'charts',items:[{title:L(`Progres checklist EO (${p.pct}% selesai)`,`EO checklist progress (${p.pct}% done)`),img:eoImg}]});}
+  }
+  if(prog){
+    const y=String(start||'').slice(0,4),same=(state.agendas||[]).filter(x=>x.programTerkait===prog&&String(x.tglMulai||'').slice(0,4)===y),mo=Array.from({length:12},(_,i)=>`${y}-${String(i+1).padStart(2,'0')}`),cur=String(start||'').slice(0,7);
+    if(same.length>1){const ctxImg=await cmRptChart(cmRptBarCfg(mo.map(m=>dayjs(m+'-01').locale(lang==='en'?'en':'id').format('MMM')),mo.map(m=>same.filter(x=>String(x.tglMulai||'').slice(0,7)===m).length),{colors:mo.map(m=>m===cur?'#F2A93B':'#C7D3F2')}),660,260);
+      blocks.push({t:'charts',items:[{title:L(`Posisi kegiatan dalam ${prog} sepanjang ${y}`,`This activity within ${prog} in ${y}`),img:ctxImg,caption:L(`Batang oranye = bulan kegiatan ini. Total ${same.length} kegiatan ${prog} pada ${y}.`,`Orange bar = this activity's month. ${same.length} ${prog} activities in ${y}.`)}]});}
+  }
+  // documents
+  blocks.push({t:'h1',text:L('Dokumen dan Notula','Documents and Minutes')});
+  const fileNames=raw=>parseActivityFiles(raw).map(x=>x.name||(typeof fileNameFromUrl==='function'?fileNameFromUrl(x.url||''):'')||'file').join(', ');
+  const docRow=(label,ok,detail)=>[label,{text:ok?L('Tersedia','Available'):L('Belum ada','Missing'),color:'FFFFFF',fill:ok?'16A37F':'E25563',bold:true,align:'center'},detail||'-'];
+  const notes=parseActivityNotula(a.notula);
+  blocks.push({t:'table',head:[L('Dokumen','Document'),'Status',L('Keterangan','Details')],widths:[24,16,60],rows:[
+    docRow(cmRptDocLabel('undangan',lang),flags.undangan,[cmRptHas(a.undangan)?a.undangan:'',fileNames(a.undanganFiles)].filter(Boolean).join(' · ')),
+    docRow(cmRptDocLabel('suratTugas',lang),flags.suratTugas,[cmRptHas(a.suratTugas)?a.suratTugas:'',fileNames(a.suratTugasFiles)].filter(Boolean).join(' · ')),
+    docRow(cmRptDocLabel('materi',lang),flags.materi,[cmRptHas(a.materi)?(isUrlLike(a.materi)?fileNameFromUrl(a.materi):a.materi):'',fileNames(a.materiFiles)].filter(Boolean).join(' · ')),
+    docRow(cmRptDocLabel('notula',lang),flags.notula,notes.map(n=>n.fileName).filter(Boolean).join(', ')),
+    docRow(cmRptDocLabel('dokumentasi',lang),flags.dokumentasi,`${parseDokumentasi(a.dokumentasi).length} ${L('foto','photo(s)')}`)]});
+  notes.slice(0,3).forEach(n=>{if(cmRptHas(n.searchPreview))blocks.push({t:'callout',tone:'info',title:`${L('Ringkasan notula','Minutes excerpt')}: ${n.fileName||''}`,lines:[String(n.searchPreview).slice(0,900)+(String(n.searchPreview).length>900?'…':'')]});});
+  if(cmIsEoEnabled(a.eoEnabled)){const p=cmEoProgress(a.eoChecklist);if(p.total){blocks.push({t:'h1',text:L('Checklist EO / Event Organizer','EO Checklist')});blocks.push({t:'table',small:true,head:[L('Tahap','Phase'),L('Tugas','Task'),'PIC',L('Tenggat','Due'),'Status'],widths:[16,40,16,14,14],rows:p.items.map(x=>[cmEoPhaseLabel(x.phase),cmReportSafe(x.task),cmReportSafe(x.pic),x.dueDate?fmtDate(x.dueDate):'-',{text:x.done?L('Selesai','Done'):L('Belum','Open'),color:'FFFFFF',fill:x.done?'16A37F':'F2A93B',bold:true,align:'center'}])});}}
+  const imgs=await cmRptImagesFor(a,12);
+  if(imgs.length){blocks.push({t:'h1',text:L('Dokumentasi Foto','Photo Documentation')});blocks.push({t:'gallery',images:imgs});}
+  else if(flags.dokumentasi){blocks.push({t:'h1',text:L('Dokumentasi Foto','Photo Documentation')});blocks.push({t:'callout',tone:'warn',title:L('Foto belum dapat dimuat','Photos could not be loaded'),lines:[L('Masuk (login) terlebih dahulu agar foto dokumentasi dapat disertakan dalam laporan.','Sign in so documentation photos can be included.')]});}
+  // AI + monev notes
+  if(opts.ai){const ctx=cmRptSingleContext(a,flags,lang);const ai=await cmRptAi(ctx,lang,'single');if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Disusun otomatis oleh asisten AI dari data kegiatan; mohon ditelaah sebelum digunakan.','Generated by the AI assistant; please review.'),sections:ai});}
+  blocks.push({t:'h1',text:L('Catatan Monev dan Tindak Lanjut','M&E Notes and Follow-up')});
+  const recs=[],today=dayjs().format('YYYY-MM-DD');
+  const missing=CM_RPT_DOC_KEYS.filter(k=>!flags[k]).map(k=>cmRptDocLabel(k,lang));
+  if(a.statusNeedsUpdate)recs.push(L('**Status kegiatan perlu diperbarui** karena tanggal pelaksanaan sudah lewat.','**Status needs updating** because the activity date has passed.'));
+  if(missing.length)recs.push(L(`**Lengkapi dokumen:** ${missing.join(', ')}.`,`**Complete documents:** ${missing.join(', ')}.`));
+  if(cmIsEoEnabled(a.eoEnabled)){const p=cmEoProgress(a.eoChecklist),over=p.items.filter(x=>!x.done&&x.dueDate&&x.dueDate<today).length;if(over)recs.push(L(`**${over} item checklist EO melewati tenggat** dan belum selesai.`,`**${over} EO checklist items are overdue.**`));}
+  if(a.statusNorm==='Completed'&&!flags.notula)recs.push(L('**Susun notula/laporan singkat** berisi hasil dan kesepakatan kegiatan.','**Prepare minutes** with outcomes and agreements.'));
+  if(!recs.length)recs.push(L('Data dan bukti kegiatan sudah lengkap. Tidak ada tindak lanjut administratif yang mendesak.','Activity data and evidence are complete. No urgent follow-up.'));
+  blocks.push({t:'bullets',items:recs});
+  const title=L('LAPORAN KEGIATAN','ACTIVITY REPORT');
+  const qr=cmRptQr(`TTE-PLACEHOLDER | ${title} | ${a.id} | ${cmReportSafe(a.namaKegiatan).slice(0,80)}`);
+  return {kind:'single',lang,fileName:cmRptFileName(`Laporan Kegiatan - ${cmReportSafe(a.namaKegiatan).slice(0,90)} - ${start||''}`),title:`${title} — ${cmReportSafe(a.namaKegiatan)}`,
+    cover:{kicker:title,title:cmReportSafe(a.namaKegiatan),subject,chips:[cmRptStatus(a.statusNorm),cmReportSafe(a.kategori),dateText],scope:[],
+      meta:[[L('Tanggal kegiatan','Activity date'),dateText],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],['Program',cmReportSafe(a.programTerkait)],['PIC Tim CM',cmReportSafe(a.picTimCM)],[L('Disusun oleh','Prepared by'),'Pusmantap — BaTii (CMO Kemenkeu)'],[L('Tanggal penyusunan','Prepared on'),cmRptLongDate(dayjs().format('YYYY-MM-DD'),lang)]],
+      tte:{qr,name:signer.name,title:signer.title,date:cmRptLongDate(dayjs().format('YYYY-MM-DD'),lang)}},
+    header:`${L('Laporan Kegiatan','Activity Report')} · ${cmReportSafe(a.namaKegiatan).slice(0,70)}`,blocks};
+}
+function cmRptSingleContext(a,flags,lang){
+  const notes=parseActivityNotula(a.notula).map(n=>`${n.fileName||'-'}: ${String(n.searchPreview||'').slice(0,1200)}`).join('\n');
+  return `ACTIVITY: ${cmReportSafe(a.namaKegiatan)}\nDATE: ${a.tglMulai}${a.tglSelesai&&a.tglSelesai!==a.tglMulai?' to '+a.tglSelesai:''} ${a.waktu||''}\nCATEGORY: ${cmReportSafe(a.kategori)} | PROGRAM: ${cmReportSafe(a.programTerkait)} | UNIT: ${cmReportSafe(a.unitPemohon)} | PIC: ${cmReportSafe(a.picTimCM)} | STATUS: ${cmRptStatus(a.statusNorm)}${a.statusNeedsUpdate?' (needs update)':''}\nLOCATION: ${cmReportSafe(a.lokasiChannel)} | PARTICIPANTS: ${cmReportSafe(a.pesertaTarget)}\nOBJECTIVE/OUTPUT: ${String(a.tujuanOutput||'-').slice(0,1500)}\nNOTES: ${String(a.catatan||'-').slice(0,1500)}\nDOCUMENTS: ${CM_RPT_DOC_KEYS.map(k=>k+'='+(flags[k]?'yes':'no')).join(', ')}\nMINUTES:\n${notes||'-'}`;
+}
+
+/* ---------- HTML renderer (preview + print to PDF) ---------- */
+function cmRptMd(s){return escapeHtml(String(s??'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
+function cmRptHtml(model){
+  const c=model.cover,L=(i,e)=>cmRptT(model.lang,i,e);let n=0;
+  const cell=v=>{if(v&&typeof v==='object'){const st=[v.fill?`background:#${v.fill}`:'',v.color?`color:#${v.color}`:'',v.bold?'font-weight:700':'',v.align?`text-align:${v.align}`:''].filter(Boolean).join(';');return `<td style="${st}">${v.fill?`<span class="pill">${cmRptMd(v.text)}</span>`:cmRptMd(v.text)}</td>`;}return `<td>${cmRptMd(v)}</td>`;};
+  const body=model.blocks.map(b=>{
+    switch(b.t){
+      case 'h1':n++;return `<h2 class="sec"><span class="num">${n}</span>${escapeHtml(b.text)}</h2>`;
+      case 'p':return `<p class="${b.muted?'muted':''}">${cmRptMd(b.text)}</p>`;
+      case 'kpis':return `<div class="kpis">${b.items.map(k=>`<div class="kpi" style="--c:#${k.color}"><div class="kv">${escapeHtml(String(k.value))}</div><div class="kl">${escapeHtml(k.label)}</div><div class="ks">${escapeHtml(k.sub||'')}</div></div>`).join('')}</div>`;
+      case 'charts':return `<div class="charts n${b.items.length}">${b.items.map(x=>`<figure class="chart"><figcaption>${escapeHtml(x.title)}</figcaption>${x.img?`<img src="${x.img.src}" alt="">`:`<div class="noimg">${L('Grafik tidak tersedia','Chart unavailable')}</div>`}${x.caption?`<small>${escapeHtml(x.caption)}</small>`:''}</figure>`).join('')}</div>`;
+      case 'callout':return `<div class="callout ${b.tone||'info'}"><b>${escapeHtml(b.title)}</b>${b.lines.length>1?`<ul>${b.lines.map(l=>`<li>${cmRptMd(l)}</li>`).join('')}</ul>`:`<p>${cmRptMd(b.lines[0])}</p>`}</div>`;
+      case 'bullets':return `<ul class="bul">${b.items.map(l=>`<li>${cmRptMd(l)}</li>`).join('')}</ul>`;
+      case 'kv':return `<table class="kvt">${b.rows.map(r=>`<tr><th>${escapeHtml(r[0])}</th><td>${cmRptMd(r[1])}</td></tr>`).join('')}</table>`;
+      case 'table':return `<table class="tbl ${b.small?'small':''}"><colgroup>${(b.widths||[]).map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr>${b.head.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table>`;
+      case 'gallery':return `<div class="gallery">${b.images.map(im=>`<figure><img src="${im.src}" alt=""><figcaption>${escapeHtml(im.caption||'')}</figcaption></figure>`).join('')}</div>`;
+      case 'ai':return `<div class="ai"><div class="aih">✦ ${escapeHtml(b.title)}</div><div class="ain">${escapeHtml(b.note||'')}</div>${b.sections.map(s=>`${s.title?`<h4>${escapeHtml(s.title)}</h4>`:''}${s.paras.map(p=>`<p>${cmRptMd(p)}</p>`).join('')}${s.bullets.length?`<ul>${s.bullets.map(x=>`<li>${cmRptMd(x)}</li>`).join('')}</ul>`:''}`).join('')}</div>`;
+      default:return '';
+    }
+  }).join('\n');
+  const tte=c.tte||{};
+  return `<!doctype html><html lang="${model.lang}"><head><meta charset="utf-8"><title>${escapeHtml(model.fileName)}</title><style>
+  @page{size:A4;margin:14mm 14mm 16mm}
+  *{box-sizing:border-box}html{background:#E9EDF3}body{margin:0;font-family:'Segoe UI',Inter,Arial,sans-serif;color:#1d2433;font-size:13.5px;line-height:1.62;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet{width:min(794px,100%);margin:18px auto;background:#fff;box-shadow:0 6px 24px rgba(16,24,40,.12);border-radius:6px;overflow:hidden}
+  .cover{min-height:1090px;display:flex;flex-direction:column}
+  .band{background:linear-gradient(120deg,#12275A 0%,#1F3F86 60%,#2F5BD3 100%);color:#fff;padding:34px 44px 30px;position:relative;overflow:hidden}.band .org{position:relative;z-index:1}
+  .band:after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:rgba(242,169,59,.22)}
+  .org{font-size:11.5px;letter-spacing:.4px;opacity:.92;line-height:1.5}.org b{font-size:13px;letter-spacing:1px}
+  .stripe{height:8px;background:linear-gradient(90deg,#F2A93B,#E25563,#7C5CE0,#1BA7C9,#16A37F)}
+  .ctitle{padding:44px 44px 10px}.kick{color:#2F5BD3;font-weight:800;letter-spacing:1.6px;font-size:14px}
+  .big{font-size:34px;line-height:1.18;font-weight:800;color:#12275A;margin:8px 0 10px}.subj{font-size:19px;color:#344054;font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.chip{background:#EEF3FF;color:#1F3F86;border-radius:999px;padding:5px 13px;font-weight:700;font-size:12.5px}
+  .scope{margin:18px 44px 0;background:#FFF8EC;border-left:5px solid #F2A93B;padding:10px 14px;border-radius:6px;font-size:12.5px}
+  .meta{margin:18px 44px 0;border-collapse:collapse;width:calc(100% - 88px);font-size:13px}.meta th{text-align:left;color:#667085;font-weight:600;width:34%;padding:7px 0;border-bottom:1px solid #EEF1F6}.meta td{padding:7px 0;border-bottom:1px solid #EEF1F6;font-weight:600}
+  .tte{margin:auto 44px 40px auto;width:330px;border:1.5px dashed #9AA7C2;border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#FAFBFF}
+  .tte img{width:96px;height:96px;opacity:.9}.qrph{width:96px;height:96px;border:2px dashed #9AA7C2;display:flex;align-items:center;justify-content:center;color:#9AA7C2;font-weight:800}
+  .tte .tl{font-size:11px;color:#2F5BD3;font-weight:800;letter-spacing:.4px;text-transform:uppercase}.tte .tn{font-weight:800;color:#12275A;margin-top:6px}.tte .tj{font-size:12px;color:#475467}.tte .td{font-size:11px;color:#98A2B3;margin-top:4px}
+  .content{padding:34px 44px 40px}
+  .runhead{display:flex;justify-content:space-between;font-size:11px;color:#98A2B3;border-bottom:1px solid #EEF1F6;padding-bottom:8px;margin-bottom:6px}
+  h2.sec{display:flex;align-items:center;gap:10px;color:#12275A;font-size:21px;margin:30px 0 12px;break-after:avoid}
+  h2.sec .num{background:#12275A;color:#fff;border-radius:9px;min-width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+  p{margin:8px 0 10px}p.muted{color:#667085;font-size:12.5px}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0 14px}
+  .kpi{border-radius:12px;padding:14px 16px;background:color-mix(in srgb,var(--c) 10%,#fff);border:1px solid color-mix(in srgb,var(--c) 30%,#fff);border-top:5px solid var(--c);break-inside:avoid}
+  .kv{font-size:28px;font-weight:800;color:var(--c);line-height:1.1}.kl{font-weight:700;color:#1d2433;margin-top:4px}.ks{font-size:12px;color:#667085}
+  .charts{display:grid;gap:14px;margin:8px 0 14px}.charts.n2{grid-template-columns:1fr 1fr}
+  .chart{margin:0;border:1px solid #E4E7EC;border-radius:12px;padding:12px 14px;break-inside:avoid;background:#fff}.chart figcaption{font-weight:700;color:#12275A;margin-bottom:6px}.chart img{width:100%;display:block}.chart small{color:#667085;font-size:12px}
+  .noimg{padding:30px;text-align:center;color:#98A2B3;background:#F8FAFC;border-radius:8px}
+  .callout{border-radius:10px;padding:12px 16px;margin:12px 0;break-inside:avoid}.callout ul{margin:6px 0 0 18px;padding:0}.callout p{margin:4px 0 0}
+  .callout.info{background:#EEF4FF;border-left:5px solid #2F5BD3}.callout.good{background:#ECFAF4;border-left:5px solid #16A37F}.callout.warn{background:#FFF4E5;border-left:5px solid #F2A93B}
+  .bul{margin:6px 0 12px 20px;padding:0}.bul li{margin:6px 0}
+  table{border-collapse:collapse;width:100%}
+  .tbl{margin:8px 0 14px;font-size:12.5px}.tbl th{background:#12275A;color:#fff;text-align:left;padding:8px;font-weight:700}.tbl td{padding:7px 8px;border-bottom:1px solid #E4E7EC;vertical-align:top}.tbl tbody tr:nth-child(even) td{background:#F8FAFD}.tbl.small{font-size:11.5px}.tbl thead{display:table-header-group}.tbl tr{break-inside:avoid}
+  .tbl td .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;color:#fff}
+  .tbl td[style*="background"]{background-clip:padding-box}
+  .kvt{margin:8px 0 14px;font-size:13px}.kvt th{width:32%;text-align:left;background:#F3F6FB;color:#344054;padding:8px 10px;border-bottom:1px solid #fff;vertical-align:top}.kvt td{padding:8px 10px;border-bottom:1px solid #EEF1F6}
+  .gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0}.gallery figure{margin:0;border:1px solid #E4E7EC;border-radius:10px;overflow:hidden;break-inside:avoid;background:#fff}.gallery img{width:100%;height:220px;object-fit:cover;display:block}.gallery figcaption{font-size:11.5px;color:#475467;padding:7px 10px}
+  .ai{border:1px solid #D9CCFF;background:linear-gradient(180deg,#F7F3FF,#fff);border-radius:12px;padding:14px 18px;margin:14px 0;break-inside:avoid}.aih{font-weight:800;color:#5B3FC4;font-size:16px}.ain{font-size:11.5px;color:#7A6AA8;margin-bottom:6px}.ai h4{margin:10px 0 4px;color:#3B2A84}.ai ul{margin:4px 0 6px 18px;padding:0}
+  .foot{font-size:11px;color:#98A2B3;text-align:center;padding:10px 0 0;border-top:1px solid #EEF1F6;margin-top:24px}
+  @media print{html{background:#fff}.sheet{box-shadow:none;margin:0;width:auto;border-radius:0}.cover{min-height:265mm;break-after:page}.content{padding:0}.runhead{display:none}}
+  @media (max-width:640px){.band,.ctitle,.content{padding-left:20px;padding-right:20px}.scope,.meta{margin-left:20px;margin-right:20px;width:calc(100% - 40px)}.big{font-size:26px}.kpis{grid-template-columns:1fr 1fr}.charts.n2,.gallery{grid-template-columns:1fr}.tte{margin:24px 20px;width:auto}}
+  </style></head><body>
+  <div class="sheet cover"><div class="band"><div class="org"><b>${escapeHtml(CM_RPT_ORG[0])}</b><br>${escapeHtml(CM_RPT_ORG[1])}<br>${escapeHtml(CM_RPT_ORG[2])}</div></div><div class="stripe"></div>
+  <div class="ctitle"><div class="kick">${escapeHtml(c.kicker)}</div><div class="big">${escapeHtml(c.title)}</div><div class="subj">${escapeHtml(c.subject)}</div><div class="chips">${(c.chips||[]).filter(cmRptHas).map(x=>`<span class="chip">${escapeHtml(x)}</span>`).join('')}</div></div>
+  ${c.scope&&c.scope.length?`<div class="scope"><b>${L('Filter yang digunakan','Filters used')}:</b> ${c.scope.map(escapeHtml).join(' • ')}</div>`:''}
+  <table class="meta">${c.meta.map(r=>`<tr><th>${escapeHtml(r[0])}</th><td>${escapeHtml(r[1])}</td></tr>`).join('')}</table>
+  <div class="tte">${tte.qr?`<img src="${tte.qr.src}" alt="QR TTE">`:`<div class="qrph">QR</div>`}<div><div class="tl">${L('Ditandatangani secara elektronik','Electronically signed')}</div><div class="tn">${escapeHtml(tte.name||L('[Nama Penandatangan]','[Signer Name]'))}</div><div class="tj">${escapeHtml(tte.title||L('[Jabatan]','[Position]'))}</div><div class="td">${escapeHtml(tte.date||'')} · ${L('Placeholder QR TTE','TTE QR placeholder')}</div></div></div>
+  </div>
+  <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')} · ${L('Dibuat dari Dashboard Master Agenda Change Management','Generated from the Change Management Master Agenda dashboard')}</div></div>
+  </body></html>`;
+}
+
+/* ---------- DOCX renderer ---------- */
+function cmDx(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'');}
+function cmDxRuns(text,o={}){
+  const parts=String(text??'').split(/(\*\*[^*]+\*\*)/g).filter(x=>x!=='');
+  return parts.map(p=>{const bold=o.b||/^\*\*.*\*\*$/.test(p);const t=bold&&/^\*\*.*\*\*$/.test(p)?p.slice(2,-2):p;
+    return String(t).split('\n').map((seg,i)=>`<w:r><w:rPr>${bold?'<w:b/>':''}${o.i?'<w:i/>':''}${o.color?`<w:color w:val="${o.color}"/>`:''}${o.sz?`<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>`:''}${o.caps?'<w:caps/>':''}</w:rPr>${i?'<w:br/>':''}<w:t xml:space="preserve">${cmDx(seg)}</w:t></w:r>`).join('');}).join('')||'<w:r><w:t></w:t></w:r>';
+}
+function cmDxP(runs,o={}){
+  const ppr=[o.style?`<w:pStyle w:val="${o.style}"/>`:'',o.keepNext?'<w:keepNext/>':'',o.pageBreakBefore?'<w:pageBreakBefore/>':'',o.shade?`<w:shd w:val="clear" w:color="auto" w:fill="${o.shade}"/>`:'',o.borderLeft?`<w:pBdr><w:left w:val="single" w:sz="24" w:space="8" w:color="${o.borderLeft}"/></w:pBdr>`:'',`<w:spacing w:before="${o.before??0}" w:after="${o.after??100}" w:line="${o.line??276}" w:lineRule="auto"/>`,o.indent?`<w:ind w:left="${o.indent}" w:right="${o.indentR||0}"/>`:'',o.align?`<w:jc w:val="${o.align}"/>`:'',o.numId?`<w:numPr><w:ilvl w:val="0"/><w:numId w:val="${o.numId}"/></w:numPr>`:''].join('');
+  return `<w:p><w:pPr>${ppr}</w:pPr>${runs}</w:p>`;
+}
+function cmDxCell(content,w,o={}){
+  const b=o.noBorder?'<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>':(o.borders||'');
+  return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${o.span?`<w:gridSpan w:val="${o.span}"/>`:''}${b}${o.fill?`<w:shd w:val="clear" w:color="auto" w:fill="${o.fill}"/>`:''}<w:tcMar><w:top w:w="${o.padT??70}" w:type="dxa"/><w:left w:w="${o.padL??110}" w:type="dxa"/><w:bottom w:w="${o.padB??70}" w:type="dxa"/><w:right w:w="${o.padR??110}" w:type="dxa"/></w:tcMar><w:vAlign w:val="${o.v||'top'}"/></w:tcPr>${content||cmDxP('')}</w:tc>`;
+}
+function cmDxTable(rows,widths,o={}){
+  const total=widths.reduce((s,x)=>s+x,0);
+  const bc=o.borderColor||'E4E7EC',border=o.noBorder?'<w:tblBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></w:tblBorders>':`<w:tblBorders><w:top w:val="single" w:sz="4" w:color="${bc}"/><w:left w:val="single" w:sz="4" w:color="${bc}"/><w:bottom w:val="single" w:sz="4" w:color="${bc}"/><w:right w:val="single" w:sz="4" w:color="${bc}"/><w:insideH w:val="single" w:sz="4" w:color="${bc}"/><w:insideV w:val="single" w:sz="4" w:color="${bc}"/></w:tblBorders>`;
+  return `<w:tbl><w:tblPr><w:tblW w:w="${total}" w:type="dxa"/>${o.jc?`<w:jc w:val="${o.jc}"/>`:''}<w:tblLayout w:type="fixed"/>${border}</w:tblPr><w:tblGrid>${widths.map(w=>`<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>${rows.map(r=>`<w:tr><w:trPr><w:cantSplit/>${r.header?'<w:tblHeader/>':''}</w:trPr>${r.cells.join('')}</w:tr>`).join('')}</w:tbl>${o.after===false?'':cmDxP('',{after:o.after??120})}`;
+}
+async function cmRptDocx(model){
+  if(typeof JSZip==='undefined')throw new Error('JSZip not available');
+  const W=9638,EMU=635,media=[],L=(i,e)=>cmRptT(model.lang,i,e);let docPr=1;
+  const addImg=(img,widthTw)=>{if(!img||!img.src)return '';const m=img.src.match(/^data:image\/(png|jpe?g);base64,(.*)$/);if(!m)return '';const ext=m[1]==='png'?'png':'jpeg';const id=`rIdImg${media.length+1}`;media.push({id,ext,data:m[2],name:`image${media.length+1}.${ext==='png'?'png':'jpg'}`});
+    const cx=Math.round(widthTw*EMU),cy=Math.round(cx*(img.h/img.w));const n=docPr++;
+    return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${n}" name="Gambar ${n}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${n}" name="${media[media.length-1].name}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;};
+  const c=model.cover,x=[];
+  // cover
+  x.push(cmDxTable([{cells:[cmDxCell(cmDxP(cmDxRuns(CM_RPT_ORG[0],{b:true,color:'FFFFFF',sz:22}),{after:40})+cmDxP(cmDxRuns(CM_RPT_ORG[1],{color:'DCE4F5',sz:19}),{after:20})+cmDxP(cmDxRuns(CM_RPT_ORG[2],{color:'DCE4F5',sz:19}),{after:20}),W,{fill:'12275A',padT:260,padB:260,padL:300,padR:300,noBorder:true})]},{cells:[cmDxCell(cmDxP('',{after:0,line:120}),W,{fill:'F2A93B',padT:20,padB:20,noBorder:true})]}],[W],{noBorder:true,after:false}));
+  x.push(cmDxP('',{after:360}));
+  x.push(cmDxP(cmDxRuns(c.kicker,{b:true,color:'2F5BD3',sz:26}),{after:80}));
+  x.push(cmDxP(cmDxRuns(c.title,{b:true,color:'12275A',sz:52}),{after:120,line:240}));
+  x.push(cmDxP(cmDxRuns(c.subject,{b:true,color:'344054',sz:30}),{after:200}));
+  const chips=(c.chips||[]).filter(cmRptHas);
+  if(chips.length)x.push(cmDxP(chips.map((t,i)=>cmDxRuns(`  ${t}  `,{b:true,color:'1F3F86',sz:20})+(i<chips.length-1?cmDxRuns('   '):'')).join(''),{after:220}));
+  if(c.scope&&c.scope.length)x.push(cmDxP(cmDxRuns(`${L('Filter yang digunakan','Filters used')}: `,{b:true,sz:20})+cmDxRuns(c.scope.join(' • '),{sz:20}),{shade:'FFF8EC',borderLeft:'F2A93B',after:200,indent:120,indentR:120}));
+  x.push(cmDxTable(c.meta.map(r=>({cells:[cmDxCell(cmDxP(cmDxRuns(r[0],{color:'667085',sz:21}),{after:0}),3300,{borders:'<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:right w:val="nil"/><w:bottom w:val="single" w:sz="4" w:color="EEF1F6"/></w:tcBorders>'}),cmDxCell(cmDxP(cmDxRuns(r[1],{b:true,sz:21}),{after:0}),W-3300,{borders:'<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:right w:val="nil"/><w:bottom w:val="single" w:sz="4" w:color="EEF1F6"/></w:tcBorders>'})]})),[3300,W-3300],{noBorder:true,after:480}));
+  const t=c.tte||{};
+  const qrRun=t.qr?addImg(t.qr,1500):cmDxRuns('QR',{b:true,color:'9AA7C2',sz:32});
+  const tteTxt=cmDxP(cmDxRuns(L('DITANDATANGANI SECARA ELEKTRONIK','ELECTRONICALLY SIGNED'),{b:true,color:'2F5BD3',sz:18}),{after:80})+cmDxP(cmDxRuns(t.name||L('[Nama Penandatangan]','[Signer Name]'),{b:true,color:'12275A',sz:22}),{after:20})+cmDxP(cmDxRuns(t.title||L('[Jabatan]','[Position]'),{color:'475467',sz:19}),{after:40})+cmDxP(cmDxRuns(`${t.date||''} · ${L('Placeholder QR TTE','TTE QR placeholder')}`,{color:'98A2B3',sz:16}),{after:0});
+  const dash='<w:tcBorders><w:top w:val="dashed" w:sz="8" w:color="9AA7C2"/><w:left w:val="dashed" w:sz="8" w:color="9AA7C2"/><w:bottom w:val="dashed" w:sz="8" w:color="9AA7C2"/><w:right w:val="dashed" w:sz="8" w:color="9AA7C2"/></w:tcBorders>';
+  x.push(cmDxTable([{cells:[cmDxCell(cmDxP('',{after:0}),W-5200,{noBorder:true}),cmDxCell(cmDxP(qrRun,{after:0,align:'center'}),1800,{fill:'FAFBFF',v:'center',borders:dash.replace('<w:right w:val="dashed" w:sz="8" w:color="9AA7C2"/>','<w:right w:val="nil"/>')}),cmDxCell(tteTxt,3400,{fill:'FAFBFF',v:'center',borders:dash.replace('<w:left w:val="dashed" w:sz="8" w:color="9AA7C2"/>','<w:left w:val="nil"/>')})]}],[W-5200,1800,3400],{noBorder:true,after:false}));
+  // body
+  let n=0,first=true;
+  for(const b of model.blocks){
+    switch(b.t){
+      case 'h1':{n++;x.push(cmDxP(cmDxRuns(`${n}  `,{b:true,color:'F2A93B',sz:32})+cmDxRuns(b.text,{b:true,color:'12275A',sz:32}),{style:'Heading1',keepNext:true,before:first?0:360,after:140,pageBreakBefore:first}));first=false;break;}
+      case 'p':x.push(cmDxP(cmDxRuns(b.text,{sz:b.muted?19:22,color:b.muted?'667085':'1D2433'}),{after:140,align:'both'}));break;
+      case 'kpis':{const per=3,w=Math.floor(W/per),rows=[];for(let i=0;i<b.items.length;i+=per){rows.push({cells:b.items.slice(i,i+per).map(k=>cmDxCell(cmDxP(cmDxRuns(String(k.value),{b:true,color:k.color,sz:40}),{after:20,line:240})+cmDxP(cmDxRuns(k.label,{b:true,sz:20}),{after:0})+cmDxP(cmDxRuns(k.sub||'',{color:'667085',sz:17}),{after:0}),w,{fill:cmRptTint(k.color),padT:120,padB:120,padL:160,borders:`<w:tcBorders><w:top w:val="single" w:sz="36" w:color="${k.color}"/><w:left w:val="single" w:sz="12" w:color="FFFFFF"/><w:bottom w:val="single" w:sz="12" w:color="FFFFFF"/><w:right w:val="single" w:sz="12" w:color="FFFFFF"/></w:tcBorders>`}))});}
+        x.push(cmDxTable(rows,Array(per).fill(w),{noBorder:true,after:160}));break;}
+      case 'charts':{if(b.items.length===2){const w=Math.floor(W/2);x.push(cmDxTable([{cells:b.items.map(it=>cmDxCell(cmDxP(cmDxRuns(it.title,{b:true,color:'12275A',sz:20}),{after:60,keepNext:true})+cmDxP(addImg(it.img,w-260)||cmDxRuns(L('Grafik tidak tersedia','Chart unavailable'),{i:true,color:'98A2B3'}),{after:40,align:'center'})+(it.caption?cmDxP(cmDxRuns(it.caption,{color:'667085',sz:17}),{after:0}):''),w,{padT:120,padB:120}))}],[w,w],{borderColor:'E4E7EC'}));}
+        else b.items.forEach(it=>{x.push(cmDxP(cmDxRuns(it.title,{b:true,color:'12275A',sz:22}),{keepNext:true,after:60,before:80}));x.push(cmDxP(addImg(it.img,W-400)||cmDxRuns(L('Grafik tidak tersedia','Chart unavailable'),{i:true,color:'98A2B3'}),{align:'center',after:it.caption?40:160,keepNext:!!it.caption}));if(it.caption)x.push(cmDxP(cmDxRuns(it.caption,{color:'667085',sz:18,i:true}),{after:160,align:'center'}));});break;}
+      case 'callout':{const tone={info:['EEF4FF','2F5BD3'],good:['ECFAF4','16A37F'],warn:['FFF4E5','F2A93B']}[b.tone||'info'];
+        const inner=cmDxP(cmDxRuns(b.title,{b:true,color:tone[1],sz:21}),{after:60})+b.lines.map(l=>cmDxP(cmDxRuns((b.lines.length>1?'•  ':'')+l,{sz:21}),{after:50,indent:b.lines.length>1?200:0})).join('');
+        x.push(cmDxTable([{cells:[cmDxCell(inner,W,{fill:tone[0],padL:220,padR:200,padT:120,padB:120,borders:`<w:tcBorders><w:top w:val="nil"/><w:right w:val="nil"/><w:bottom w:val="nil"/><w:left w:val="single" w:sz="36" w:color="${tone[1]}"/></w:tcBorders>`})]}],[W],{noBorder:true,after:160}));break;}
+      case 'bullets':b.items.forEach(l=>x.push(cmDxP(cmDxRuns(l,{sz:22}),{numId:1,after:80})));x.push(cmDxP('',{after:60}));break;
+      case 'kv':x.push(cmDxTable(b.rows.map(r=>({cells:[cmDxCell(cmDxP(cmDxRuns(r[0],{b:true,color:'344054',sz:20}),{after:0}),3100,{fill:'F3F6FB'}),cmDxCell(cmDxP(cmDxRuns(r[1],{sz:20}),{after:0}),W-3100)]})),[3100,W-3100],{borderColor:'E4E7EC'}));break;
+      case 'table':{const ws=b.widths.map(p=>Math.round(W*p/100));ws[ws.length-1]+=W-ws.reduce((s,v)=>s+v,0);const sz=b.small?17:19;
+        const head={header:true,cells:b.head.map((h,i)=>cmDxCell(cmDxP(cmDxRuns(h,{b:true,color:'FFFFFF',sz}),{after:0}),ws[i],{fill:'12275A'}))};
+        const rows=b.rows.map((r,ri)=>({cells:r.map((v,i)=>{const o=v&&typeof v==='object'?v:{text:v};return cmDxCell(cmDxP(cmDxRuns(o.text,{b:o.bold,color:o.color,sz}),{after:0,align:o.align==='center'?'center':undefined}),ws[i],{fill:o.fill||(ri%2?'F8FAFD':undefined),v:'center'});})}));
+        x.push(cmDxTable([head,...rows],ws,{borderColor:'E4E7EC'}));break;}
+      case 'gallery':{const w=Math.floor(W/2),rows=[];for(let i=0;i<b.images.length;i+=2){const pair=b.images.slice(i,i+2);while(pair.length<2)pair.push(null);rows.push({cells:pair.map(im=>cmDxCell(im?cmDxP(addImg(im,w-240),{after:40,align:'center'})+cmDxP(cmDxRuns(im.caption||'',{color:'475467',sz:16}),{after:0}):cmDxP(''),w,{padT:100,padB:100}))});}x.push(cmDxTable(rows,[w,w],{borderColor:'E4E7EC'}));break;}
+      case 'ai':{let inner=cmDxP(cmDxRuns('✦ '+b.title,{b:true,color:'5B3FC4',sz:24}),{after:20})+cmDxP(cmDxRuns(b.note||'',{i:true,color:'7A6AA8',sz:16}),{after:80});
+        b.sections.forEach(s=>{if(s.title)inner+=cmDxP(cmDxRuns(s.title,{b:true,color:'3B2A84',sz:21}),{before:80,after:40});s.paras.forEach(p=>inner+=cmDxP(cmDxRuns(p,{sz:20}),{after:50}));s.bullets.forEach(p=>inner+=cmDxP(cmDxRuns('•  '+p,{sz:20}),{after:40,indent:200}));});
+        x.push(cmDxTable([{cells:[cmDxCell(inner,W,{fill:'F7F3FF',padL:220,padR:200,padT:140,padB:140})]}],[W],{borderColor:'D9CCFF',after:160}));break;}
+    }
+  }
+  const footerXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="6" w:color="E4E7EC"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="${W}"/></w:tabs></w:pPr><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">${cmDx(model.header||'')}</w:t></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:tab/><w:t xml:space="preserve">${cmDx(L('Halaman ','Page '))}</w:t></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="98A2B3"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>`;
+  const emptyFtr=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p/></w:ftr>`;
+  const ns='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${ns}><w:body>${x.join('')}<w:sectPr><w:footerReference w:type="default" r:id="rIdFtr1"/><w:footerReference w:type="first" r:id="rIdFtr2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/><w:titlePg/></w:sectPr></w:body></w:document>`;
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:szCs w:val="22"/><w:lang w:val="id-ID"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="100" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="12275A"/><w:sz w:val="32"/></w:rPr></w:style><w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>`;
+  const numbering=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:abstractNum w:abstractNumId="0"><w:multiLevelType w:val="singleLevel"/><w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="bullet"/><w:lvlText w:val="●"/><w:lvlJc w:val="left"/><w:pPr><w:ind w:left="460" w:hanging="300"/></w:pPr><w:rPr><w:color w:val="F2A93B"/><w:sz w:val="18"/></w:rPr></w:lvl></w:abstractNum><w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num></w:numbering>`;
+  const rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rIdNum" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/><Relationship Id="rIdFtr1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/><Relationship Id="rIdFtr2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer2.xml"/>${media.map(m=>`<Relationship Id="${m.id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${m.name}"/>`).join('')}</Relationships>`;
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/word/footer2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${cmDx(model.fileName)}</dc:title><dc:creator>Pusmantap BaTii</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().replace(/\.\d+Z$/,'Z')}</dcterms:created></cp:coreProperties>`;
+  const zip=new JSZip();
+  zip.file('[Content_Types].xml',ct);
+  zip.folder('_rels').file('.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>');
+  zip.folder('docProps').file('core.xml',core);
+  const w=zip.folder('word');w.file('document.xml',doc);w.file('styles.xml',styles);w.file('numbering.xml',numbering);w.file('footer1.xml',footerXml);w.file('footer2.xml',emptyFtr);w.folder('_rels').file('document.xml.rels',rels);
+  const md=w.folder('media');media.forEach(m=>md.file(m.name,m.data,{base64:true}));
+  return zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+function cmRptTint(hex){const h=String(hex||'2F5BD3').replace('#','');const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);const mix=v=>Math.round(v*0.1+255*0.9).toString(16).padStart(2,'0');return (mix(r)+mix(g)+mix(b)).toUpperCase();}
+function cmRptDownloadBlob(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);}
+
+/* ---------- UI: builder + preview ---------- */
+function cmOpenActivityReportBuilder(){
+  try{
+    const items=getFiltered(),prefs=cmRptPrefs(),signer=cmRptSigner(),filterLines=cmReportFilterSummary(items,currentLang);
+    const aiOk=cmRptAiAvailable();
+    const host=document.createElement('div');host.className='modal-overlay cm-report-modal';
+    const titleFor=lang=>{const per=cmRptPeriod(items,lang),subj=cmRptSubject(lang);return `${cmRptT(lang,'Laporan Monitoring dan Evaluasi','Monitoring and Evaluation Report')} ${per.label} — ${subj.text}`;};
+    const chk=(k,label)=>`<label><input type="checkbox" data-inc="${k}" ${prefs.inc[k]!==false?'checked':''}> ${label}</label>`;
+    host.innerHTML=`<div class="modal-box"><div class="modal-head"><div><h2>${uiText('Generate Monitoring & Evaluation Report','Generate Laporan Monitoring & Evaluasi')}</h2><p>${items.length} ${uiText('activities match the current filters','activity sesuai filter aktif')}</p><div class="cm-report-filter-context"><b>${uiText('Report scope','Cakupan laporan')}:</b> ${filterLines.map(escapeHtml).join(' • ')||uiText('All Agenda data','Seluruh data Agenda')}</div></div><button class="modal-close" data-close>&times;</button></div>
+    <div class="modal-body">
+      <div class="cm-rpt2-title"><small>${uiText('Report title (auto from filters)','Judul laporan (otomatis dari filter)')}</small><b id="cmRptTitlePreview">${escapeHtml(titleFor(prefs.lang))}</b><em>${uiText('Monthly range → "Bulan …", full quarter → "Triwulan …", Program/Unit filter → document name.','Rentang 1 bulan → "Bulan …", 1 triwulan penuh → "Triwulan …", filter Program/Unit → nama dokumen.')}</em></div>
+      <div style="margin-top:14px"><b>${uiText('Include','Sertakan')}</b><div class="cm-report-checks">${chk('summary',uiText('Executive summary','Ringkasan eksekutif'))}${chk('charts',uiText('Charts & statistics','Grafik & statistik'))}${chk('docs',uiText('Document completeness','Kelengkapan dokumen'))}${chk('list',uiText('Activity list','Daftar kegiatan'))}${chk('gallery',uiText('Photo documentation','Dokumentasi foto'))}${chk('recs',uiText('Notes & recommendations','Catatan & rekomendasi'))}</div></div>
+      <label class="cm-rpt2-ai ${aiOk?'':'disabled'}"><input type="checkbox" id="cmRptAi" ${prefs.ai&&aiOk?'checked':''} ${aiOk?'':'disabled'}><span><b>✦ ${uiText('AI-assisted analysis','Analisis berbasis AI')}</b><small>${aiOk?uiText('Uses the configured AI Worker to write achievements, findings and recommendations from the data.','Memakai AI Worker yang sudah dikonfigurasi untuk menulis capaian, temuan, dan rekomendasi dari data.'):uiText('Configure the AI Worker in AI Settings to enable.','Konfigurasikan AI Worker di AI Settings untuk mengaktifkan.')}</small></span></label>
+      <div class="cm-rpt2-grid"><label>${uiText('Signer name (TTE)','Nama penandatangan (TTE)')}<input id="cmRptSignName" value="${escapeHtml(signer.name||'')}" placeholder="${uiText('[Signer Name]','[Nama Penandatangan]')}"></label><label>${uiText('Position','Jabatan')}<input id="cmRptSignTitle" value="${escapeHtml(signer.title||'')}" placeholder="${uiText('[Position]','[Jabatan]')}"></label><label>${uiText('Language','Bahasa')}<select id="cmReportLang"><option value="id" ${prefs.lang!=='en'?'selected':''}>Bahasa Indonesia</option><option value="en" ${prefs.lang==='en'?'selected':''}>English</option></select></label></div>
+    </div><div class="modal-foot"><button class="btn btn-outline" data-close>${uiText('Cancel','Batal')}</button><button class="btn btn-gold" id="cmPreviewReport">${uiText('Preview Report','Preview Laporan')}</button></div></div>`;
+    document.body.appendChild(host);
+    host.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>host.remove());
+    host.querySelector('#cmReportLang').onchange=e=>{host.querySelector('#cmRptTitlePreview').textContent=titleFor(e.target.value);};
+    host.querySelector('#cmPreviewReport').onclick=()=>{
+      const inc={};host.querySelectorAll('[data-inc]').forEach(x=>inc[x.dataset.inc]=x.checked);
+      const lang=host.querySelector('#cmReportLang').value,ai=!!host.querySelector('#cmRptAi')?.checked;
+      const sg={name:host.querySelector('#cmRptSignName').value.trim(),title:host.querySelector('#cmRptSignTitle').value.trim()};
+      cmRptSaveSigner(sg);cmRptSavePrefs({ai,lang,inc});host.remove();
+      cmShowReportPreview(items,'monitoring',inc,lang,{ai,signer:sg});
+    };
+  }catch(err){console.error('Open activity report builder failed:',err);toast(uiText('Unable to open Activity Report: ','Gagal membuka Activity Report: ')+(err?.message||String(err)),'error');}
+}
+window.cmOpenActivityReportBuilder=cmOpenActivityReportBuilder;
+function cmRptPreviewModal(titleText,build,opts){
+  const host=document.createElement('div');host.className='modal-overlay cm-rpt2-modal';
+  const aiOk=cmRptAiAvailable();
+  host.innerHTML=`<div class="modal-box"><div class="modal-head"><div><h2>${escapeHtml(titleText)}</h2><p class="cm-rpt2-status">${uiText('Preparing report…','Menyiapkan laporan…')}</p></div><button class="modal-close" data-close>&times;</button></div>
+  <div class="modal-body"><div class="cm-rpt2-toolbar"><label class="${aiOk?'':'disabled'}"><input type="checkbox" id="cmRpt2Ai" ${opts.ai&&aiOk?'checked':''} ${aiOk?'':'disabled'}> ✦ ${uiText('AI analysis','Analisis AI')}</label><select id="cmRpt2Lang"><option value="id" ${opts.lang!=='en'?'selected':''}>Bahasa Indonesia</option><option value="en" ${opts.lang==='en'?'selected':''}>English</option></select>${opts.onSettings?`<button class="btn btn-outline btn-sm" id="cmRpt2Settings">⚙ ${uiText('Settings','Pengaturan')}</button>`:''}</div>
+  <div class="cm-rpt2-frame-wrap"><div class="cm-rpt2-loading"><span class="cm-rpt2-spin"></span>${uiText('Building charts and layout…','Menyusun grafik dan tata letak…')}</div><iframe class="cm-rpt2-frame" title="Report preview"></iframe></div></div>
+  <div class="modal-foot"><button class="btn btn-outline" data-close>${uiText('Close','Tutup')}</button><button class="btn btn-outline" id="cmRpt2Pdf" disabled>⬇ PDF</button><button class="btn btn-gold" id="cmRpt2Word" disabled>⬇ Word (.docx)</button></div></div>`;
+  document.body.appendChild(host);
+  const frame=host.querySelector('iframe'),status=host.querySelector('.cm-rpt2-status'),loading=host.querySelector('.cm-rpt2-loading'),btnPdf=host.querySelector('#cmRpt2Pdf'),btnWord=host.querySelector('#cmRpt2Word');
+  let model=null,html='',busy=false;
+  const run=async()=>{
+    if(busy)return;busy=true;btnPdf.disabled=btnWord.disabled=true;loading.style.display='flex';status.textContent=uiText('Preparing report…','Menyiapkan laporan…');
+    try{
+      const o={...opts,ai:!!host.querySelector('#cmRpt2Ai')?.checked,lang:host.querySelector('#cmRpt2Lang').value};
+      model=await build(o);html=cmRptHtml(model);frame.srcdoc=html;
+      status.textContent=`${model.fileName}`;btnPdf.disabled=btnWord.disabled=false;
+    }catch(e){console.error('Report build failed',e);status.textContent=uiText('Failed to build report: ','Gagal menyusun laporan: ')+(e?.message||e);toast(status.textContent,'error');}
+    finally{loading.style.display='none';busy=false;}
+  };
+  host.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>host.remove());
+  host.querySelector('#cmRpt2Ai')?.addEventListener('change',run);
+  host.querySelector('#cmRpt2Lang').addEventListener('change',run);
+  host.querySelector('#cmRpt2Settings')?.addEventListener('click',()=>{host.remove();opts.onSettings();});
+  btnPdf.onclick=()=>{try{const w=frame.contentWindow;if(!w)throw new Error('preview not ready');const t=w.document.title;w.document.title=model.fileName;w.focus();w.print();setTimeout(()=>{try{w.document.title=t}catch(e){}},1500);}catch(e){toast(uiText('Unable to print: ','Gagal mencetak: ')+(e.message||e),'error');}};
+  btnWord.onclick=async()=>{try{btnWord.disabled=true;const blob=await cmRptDocx(model);cmRptDownloadBlob(blob,model.fileName+'.docx');toast(uiText('Word report downloaded.','Laporan Word berhasil diunduh.'),'success');}catch(e){console.error(e);toast(uiText('Word export failed: ','Gagal ekspor Word: ')+(e.message||e),'error');}finally{btnWord.disabled=false;}};
+  run();
+  return host;
+}
+function cmShowReportPreview(items,type,inc,lang,extra={}){
+  return cmRptPreviewModal(uiText('Monitoring & Evaluation Report Preview','Preview Laporan Monitoring & Evaluasi'),o=>cmRptBuildRangeModel(items,{lang:o.lang,ai:o.ai,inc:inc||{},signer:extra.signer||cmRptSigner()}),{lang:lang||currentLang,ai:!!extra.ai,onSettings:cmOpenActivityReportBuilder});
+}
+async function cmExportReportDocx(items,lang='id',singleTitle=''){
+  try{const model=items.length===1&&singleTitle?await cmRptBuildSingleModel(items[0],{lang,ai:false,signer:cmRptSigner()}):await cmRptBuildRangeModel(items,{lang,ai:false,inc:cmRptPrefs().inc,signer:cmRptSigner()});const blob=await cmRptDocx(model);cmRptDownloadBlob(blob,model.fileName+'.docx');return true;}
+  catch(err){console.error('Report DOCX generation failed:',err);toast((lang==='id'?'Gagal membuat file Word: ':'Failed to create Word file: ')+(err?.message||String(err)),'error');return false;}
 }
 function cmFindAgendaById(id){return (state.agendas||[]).find(x=>String(x?.id)===String(id));}
 async function cmGenerateSingleActivityDocx(a){
   if(!a){toast(uiText('Activity data was not found.','Data activity tidak ditemukan.'),'error');return false;}
-  const ok=await cmExportReportDocx([a],currentLang,`Laporan Kegiatan — ${cmReportSafe(a.namaKegiatan)}`);
-  if(ok)toast(uiText('Activity report downloaded as Word.','Laporan activity berhasil diunduh dalam format Word.'),'success');
-  return ok;
+  const prefs=cmRptPrefs();
+  cmRptPreviewModal(`${uiText('Activity Report','Laporan Kegiatan')} — ${cmReportSafe(a.namaKegiatan).slice(0,80)}`,o=>cmRptBuildSingleModel(a,{lang:o.lang,ai:o.ai,signer:cmRptSigner()}),{lang:prefs.lang||'id',ai:false});
+  return true;
 }
 window.cmGenerateSingleActivityDocx=cmGenerateSingleActivityDocx;
 async function cmGenerateSingleActivityReportById(id){
-  try{
-    const a=cmFindAgendaById(id);
-    if(!a){toast(uiText('Activity data was not found.','Data activity tidak ditemukan.'),'error');return false;}
-    return await cmGenerateSingleActivityDocx(a);
-  }catch(err){
-    console.error('Single activity report failed:',err);
-    toast(uiText('Unable to generate activity report: ','Gagal membuat laporan activity: ')+(err?.message||String(err)),'error');
-    return false;
-  }
+  try{const a=cmFindAgendaById(id);if(!a){toast(uiText('Activity data was not found.','Data activity tidak ditemukan.'),'error');return false;}return await cmGenerateSingleActivityDocx(a);}
+  catch(err){console.error('Single activity report failed:',err);toast(uiText('Unable to generate activity report: ','Gagal membuat laporan activity: ')+(err?.message||String(err)),'error');return false;}
 }
 window.cmGenerateSingleActivityReportById=cmGenerateSingleActivityReportById;
-function cmExportReportPdf(items,lang='id'){
-  const {jsPDF}=window.jspdf||{};if(!jsPDF){alert('PDF library not available');return}const doc=new jsPDF({unit:'mm',format:'a4'}),stats=cmReportStats(items);doc.setFontSize(16);doc.text(lang==='id'?'Laporan Monitoring Kegiatan Change Management':'Change Management Activity Monitoring Report',15,18);doc.setFontSize(10);const lines=doc.splitTextToSize(cmReportNarrative(items,stats,lang),180);doc.text(lines,15,28);let y=28+lines.length*5+6;items.slice(0,35).forEach((a,i)=>{const tx=`${i+1}. ${fmtDate(a.tglMulai)} | ${a.namaKegiatan} | ${a.unitPemohon} | ${activityStatusLabel(a.statusNorm)}`;const ls=doc.splitTextToSize(tx,180);if(y+ls.length*5>285){doc.addPage();y=18}doc.text(ls,15,y);y+=ls.length*5+2});doc.save('Laporan_Activity_Filter.pdf');
-}
+function cmExportReportPdf(items,lang='id'){cmShowReportPreview(items,'monitoring',cmRptPrefs().inc,lang,{ai:false});}
 
 
 /* ============================================================
