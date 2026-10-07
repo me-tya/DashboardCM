@@ -501,6 +501,9 @@ table.data-table tbody td{padding:12px 14px;border-bottom:1px solid var(--border
 table.data-table tbody tr{cursor:pointer;transition:background .1s;}
 table.data-table tbody tr:hover{background:#F8F9FD;}
 .table-title{font-weight:600;color:var(--ink-900);margin-bottom:3px;}
+.inv-badge{display:inline-flex;align-items:center;gap:5px;max-width:100%;margin:0 0 4px;padding:2px 8px;border:1px solid #C9D6F2;border-radius:6px;background:#EEF3FC;color:var(--navy-700,#1B3A73);font:600 10.5px/1.5 'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.2px;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+.inv-badge svg{width:12px;height:12px;flex:0 0 auto}.inv-badge span{overflow:hidden;text-overflow:ellipsis}
+a.inv-badge:hover{background:#DCE6F8;border-color:#9DB6E6}
 .table-date-day{display:block;font-family:'Inter',sans-serif;font-size:10.5px;line-height:1.25;color:var(--ink-300);font-weight:600;margin-bottom:2px;}
 .table-date-value{display:block;line-height:1.35;}
 .table-date-value + .table-date-value{margin-top:1px;}
@@ -719,6 +722,11 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .chart-card h3{font-family:'Sora',sans-serif;font-size:13.5px;margin:0 0 12px;color:var(--ink-900);}
 .chart-box{position:relative;height:240px;}
 .chart-box.tall{height:300px;}
+.chart-narr{margin-top:12px;padding:10px 12px;background:#F6F8FC;border-left:3px solid var(--chart-accent, var(--navy-700));border-radius:8px;font-size:12.5px;line-height:1.6;color:var(--ink-700, #3A4560)}
+.chart-narr:empty{display:none}.chart-narr b{color:var(--ink-900, #141B2E)}
+.cm-compile-btn{border-color:#C9B26A;color:var(--navy-800)}.cm-compile-btn:hover{background:#FFF8E6}
+.cal-export-sep{width:1px;height:22px;background:var(--border);margin:0 2px;align-self:center}
+@media(max-width:700px){.cal-export-sep{display:none}}
 
 /* ===== MODAL ===== */
 .modal-overlay{
@@ -1857,6 +1865,9 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .und-import-ic{width:38px;height:38px;border-radius:10px;background:#E3ECFF;color:#1F3A8A;display:grid;place-items:center;flex:none}.und-import-ic svg{width:20px;height:20px}
 .und-import-copy{flex:1;min-width:0}.und-import-copy strong{display:block;font-size:13px;color:#12275A}.und-import-copy small{display:block;font-size:11.5px;color:var(--ink-500);line-height:1.4;margin-top:2px}
 #btnImportUndangan{white-space:nowrap;flex:none}
+.und-prev{display:block;margin-top:4px;font-size:11px;color:var(--ink-500);line-height:1.4}
+.und-row.mode-off{opacity:.45}
+.und-replace{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--ink-700,#3A4560);cursor:pointer}
 @media(max-width:600px){.und-import-card{flex-wrap:wrap}#btnImportUndangan{width:100%}}
 .und-box{width:min(760px,100%);height:min(780px,calc(100vh - 32px))}
 .und-list{padding:0 14px}
@@ -1992,8 +2003,8 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 #tab-table .row-actions{gap:4px;flex-wrap:nowrap;align-items:flex-start;align-content:flex-start;white-space:nowrap;}
 #tab-table .icon-btn{width:25px;height:25px;border-radius:7px;flex:0 0 25px;}
 #tab-table .program-cell{white-space:normal;overflow-wrap:normal;word-break:normal;line-height:1.3;}
-#tab-table .icon-btn[data-action="report"]{color:var(--blue);background:var(--blue-bg);border-color:#BFD2F3;}
-#tab-table .icon-btn[data-action="report"]:hover{color:var(--navy-800);background:#D7E6FB;border-color:#8FB2E9;}
+#tab-table .icon-btn[data-action="report"]{color:#2F6FCE;background:#fff;border-color:#C9D6F2;transition:background .15s,border-color .15s,box-shadow .15s;}
+#tab-table .icon-btn[data-action="report"]:hover,#tab-table .icon-btn[data-action="report"]:focus-visible{color:#2F6FCE;background:#EAF1FC;border-color:#9DB6E6;box-shadow:0 1px 3px rgba(47,111,206,.15);}
 #tab-table .status-badge,
 #tab-table .cat-badge,
 #tab-table .unit-badge{padding-left:6px;padding-right:6px;font-size:10px;white-space:normal;line-height:1.25;}
@@ -5036,8 +5047,8 @@ function cmRptNarrDist(obj,total,lang,o){
   if(n===1)return L(`Seluruh kegiatan yang tercatat (${top[1]}) berasal dari ${noun} **${top[0]}**.`,`All recorded activities (${top[1]}) come from ${noun} **${top[0]}**.`)+blankTxt;
   const k=Math.min(3,n),topK=all.slice(0,k),share=cmRptPct(topK.reduce((s,x)=>s+x[1],0),total);
   const rest=all.slice(1,k).map(x=>`${x[0]} (${x[1]})`);
-  let t=L(`Terdapat ${n} ${noun} yang tercatat. **${top[0]}** paling menonjol dengan ${top[1]} kegiatan (${cmRptPct(top[1],total)}% dari total)${rest.length?`, disusul ${cmRptJoin(rest,lang)}`:''}.`,`${n} ${noun} values are recorded. **${top[0]}** leads with ${top[1]} activities (${cmRptPct(top[1],total)}%)${rest.length?`, followed by ${cmRptJoin(rest,lang)}`:''}.`);
-  if(n>3)t+=L(` ${k} ${noun} teratas mencakup ${share}% kegiatan, ${share>=70?'menunjukkan kegiatan terkonsentrasi pada sedikit '+noun:'menunjukkan sebaran yang relatif merata'}.`,` The top ${k} account for ${share}% of activities, ${share>=70?'showing a strong concentration':'showing a fairly even spread'}.`);
+  let t=L(`Terdapat ${n} ${noun} yang tercatat. **${top[0]}** paling menonjol dengan ${top[1]} kegiatan (${cmRptPct(top[1],total)}% dari total)${rest.length?`, disusul ${cmRptJoin(rest,lang)}`:''}.`,`${n} ${noun} are recorded. **${top[0]}** leads with ${top[1]} activities (${cmRptPct(top[1],total)}%)${rest.length?`, followed by ${cmRptJoin(rest,lang)}`:''}.`);
+  if(n>3){const t1=cmRptPct(top[1],total),conc=share>=70||t1>=40;t+=L(` ${k} ${noun} teratas mencakup ${share}% kegiatan, ${conc?(t1>=40?`dengan porsi terbesar pada ${top[0]} sehingga kegiatan cenderung terkonsentrasi`:'menunjukkan kegiatan terkonsentrasi pada sedikit '+noun):'menunjukkan sebaran yang relatif merata'}.`,` The top ${k} account for ${share}% of activities, ${conc?(t1>=40?`with ${top[0]} taking the largest share, so activities are concentrated`:'showing a strong concentration'):'showing a fairly even spread'}.`);}
   if(o.shown&&n>o.shown)t+=L(` Grafik menampilkan ${o.shown} ${noun} teratas; ${n-o.shown} lainnya tidak ditampilkan.`,` The chart shows the top ${o.shown}; ${n-o.shown} others are omitted.`);
   return t+blankTxt;
 }
@@ -5046,7 +5057,7 @@ function cmRptNarrPic(st,total,lang){
   const n=all.length,sum=all.reduce((s,x)=>s+x[1],0),avg=sum/n,top=all[0],minV=all[n-1][1],lows=all.filter(x=>x[1]===minV).map(x=>x[0]);
   let t=L(`Sebanyak ${n} PIC terlibat, dengan rata-rata ${cmRptFmt1(avg,lang)} kegiatan per orang. **${top[0]}** paling banyak terlibat (${top[1]} kegiatan atau ${cmRptPct(top[1],total)}% dari seluruh kegiatan)`,`${n} PICs were involved, averaging ${cmRptFmt1(avg,lang)} activities each. **${top[0]}** was most involved (${top[1]}, ${cmRptPct(top[1],total)}% of all activities)`);
   t+=n>1&&top[1]>=avg*1.5?L(', cukup jauh di atas rata-rata sehingga pemerataan beban kerja perlu diperhatikan.',', well above average, so workload balance deserves attention.'):L('; beban kerja antar-PIC relatif seimbang.','; workload is fairly balanced.');
-  if(n>1&&minV<top[1])t+=L(` Keterlibatan paling sedikit: ${cmRptJoin(lows.slice(0,4),lang)}${lows.length>4?` dan ${lows.length-4} lainnya`:''} (${minV} kegiatan).`,` Least involved: ${cmRptJoin(lows.slice(0,4),lang)}${lows.length>4?` and ${lows.length-4} others`:''} (${minV}).`);
+  if(n>1&&minV<top[1]){const lw=lows.length>4?`${lows.slice(0,4).join(', ')}${lang==='en'?`, and ${lows.length-4} others`:`, serta ${lows.length-4} PIC lainnya`}`:cmRptJoin(lows,lang);t+=L(` Keterlibatan paling sedikit: ${lw} (masing-masing ${minV} kegiatan).`,` Least involved: ${lw} (${minV} each).`);}
   return t;
 }
 function cmRptNarrDocs(have,miss,base,lang,done){
@@ -5078,7 +5089,7 @@ function cmRptNarrClarity(clear,actorOnly,unclear,lang){
 }
 
 /* ---------- report models ---------- */
-function cmRptStatusCell(key,lang){const c=CM_RPT_STATUS_COLOR[key]||'#5B6B82';return {text:cmRptStatus(key||'Scheduled'),color:'#FFFFFF',fill:c.replace('#',''),bold:true,align:'center'};}
+function cmRptStatusCell(key,lang){const c=CM_RPT_STATUS_COLOR[key]||'#5B6B82';return {text:cmRptStatus(key||'Scheduled'),color:'FFFFFF',fill:c.replace('#',''),bold:true,align:'center'};}
 async function cmRptBuildRangeModel(items,opts){
   cmRptLangCur=opts.lang;const lang=opts.lang,L=(i,e)=>cmRptT(lang,i,e),st=cmReportStats(items),per=cmRptPeriod(items,lang),subj=cmRptSubject(lang),inc=opts.inc||{};
   const total=items.length,done=st.completed,rate=cmRptPct(done,total);
@@ -5215,7 +5226,7 @@ async function cmRptBuildRangeModel(items,opts){
   if(opts.ai&&total){
     const ctx=cmRptRangeContext(items,st,per,subj,lang,rangeAnalysis);
     const ai=await cmRptAi(ctx,lang,'range',{dateFrom:per.from||'',dateTo:per.to||'',activityIds:items.map(x=>x.id)});
-    if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Disusun otomatis oleh asisten AI dari data dashboard; mohon ditelaah sebelum digunakan.','Generated by the AI assistant from dashboard data; please review before use.')+(ai.model?` · Model: ${ai.model}`:''),sections:ai});else blocks.push({t:'callout',tone:'warn',title:L('Analisis AI tidak tersedia','AI analysis unavailable'),lines:[L(`Permintaan ke AI Worker gagal (${cmRptAiLastError||'tanpa keterangan'}). Bagian analisis di laporan ini disusun otomatis oleh aplikasi.`,`AI Worker request failed (${cmRptAiLastError||'no detail'}). Analysis in this report is generated automatically.`)]});
+    if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Mohon ditelaah sebelum digunakan.','Please review before use.')+(ai.model?` · Model: ${ai.model}`:''),sections:ai});else blocks.push({t:'callout',tone:'warn',title:L('Analisis AI tidak tersedia','AI analysis unavailable'),lines:[L(`Permintaan ke AI Worker gagal (${cmRptAiLastError||'tanpa keterangan'}). Bagian analisis lainnya tetap tersedia.`,`AI Worker request failed (${cmRptAiLastError||'no detail'}). Other analysis sections remain available.`)]});
   }
   if(total&&inc.recs!==false){
     blocks.push({t:'h1',text:L('Rekomendasi Monev','M&E Recommendations')});
@@ -5229,7 +5240,6 @@ async function cmRptBuildRangeModel(items,opts){
     if(per.to&&per.to<today&&rate<60)recs.push(L(`**Tingkat penyelesaian ${rate}% untuk periode yang sudah berakhir.** Identifikasi hambatan bersama unit pemohon.`,`**Completion is ${rate}% for a closed period.** Identify blockers with requesting units.`));
     if(!recs.length)recs.push(L('Pelaksanaan kegiatan sudah berjalan baik. Pertahankan ritme kerja dan kelengkapan bukti dukung.','Execution is on track. Keep the pace and evidence completeness.'));
     blocks.push({t:'bullets',items:recs});
-    blocks.push({t:'p',text:L('Laporan ini disusun otomatis dari data Dashboard Master Agenda Change Management sesuai filter yang dipilih, sebagai bahan monitoring dan evaluasi pimpinan.','This report is generated automatically from the Change Management Master Agenda dashboard based on the selected filters.'),muted:true});
   }
   const qr=cmRptQr(`TTE-PLACEHOLDER | ${title} ${per.label} | ${subj.text}`);
   return {kind:'range',lang,fileName,title:`${title} ${per.label.toUpperCase()}`,
@@ -5357,7 +5367,7 @@ async function cmRptBuildSingleModel(a,opts){
   if(imgs.length){blocks.push({t:'h1',text:L('Dokumentasi Foto','Photo Documentation')});blocks.push({t:'gallery',images:imgs});}
   else if(flags.dokumentasi){blocks.push({t:'h1',text:L('Dokumentasi Foto','Photo Documentation')});blocks.push({t:'callout',tone:'warn',title:L('Foto belum dapat dimuat','Photos could not be loaded'),lines:[L('Masuk (login) terlebih dahulu agar foto dokumentasi dapat disertakan dalam laporan.','Sign in so documentation photos can be included.')]});}
   // AI + monev notes
-  if(opts.ai){const ctx=cmRptSingleContext(a,flags,lang,sources);const ai=await cmRptAi(ctx,lang,'single',{dateFrom:a.tglMulai||'',dateTo:a.tglSelesai||a.tglMulai||'',activityIds:[a.id]});if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Disusun otomatis oleh asisten AI dari data kegiatan; mohon ditelaah sebelum digunakan.','Generated by the AI assistant; please review.')+(ai.model?` · Model: ${ai.model}`:''),sections:ai});else blocks.push({t:'callout',tone:'warn',title:L('Analisis AI tidak tersedia','AI analysis unavailable'),lines:[L(`Permintaan ke AI Worker gagal (${cmRptAiLastError||'tanpa keterangan'}). Bagian analisis di laporan ini disusun otomatis oleh aplikasi.`,`AI Worker request failed (${cmRptAiLastError||'no detail'}). Analysis in this report is generated automatically.`)]});}
+  if(opts.ai){const ctx=cmRptSingleContext(a,flags,lang,sources);const ai=await cmRptAi(ctx,lang,'single',{dateFrom:a.tglMulai||'',dateTo:a.tglSelesai||a.tglMulai||'',activityIds:[a.id]});if(ai&&ai.length)blocks.push({t:'ai',title:L('Analisis Berbasis AI','AI-assisted Analysis'),note:L('Mohon ditelaah sebelum digunakan.','Please review before use.')+(ai.model?` · Model: ${ai.model}`:''),sections:ai});else blocks.push({t:'callout',tone:'warn',title:L('Analisis AI tidak tersedia','AI analysis unavailable'),lines:[L(`Permintaan ke AI Worker gagal (${cmRptAiLastError||'tanpa keterangan'}). Bagian analisis lainnya tetap tersedia.`,`AI Worker request failed (${cmRptAiLastError||'no detail'}). Other analysis sections remain available.`)]});}
   blocks.push({t:'h1',text:L('Kesimpulan Monev','M&E Conclusion')});
   const level=hi>=2||(tl.length&&unclear/tl.length>0.5)?['Perlu Pemantauan Intensif','Needs Close Monitoring','warn']:(kendala.length||tl.length)?['Pemantauan Berkala','Regular Monitoring','info']:['Terkendali','Under Control','good'];
   blocks.push({t:'callout',tone:level[2],title:`${L('Status tindak lanjut','Follow-up status')}: ${L(level[0],level[1])}`,lines:[L(
@@ -5380,17 +5390,19 @@ function cmRptSingleContext(a,flags,lang,sources){
 function cmRptMd(s){return escapeHtml(String(s??'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
 function cmRptHtml(model){
   const c=model.cover,L=(i,e)=>cmRptT(model.lang,i,e);let n=0;
-  const cell=v=>{if(v&&typeof v==='object'){const st=[v.fill?`background:#${v.fill}`:'',v.color?`color:#${v.color}`:'',v.bold?'font-weight:700':'',v.align?`text-align:${v.align}`:''].filter(Boolean).join(';');return `<td style="${st}">${v.fill?`<span class="pill">${cmRptMd(v.text)}</span>`:cmRptMd(v.text)}</td>`;}return `<td>${cmRptMd(v)}</td>`;};
+  const cell=v=>{if(v&&typeof v==='object'){const st=[v.fill?`background:#${v.fill}`:'',v.bg?`background:#${v.bg}`:'',v.color?`color:#${v.color}`:'',v.bold?'font-weight:700':'',v.align?`text-align:${v.align}`:''].filter(Boolean).join(';');return `<td style="${st}">${v.fill?`<span class="pill">${cmRptMd(v.text)}</span>`:cmRptMd(v.text)}</td>`;}return `<td>${cmRptMd(v)}</td>`;};
   const body=model.blocks.map(b=>{
     switch(b.t){
       case 'h1':n++;return `<h2 class="sec"><span class="num">${n}</span>${escapeHtml(b.text)}</h2>`;
+      case 'part':n=0;return `<div class="part"><span>${escapeHtml(b.kicker||'')}</span><b>${escapeHtml(b.text)}</b>${b.sub?`<small>${escapeHtml(b.sub)}</small>`:''}</div>`;
+      case 'h2':return `<h3 class="sub">${escapeHtml(b.text)}</h3>`;
       case 'p':return `<p class="${b.muted?'muted':''}">${cmRptMd(b.text)}</p>`;
       case 'kpis':return `<div class="kpis">${b.items.map(k=>`<div class="kpi" style="--c:#${k.color}"><div class="kv">${escapeHtml(String(k.value))}</div><div class="kl">${escapeHtml(k.label)}</div><div class="ks">${escapeHtml(k.sub||'')}</div></div>`).join('')}</div>`;
       case 'charts':return `<div class="charts n${b.items.length}">${b.items.map(x=>`<figure class="chart"><figcaption>${escapeHtml(x.title)}</figcaption>${x.img?`<img src="${x.img.src}" alt="">`:`<div class="noimg">${L('Grafik tidak tersedia','Chart unavailable')}</div>`}${x.caption?`<small>${escapeHtml(x.caption)}</small>`:''}</figure>`).join('')}</div>`;
       case 'callout':return `<div class="callout ${b.tone||'info'}"><b>${escapeHtml(b.title)}</b>${b.lines.length>1?`<ul>${b.lines.map(l=>`<li>${cmRptMd(l)}</li>`).join('')}</ul>`:`<p>${cmRptMd(b.lines[0])}</p>`}</div>`;
       case 'bullets':return `<ul class="bul">${b.items.map(l=>`<li>${cmRptMd(l)}</li>`).join('')}</ul>`;
       case 'kv':return `<table class="kvt">${b.rows.map(r=>`<tr><th>${escapeHtml(r[0])}</th><td>${cmRptMd(r[1])}</td></tr>`).join('')}</table>`;
-      case 'table':return `<table class="tbl ${b.small?'small':''}"><colgroup>${(b.widths||[]).map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr>${b.head.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table>`;
+      case 'table':return `<table class="tbl ${b.small?'small':''} ${b.fixed?'fixed':''}"><colgroup>${(b.widths||[]).map(w=>`<col style="width:${w}%">`).join('')}</colgroup><thead><tr>${b.head.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table>`;
       case 'gallery':return `<div class="gallery">${b.images.map(im=>`<figure><img src="${im.src}" alt=""><figcaption>${escapeHtml(im.caption||'')}</figcaption></figure>`).join('')}</div>`;
       case 'ai':return `<div class="ai"><div class="aih">✦ ${escapeHtml(b.title)}</div><div class="ain">${escapeHtml(b.note||'')}</div>${b.sections.map(s=>`${s.title?`<h4>${escapeHtml(s.title)}</h4>`:''}${s.paras.map(p=>`<p>${cmRptMd(p)}</p>`).join('')}${s.bullets.length?`<ul>${s.bullets.map(x=>`<li>${cmRptMd(x)}</li>`).join('')}</ul>`:''}`).join('')}</div>`;
       default:return '';
@@ -5430,12 +5442,14 @@ function cmRptHtml(model){
   .callout.info{background:#EEF4FF;border-left:5px solid #2F5BD3}.callout.good{background:#ECFAF4;border-left:5px solid #16A37F}.callout.warn{background:#FFF4E5;border-left:5px solid #F2A93B}
   .bul{margin:6px 0 12px 20px;padding:0}.bul li{margin:6px 0}
   table{border-collapse:collapse;width:100%}
-  .tbl{margin:8px 0 14px;font-size:12.5px}.tbl th{background:#12275A;color:#fff;text-align:left;padding:8px;font-weight:700}.tbl td{padding:7px 8px;border-bottom:1px solid #E4E7EC;vertical-align:top}.tbl tbody tr:nth-child(even) td{background:#F8FAFD}.tbl.small{font-size:11.5px}.tbl thead{display:table-header-group}.tbl tr{break-inside:avoid}
+  .tbl{margin:8px 0 14px;font-size:12.5px}.tbl th{background:#12275A;color:#fff;text-align:left;padding:8px;font-weight:700}.tbl td{padding:7px 8px;border-bottom:1px solid #E4E7EC;vertical-align:top}.tbl tbody tr:nth-child(even) td{background:#F8FAFD}.tbl.small{font-size:11.5px}.tbl.fixed{table-layout:fixed}.tbl.fixed td{word-wrap:break-word}.tbl thead{display:table-header-group}.tbl tr{break-inside:avoid}
   .tbl td .pill{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;color:#fff}
   .tbl td[style*="background"]{background-clip:padding-box}
   .kvt{margin:8px 0 14px;font-size:13px}.kvt th{width:32%;text-align:left;background:#F3F6FB;color:#344054;padding:8px 10px;border-bottom:1px solid #fff;vertical-align:top}.kvt td{padding:8px 10px;border-bottom:1px solid #EEF1F6}
   .gallery{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0}.gallery figure{margin:0;border:1px solid #E4E7EC;border-radius:10px;overflow:hidden;break-inside:avoid;background:#fff}.gallery img{width:100%;height:220px;object-fit:cover;display:block}.gallery figcaption{font-size:11.5px;color:#475467;padding:7px 10px}
   .ai{border:1px solid #D9CCFF;background:linear-gradient(180deg,#F7F3FF,#fff);border-radius:12px;padding:14px 18px;margin:14px 0;break-inside:avoid}.aih{font-weight:800;color:#5B3FC4;font-size:16px}.ain{font-size:11.5px;color:#7A6AA8;margin-bottom:6px}.ai h4{margin:10px 0 4px;color:#3B2A84}.ai ul{margin:4px 0 6px 18px;padding:0}
+  .part{margin:34px 0 10px;padding:16px 20px;border-radius:12px;background:linear-gradient(120deg,#12275A,#2F5BD3);color:#fff;break-before:page;break-after:avoid}.part span{display:block;font-size:11.5px;letter-spacing:1.4px;color:#F7D58A;font-weight:800}.part b{display:block;font-size:22px;line-height:1.25}.part small{display:block;opacity:.85;font-size:12.5px;margin-top:2px}.content>.runhead+.part{margin-top:4px;break-before:auto}
+  h3.sub{color:#1F3F86;font-size:16px;margin:20px 0 6px;padding-bottom:4px;border-bottom:2px solid #EEF1F6;break-after:avoid}
   .foot{font-size:11px;color:#98A2B3;text-align:center;padding:10px 0 0;border-top:1px solid #EEF1F6;margin-top:24px}
   @media print{html{background:#fff}.sheet{box-shadow:none;margin:0;width:auto;border-radius:0}.cover{min-height:265mm;break-after:page}.content{padding:0}.runhead{display:none}}
   @media (max-width:640px){.band,.ctitle,.content{padding-left:20px;padding-right:20px}.scope,.meta{margin-left:20px;margin-right:20px;width:calc(100% - 40px)}.big{font-size:26px}.kpis{grid-template-columns:1fr 1fr}.charts.n2,.gallery{grid-template-columns:1fr}.tte{margin:24px 20px;width:auto}}
@@ -5446,7 +5460,7 @@ function cmRptHtml(model){
   <table class="meta">${c.meta.map(r=>`<tr><th>${escapeHtml(r[0])}</th><td>${escapeHtml(r[1])}</td></tr>`).join('')}</table>
   <div class="tte">${tte.date?`<div class="tdt">${escapeHtml(tte.city?tte.city+', '+tte.date:tte.date)}</div>`:''}${tte.label?`<div class="tlb">${escapeHtml(tte.label)}</div>`:''}<div class="tj">${escapeHtml(tte.title||L('[Jabatan]','[Position]'))}</div>${tte.qr?`<img src="${tte.qr.src}" alt="QR TTE">`:`<div class="qrph">QR</div>`}<div class="tl">${L('Ditandatangani secara elektronik','Electronically signed')}</div><div class="tn">${escapeHtml(tte.name||L('[Nama Pejabat]','[Signer Name]'))}</div></div>
   </div>
-  <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')} · ${L('Dibuat dari Dashboard Master Agenda Change Management','Generated from the Change Management Master Agenda dashboard')}</div></div>
+  <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')} · ${L('Sumber data: Dashboard Master Agenda Change Management','Data source: Change Management Master Agenda dashboard')}</div></div>
   </body></html>`;
 }
 
@@ -5501,6 +5515,8 @@ async function cmRptDocx(model){
   let n=0,first=true;
   for(const b of model.blocks){
     switch(b.t){
+      case 'part':{n=0;x.push(cmDxP('',{pageBreakBefore:true,after:0}));x.push(cmDxTable([{cells:[cmDxCell(cmDxP(cmDxRuns(b.kicker||'',{b:true,color:'F7D58A',sz:19}),{after:40})+cmDxP(cmDxRuns(b.text,{b:true,color:'FFFFFF',sz:36}),{after:b.sub?40:0,line:240})+(b.sub?cmDxP(cmDxRuns(b.sub,{color:'DCE4F5',sz:20}),{after:0}):''),W,{fill:'12275A',padT:200,padB:200,padL:280,padR:280,noBorder:true})]}],[W],{noBorder:true,after:200}));first=false;break;}
+      case 'h2':x.push(cmDxP(cmDxRuns(b.text,{b:true,color:'1F3F86',sz:26}),{keepNext:true,before:220,after:80}));break;
       case 'h1':{n++;x.push(cmDxP(cmDxRuns(`${n}  `,{b:true,color:'F2A93B',sz:32})+cmDxRuns(b.text,{b:true,color:'12275A',sz:32}),{style:'Heading1',keepNext:true,before:first?0:360,after:140,pageBreakBefore:first}));first=false;break;}
       case 'p':x.push(cmDxP(cmDxRuns(b.text,{sz:b.muted?19:22,color:b.muted?'667085':'1D2433'}),{after:140,align:'both'}));break;
       case 'kpis':{const per=3,w=Math.floor(W/per),rows=[];for(let i=0;i<b.items.length;i+=per){rows.push({cells:b.items.slice(i,i+per).map(k=>cmDxCell(cmDxP(cmDxRuns(String(k.value),{b:true,color:k.color,sz:40}),{after:20,line:240})+cmDxP(cmDxRuns(k.label,{b:true,sz:20}),{after:0})+cmDxP(cmDxRuns(k.sub||'',{color:'667085',sz:17}),{after:0}),w,{fill:cmRptTint(k.color),padT:120,padB:120,padL:160,borders:`<w:tcBorders><w:top w:val="single" w:sz="36" w:color="${k.color}"/><w:left w:val="single" w:sz="12" w:color="FFFFFF"/><w:bottom w:val="single" w:sz="12" w:color="FFFFFF"/><w:right w:val="single" w:sz="12" w:color="FFFFFF"/></w:tcBorders>`}))});}
@@ -5514,7 +5530,7 @@ async function cmRptDocx(model){
       case 'kv':x.push(cmDxTable(b.rows.map(r=>({cells:[cmDxCell(cmDxP(cmDxRuns(r[0],{b:true,color:'344054',sz:20}),{after:0}),3100,{fill:'F3F6FB'}),cmDxCell(cmDxP(cmDxRuns(r[1],{sz:20}),{after:0}),W-3100)]})),[3100,W-3100],{borderColor:'E4E7EC'}));break;
       case 'table':{const ws=b.widths.map(p=>Math.round(W*p/100));ws[ws.length-1]+=W-ws.reduce((s,v)=>s+v,0);const sz=b.small?17:19;
         const head={header:true,cells:b.head.map((h,i)=>cmDxCell(cmDxP(cmDxRuns(h,{b:true,color:'FFFFFF',sz}),{after:0}),ws[i],{fill:'12275A'}))};
-        const rows=b.rows.map((r,ri)=>({cells:r.map((v,i)=>{const o=v&&typeof v==='object'?v:{text:v};return cmDxCell(cmDxP(cmDxRuns(o.text,{b:o.bold,color:o.color,sz}),{after:0,align:o.align==='center'?'center':undefined}),ws[i],{fill:o.fill||(ri%2?'F8FAFD':undefined),v:'center'});})}));
+        const rows=b.rows.map((r,ri)=>({cells:r.map((v,i)=>{const o=v&&typeof v==='object'?v:{text:v};return cmDxCell(cmDxP(cmDxRuns(o.text,{b:o.bold,color:o.color?String(o.color).replace('#',''):undefined,sz}),{after:0,align:o.align==='center'?'center':undefined}),ws[i],{fill:o.fill||o.bg||(ri%2?'F8FAFD':undefined),v:o.v||'center'});})}));
         x.push(cmDxTable([head,...rows],ws,{borderColor:'E4E7EC'}));break;}
       case 'gallery':{const w=Math.floor(W/2),rows=[];for(let i=0;i<b.images.length;i+=2){const pair=b.images.slice(i,i+2);while(pair.length<2)pair.push(null);rows.push({cells:pair.map(im=>cmDxCell(im?cmDxP(addImg(im,w-240),{after:40,align:'center'})+cmDxP(cmDxRuns(im.caption||'',{color:'475467',sz:16}),{after:0}):cmDxP(''),w,{padT:100,padB:100}))});}x.push(cmDxTable(rows,[w,w],{borderColor:'E4E7EC'}));break;}
       case 'ai':{let inner=cmDxP(cmDxRuns('✦ '+b.title,{b:true,color:'5B3FC4',sz:24}),{after:20})+cmDxP(cmDxRuns(b.note||'',{i:true,color:'7A6AA8',sz:16}),{after:80});
@@ -5574,7 +5590,7 @@ function cmRptPreviewModal(titleText,build,opts){
   const host=document.createElement('div');host.className='modal-overlay cm-rpt2-modal';
   const aiOk=cmRptAiAvailable();
   host.innerHTML=`<div class="modal-box"><div class="modal-head"><div><h2>${escapeHtml(titleText)}</h2><p class="cm-rpt2-status">${uiText('Preparing report…','Menyiapkan laporan…')}</p></div><button class="modal-close" data-close>&times;</button></div>
-  <div class="modal-body"><div class="cm-rpt2-toolbar"><label class="${aiOk?'':'disabled'}"><input type="checkbox" id="cmRpt2Ai" ${opts.ai&&aiOk?'checked':''} ${aiOk?'':'disabled'}> ✦ ${uiText('AI analysis','Analisis AI')}</label><select id="cmRpt2Lang"><option value="id" ${opts.lang!=='en'?'selected':''}>Bahasa Indonesia</option><option value="en" ${opts.lang==='en'?'selected':''}>English</option></select><button class="btn btn-outline btn-sm" id="cmRpt2TteBtn">✍ ${uiText('TTE settings','Atur TTE')}</button>${opts.onSettings?`<button class="btn btn-outline btn-sm" id="cmRpt2Settings">⚙ ${uiText('Settings','Pengaturan')}</button>`:''}</div>
+  <div class="modal-body"><div class="cm-rpt2-toolbar">${opts.noAi?'':`<label class="${aiOk?'':'disabled'}"><input type="checkbox" id="cmRpt2Ai" ${opts.ai&&aiOk?'checked':''} ${aiOk?'':'disabled'}> ✦ ${uiText('AI analysis','Analisis AI')}</label>`}<select id="cmRpt2Lang"><option value="id" ${opts.lang!=='en'?'selected':''}>Bahasa Indonesia</option><option value="en" ${opts.lang==='en'?'selected':''}>English</option></select><button class="btn btn-outline btn-sm" id="cmRpt2TteBtn">✍ ${uiText('TTE settings','Atur TTE')}</button>${opts.onSettings?`<button class="btn btn-outline btn-sm" id="cmRpt2Settings">⚙ ${uiText('Settings','Pengaturan')}</button>`:''}</div>
   <div class="cm-rpt2-ttepanel" hidden>${cmRptTteFieldsHtml(cmRptSigner())}<div style="text-align:right;margin-top:8px"><button class="btn btn-gold btn-sm" id="cmRpt2TteApply">${uiText('Apply','Terapkan')}</button></div></div>
   <div class="cm-rpt2-frame-wrap"><div class="cm-rpt2-loading"><span class="cm-rpt2-spin"></span>${uiText('Building charts and layout…','Menyusun grafik dan tata letak…')}</div><iframe class="cm-rpt2-frame" title="Report preview"></iframe></div></div>
   <div class="modal-foot"><button class="btn btn-outline" data-close>${uiText('Close','Tutup')}</button><button class="btn btn-outline" id="cmRpt2Pdf" disabled>⬇ PDF</button><button class="btn btn-gold" id="cmRpt2Word" disabled>⬇ Word (.docx)</button></div></div>`;
@@ -5636,10 +5652,585 @@ async function cmGenerateSingleActivityReportById(id){
 window.cmGenerateSingleActivityReportById=cmGenerateSingleActivityReportById;
 function cmExportReportPdf(items,lang='id'){cmShowReportPreview(items,'monitoring',cmRptPrefs().inc,lang,{ai:false});}
 
+/* ===== Menu Reports — Overview, Kalender, Workboard, Matriks + Kompilasi (2026-10-07) =====
+   Semua laporan memakai mesin yang sama dengan Laporan Monev Agenda:
+   model {cover, blocks} -> cmRptHtml (preview/PDF) & cmRptDocx (Word).
+*/
+const CM_X_STATUS_ORDER=['Pending','Scheduled','Ongoing','Postponed','Completed','Cancelled','Not Attended'];
+const CM_X_DOC_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+const CM_X_STACK_ICON='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;margin-right:2px"><path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 5 9-5"/></svg>';
+function cmXL(lang){return (i,e)=>cmRptT(lang,i,e);}
+function cmXLoc(lang){return lang==='en'?'en':'id';}
+function cmXMonth(m,lang,fmt='MMMM YYYY'){const d=dayjs(m+'-01');return d.isValid()?d.locale(cmXLoc(lang)).format(fmt):m;}
+function cmXDay(d,lang,fmt='dddd, D MMMM YYYY'){const x=dayjs(d);return x.isValid()?x.locale(cmXLoc(lang)).format(fmt):cmReportSafe(d);}
+function cmXPics(a){return typeof cmPicList==='function'?cmPicList(a.picTimCM):String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean);}
+function cmXPicMap(items){const m={};items.forEach(a=>{(typeof splitNames==='function'?splitNames(a.picTimCM):String(a.picTimCM||'').split(',')).forEach(nm=>{nm=String(nm||'').trim();if(nm)m[nm]=(m[nm]||0)+1;});});return m;}
+function cmXCount(items,fn){const m={};items.forEach(a=>{const k=fn(a);if(k==null)return;m[k]=(m[k]||0)+1;});return m;}
+function cmXSorted(obj){return Object.entries(obj||{}).sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0])));}
+function cmXFmtN(n,lang){return cmRptFmt1(n,lang);}
+function cmXDateRange(a,lang){const s=a.tglMulai,e=a.tglSelesai&&a.tglSelesai!==a.tglMulai?a.tglSelesai:'';if(!e)return cmXDay(s,lang,'D MMM YYYY');const ds=dayjs(s),de=dayjs(e);if(ds.isValid()&&de.isValid()&&ds.isSame(de,'month'))return `${ds.format('D')}–${de.locale(cmXLoc(lang)).format('D MMM YYYY')}`;return `${cmXDay(s,lang,'D MMM YYYY')} – ${cmXDay(e,lang,'D MMM YYYY')}`;}
+function cmXUnitType(u){try{return typeof getUnitType==='function'?getUnitType(u):'internal';}catch(e){return 'internal';}}
+function cmXWithLang(lang,fn){const prev=cmRptLangCur;cmRptLangCur=lang;try{return fn();}finally{cmRptLangCur=prev;}}
+
+function cmXWrap({lang,signer,kicker,title,subject,chips,scope,meta,fileName,header,blocks}){
+  const L=cmXL(lang),sg=signer||cmRptSigner(),date=cmRptLongDate(sg.date||dayjs().format('YYYY-MM-DD'),lang);
+  const qr=cmRptQr(`TTE-PLACEHOLDER | ${kicker} ${title} | ${subject}`);
+  return {kind:'menu',lang,fileName:cmRptFileName(fileName),title:`${kicker} ${title}`,
+    cover:{kicker,title,subject,chips:chips||[],scope:scope||[],
+      meta:[...(meta||[]),[L('Disusun oleh','Prepared by'),'Pusmantap — BaTii (CMO Kemenkeu)'],[L('Tanggal penyusunan','Prepared on'),date]],
+      tte:{qr,name:sg.name,title:sg.title,label:sg.label,city:sg.city,date}},
+    header,blocks};
+}
+
+/* ---------- Narasi grafik Overview (dipakai di layar dan di laporan) ---------- */
+function cmXNarrTrendService(items,lang){
+  const L=cmXL(lang),ya={},no={};
+  items.forEach(a=>{const m=a.yearMonth||String(a.tglMulai||'').slice(0,7);if(!/^\d{4}-\d{2}$/.test(m))return;const t=a.layanan==='Yes'?ya:no;t[m]=(t[m]||0)+1;});
+  const ms=[...new Set([...Object.keys(ya),...Object.keys(no)])].sort();
+  if(!ms.length)return L('Belum ada kegiatan yang sesuai filter, sehingga tren bulanan belum dapat dibaca.','No activities match the filters, so there is no monthly trend to read yet.');
+  const tot=m=>(ya[m]||0)+(no[m]||0),sumY=Object.values(ya).reduce((s,v)=>s+v,0),sumN=Object.values(no).reduce((s,v)=>s+v,0),ml=m=>cmXMonth(m,lang);
+  if(ms.length===1){const m=ms[0];return L(`Seluruh ${tot(m)} kegiatan berlangsung pada **${ml(m)}**, terdiri dari ${ya[m]||0} kegiatan layanan dan ${no[m]||0} kegiatan non-layanan.`,`All ${tot(m)} activities took place in **${ml(m)}**: ${ya[m]||0} service and ${no[m]||0} non-service.`);}
+  const peak=[...ms].sort((a,b)=>tot(b)-tot(a)||a.localeCompare(b))[0],avg=(sumY+sumN)/ms.length;
+  let t=L(`Dalam rentang ${ml(ms[0])} sampai ${ml(ms[ms.length-1])} tercatat rata-rata ${cmXFmtN(avg,lang)} kegiatan per bulan. Puncak kegiatan terjadi pada **${ml(peak)}** dengan ${tot(peak)} kegiatan (${ya[peak]||0} layanan, ${no[peak]||0} non-layanan).`,
+    `Between ${ml(ms[0])} and ${ml(ms[ms.length-1])} there were on average ${cmXFmtN(avg,lang)} activities per month. The peak was **${ml(peak)}** with ${tot(peak)} activities (${ya[peak]||0} service, ${no[peak]||0} non-service).`);
+  const pk=o=>{const e=cmXSorted(o);return e[0]||null;},pY=pk(ya),pN=pk(no);
+  if(pY&&pN)t+=L(` Kegiatan layanan paling banyak pada ${ml(pY[0])} (${pY[1]}), sedangkan non-layanan paling banyak pada ${ml(pN[0])} (${pN[1]}).`,` Service activities peaked in ${ml(pY[0])} (${pY[1]}), non-service in ${ml(pN[0])} (${pN[1]}).`);
+  const svcDom=ms.filter(m=>(ya[m]||0)>(no[m]||0)).length;
+  t+=L(` Garis layanan berada di atas non-layanan pada ${svcDom} dari ${ms.length} bulan.`,` The service line is above non-service in ${svcDom} of ${ms.length} months.`);
+  const l=ms[ms.length-1],p=ms[ms.length-2],d=tot(l)-tot(p),cur=dayjs().format('YYYY-MM');
+  t+=d===0?L(` Jumlah kegiatan ${ml(l)} sama dengan bulan sebelumnya (${tot(l)}).`,` ${ml(l)} equals the previous month (${tot(l)}).`):L(` Dibandingkan ${ml(p)}, kegiatan pada ${ml(l)} ${d>0?'naik':'turun'} ${Math.abs(d)} kegiatan (${tot(p)} menjadi ${tot(l)}).`,` Compared with ${ml(p)}, ${ml(l)} ${d>0?'rose':'fell'} by ${Math.abs(d)} (${tot(p)} to ${tot(l)}).`);
+  if(l>=cur)t+=L(` Angka ${ml(l)} masih dapat bertambah karena bulan tersebut belum berakhir.`,` The ${ml(l)} figure may still grow as the month is not over.`);
+  const span=dayjs(l+'-01').diff(dayjs(ms[0]+'-01'),'month')+1,gaps=span-ms.length;
+  if(gaps>0)t+=L(` Terdapat ${gaps} bulan tanpa kegiatan dalam rentang tersebut yang tidak tampil sebagai titik pada grafik.`,` ${gaps} months in this range had no activities and are not plotted.`);
+  return t;
+}
+function cmXNarrStatus(items,lang){
+  if(!items.length)return cmRptT(lang,'Belum ada kegiatan yang sesuai filter.','No activities match the filters.');
+  return cmXWithLang(lang,()=>cmRptNarrStatus(cmReportStats(items),items.length,lang));
+}
+function cmXNarrLayanan(items,lang){
+  const L=cmXL(lang),n=items.length;if(!n)return L('Belum ada kegiatan yang sesuai filter.','No activities match the filters.');
+  const svc=items.filter(a=>a.layanan==='Yes'),y=svc.length,p=cmRptPct(y,n);
+  let t=L(`Dari ${n} kegiatan, **${y} (${p}%) merupakan kegiatan layanan** dan ${n-y} (${100-p}%) kegiatan non-layanan.`,`Of ${n} activities, **${y} (${p}%) are service activities** and ${n-y} (${100-p}%) are non-service.`);
+  t+=p>=60?L(' Porsi ini menunjukkan sebagian besar beban kerja tim berupa dukungan langsung kepada unit.',' Most of the team workload is direct support to units.'):p<=40?L(' Kegiatan tim lebih banyak berupa agenda non-layanan, seperti koordinasi dan agenda internal.',' Most team activities are non-service, such as coordination and internal agendas.'):L(' Komposisi keduanya relatif berimbang.',' The two are fairly balanced.');
+  const tu=cmXSorted(cmXCount(svc,a=>cmRptHas(a.unitPemohon)?a.unitPemohon:null))[0];
+  if(tu)t+=L(` Unit yang paling banyak menerima layanan adalah **${tu[0]}** (${tu[1]} kegiatan).`,` The unit receiving the most service is **${tu[0]}** (${tu[1]}).`);
+  return t;
+}
+function cmXNarrKategori(items,lang){
+  const L=cmXL(lang),n=items.length;if(!n)return L('Belum ada kegiatan yang sesuai filter.','No activities match the filters.');
+  const by=cmXCount(items,a=>cmReportSafe(a.kategori));let t=cmRptNarrDist(by,n,lang,{noun:['kategori','categories']});
+  const top=cmXSorted(by).filter(x=>x[0]!=='-')[0];
+  if(top){const inTop=items.filter(a=>cmReportSafe(a.kategori)===top[0]),ys=inTop.filter(a=>a.layanan==='Yes').length;t+=L(` Pada kategori ${top[0]}, ${ys} dari ${inTop.length} kegiatan merupakan layanan.`,` Within ${top[0]}, ${ys} of ${inTop.length} activities are service.`);}
+  return t;
+}
+function cmXNarrPic(items,lang,shown=10){
+  const L=cmXL(lang),map=cmXPicMap(items),k=Object.keys(map).length;
+  let t=cmRptNarrPic({byPic:map},items.length,lang);
+  if(k>shown)t+=L(` Grafik menampilkan ${shown} PIC dengan keterlibatan tertinggi dari total ${k} PIC.`,` The chart shows the top ${shown} of ${k} PICs.`);
+  return t;
+}
+function cmXNarrUnit(items,lang){
+  const L=cmXL(lang),n=items.length;if(!n)return L('Belum ada kegiatan yang sesuai filter.','No activities match the filters.');
+  const by=cmXCount(items,a=>cmReportSafe(a.unitPemohon));let t=cmRptNarrDist(by,n,lang,{noun:['unit pengusul','requesting units']});
+  const units=Object.keys(by).filter(u=>u!=='-'),intU=units.filter(u=>cmXUnitType(u)==='internal'),extU=units.length-intU.length;
+  const intA=items.filter(a=>cmRptHas(a.unitPemohon)&&cmXUnitType(a.unitPemohon)==='internal').length,extA=items.filter(a=>cmRptHas(a.unitPemohon)&&cmXUnitType(a.unitPemohon)!=='internal').length;
+  t+=L(` Berdasarkan asal unit, ${intU.length} unit internal Kemenkeu mengajukan ${intA} kegiatan${extU?`, sedangkan ${extU} unit eksternal mengajukan ${extA} kegiatan`:' dan belum ada pengajuan dari unit eksternal'}.`,` By origin, ${intU.length} internal units requested ${intA} activities${extU?`, while ${extU} external units requested ${extA}`:' and there were no external requests'}.`);
+  return t;
+}
+function cmRenderOverviewNarratives(items){
+  const lang=currentLang==='en'?'en':'id',set=(id,txt)=>{const el=document.getElementById(id);if(el)el.innerHTML=cmRptMd(txt||'');};
+  try{
+    set('narrTrend',cmXNarrTrendService(items,lang));set('narrStatus',cmXNarrStatus(items,lang));set('narrLayanan',cmXNarrLayanan(items,lang));
+    set('narrKategori',cmXNarrKategori(items,lang));set('narrPic',cmXNarrPic(items,lang));set('narrUnit',cmXNarrUnit(items,lang));
+  }catch(e){console.warn('Overview narrative failed',e);}
+}
+/* Narasi grafik CRA */
+function cmXNarrAdkar(dims){
+  const id=currentLang!=='en',L=(i,e)=>id?i:e;if(!dims||!dims.length)return '';
+  const s=[...dims].sort((a,b)=>b.pct-a.pct),hi=s[0],lo=s[s.length-1],below=dims.filter(d=>d.pct<80),avg=dims.reduce((x,d)=>x+d.pct,0)/dims.length;
+  let t=L(`Rata-rata skor kesiapan seluruh dimensi adalah ${Math.round(avg)}%. Dimensi terkuat adalah **${hi.label}** (${hi.pct}%)`,`The average readiness across dimensions is ${Math.round(avg)}%. The strongest is **${hi.label}** (${hi.pct}%)`);
+  if(lo!==hi)t+=L(`, sedangkan yang terendah **${lo.label}** (${lo.pct}%), selisih ${hi.pct-lo.pct} poin.`,`, the weakest **${lo.label}** (${lo.pct}%), a gap of ${hi.pct-lo.pct} points.`);else t+='.';
+  t+=below.length?L(` Sebanyak ${below.length} dari ${dims.length} dimensi masih di bawah ambang siap 80% (${below.map(d=>d.label).join(', ')}) dan menjadi prioritas intervensi.`,` ${below.length} of ${dims.length} dimensions are below the 80% readiness threshold (${below.map(d=>d.label).join(', ')}) and should be prioritised.`):L(' Seluruh dimensi sudah mencapai ambang siap 80%.',' All dimensions meet the 80% readiness threshold.');
+  return t;
+}
+function cmXNarrCompare(series,dimKeys){
+  const id=currentLang!=='en',L=(i,e)=>id?i:e;if(!series||!series.length)return '';
+  const lab=x=>`${x.s.round||'Round'} v${Number(x.s.version)||1}`;
+  if(series.length===1)return L(`Baru tersedia satu putaran berdata (${lab(series[0])}) dengan skor keseluruhan ${series[0].overall}%. Perbandingan tren dapat dibaca setelah putaran berikutnya memiliki respons.`,`Only one round has data (${lab(series[0])}), overall ${series[0].overall}%. Trends will appear once another round has responses.`);
+  const f=series[0],l=series[series.length-1],d=l.overall-f.overall;
+  let t=L(`Skor keseluruhan bergerak dari ${f.overall}% (${lab(f)}) menjadi ${l.overall}% (${lab(l)}), ${d>0?`naik ${d} poin`:d<0?`turun ${Math.abs(d)} poin`:'tidak berubah'}.`,`Overall readiness moved from ${f.overall}% (${lab(f)}) to ${l.overall}% (${lab(l)}), ${d>0?`up ${d} points`:d<0?`down ${Math.abs(d)} points`:'unchanged'}.`);
+  const ch=(dimKeys||[]).map(k=>{const a=f.dims.find(y=>y.dim===k)?.pct,b=l.dims.find(y=>y.dim===k)?.pct;return a==null||b==null?null:{k,lbl:(typeof CM_SURVEY_DIM_LABEL!=='undefined'&&CM_SURVEY_DIM_LABEL[k])||k,d:b-a};}).filter(Boolean).sort((a,b)=>b.d-a.d);
+  if(ch.length){const up=ch[0],dn=ch[ch.length-1];if(up.d>0)t+=L(` Kenaikan terbesar pada dimensi **${up.lbl}** (+${up.d} poin).`,` The largest gain is **${up.lbl}** (+${up.d}).`);if(dn.d<0)t+=L(` Penurunan terbesar pada **${dn.lbl}** (${dn.d} poin) dan perlu ditelusuri penyebabnya.`,` The largest drop is **${dn.lbl}** (${dn.d}) and should be investigated.`);}
+  return t;
+}
+
+/* ---------- Laporan Overview ---------- */
+async function cmXBuildOverviewModel(o){
+  const lang=o.lang,L=cmXL(lang);cmRptLangCur=lang;
+  const items=getFiltered(),n=items.length,per=cmRptPeriod(items,lang),subj=cmRptSubject(lang),blocks=[];
+  const perTxt=per.kind==='all'?L('seluruh periode','all periods'):per.label.charAt(0).toLowerCase()+per.label.slice(1);
+  const thisMonth=dayjs().format('YYYY-MM'),done=items.filter(a=>a.statusNorm==='Completed').length,sched=items.filter(a=>['Scheduled','Ongoing'].includes(a.statusNorm)).length,svc=items.filter(a=>a.layanan==='Yes').length;
+  const units=new Set(items.map(a=>a.unitPemohon).filter(cmRptHas)).size,topCat=cmXSorted(cmXCount(items,a=>cmRptHas(a.kategori)?a.kategori:null))[0];
+  blocks.push({t:'h1',text:L('Ringkasan Dashboard','Dashboard Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Total kegiatan','Total activities'),value:n,sub:per.short,color:'2F5BD3'},
+    {label:L('Bulan berjalan','This month'),value:items.filter(a=>a.yearMonth===thisMonth).length,sub:cmXMonth(thisMonth,lang),color:'1BA7C9'},
+    {label:L('Selesai','Completed'),value:done,sub:`${cmRptPct(done,n)}% ${L('dari total','of total')}`,color:'16A37F'},
+    {label:L('Terjadwal / berjalan','Scheduled / ongoing'),value:sched,sub:L('perlu dipantau','to monitor'),color:'F2A93B'},
+    {label:L('Kegiatan layanan','Service activities'),value:svc,sub:`${cmRptPct(svc,n)}% ${L('dari total','of total')}`,color:'7C5CE0'},
+    {label:L('Unit pengusul','Requesting units'),value:units,sub:topCat?`${L('Kategori terbanyak','Top category')}: ${topCat[0]}`:'-',color:'E25563'}]});
+  if(!n){blocks.push({t:'callout',tone:'warn',title:L('Tidak ada data','No data'),lines:[L('Tidak ada kegiatan yang sesuai filter aktif.','No activities match the active filters.')]});}
+  else{
+    blocks.push({t:'p',text:L(`Dashboard mencatat **${n} kegiatan** pada ${perTxt}. Sebanyak **${done} kegiatan (${cmRptPct(done,n)}%) telah selesai** dan ${sched} kegiatan masih terjadwal atau berjalan. Kegiatan layanan mencapai ${svc} kegiatan (${cmRptPct(svc,n)}%), diajukan oleh ${units} unit pengusul.${topCat?` Kategori yang paling sering dilaksanakan adalah **${topCat[0]}** (${topCat[1]} kegiatan).`:''}`,
+      `The dashboard records **${n} activities** for ${perTxt}. **${done} (${cmRptPct(done,n)}%) are completed** and ${sched} are scheduled or ongoing. Service activities total ${svc} (${cmRptPct(svc,n)}%), requested by ${units} units.${topCat?` The most frequent category is **${topCat[0]}** (${topCat[1]}).`:''}`)});
+    // Tren
+    const ya={},no={};items.forEach(a=>{const m=a.yearMonth||String(a.tglMulai||'').slice(0,7);if(!/^\d{4}-\d{2}$/.test(m))return;const t=a.layanan==='Yes'?ya:no;t[m]=(t[m]||0)+1;});
+    const ms=[...new Set([...Object.keys(ya),...Object.keys(no)])].sort();
+    blocks.push({t:'h1',text:L('Tren Kegiatan per Bulan','Monthly Activity Trend')});
+    const trend=await cmRptChart({type:'line',data:{labels:ms.map(m=>cmXMonth(m,lang,'MMM YY')),datasets:[
+      {label:L('Layanan','Service'),data:ms.map(m=>ya[m]||0),borderColor:'#1B3A73',backgroundColor:'rgba(27,58,115,.12)',fill:true,tension:.35,pointRadius:5,pointBackgroundColor:'#1B3A73',borderWidth:3},
+      {label:L('Non-layanan','Non-service'),data:ms.map(m=>no[m]||0),borderColor:'#C8A84B',backgroundColor:'rgba(200,168,75,.14)',fill:true,tension:.35,pointRadius:5,pointBackgroundColor:'#C8A84B',borderWidth:3}]},
+      options:{plugins:{legend:{position:'top'},datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,align:'top',anchor:'end',color:'#12275A',font:{weight:'bold',size:13}}},scales:{x:{grid:{display:false},ticks:{color:'#344054',font:{size:13}}},y:{beginAtZero:true,ticks:{precision:0,color:'#344054',font:{size:13}},grid:{color:'#EEF1F6'}}}}},700,320);
+    blocks.push({t:'charts',items:[{title:L('Kegiatan layanan dan non-layanan per bulan','Service vs non-service activities per month'),img:trend}]});
+    blocks.push({t:'p',text:cmXNarrTrendService(items,lang)});
+    // Status & layanan
+    blocks.push({t:'h1',text:L('Status dan Jenis Layanan','Status and Service Type')});
+    const st=cmReportStats(items),sk=Object.keys(st.byStatusKey).sort((a,b)=>st.byStatusKey[b]-st.byStatusKey[a]);
+    const stImg=await cmRptChart(cmRptDoughnutCfg(sk.map(k=>cmRptStatus(k)),sk.map(k=>st.byStatusKey[k]),sk.map(k=>CM_RPT_STATUS_COLOR[k]||'#5B6B82'),[`${cmRptPct(done,n)}%`,L('selesai','completed')]),620,320);
+    const lyImg=await cmRptChart(cmRptDoughnutCfg([L('Layanan','Service'),L('Non-layanan','Non-service')],[svc,n-svc],['#1B3A73','#C8A84B'],[`${cmRptPct(svc,n)}%`,L('layanan','service')]),620,320);
+    blocks.push({t:'charts',items:[{title:L('Distribusi status kegiatan','Status distribution'),img:stImg},{title:L('Layanan dan non-layanan','Service vs non-service'),img:lyImg}]});
+    blocks.push({t:'p',text:L('**Status.** ','**Status.** ')+cmXNarrStatus(items,lang)});
+    blocks.push({t:'p',text:L('**Jenis layanan.** ','**Service type.** ')+cmXNarrLayanan(items,lang)});
+    // Kategori
+    blocks.push({t:'h1',text:L('Sebaran Kategori Kegiatan','Activity Categories')});
+    const cY={},cN={},cT=cmXCount(items,a=>cmReportSafe(a.kategori));items.forEach(a=>{const k=cmReportSafe(a.kategori),t=a.layanan==='Yes'?cY:cN;t[k]=(t[k]||0)+1;});
+    const cats=cmXSorted(cT).slice(0,10).map(x=>x[0]);
+    const katImg=await cmRptChart({type:'bar',data:{labels:cats,datasets:[{label:L('Layanan','Service'),data:cats.map(c=>cY[c]||0),backgroundColor:'#1B3A73',maxBarThickness:28},{label:L('Non-layanan','Non-service'),data:cats.map(c=>cN[c]||0),backgroundColor:'#C8A84B',maxBarThickness:28}]},
+      options:{indexAxis:'y',plugins:{legend:{position:'top'},datalabels:{color:'#fff',font:{weight:'bold',size:13},formatter:v=>v>0?v:''}},scales:{x:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#344054',font:{size:13}},grid:{color:'#EEF1F6'}},y:{stacked:true,grid:{display:false},ticks:{color:'#344054',font:{size:13}}}}}},680,Math.max(240,80+cats.length*40));
+    blocks.push({t:'charts',items:[{title:L('Kegiatan per kategori','Activities per category'),img:katImg}]});
+    blocks.push({t:'p',text:cmXNarrKategori(items,lang)});
+    // PIC
+    blocks.push({t:'h1',text:L('Beban Kerja PIC Tim CM','CM Team PIC Workload')});
+    const pm=cmXSorted(cmXPicMap(items)).slice(0,10);
+    const picImg=await cmRptChart(cmRptBarCfg(pm.map(x=>x[0]),pm.map(x=>x[1]),{horizontal:true,colors:pm.map(()=> '#254A8C')}),680,Math.max(240,70+pm.length*38));
+    blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per PIC (10 teratas)','Activities per PIC (top 10)'),img:picImg,caption:L('Satu kegiatan dapat ditangani lebih dari satu PIC.','One activity may involve several PICs.')}]});
+    blocks.push({t:'p',text:cmXNarrPic(items,lang)});
+    // Unit
+    blocks.push({t:'h1',text:L('Unit Pengusul','Requesting Units')});
+    const um=cmXSorted(cmXCount(items,a=>cmRptHas(a.unitPemohon)?a.unitPemohon:null)).slice(0,12);
+    const unitImg=await cmRptChart({type:'bar',data:{labels:um.map(x=>x[0]),datasets:[{label:L('Internal Kemenkeu','Internal MoF'),data:um.map(x=>cmXUnitType(x[0])==='internal'?x[1]:0),backgroundColor:'#1B3A73',maxBarThickness:26},{label:L('Eksternal','External'),data:um.map(x=>cmXUnitType(x[0])==='internal'?0:x[1]),backgroundColor:'#C8A84B',maxBarThickness:26}]},
+      options:{indexAxis:'y',plugins:{legend:{position:'top'},datalabels:{color:'#fff',font:{weight:'bold',size:13},formatter:v=>v>0?v:''}},scales:{x:{stacked:true,beginAtZero:true,ticks:{precision:0,color:'#344054',font:{size:13}},grid:{color:'#EEF1F6'}},y:{stacked:true,grid:{display:false},ticks:{color:'#344054',font:{size:13}}}}}},680,Math.max(240,80+um.length*36));
+    blocks.push({t:'charts',items:[{title:L('Kegiatan per unit pengusul (12 teratas)','Activities per requesting unit (top 12)'),img:unitImg}]});
+    blocks.push({t:'p',text:cmXNarrUnit(items,lang)});
+    // Catatan
+    blocks.push({t:'h1',text:L('Catatan dan Tindak Lanjut','Notes and Follow-up')});
+    const recs=[],pend=items.filter(a=>['Pending','Postponed'].includes(a.statusNorm)).length,needs=items.filter(a=>a.statusNeedsUpdate).length;
+    if(needs)recs.push(L(`**${needs} kegiatan sudah lewat tanggal namun statusnya belum diperbarui.** Pemutakhiran status diperlukan agar capaian di dashboard akurat.`,`**${needs} past activities still need a status update.**`));
+    if(pend)recs.push(L(`**${pend} kegiatan menunggu konfirmasi atau ditunda.** Perlu kepastian jadwal dengan unit pengusul.`,`**${pend} activities are awaiting confirmation or postponed.** Confirm schedules with requesting units.`));
+    if(pm[0]&&n>=8&&pm[0][1]/n>=0.35)recs.push(L(`**Pemerataan beban kerja.** ${pm[0][0]} terlibat pada ${cmRptPct(pm[0][1],n)}% kegiatan.`,`**Balance workload.** ${pm[0][0]} is involved in ${cmRptPct(pm[0][1],n)}% of activities.`));
+    if(!recs.length)recs.push(L('Pelaksanaan kegiatan berjalan sesuai rencana; tidak terdapat kegiatan yang memerlukan perhatian khusus.','Activities are on track; nothing needs special attention.'));
+    blocks.push({t:'bullets',items:recs});
+  }
+  return cmXWrap({lang,signer:o.signer,kicker:L('LAPORAN OVERVIEW','OVERVIEW REPORT'),title:per.label.toUpperCase(),subject:L('Dashboard Master Agenda Change Management','Change Management Master Agenda Dashboard'),
+    chips:[`${n} ${L('kegiatan','activities')}`,`${cmRptPct(done,n)}% ${L('selesai','completed')}`],scope:cmReportFilterSummary(items,lang),
+    meta:[[L('Periode laporan','Report period'),per.range||per.label],[L('Lingkup','Scope'),subj.text],[L('Jumlah kegiatan','Activities'),String(n)]],
+    fileName:`${L('Laporan Overview','Overview Report')} - ${per.short}`,header:`${L('Laporan Overview','Overview Report')} · ${per.short}`,blocks});
+}
+
+/* ---------- Laporan & Ekspor Kalender ---------- */
+function cmXHolidayText(h,lang){if(!h)return '';return lang==='en'?(h.en||h.id||''):(h.id||h.en||'');}
+function cmXCalendarData(month){
+  month=month||state.calMonth||dayjs().format('YYYY-MM');
+  const ms=dayjs(month+'-01').startOf('day'),me=ms.endOf('month').startOf('day'),firstDow=(ms.day()+6)%7,byDay={},items=[];
+  getFiltered().forEach(a=>{
+    const s=dayjs(a.tglMulai).startOf('day');if(!s.isValid())return;let e=dayjs(a.tglSelesai||a.tglMulai).startOf('day');if(!e.isValid()||e.isBefore(s))e=s;
+    if(e.isBefore(ms,'day')||s.isAfter(me,'day'))return;items.push(a);
+    let c=s.isBefore(ms,'day')?ms:s;const end=e.isAfter(me,'day')?me:e;
+    while(!c.isAfter(end,'day')){const k=c.format('YYYY-MM-DD');(byDay[k]||(byDay[k]=[])).push(a);c=c.add(1,'day');}
+  });
+  items.sort((a,b)=>String(a.tglMulai).localeCompare(String(b.tglMulai))||String(a.waktu||'').localeCompare(String(b.waktu||'')));
+  const holidays=[];for(let d=1;d<=ms.daysInMonth();d++){const k=ms.date(d).format('YYYY-MM-DD');let h=null;try{h=cmIndonesiaHolidayForDate(k);}catch(e){}if(h)holidays.push({date:k,item:h});}
+  const weekOf=k=>Math.floor((dayjs(k).date()-1+firstDow)/7)+1;
+  return {month,ms,me,firstDow,byDay,items,holidays,weekOf,weeks:Math.ceil((firstDow+ms.daysInMonth())/7)};
+}
+function cmXCalendarNarr(d,lang){
+  const L=cmXL(lang),n=d.items.length,mLab=cmXMonth(d.month,lang);
+  if(!n)return L(`Tidak ada kegiatan yang tercatat pada **${mLab}** sesuai filter aktif.${d.holidays.length?` Bulan ini memiliki ${d.holidays.length} hari libur nasional/cuti bersama.`:''}`,`No activities are recorded in **${mLab}** for the active filters.`);
+  const days=Object.keys(d.byDay).sort(),busy=[...days].sort((a,b)=>d.byDay[b].length-d.byDay[a].length||a.localeCompare(b))[0];
+  let work=0;for(let i=1;i<=d.ms.daysInMonth();i++){const k=d.ms.date(i);const dow=(k.day()+6)%7;const ks=k.format('YYYY-MM-DD');if(dow<5&&!d.holidays.some(h=>h.date===ks))work++;}
+  const workDays=days.filter(k=>{const dow=(dayjs(k).day()+6)%7;return dow<5&&!d.holidays.some(h=>h.date===k);}).length;
+  const wk={};days.forEach(k=>{wk[d.weekOf(k)]=(wk[d.weekOf(k)]||0)+d.byDay[k].length;});const topW=cmXSorted(wk)[0];
+  const offDay=d.items.filter(a=>{const k=a.tglMulai;const dow=(dayjs(k).day()+6)%7;return dow>=5||d.holidays.some(h=>h.date===k);}).length;
+  const done=d.items.filter(a=>a.statusNorm==='Completed').length,multi=d.items.filter(a=>a.tglSelesai&&a.tglSelesai!==a.tglMulai).length;
+  let t=L(`Pada **${mLab}** terdapat **${n} kegiatan** yang tersebar pada ${days.length} hari kalender, mencakup ${workDays} dari ${work} hari kerja (${cmRptPct(workDays,work)}%). Hari tersibuk adalah **${cmXDay(busy,lang,'dddd, D MMMM')}** dengan ${d.byDay[busy].length} kegiatan, dan pekan ke-${topW[0]} menjadi pekan terpadat (${topW[1]} kegiatan-hari).`,
+    `In **${mLab}** there are **${n} activities** across ${days.length} calendar days, covering ${workDays} of ${work} working days (${cmRptPct(workDays,work)}%). The busiest day is **${cmXDay(busy,lang,'dddd, D MMMM')}** with ${d.byDay[busy].length} activities, and week ${topW[0]} is the busiest (${topW[1]} activity-days).`);
+  t+=L(` Sebanyak ${done} kegiatan (${cmRptPct(done,n)}%) berstatus selesai.`,` ${done} (${cmRptPct(done,n)}%) are completed.`);
+  if(multi)t+=L(` ${multi} kegiatan berlangsung lebih dari satu hari.`,` ${multi} activities span more than one day.`);
+  if(d.holidays.length)t+=L(` Bulan ini memiliki ${d.holidays.length} hari libur nasional/cuti bersama${offDay?`, dan ${offDay} kegiatan dimulai pada akhir pekan atau hari libur`:''}.`,` The month has ${d.holidays.length} public holidays/collective leave days${offDay?`, and ${offDay} activities start on a weekend or holiday`:''}.`);
+  else if(offDay)t+=L(` ${offDay} kegiatan dimulai pada akhir pekan.`,` ${offDay} activities start on a weekend.`);
+  return t;
+}
+async function cmXBuildCalendarModel(o){
+  const lang=o.lang,L=cmXL(lang);cmRptLangCur=lang;
+  const d=cmXCalendarData(),n=d.items.length,mLab=cmXMonth(d.month,lang),blocks=[];
+  const dn=lang==='en'?['Mon','Tue','Wed','Thu','Fri','Sat','Sun']:['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+  const days=Object.keys(d.byDay).sort(),busy=[...days].sort((a,b)=>d.byDay[b].length-d.byDay[a].length||a.localeCompare(b))[0];
+  const done=d.items.filter(a=>a.statusNorm==='Completed').length,open=d.items.filter(a=>['Scheduled','Ongoing','Pending'].includes(a.statusNorm)).length;
+  blocks.push({t:'h1',text:L('Ringkasan Bulan','Monthly Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Kegiatan','Activities'),value:n,sub:mLab,color:'2F5BD3'},
+    {label:L('Hari berkegiatan','Active days'),value:days.length,sub:L('hari kalender','calendar days'),color:'1BA7C9'},
+    {label:L('Hari tersibuk','Busiest day'),value:busy?dayjs(busy).format('D'):'-',sub:busy?`${cmXDay(busy,lang,'dddd')} · ${d.byDay[busy].length} ${L('kegiatan','activities')}`:'-',color:'7C5CE0'},
+    {label:L('Selesai','Completed'),value:done,sub:`${cmRptPct(done,n)}%`,color:'16A37F'},
+    {label:L('Belum selesai','Open'),value:open,sub:L('terjadwal / menunggu','scheduled / pending'),color:'F2A93B'},
+    {label:L('Hari libur','Holidays'),value:d.holidays.length,sub:L('nasional & cuti bersama','public & collective'),color:'E25563'}]});
+  blocks.push({t:'p',text:cmXCalendarNarr(d,lang)});
+  // Grid kalender
+  blocks.push({t:'h1',text:L(`Kalender ${mLab}`,`Calendar ${mLab}`)});
+  const rows=[];
+  for(let w=0;w<d.weeks;w++){const r=[];for(let i=0;i<7;i++){const dayNum=w*7+i-d.firstDow+1;if(dayNum<1||dayNum>d.ms.daysInMonth()){r.push({text:'',bg:'F5F6F8'});continue;}
+    const k=d.ms.date(dayNum).format('YYYY-MM-DD'),evs=d.byDay[k]||[],h=d.holidays.find(x=>x.date===k);
+    let txt=`**${dayNum}**`;if(h)txt+=`\n${cmXHolidayText(h.item,lang)}`;evs.slice(0,3).forEach(a=>{txt+=`\n• ${cmReportSafe(a.namaKegiatan).slice(0,48)}${String(a.namaKegiatan||'').length>48?'…':''}`;});if(evs.length>3)txt+=`\n+${evs.length-3} ${L('lainnya','more')}`;
+    r.push(h?{text:txt,bg:h.item.type==='collective'?'FFF4E5':'FDECEE'}:(i>=5?{text:txt,bg:'F8FAFD'}:txt));}
+    rows.push(r);}
+  blocks.push({t:'table',small:true,fixed:true,head:dn,widths:[14,14,14,14,14,15,15],rows});
+  blocks.push({t:'p',muted:true,text:L('Sel berwarna merah muda menandai hari libur nasional, oranye muda menandai cuti bersama, dan abu-abu muda menandai akhir pekan.','Pink cells mark public holidays, light orange marks collective leave, light grey marks weekends.')});
+  if(n){
+    // Sebaran
+    blocks.push({t:'h1',text:L('Sebaran Waktu Kegiatan','Timing of Activities')});
+    const wkMap={};for(let w=1;w<=d.weeks;w++)wkMap[w]=0;days.forEach(k=>{wkMap[d.weekOf(k)]+=d.byDay[k].length;});
+    const dowMap=[0,0,0,0,0,0,0];days.forEach(k=>{dowMap[(dayjs(k).day()+6)%7]+=d.byDay[k].length;});
+    const wkImg=await cmRptChart(cmRptBarCfg(Object.keys(wkMap).map(w=>L(`Pekan ${w}`,`Week ${w}`)),Object.values(wkMap),{colors:Object.keys(wkMap).map(()=> '#2F5BD3')}),460,300);
+    const dowImg=await cmRptChart(cmRptBarCfg(dn,dowMap,{colors:dn.map((_,i)=>i>=5?'#8A94A6':'#16A37F')}),460,300);
+    blocks.push({t:'charts',items:[{title:L('Kegiatan per pekan','Activities per week'),img:wkImg},{title:L('Kegiatan per hari dalam pekan','Activities by weekday'),img:dowImg}]});
+    const wkE=cmXSorted(wkMap),dE=dowMap.map((v,i)=>[dn[i],v]).sort((a,b)=>b[1]-a[1]),quiet=Object.entries(wkMap).filter(x=>!x[1]).map(x=>x[0]);
+    blocks.push({t:'p',text:L(`Grafik kiri menghitung kegiatan per hari kalender pada setiap pekan (kegiatan multi-hari dihitung pada setiap harinya). Pekan ke-${wkE[0][0]} paling padat dengan ${wkE[0][1]} kegiatan-hari${quiet.length?`, sementara pekan ke-${quiet.join(', ')} tidak memiliki kegiatan`:''}. Grafik kanan menunjukkan hari **${dE[0][0]}** sebagai hari dengan kegiatan terbanyak (${dE[0][1]})${dowMap[5]+dowMap[6]?`, dan terdapat ${dowMap[5]+dowMap[6]} kegiatan-hari pada akhir pekan`:', tanpa kegiatan pada akhir pekan'}.`,
+      `The left chart counts activity-days per week (multi-day activities count on each day). Week ${wkE[0][0]} is busiest with ${wkE[0][1]}${quiet.length?`, while week ${quiet.join(', ')} has none`:''}. The right chart shows **${dE[0][0]}** as the busiest weekday (${dE[0][1]})${dowMap[5]+dowMap[6]?`, with ${dowMap[5]+dowMap[6]} activity-days on weekends`:', with no weekend activity'}.`)});
+    // Agenda rinci
+    blocks.push({t:'h1',text:L('Agenda Kegiatan','Activity Agenda')});
+    blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Waktu','Time'),L('Kegiatan','Activity'),L('Kategori','Category'),L('Unit','Unit'),'PIC','Status'],widths:[5,13,9,29,10,10,12,12],
+      rows:d.items.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmReportSafe(a.waktu),cmReportSafe(a.namaKegiatan),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmRptStatusCell(a.statusNorm,lang)])});
+  }
+  if(d.holidays.length){
+    blocks.push({t:'h1',text:L('Hari Libur Nasional dan Cuti Bersama','Public Holidays and Collective Leave')});
+    blocks.push({t:'table',head:[L('Tanggal','Date'),L('Keterangan','Description'),L('Jenis','Type'),L('Kegiatan pada hari itu','Activities that day')],widths:[24,40,16,20],
+      rows:d.holidays.map(h=>[cmXDay(h.date,lang,'dddd, D MMM YYYY'),cmXHolidayText(h.item,lang),h.item.type==='collective'?L('Cuti bersama','Collective leave'):L('Libur nasional','Public holiday'),{text:String((d.byDay[h.date]||[]).length),align:'center'}])});
+  }
+  const scope=cmReportFilterSummary(d.items,lang).filter(x=>!/^(Periode|Period):/.test(x));
+  return cmXWrap({lang,signer:o.signer,kicker:L('LAPORAN KALENDER KEGIATAN','ACTIVITY CALENDAR REPORT'),title:mLab.toUpperCase(),subject:L('Agenda Change Management Pusmantap','Pusmantap Change Management Agenda'),
+    chips:[`${n} ${L('kegiatan','activities')}`,`${days.length} ${L('hari berkegiatan','active days')}`],scope,
+    meta:[[L('Bulan','Month'),mLab],[L('Jumlah kegiatan','Activities'),String(n)],[L('Hari libur','Holidays'),String(d.holidays.length)]],
+    fileName:`${L('Kalender Kegiatan','Activity Calendar')} - ${mLab}`,header:`${L('Kalender Kegiatan','Activity Calendar')} · ${mLab}`,blocks});
+}
+async function cmXExportCalendarWord(){
+  try{toast(uiText('Preparing Word file…','Menyiapkan file Word…'),'info');const model=await cmXBuildCalendarModel({lang:currentLang==='en'?'en':'id',signer:cmRptSigner()});const blob=await cmRptDocx(model);cmRptDownloadBlob(blob,model.fileName+'.docx');toast(uiText('Calendar exported to Word.','Kalender berhasil diekspor ke Word.'),'success');}
+  catch(e){console.error(e);toast(uiText('Word export failed: ','Gagal ekspor Word: ')+(e.message||e),'error');}
+}
+function cmXExportCalendarExcel(){
+  try{
+    if(typeof XLSX==='undefined')throw new Error('XLSX library not available');
+    const lang=currentLang==='en'?'en':'id',L=cmXL(lang);cmRptLangCur=lang;const d=cmXCalendarData(),mLab=cmXMonth(d.month,lang),wb=XLSX.utils.book_new();
+    const dn=lang==='en'?['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']:['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
+    const plain=s=>String(s||'').replace(/\*\*/g,'');
+    // Ringkasan
+    const days=Object.keys(d.byDay);const done=d.items.filter(a=>a.statusNorm==='Completed').length;
+    const sum=[[L(`Kalender Kegiatan ${mLab}`,`Activity Calendar ${mLab}`)],[CM_RPT_ORG[2]+' — '+CM_RPT_ORG[1]],[],[L('Indikator','Indicator'),L('Nilai','Value')],
+      [L('Jumlah kegiatan','Activities'),d.items.length],[L('Hari berkegiatan','Active days'),days.length],[L('Kegiatan selesai','Completed'),done],[L('Hari libur nasional/cuti bersama','Holidays'),d.holidays.length],[],
+      [L('Uraian','Summary')],[plain(cmXCalendarNarr(d,lang))]];
+    const scope=cmReportFilterSummary(d.items,lang).filter(x=>!/^(Periode|Period):/.test(x));if(scope.length){sum.push([]);sum.push([L('Filter','Filters'),scope.join(' • ')]);}
+    const ws0=XLSX.utils.aoa_to_sheet(sum);ws0['!cols']=[{wch:38},{wch:90}];XLSX.utils.book_append_sheet(wb,ws0,L('Ringkasan','Summary'));
+    // Kalender (grid): baris tanggal lalu baris kegiatan per pekan
+    const grid=[[L(`Kalender ${mLab}`,`Calendar ${mLab}`)],dn];
+    for(let w=0;w<d.weeks;w++){
+      const keys=[];for(let i=0;i<7;i++){const dayNum=w*7+i-d.firstDow+1;keys.push(dayNum>=1&&dayNum<=d.ms.daysInMonth()?d.ms.date(dayNum).format('YYYY-MM-DD'):null);}
+      grid.push(keys.map(k=>{if(!k)return '';const h=d.holidays.find(x=>x.date===k);return `${dayjs(k).date()}${h?' — '+cmXHolidayText(h.item,lang):''}`;}));
+      const max=Math.max(0,...keys.map(k=>k?(d.byDay[k]||[]).length:0));
+      for(let r=0;r<max;r++)grid.push(keys.map(k=>{const a=k?(d.byDay[k]||[])[r]:null;return a?`• ${cmReportSafe(a.namaKegiatan)}${cmRptHas(a.waktu)?' ('+a.waktu+')':''}`:'';}));
+      grid.push([]);
+    }
+    const ws1=XLSX.utils.aoa_to_sheet(grid);ws1['!cols']=dn.map(()=>({wch:34}));XLSX.utils.book_append_sheet(wb,ws1,L('Kalender','Calendar'));
+    // Agenda
+    const ag=d.items.map((a,i)=>({No:i+1,[L('Tanggal Mulai','Start Date')]:a.tglMulai||'',[L('Tanggal Selesai','End Date')]:a.tglSelesai||a.tglMulai||'',[L('Hari','Day')]:cmXDay(a.tglMulai,lang,'dddd'),[L('Waktu','Time')]:a.waktu||'',[L('Nama Kegiatan','Activity')]:a.namaKegiatan||'',[L('Kategori','Category')]:a.kategori||'',[L('Program Terkait','Related Program')]:a.programTerkait||'',[L('Unit Pengusul','Requesting Unit')]:a.unitPemohon||'',[L('Layanan','Service')]:a.layanan==='Yes'?L('Ya','Yes'):L('Tidak','No'),['PIC Tim CM']:cmXPics(a).join(', '),[L('Lokasi / Kanal','Location / Channel')]:a.lokasiChannel||'',Status:cmRptStatus(a.statusNorm)}));
+    const ws2=ag.length?XLSX.utils.json_to_sheet(ag):XLSX.utils.aoa_to_sheet([[L('Tidak ada kegiatan pada bulan ini.','No activities this month.')]]);
+    ws2['!cols']=[{wch:5},{wch:12},{wch:12},{wch:10},{wch:14},{wch:60},{wch:14},{wch:24},{wch:18},{wch:9},{wch:24},{wch:28},{wch:18}];XLSX.utils.book_append_sheet(wb,ws2,'Agenda');
+    // Rekap harian
+    const rk=[[L('Tanggal','Date'),L('Hari','Day'),L('Jumlah Kegiatan','Activities'),L('Daftar Kegiatan','Activity List'),L('Keterangan Libur','Holiday')]];
+    for(let i=1;i<=d.ms.daysInMonth();i++){const k=d.ms.date(i).format('YYYY-MM-DD'),ev=d.byDay[k]||[],h=d.holidays.find(x=>x.date===k);rk.push([k,cmXDay(k,lang,'dddd'),ev.length,ev.map(a=>cmReportSafe(a.namaKegiatan)).join('; '),h?cmXHolidayText(h.item,lang):'']);}
+    const ws3=XLSX.utils.aoa_to_sheet(rk);ws3['!cols']=[{wch:12},{wch:10},{wch:10},{wch:100},{wch:36}];XLSX.utils.book_append_sheet(wb,ws3,L('Rekap Harian','Daily Recap'));
+    XLSX.writeFile(wb,cmRptFileName(`${L('Kalender Kegiatan','Activity Calendar')} - ${mLab}`)+'.xlsx');
+    toast(uiText('Calendar exported to Excel.','Kalender berhasil diekspor ke Excel.'),'success');
+  }catch(e){console.error(e);toast(uiText('Excel export failed: ','Gagal ekspor Excel: ')+(e.message||e),'error');}
+}
+
+/* ---------- Laporan Workboard ---------- */
+function cmXDaysTo(a,today){const s=dayjs(a.tglMulai).startOf('day');return s.isValid()?s.diff(dayjs(today),'day'):null;}
+function cmXWorkNote(a,key,lang,today){
+  const L=cmXL(lang),dt=cmXDaysTo(a,today),end=dayjs(a.tglSelesai||a.tglMulai).startOf('day'),past=end.isValid()&&end.isBefore(dayjs(today),'day');
+  if(key==='Completed'){const f=cmRptDocFlags(a);return `${L('Notula','Minutes')} ${f.notula?'✓':'–'} · ${L('Foto','Photos')} ${f.dokumentasi?'✓':'–'}`;}
+  if(['Cancelled','Not Attended'].includes(key))return cmRptHas(a.catatan)?cmRptShort(a.catatan,80):'-';
+  if(past){const late=dayjs(today).diff(end,'day');return {text:L(`Lewat ${late} hari, status perlu diperbarui`,`${late} days past, update status`),color:'C53030',bold:true};}
+  if(dt===null)return '-';if(dt===0)return {text:L('Hari ini','Today'),color:'B7791F',bold:true};if(dt<0)return L('Sedang berjalan','In progress');
+  return dt<=7?{text:`H-${dt}`,color:'B7791F',bold:true}:`H-${dt}`;
+}
+function cmXNarrWorkStatus(key,list,lang,today){
+  const L=cmXL(lang),n=list.length,in14=dayjs(today).add(14,'day').format('YYYY-MM-DD');
+  const past=list.filter(a=>dayjs(a.tglSelesai||a.tglMulai).isBefore(dayjs(today),'day')),soon=list.filter(a=>a.tglMulai>=today&&a.tglMulai<=in14).sort((a,b)=>a.tglMulai.localeCompare(b.tglMulai));
+  const nx=soon[0],tu=cmXSorted(cmXCount(list,a=>cmRptHas(a.unitPemohon)?a.unitPemohon:null))[0],tp=cmXSorted(cmXPicMap(list))[0];
+  const nxTxt=nx?L(`, terdekat **${cmReportSafe(nx.namaKegiatan).slice(0,90)}** (${cmXDay(nx.tglMulai,lang,'D MMMM YYYY')})`,`, the nearest being **${cmReportSafe(nx.namaKegiatan).slice(0,90)}** (${cmXDay(nx.tglMulai,lang,'D MMMM YYYY')})`):'';
+  let t='';
+  switch(key){
+    case 'Pending':t=L(`Sebanyak **${n} kegiatan masih menunggu konfirmasi**.`,`**${n} activities are awaiting confirmation**.`)+(soon.length?L(` ${soon.length} di antaranya dijadwalkan dalam 14 hari ke depan${nxTxt}, sehingga kepastian pelaksanaan dengan unit pengusul perlu segera diperoleh.`,` ${soon.length} fall within the next 14 days${nxTxt}, so confirmation with the requesting unit is urgent.`):'')+(past.length?L(` ${past.length} kegiatan sudah melewati tanggal rencana tanpa konfirmasi dan perlu ditetapkan statusnya (terlaksana, ditunda, atau dibatalkan).`,` ${past.length} have passed their planned date without confirmation and need a final status.`):'');break;
+    case 'Scheduled':t=L(`Terdapat **${n} kegiatan terjadwal**.`,`**${n} activities are scheduled**.`)+(soon.length?L(` ${soon.length} kegiatan akan berlangsung dalam 14 hari ke depan${nxTxt}.`,` ${soon.length} will take place within 14 days${nxTxt}.`):L(' Belum ada yang jatuh dalam 14 hari ke depan.',' None fall within the next 14 days.'))+(past.length?L(` ${past.length} kegiatan sudah lewat tanggal pelaksanaan tetapi statusnya masih terjadwal, sehingga perlu dimutakhirkan.`,` ${past.length} are past their date but still marked scheduled and need updating.`):'');break;
+    case 'Ongoing':t=L(`**${n} kegiatan sedang berlangsung**: ${cmRptJoin(list.slice(0,3).map(a=>cmReportSafe(a.namaKegiatan).slice(0,70)),lang)}${n>3?` dan ${n-3} lainnya`:''}.`,`**${n} activities are ongoing**: ${cmRptJoin(list.slice(0,3).map(a=>cmReportSafe(a.namaKegiatan).slice(0,70)),lang)}${n>3?` and ${n-3} more`:''}.`);break;
+    case 'Postponed':t=L(`**${n} kegiatan ditunda** dan memerlukan jadwal pengganti atau keputusan pembatalan.`,`**${n} activities are postponed** and need a new date or a cancellation decision.`);break;
+    case 'Completed':{const nt=list.filter(a=>cmRptDocFlags(a).notula).length,ft=list.filter(a=>cmRptDocFlags(a).dokumentasi).length;t=L(`**${n} kegiatan telah selesai**. Notula tersedia pada ${nt} kegiatan dan dokumentasi foto pada ${ft} kegiatan${n-nt?`; ${n-nt} kegiatan belum dilengkapi notula`:''}.`,`**${n} activities are completed**. Minutes exist for ${nt} and photos for ${ft}${n-nt?`; ${n-nt} still lack minutes`:''}.`);break;}
+    case 'Cancelled':t=L(`**${n} kegiatan dibatalkan**.`,`**${n} activities were cancelled**.`);break;
+    case 'Not Attended':t=L(`**${n} kegiatan tidak dihadiri** oleh tim.`,`**${n} activities were not attended** by the team.`);break;
+    default:t=L(`${n} kegiatan.`,`${n} activities.`);
+  }
+  if(n>1&&tu)t+=L(` Unit pengusul terbanyak pada kolom ini adalah ${tu[0]} (${tu[1]})`,` The top requesting unit here is ${tu[0]} (${tu[1]})`)+(tp?L(`, dengan PIC paling banyak terlibat ${tp[0]} (${tp[1]}).`,`, and the most involved PIC is ${tp[0]} (${tp[1]}).`):'.');
+  return t;
+}
+async function cmXBuildWorkboardModel(o){
+  const lang=o.lang,L=cmXL(lang);cmRptLangCur=lang;
+  const items=getFiltered(),n=items.length,today=dayjs().format('YYYY-MM-DD'),per=cmRptPeriod(items,lang),blocks=[];
+  const by={};CM_X_STATUS_ORDER.forEach(k=>by[k]=[]);items.forEach(a=>{const k=a.statusNorm||'Scheduled';(by[k]||(by[k]=[])).push(a);});
+  Object.values(by).forEach(l=>l.sort((a,b)=>String(a.tglMulai).localeCompare(String(b.tglMulai))));
+  const present=Object.keys(by).filter(k=>by[k].length),g=k=>(by[k]||[]).length,active=[...(by.Pending||[]),...(by.Scheduled||[]),...(by.Ongoing||[])];
+  const late=active.filter(a=>dayjs(a.tglSelesai||a.tglMulai).isBefore(dayjs(today),'day')).length,in14=active.filter(a=>a.tglMulai>=today&&a.tglMulai<=dayjs(today).add(14,'day').format('YYYY-MM-DD')).length;
+  blocks.push({t:'h1',text:L('Ringkasan Papan Kerja','Workboard Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Total kegiatan','Total activities'),value:n,sub:per.short,color:'2F5BD3'},
+    {label:L('Menunggu konfirmasi','Awaiting confirmation'),value:g('Pending'),sub:L('perlu kepastian','needs confirmation'),color:'C28A1E'},
+    {label:L('Terjadwal / berjalan','Scheduled / ongoing'),value:g('Scheduled')+g('Ongoing'),sub:`${in14} ${L('dalam 14 hari','within 14 days')}`,color:'F2A93B'},
+    {label:L('Selesai','Completed'),value:g('Completed'),sub:`${cmRptPct(g('Completed'),n)}% ${L('dari total','of total')}`,color:'16A37F'},
+    {label:L('Ditunda','Postponed'),value:g('Postponed'),sub:L('perlu jadwal ulang','needs rescheduling'),color:'7C5CE0'},
+    {label:L('Perlu pembaruan','Needs update'),value:late,sub:L('lewat tanggal, belum selesai','past date, not closed'),color:'E25563'}]});
+  if(!n){blocks.push({t:'callout',tone:'warn',title:L('Tidak ada data','No data'),lines:[L('Tidak ada kegiatan yang sesuai filter aktif.','No activities match the active filters.')]});}
+  else{
+    const big=present.sort((a,b)=>g(b)-g(a))[0];
+    blocks.push({t:'p',text:L(`Papan kerja memuat **${n} kegiatan** yang terbagi ke dalam ${present.length} kolom status. Kolom terbesar adalah **${cmRptStatus(big)}** (${g(big)} kegiatan, ${cmRptPct(g(big),n)}%). Kegiatan yang masih aktif (menunggu konfirmasi, terjadwal, dan berjalan) berjumlah ${active.length}, dengan ${in14} kegiatan akan dilaksanakan dalam 14 hari ke depan${late?` dan **${late} kegiatan sudah lewat tanggal tetapi belum ditutup statusnya**`:''}. Tingkat penyelesaian saat ini ${cmRptPct(g('Completed'),n)}%.`,
+      `The workboard holds **${n} activities** across ${present.length} status columns. The largest is **${cmRptStatus(big)}** (${g(big)}, ${cmRptPct(g(big),n)}%). Active items (pending, scheduled, ongoing) total ${active.length}, with ${in14} in the next 14 days${late?` and **${late} past their date but not closed**`:''}. Completion stands at ${cmRptPct(g('Completed'),n)}%.`)});
+    const ord=CM_X_STATUS_ORDER.filter(k=>g(k));
+    if(ord.length>1){const img=await cmRptChart(cmRptBarCfg(ord.map(k=>cmRptStatus(k)),ord.map(g),{colors:ord.map(k=>CM_RPT_STATUS_COLOR[k]||'#5B6B82')}),680,300);
+    blocks.push({t:'charts',items:[{title:L('Jumlah kegiatan per kolom status','Activities per status column'),img}]});
+    blocks.push({t:'p',text:cmXNarrStatus(items,lang)});}
+    if(active.length){
+      const pm=cmXSorted(cmXPicMap(active)).slice(0,10);
+      if(pm.length){const pImg=await cmRptChart(cmRptBarCfg(pm.map(x=>x[0]),pm.map(x=>x[1]),{horizontal:true,colors:pm.map(()=> '#F2A93B')}),680,Math.max(220,70+pm.length*36));
+        blocks.push({t:'charts',items:[{title:L('Beban kegiatan aktif per PIC','Active workload per PIC'),img:pImg,caption:L('Menghitung kegiatan berstatus menunggu konfirmasi, terjadwal, dan berjalan.','Counts pending, scheduled and ongoing activities.')}]});
+        blocks.push({t:'p',text:cmRptNarrPic({byPic:cmXPicMap(active)},active.length,lang).replace(/seluruh kegiatan/g,'kegiatan aktif')});}
+    }
+    blocks.push({t:'h1',text:L('Rincian per Status','Details by Status')});
+    CM_X_STATUS_ORDER.filter(k=>g(k)).forEach(k=>{
+      const list=by[k],shown=list.slice(0,60);
+      blocks.push({t:'h2',text:`${cmRptStatus(k)} (${list.length})`});
+      blocks.push({t:'p',text:cmXNarrWorkStatus(k,list,lang,today)});
+      blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Kegiatan','Activity'),L('Kategori','Category'),L('Unit','Unit'),'PIC',L('Keterangan','Note')],widths:[5,13,33,11,11,13,14],
+        rows:shown.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmReportSafe(a.namaKegiatan),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmXWorkNote(a,k,lang,today)])});
+      if(list.length>shown.length)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 60 dari ${list.length} kegiatan.`,`Showing 60 of ${list.length}.`)});
+    });
+    blocks.push({t:'h1',text:L('Hal yang Perlu Ditindaklanjuti','Items Requiring Follow-up')});
+    const recs=[];
+    if(late)recs.push(L(`**Mutakhirkan status ${late} kegiatan** yang sudah lewat tanggal tetapi masih tercatat menunggu konfirmasi, terjadwal, atau berjalan.`,`**Update the status of ${late} activities** that are past their date.`));
+    const pend14=(by.Pending||[]).filter(a=>a.tglMulai>=today&&a.tglMulai<=dayjs(today).add(14,'day').format('YYYY-MM-DD')).length;
+    if(pend14)recs.push(L(`**Konfirmasi ${pend14} kegiatan** yang masih menunggu konfirmasi namun akan berlangsung dalam 14 hari.`,`**Confirm ${pend14} pending activities** due within 14 days.`));
+    if(g('Postponed'))recs.push(L(`**Tetapkan jadwal pengganti untuk ${g('Postponed')} kegiatan yang ditunda**, atau tutup bila tidak jadi dilaksanakan.`,`**Reschedule ${g('Postponed')} postponed activities** or close them.`));
+    const noN=(by.Completed||[]).filter(a=>!cmRptDocFlags(a).notula).length;
+    if(noN)recs.push(L(`**Lengkapi notula ${noN} kegiatan selesai** sebagai bukti dukung.`,`**Upload minutes for ${noN} completed activities.**`));
+    if(!recs.length)recs.push(L('Seluruh kolom status dalam kondisi terkendali; tidak ada kegiatan yang memerlukan tindak lanjut khusus.','All columns are under control; no special follow-up needed.'));
+    blocks.push({t:'bullets',items:recs});
+  }
+  return cmXWrap({lang,signer:o.signer,kicker:L('LAPORAN STATUS KEGIATAN (WORKBOARD)','ACTIVITY STATUS REPORT (WORKBOARD)'),title:per.label.toUpperCase(),subject:cmRptSubject(lang).text,
+    chips:[`${n} ${L('kegiatan','activities')}`,`${active.length} ${L('aktif','active')}`],scope:cmReportFilterSummary(items,lang),
+    meta:[[L('Periode laporan','Report period'),per.range||per.label],[L('Posisi data','Data as of'),cmRptLongDate(today,lang)],[L('Jumlah kegiatan','Activities'),String(n)]],
+    fileName:`${L('Laporan Workboard','Workboard Report')} - ${per.short}`,header:`${L('Laporan Workboard','Workboard Report')} · ${per.short}`,blocks});
+}
+
+/* ---------- Laporan Matriks ---------- */
+function cmXCross(items,rowKey,maxRows=15,maxCols=6,lang='id'){
+  const L=cmXL(lang),rowT=cmXCount(items,a=>cmReportSafe(a[rowKey])),catT=cmXCount(items,a=>cmReportSafe(a.kategori));
+  const cats=cmXSorted(catT).map(x=>x[0]),colCats=cats.slice(0,maxCols),hasOther=cats.length>maxCols;
+  const rowsAll=cmXSorted(rowT).filter(x=>x[0]!=='-'),rows=rowsAll.slice(0,maxRows),restRows=rowsAll.slice(maxRows),blank=rowT['-']||0;
+  const cell=(list,c)=>list.filter(a=>cmReportSafe(a.kategori)===c).length;
+  const mk=(label,list)=>{const vals=colCats.map(c=>cell(list,c)),other=hasOther?list.filter(a=>!colCats.includes(cmReportSafe(a.kategori))).length:null;const tot=list.length;
+    return [label,...vals.map(v=>({text:v?String(v):'',align:'center',bg:v?cmXHeat(v,tot):undefined})),...(hasOther?[{text:other?String(other):'',align:'center'}]:[]),{text:String(tot),bold:true,align:'center'}];};
+  const out=rows.map(([r])=>mk(r,items.filter(a=>cmReportSafe(a[rowKey])===r)));
+  if(restRows.length)out.push(mk(L(`${rowKey==='programTerkait'?'Program':'Unit'} lain (${restRows.length})`,`Other ${rowKey==='programTerkait'?'programs':'units'} (${restRows.length})`),items.filter(a=>restRows.some(x=>x[0]===cmReportSafe(a[rowKey])))));
+  if(blank)out.push(mk(rowKey==='programTerkait'?L('(Tanpa program terkait)','(No related program)'):L('(Tanpa unit)','(No unit)'),items.filter(a=>cmReportSafe(a[rowKey])==='-')));
+  out.push([{text:'Total',bold:true},...colCats.map(c=>({text:String(catT[c]||0),bold:true,align:'center'})),...(hasOther?[{text:String(items.filter(a=>!colCats.includes(cmReportSafe(a.kategori))).length),bold:true,align:'center'}]:[]),{text:String(items.length),bold:true,align:'center'}]);
+  const head=[rowKey==='programTerkait'?L('Program terkait','Related program'):L('Unit pengusul','Requesting unit'),...colCats,...(hasOther?[L('Kategori lain','Other categories')]:[]),'Total'];
+  const nc=head.length,first=nc>7?24:30,w=(100-first)/(nc-1),widths=[first,...Array(nc-1).fill(Math.round(w*10)/10)];
+  return {head,rows:out,widths,rowsAll,blank,cats};
+}
+function cmXHeat(v,tot){const r=tot?v/tot:0;return r>=0.5?'C9D6F2':r>=0.25?'DCE5F7':'EEF3FC';}
+function cmXNarrCross(items,rowKey,lang){
+  const L=cmXL(lang),noun=rowKey==='programTerkait'?L('program','programs'):L('unit pengusul','requesting units');
+  const pairs={};items.forEach(a=>{const r=cmReportSafe(a[rowKey]);if(r==='-')return;const k=r+'||'+cmReportSafe(a.kategori);pairs[k]=(pairs[k]||0)+1;});
+  const ps=cmXSorted(pairs);if(!ps.length)return L(`Belum ada kegiatan yang mencantumkan ${noun}.`,`No activities record a ${noun}.`);
+  const rows=new Set(ps.map(p=>p[0].split('||')[0])),cats=new Set(items.map(a=>cmReportSafe(a.kategori)));
+  const filled=ps.length,cells=rows.size*cats.size,[r0,c0]=ps[0][0].split('||');
+  const catSpread={};ps.forEach(p=>{const c=p[0].split('||')[1];catSpread[c]=(catSpread[c]||0)+1;});const cs=cmXSorted(catSpread)[0];
+  const single=[...rows].filter(r=>ps.filter(p=>p[0].startsWith(r+'||')).length===1).length;
+  let t=L(`Kombinasi paling kuat adalah **${r0}** dengan kategori **${c0}** (${ps[0][1]} kegiatan)`,`The strongest combination is **${r0}** with **${c0}** (${ps[0][1]} activities)`);
+  if(ps[1]){const [r1,c1]=ps[1][0].split('||');t+=L(`, disusul ${r1} – ${c1} (${ps[1][1]})`,`, followed by ${r1} – ${c1} (${ps[1][1]})`);}
+  t+=L(`. Dari ${cells} kemungkinan pasangan ${noun} dan kategori, ${filled} pasangan (${cmRptPct(filled,cells)}%) terisi kegiatan.`,`. Of ${cells} possible ${noun}–category pairs, ${filled} (${cmRptPct(filled,cells)}%) have activities.`);
+  if(cs)t+=L(` Kategori ${cs[0]} paling luas jangkauannya karena digunakan oleh ${cs[1]} ${noun}.`,` ${cs[0]} is the most widely used category, appearing for ${cs[1]} ${noun}.`);
+  if(single)t+=L(` Sebanyak ${single} ${noun} hanya memiliki satu jenis kategori kegiatan.`,` ${single} ${noun} have only one activity category.`);
+  return t;
+}
+async function cmXBuildMatrixModel(o){
+  const lang=o.lang,L=cmXL(lang);cmRptLangCur=lang;
+  const items=getFiltered(),n=items.length,per=cmRptPeriod(items,lang),blocks=[];
+  const prog={},unit={};
+  items.forEach(a=>{const p=cmReportSafe(a.programTerkait),u=cmReportSafe(a.unitPemohon),k=cmReportSafe(a.kategori);
+    if(p!=='-'){prog[p]=prog[p]||{n:0,units:{},cats:{}};prog[p].n++;prog[p].cats[k]=(prog[p].cats[k]||0)+1;if(u!=='-')prog[p].units[u]=(prog[p].units[u]||0)+1;}
+    if(u!=='-'){unit[u]=unit[u]||{n:0,progs:{},cats:{},noProg:0};unit[u].n++;unit[u].cats[k]=(unit[u].cats[k]||0)+1;if(p!=='-')unit[u].progs[p]=(unit[u].progs[p]||0)+1;else unit[u].noProg++;}});
+  const noProg=items.filter(a=>!cmRptHas(a.programTerkait)).length,nP=Object.keys(prog).length,nU=Object.keys(unit).length,nK=new Set(items.map(a=>cmReportSafe(a.kategori))).size;
+  blocks.push({t:'h1',text:L('Ringkasan Matriks','Matrix Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Kegiatan','Activities'),value:n,sub:per.short,color:'2F5BD3'},
+    {label:L('Kategori','Categories'),value:nK,sub:L('jenis kegiatan','activity types'),color:'1BA7C9'},
+    {label:L('Program terkait','Related programs'),value:nP,sub:`${n-noProg} ${L('kegiatan terhubung','linked activities')}`,color:'7C5CE0'},
+    {label:L('Unit pengusul','Requesting units'),value:nU,sub:L('unit berbeda','distinct units'),color:'E25563'},
+    {label:L('Tanpa program','No program'),value:noProg,sub:`${cmRptPct(noProg,n)}% ${L('dari total','of total')}`,color:'F2A93B'},
+    {label:L('Rata-rata unit/program','Avg units/program'),value:nP?cmXFmtN(Object.values(prog).reduce((s,x)=>s+Object.keys(x.units).length,0)/nP,lang):'-',sub:L('keterhubungan','linkage'),color:'16A37F'}]});
+  if(!n){blocks.push({t:'callout',tone:'warn',title:L('Tidak ada data','No data'),lines:[L('Tidak ada kegiatan yang sesuai filter aktif.','No activities match the active filters.')]});}
+  else{
+    const pTop=cmXSorted(Object.fromEntries(Object.entries(prog).map(([k,v])=>[k,v.n])))[0],uTop=cmXSorted(Object.fromEntries(Object.entries(unit).map(([k,v])=>[k,v.n])))[0];
+    blocks.push({t:'p',text:L(`Matriks memetakan **${n} kegiatan** berdasarkan kategori, program terkait, dan unit pengusul. Sebanyak ${n-noProg} kegiatan (${cmRptPct(n-noProg,n)}%) terhubung dengan ${nP} program${pTop?`, dengan **${pTop[0]}** sebagai program paling aktif (${pTop[1]} kegiatan)`:''}. Kegiatan diajukan oleh ${nU} unit${uTop?`, terbanyak **${uTop[0]}** (${uTop[1]} kegiatan)`:''}.${noProg?` Sebanyak ${noProg} kegiatan belum dikaitkan dengan program tertentu.`:''}`,
+      `The matrix maps **${n} activities** by category, related program and requesting unit. ${n-noProg} (${cmRptPct(n-noProg,n)}%) are linked to ${nP} programs${pTop?`, led by **${pTop[0]}** (${pTop[1]})`:''}. ${nU} units submitted requests${uTop?`, most from **${uTop[0]}** (${uTop[1]})`:''}.${noProg?` ${noProg} activities have no related program.`:''}`)});
+    // charts
+    const pr=cmXSorted(Object.fromEntries(Object.entries(prog).map(([k,v])=>[k,v.n]))).slice(0,8),un=cmXSorted(Object.fromEntries(Object.entries(unit).map(([k,v])=>[k,v.n]))).slice(0,8);
+    const items2=[];
+    if(pr.length)items2.push({title:L('Program terkait dengan kegiatan terbanyak','Top related programs'),img:await cmRptChart(cmRptBarCfg(pr.map(x=>String(x[0]).slice(0,34)),pr.map(x=>x[1]),{horizontal:true,colors:pr.map(()=> '#7C5CE0')}),460,Math.max(220,60+pr.length*38))});
+    if(un.length)items2.push({title:L('Unit pengusul dengan kegiatan terbanyak','Top requesting units'),img:await cmRptChart(cmRptBarCfg(un.map(x=>x[0]),un.map(x=>x[1]),{horizontal:true,colors:un.map(x=>cmXUnitType(x[0])==='internal'?'#1B3A73':'#C8A84B')}),460,Math.max(220,60+un.length*38)),caption:L('Biru: internal Kemenkeu; emas: eksternal.','Blue: internal; gold: external.')});
+    if(items2.length){blocks.push({t:'charts',items:items2});
+      blocks.push({t:'p',text:cmRptNarrDist(cmXCount(items,a=>cmReportSafe(a.programTerkait)),n,lang,{noun:['program terkait','related programs'],shown:8})});
+      blocks.push({t:'p',text:cmXNarrUnit(items,lang)});}
+    // cross tables
+    blocks.push({t:'h1',text:L('Matriks Kategori dan Program Terkait','Category × Related Program Matrix')});
+    const cp=cmXCross(items,'programTerkait',15,6,lang);
+    blocks.push({t:'p',text:cmXNarrCross(items,'programTerkait',lang)});
+    blocks.push({t:'table',small:true,head:cp.head,widths:cp.widths,rows:cp.rows});
+    blocks.push({t:'h1',text:L('Matriks Kategori dan Unit Pengusul','Category × Requesting Unit Matrix')});
+    const cu=cmXCross(items,'unitPemohon',15,6,lang);
+    blocks.push({t:'p',text:cmXNarrCross(items,'unitPemohon',lang)});
+    blocks.push({t:'table',small:true,head:cu.head,widths:cu.widths,rows:cu.rows});
+    if(cp.cats.length>6||cp.rowsAll.length>15||cu.rowsAll.length>15)blocks.push({t:'p',muted:true,text:L('Matriks menampilkan 6 kategori dan 15 baris teratas; sisanya digabung pada kolom "Kategori lain" dan baris "Program/Unit lain".','Matrices show the top 6 categories and 15 rows; the rest are grouped as "Other".')});
+    // keterkaitan program-unit
+    blocks.push({t:'h1',text:L('Keterkaitan Program Terkait dan Unit Pengusul','Links between Programs and Requesting Units')});
+    const progE=Object.entries(prog).sort((a,b)=>b[1].n-a[1].n);
+    if(progE.length){
+      const multi=progE.filter(([,v])=>Object.keys(v.units).length>1),one=progE.filter(([,v])=>Object.keys(v.units).length===1),widest=[...progE].sort((a,b)=>Object.keys(b[1].units).length-Object.keys(a[1].units).length)[0];
+      blocks.push({t:'p',text:L(`Dari ${progE.length} program terkait, ${multi.length} program melibatkan lebih dari satu unit pengusul dan ${one.length} program hanya diajukan oleh satu unit. Program dengan jangkauan unit terluas adalah **${widest[0]}** yang melibatkan ${Object.keys(widest[1].units).length} unit (${cmRptJoin(cmXSorted(widest[1].units).slice(0,4).map(x=>x[0]),lang)}${Object.keys(widest[1].units).length>4?' dan lainnya':''}).`,
+        `Of ${progE.length} related programs, ${multi.length} involve more than one requesting unit and ${one.length} involve a single unit. The program with the widest reach is **${widest[0]}**, involving ${Object.keys(widest[1].units).length} units (${cmRptJoin(cmXSorted(widest[1].units).slice(0,4).map(x=>x[0]),lang)}${Object.keys(widest[1].units).length>4?' and others':''}).`)});
+      blocks.push({t:'bullets',items:progE.slice(0,6).map(([p,v])=>{const us=cmXSorted(v.units),kc=cmXSorted(v.cats)[0];return L(`**${p}** — ${v.n} kegiatan${us.length?`, diajukan oleh ${cmRptJoin(us.slice(0,4).map(x=>`${x[0]} (${x[1]})`),lang)}${us.length>4?` dan ${us.length-4} unit lainnya`:''}`:''}; didominasi kategori ${kc?kc[0]:'-'}.`,`**${p}** — ${v.n} activities${us.length?`, requested by ${cmRptJoin(us.slice(0,4).map(x=>`${x[0]} (${x[1]})`),lang)}${us.length>4?` and ${us.length-4} more`:''}`:''}; mainly ${kc?kc[0]:'-'}.`);})});
+      blocks.push({t:'table',small:true,head:['No',L('Program terkait','Related program'),L('Kegiatan','Activities'),L('Unit pengusul (jumlah kegiatan)','Requesting units (activities)'),L('Kategori dominan','Main category')],widths:[5,27,10,40,18],
+        rows:progE.slice(0,40).map(([p,v],i)=>[String(i+1),p,{text:String(v.n),align:'center',bold:true},cmXSorted(v.units).map(x=>`${x[0]} (${x[1]})`).join(', ')||'-',(cmXSorted(v.cats)[0]||['-'])[0]])});
+      if(progE.length>40)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 40 dari ${progE.length} program.`,`Showing 40 of ${progE.length} programs.`)});
+    }else blocks.push({t:'callout',tone:'warn',title:L('Belum ada program terkait','No related programs'),lines:[L('Belum ada kegiatan yang dikaitkan dengan program pada filter ini.','No activities are linked to a program for these filters.')]});
+    // profil unit
+    blocks.push({t:'h1',text:L('Profil Unit Pengusul','Requesting Unit Profile')});
+    const unitE=Object.entries(unit).sort((a,b)=>b[1].n-a[1].n),noLink=unitE.filter(([,v])=>!Object.keys(v.progs).length),multiP=unitE.filter(([,v])=>Object.keys(v.progs).length>1);
+    blocks.push({t:'p',text:L(`Sebanyak ${unitE.length} unit pengusul tercatat. ${multiP.length} unit terlibat pada lebih dari satu program${noLink.length?`, sedangkan ${noLink.length} unit (${cmRptJoin(noLink.slice(0,4).map(x=>x[0]),lang)}${noLink.length>4?' dan lainnya':''}) seluruh kegiatannya belum dikaitkan dengan program`:''}. Informasi ini dapat dipakai untuk memastikan setiap permintaan unit terhubung dengan program transformasi yang relevan.`,
+      `${unitE.length} requesting units are recorded. ${multiP.length} are involved in more than one program${noLink.length?`, while ${noLink.length} (${cmRptJoin(noLink.slice(0,4).map(x=>x[0]),lang)}${noLink.length>4?' and others':''}) have no activity linked to a program`:''}.`)});
+    blocks.push({t:'table',small:true,head:['No',L('Unit pengusul','Requesting unit'),L('Asal','Origin'),L('Kegiatan','Activities'),L('Program terkait','Related programs'),L('Kategori dominan','Main category')],widths:[5,18,11,10,38,18],
+      rows:unitE.slice(0,40).map(([u,v],i)=>[String(i+1),u,cmXUnitType(u)==='internal'?L('Internal','Internal'):L('Eksternal','External'),{text:String(v.n),align:'center',bold:true},(cmXSorted(v.progs).map(x=>`${x[0]} (${x[1]})`).join(', ')||'-')+(v.noProg&&Object.keys(v.progs).length?L(`; ${v.noProg} tanpa program`,`; ${v.noProg} without program`):''),(cmXSorted(v.cats)[0]||['-'])[0]])});
+    if(unitE.length>40)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 40 dari ${unitE.length} unit.`,`Showing 40 of ${unitE.length} units.`)});
+    // catatan
+    blocks.push({t:'h1',text:L('Catatan Analisis','Analysis Notes')});
+    const recs=[];
+    if(noProg)recs.push(L(`**${noProg} kegiatan (${cmRptPct(noProg,n)}%) belum memiliki program terkait.** Pengisian program membantu menelusuri kontribusi kegiatan terhadap agenda transformasi.`,`**${noProg} activities (${cmRptPct(noProg,n)}%) have no related program.**`));
+    if(pTop&&n-noProg>0&&pTop[1]/(n-noProg)>=0.4)recs.push(L(`**Kegiatan terkonsentrasi pada ${pTop[0]}** (${cmRptPct(pTop[1],n-noProg)}% dari kegiatan yang terhubung program).`,`**Activities concentrate on ${pTop[0]}** (${cmRptPct(pTop[1],n-noProg)}% of linked activities).`));
+    if(uTop&&uTop[1]/n>=0.3)recs.push(L(`**${uTop[0]} merupakan pengguna layanan terbesar** (${cmRptPct(uTop[1],n)}% kegiatan); koordinasi rutin dengan unit ini perlu dijaga.`,`**${uTop[0]} is the largest requester** (${cmRptPct(uTop[1],n)}%).`));
+    if(noLink.length)recs.push(L(`**${noLink.length} unit pengusul belum terhubung dengan program mana pun**; perlu dipastikan apakah kegiatannya mendukung program transformasi tertentu.`,`**${noLink.length} units are not linked to any program.**`));
+    if(!recs.length)recs.push(L('Keterkaitan kategori, program, dan unit pengusul sudah tercatat dengan baik.','Category, program and unit links are well recorded.'));
+    blocks.push({t:'bullets',items:recs});
+  }
+  return cmXWrap({lang,signer:o.signer,kicker:L('LAPORAN MATRIKS KEGIATAN','ACTIVITY MATRIX REPORT'),title:per.label.toUpperCase(),subject:L('Keterkaitan Kategori, Program Terkait, dan Unit Pengusul','Categories, Related Programs and Requesting Units'),
+    chips:[`${n} ${L('kegiatan','activities')}`,`${nP} program`,`${nU} unit`],scope:cmReportFilterSummary(items,lang),
+    meta:[[L('Periode laporan','Report period'),per.range||per.label],[L('Jumlah kegiatan','Activities'),String(n)],[L('Program terkait','Related programs'),String(nP)],[L('Unit pengusul','Requesting units'),String(nU)]],
+    fileName:`${L('Laporan Matriks','Matrix Report')} - ${per.short}`,header:`${L('Laporan Matriks','Matrix Report')} · ${per.short}`,blocks});
+}
+
+/* ---------- Kompilasi ---------- */
+const CM_X_PARTS=[
+  {key:'overview',id:'Overview Dashboard',en:'Dashboard Overview',build:o=>cmXBuildOverviewModel(o)},
+  {key:'agenda',id:'Monitoring dan Evaluasi Agenda',en:'Agenda Monitoring and Evaluation',build:o=>cmRptBuildRangeModel(getFiltered(),{lang:o.lang,ai:false,inc:cmRptPrefs().inc,signer:o.signer})},
+  {key:'calendar',id:'Kalender Kegiatan',en:'Activity Calendar',build:o=>cmXBuildCalendarModel(o)},
+  {key:'kanban',id:'Status Kegiatan (Workboard)',en:'Activity Status (Workboard)',build:o=>cmXBuildWorkboardModel(o)},
+  {key:'matrix',id:'Matriks Kategori, Program, dan Unit',en:'Category, Program and Unit Matrix',build:o=>cmXBuildMatrixModel(o)}];
+function cmXCompilePrefs(){try{const p=JSON.parse(localStorage.getItem('cmCompilePrefs')||'null');if(p&&Array.isArray(p.parts))return p;}catch(e){}return {parts:CM_X_PARTS.map(x=>x.key)};}
+async function cmXBuildCompiledModel(sel,o){
+  const lang=o.lang,L=cmXL(lang),parts=CM_X_PARTS.filter(p=>sel.includes(p.key)),items=getFiltered(),per=cmRptPeriod(items,lang),roman=['I','II','III','IV','V','VI'];
+  const blocks=[];
+  blocks.push({t:'part',kicker:L('PENGANTAR','INTRODUCTION'),text:L('Ruang Lingkup Kompilasi','Scope of this Compilation')});
+  blocks.push({t:'p',text:L(`Dokumen ini menghimpun ${parts.length} laporan dari Dashboard Master Agenda Change Management untuk ${per.kind==='all'?'seluruh periode':per.label.charAt(0).toLowerCase()+per.label.slice(1)}, dengan filter yang sama pada setiap bagian sehingga angka antarbagian dapat dibandingkan secara langsung. Total kegiatan yang tercakup adalah **${items.length} kegiatan**.`,
+    `This document compiles ${parts.length} reports from the Change Management Master Agenda dashboard for ${per.label}, using the same filters in every part so figures are directly comparable. It covers **${items.length} activities**.`)});
+  blocks.push({t:'table',head:[L('Bagian','Part'),L('Laporan','Report'),L('Isi utama','Main content')],widths:[12,38,50],rows:parts.map((p,i)=>[{text:roman[i],bold:true,align:'center'},lang==='en'?p.en:p.id,{overview:L('Indikator utama, tren bulanan, status, layanan, kategori, PIC, dan unit pengusul','Key indicators, monthly trend, status, service, category, PIC and units'),agenda:L('Ringkasan monev, kelengkapan dokumen, daftar kegiatan, kendala, dan tindak lanjut','M&E summary, documents, activity list, issues and follow-up'),calendar:L(`Kalender ${cmXMonth(state.calMonth||dayjs().format('YYYY-MM'),lang)}, sebaran waktu, dan hari libur`,`Calendar for ${cmXMonth(state.calMonth||dayjs().format('YYYY-MM'),lang)}, timing and holidays`),kanban:L('Posisi setiap kolom status dan hal yang perlu ditindaklanjuti','Status columns and follow-up items'),matrix:L('Keterkaitan kategori, program terkait, dan unit pengusul','Links between categories, programs and units')}[p.key]])});
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i];const m=await p.build(o);
+    blocks.push({t:'part',kicker:`${L('BAGIAN','PART')} ${roman[i]}`,text:lang==='en'?p.en:p.id,sub:m.cover&&m.cover.title?m.cover.title:''});
+    m.blocks.forEach(b=>blocks.push(b));
+  }
+  cmRptLangCur=lang;
+  return cmXWrap({lang,signer:o.signer,kicker:L('KOMPILASI LAPORAN CHANGE MANAGEMENT','CHANGE MANAGEMENT REPORT COMPILATION'),title:per.label.toUpperCase(),subject:cmRptSubject(lang).text,
+    chips:[`${parts.length} ${L('bagian','parts')}`,`${items.length} ${L('kegiatan','activities')}`],scope:cmReportFilterSummary(items,lang),
+    meta:[[L('Periode laporan','Report period'),per.range||per.label],[L('Bagian','Parts'),parts.map((p,i)=>`${roman[i]}. ${lang==='en'?p.en:p.id}`).join('; ')]],
+    fileName:`${L('Kompilasi Laporan CM','CM Report Compilation')} - ${per.short}`,header:`${L('Kompilasi Laporan','Report Compilation')} · ${per.short}`,blocks});
+}
+function cmOpenCompiledReportBuilder(){
+  try{
+    const prefs=cmXCompilePrefs(),rp=cmRptPrefs(),items=getFiltered(),filterLines=cmReportFilterSummary(items,currentLang);
+    const host=document.createElement('div');host.className='modal-overlay cm-report-modal';
+    host.innerHTML=`<div class="modal-box"><div class="modal-head"><div><h2>${uiText('Report Compilation','Kompilasi Laporan')}</h2><p>${items.length} ${uiText('activities match the current filters','kegiatan sesuai filter aktif')}</p><div class="cm-report-filter-context"><b>${uiText('Scope','Cakupan')}:</b> ${filterLines.map(escapeHtml).join(' • ')||uiText('All data','Seluruh data')}</div></div><button class="modal-close" data-close>&times;</button></div>
+    <div class="modal-body"><b>${uiText('Reports to compile','Laporan yang dihimpun')}</b>
+      <div class="cm-report-checks cm-compile-checks">${CM_X_PARTS.map(p=>`<label><input type="checkbox" data-part="${p.key}" ${prefs.parts.includes(p.key)?'checked':''}> ${escapeHtml(currentLang==='en'?p.en:p.id)}${p.key==='calendar'?` <small style="color:var(--ink-500)">(${escapeHtml(cmXMonth(state.calMonth||dayjs().format('YYYY-MM'),currentLang))})</small>`:''}</label>`).join('')}</div>
+      <p style="font-size:12px;color:var(--ink-500);margin:10px 0 0">${uiText('Every part uses the same active filters. The calendar part follows the month currently shown in the Calendar menu.','Setiap bagian memakai filter aktif yang sama. Bagian kalender mengikuti bulan yang sedang ditampilkan di menu Kalender.')}</p>
+      ${cmRptTteFieldsHtml(cmRptSigner())}
+      <div class="cm-rpt2-grid"><label>${uiText('Language','Bahasa')}<select id="cmCompileLang"><option value="id" ${rp.lang!=='en'?'selected':''}>Bahasa Indonesia</option><option value="en" ${rp.lang==='en'?'selected':''}>English</option></select></label></div>
+    </div><div class="modal-foot"><button class="btn btn-outline" data-close>${uiText('Cancel','Batal')}</button><button class="btn btn-gold" id="cmCompileGo">${uiText('Preview Compilation','Preview Kompilasi')}</button></div></div>`;
+    document.body.appendChild(host);
+    host.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>host.remove());
+    host.querySelector('#cmCompileGo').onclick=()=>{
+      const sel=[...host.querySelectorAll('[data-part]')].filter(x=>x.checked).map(x=>x.dataset.part);
+      if(!sel.length){toast(uiText('Select at least one report.','Pilih minimal satu laporan.'),'info');return;}
+      const lang=host.querySelector('#cmCompileLang').value;cmRptTteRead(host);
+      try{localStorage.setItem('cmCompilePrefs',JSON.stringify({parts:sel}))}catch(e){}
+      host.remove();
+      cmRptPreviewModal(uiText('Report Compilation Preview','Preview Kompilasi Laporan'),o=>cmXBuildCompiledModel(sel,o),{lang,ai:false,noAi:true,onSettings:cmOpenCompiledReportBuilder});
+    };
+  }catch(err){console.error(err);toast(uiText('Unable to open compilation: ','Gagal membuka kompilasi: ')+(err?.message||String(err)),'error');}
+}
+function cmOpenOverviewReport(){cmRptPreviewModal(uiText('Overview Report Preview','Preview Laporan Overview'),o=>cmXBuildOverviewModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true});}
+function cmOpenCalendarReport(){cmRptPreviewModal(uiText('Calendar Report Preview','Preview Laporan Kalender'),o=>cmXBuildCalendarModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true});}
+function cmOpenWorkboardReport(){cmRptPreviewModal(uiText('Workboard Report Preview','Preview Laporan Workboard'),o=>cmXBuildWorkboardModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true});}
+function cmOpenMatrixReport(){cmRptPreviewModal(uiText('Matrix Report Preview','Preview Laporan Matriks'),o=>cmXBuildMatrixModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true});}
+Object.assign(window,{cmOpenCompiledReportBuilder,cmOpenOverviewReport,cmOpenCalendarReport,cmOpenWorkboardReport,cmOpenMatrixReport,cmXExportCalendarExcel,cmXExportCalendarWord});
+function cmCtxReportButtons(tab){
+  const map={analytics:['cmOpenOverviewReport',uiText('Overview Report','Laporan Overview')],table:['cmOpenActivityReportBuilder',uiText('Report','Laporan')],calendar:['cmOpenCalendarReport',uiText('Calendar Report','Laporan Kalender')],kanban:['cmOpenWorkboardReport',uiText('Workboard Report','Laporan Workboard')],matrix:['cmOpenMatrixReport',uiText('Matrix Report','Laporan Matriks')]}[tab];
+  if(!map)return '';
+  const btn=(id,fn,label,cls,title,icon)=>`<button type="button" class="btn btn-sm ${cls}" id="${id}" onclick="event.preventDefault();event.stopPropagation();window.${fn}();return false;" title="${escapeHtml(title)}">${icon}${escapeHtml(label)}</button>`;
+  let h=btn(tab==='table'?'btnActivityReport':'btnMenuReport',map[0],map[1],'cm-report-btn',uiText('Generate report from current filters','Generate laporan sesuai filter aktif'),CM_X_DOC_ICON);
+  if(tab==='calendar')h+=btn('btnCalExcelCtx','cmXExportCalendarExcel','Excel','btn-outline',uiText('Export the calendar month to Excel','Ekspor kalender bulan ini ke Excel'),'&#8615; ');
+  h+=btn('btnCompileReport','cmOpenCompiledReportBuilder',uiText('Compile Reports','Kompilasi Laporan'),'btn-outline cm-compile-btn',uiText('Combine reports from Overview, Agenda, Calendar, Workboard and Matrix','Gabungkan laporan Overview, Agenda, Kalender, Workboard, dan Matriks'),CM_X_STACK_ICON);
+  return h;
+}
+
+
 
 /* ============================================================
    RENDER: TABLE TAB
 ============================================================ */
+function cmInvitationBadge(a){
+  const no=String(a?.undangan??'').trim();if(!no||/^[-–—]+$/.test(no))return '';
+  const url=String(a?.undanganUrl??'').trim(),ok=/^https?:\/\//i.test(url);
+  const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+  const label=`${icon}<span>${escapeHtml(no)}</span>`;
+  return ok?`<a class="inv-badge" href="${escapeHtml(url)}" target="_blank" rel="noopener" title="${uiText('Open invitation','Buka undangan')}" onclick="event.stopPropagation()">${label}</a>`:`<span class="inv-badge" title="${uiText('Invitation number','Nomor undangan')}">${label}</span>`;
+}
 function renderTable() {
   const filtered = getFiltered();
   document.getElementById('cntTable').textContent = filtered.length;
@@ -5685,7 +6276,7 @@ function renderTable() {
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
       <td class="mono">${formatActivityDateCell(a)}</td>
       <td>
-        <div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
+        ${cmInvitationBadge(a)}<div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
         ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
@@ -5698,7 +6289,7 @@ function renderTable() {
         <div class="row-actions">
           <button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>
           <button class="icon-btn" data-action="history" data-id="${a.id}" title="${uiText('Activity history / audit log','Riwayat / audit log Activity')}" aria-label="${uiText('Activity history / audit log','Riwayat / audit log Activity')}">${iconHistory()}</button>
-          <button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></button>
+          <button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></button>
           ${cmCanMutate()&&cmIsEoEnabled(a.eoEnabled)?`<button class="icon-btn eo-manage-btn" data-action="event" data-id="${a.id}" title="${uiText('Manage Event','Kelola Event')}" aria-label="${uiText('Manage Event','Kelola Event')}">${cmEoWorkspaceIcon()}</button>`:''}
           ${cmCanMutate()?`<button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button><button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>`:''}
         </div>
@@ -6164,7 +6755,10 @@ function renderCalendar() {
   let html=`<div class="cal-header"><div class="cal-title-wrap"><select class="cal-month-select" id="calMonthSelect" title="${uiText('Select calendar month','Pilih bulan kalender')}" aria-label="${uiText('Calendar month','Bulan kalender')}">${monthOptions}</select><select class="cal-year-select" id="calYearSelect" title="${uiText('Select calendar year','Pilih tahun kalender')}" aria-label="${uiText('Calendar year','Tahun kalender')}">${yearOptions}</select></div><div class="cal-nav">
     <button class="btn btn-outline btn-sm" id="calPrev">&lsaquo; ${uiText('Previous','Sebelumnya')}</button>
     <button class="btn btn-outline btn-sm" id="calToday">${uiText('Today','Hari Ini')}</button>
-    <button class="btn btn-outline btn-sm" id="calNext">${uiText('Next','Berikutnya')} &rsaquo;</button></div></div>
+    <button class="btn btn-outline btn-sm" id="calNext">${uiText('Next','Berikutnya')} &rsaquo;</button>
+    <span class="cal-export-sep"></span>
+    <button class="btn btn-outline btn-sm cal-export-btn" id="calExportWord" title="${uiText('Export this month to Word','Ekspor bulan ini ke Word')}">&#8615; Word</button>
+    <button class="btn btn-outline btn-sm cal-export-btn" id="calExportExcel" title="${uiText('Export this month to Excel','Ekspor bulan ini ke Excel')}">&#8615; Excel</button></div></div>
     <div class="cal-holiday-legend" aria-label="${uiText('Indonesia holiday legend','Legenda kalender Indonesia')}">
       <span class="cal-holiday-legend-item"><span class="cal-holiday-swatch national"></span>${uiText('National Holiday','Hari Libur Nasional')}</span>
       <span class="cal-holiday-legend-item"><span class="cal-holiday-swatch collective"></span>${uiText('Collective Leave','Cuti Bersama')}</span>
@@ -6194,6 +6788,8 @@ function renderCalendar() {
   document.getElementById('calPrev').onclick=()=>{state.calMonth=monthStart.subtract(1,'month').format('YYYY-MM');renderCalendar();};
   document.getElementById('calNext').onclick=()=>{state.calMonth=monthStart.add(1,'month').format('YYYY-MM');renderCalendar();};
   document.getElementById('calToday').onclick=()=>{state.calMonth=dayjs().format('YYYY-MM');renderCalendar();};
+  document.getElementById('calExportWord')?.addEventListener('click',()=>cmXExportCalendarWord());
+  document.getElementById('calExportExcel')?.addEventListener('click',()=>cmXExportCalendarExcel());
   document.getElementById('calHolidaySync')?.addEventListener('click',()=>cmHolidaySyncYear(holidayYear,{force:true,notify:true}));
   cmHolidayEnsureYear(holidayYear);
   container.querySelectorAll('.cal-event').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
@@ -6299,15 +6895,16 @@ function renderAnalytics() {
   const filtered = getFiltered();
   const axisTitle = (text) => ({ display:true, text, font:{ size:11.5, weight:'600' }, color:'#5D6785' });
   container.innerHTML = `<section class="kpi-grid overview-kpi-grid" id="overviewKpiGrid"></section><div class="analytics-grid">
-    <div class="chart-card" style="--chart-accent:#1B3A73;"><h3>${t('chartTrendTitle')}</h3><div class="chart-box tall"><canvas id="chartTrend"></canvas></div></div>
-    <div class="chart-card" style="--chart-accent:#15916F;"><h3>${t('chartStatusTitle')}</h3><div class="chart-box tall"><canvas id="chartStatus"></canvas></div></div>
-    <div class="chart-card" style="--chart-accent:#1B3A73;"><h3>${t('chartLayananTitle')}</h3><div class="chart-box tall"><canvas id="chartLayanan"></canvas></div></div>
-    <div class="chart-card" style="--chart-accent:#2F6FCE;"><h3>${t('chartKategoriTitle')}</h3><div class="chart-box tall"><canvas id="chartKategori"></canvas></div></div>
-    <div class="chart-card" style="--chart-accent:#6D53C7;"><h3>${t('chartPicTitle')}</h3><div class="chart-box tall"><canvas id="chartPic"></canvas></div></div>
-    <div class="chart-card" style="--chart-accent:#C3488B;"><h3>${t('chartUnitTitle')}</h3><div class="chart-box tall"><canvas id="chartUnit"></canvas></div></div>
+    <div class="chart-card" style="--chart-accent:#1B3A73;"><h3>${t('chartTrendTitle')}</h3><div class="chart-box tall"><canvas id="chartTrend"></canvas></div><div class="chart-narr" id="narrTrend"></div></div>
+    <div class="chart-card" style="--chart-accent:#15916F;"><h3>${t('chartStatusTitle')}</h3><div class="chart-box tall"><canvas id="chartStatus"></canvas></div><div class="chart-narr" id="narrStatus"></div></div>
+    <div class="chart-card" style="--chart-accent:#1B3A73;"><h3>${t('chartLayananTitle')}</h3><div class="chart-box tall"><canvas id="chartLayanan"></canvas></div><div class="chart-narr" id="narrLayanan"></div></div>
+    <div class="chart-card" style="--chart-accent:#2F6FCE;"><h3>${t('chartKategoriTitle')}</h3><div class="chart-box tall"><canvas id="chartKategori"></canvas></div><div class="chart-narr" id="narrKategori"></div></div>
+    <div class="chart-card" style="--chart-accent:#6D53C7;"><h3>${t('chartPicTitle')}</h3><div class="chart-box tall"><canvas id="chartPic"></canvas></div><div class="chart-narr" id="narrPic"></div></div>
+    <div class="chart-card" style="--chart-accent:#C3488B;"><h3>${t('chartUnitTitle')}</h3><div class="chart-box tall"><canvas id="chartUnit"></canvas></div><div class="chart-narr" id="narrUnit"></div></div>
   </div>`;
 
   renderKPI('overviewKpiGrid', filtered);
+  if (typeof cmRenderOverviewNarratives === 'function') cmRenderOverviewNarratives(filtered);
   Object.values(state.charts).forEach(c => c && c.destroy());
   state.charts = {};
 
@@ -7553,7 +8150,7 @@ function configureContextToolbar(tab=state.activeTab){
   label.textContent=uiText('Filters','Filter');
   let html='';
   if(['analytics','table','calendar','kanban','matrix'].includes(tab)){
-    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}"><span class="filter-date-sep">${uiText('to','s/d')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}"><button class="btn btn-outline btn-sm context-reset" id="btnResetFilter">${uiText('Reset','Reset')}</button>${tab==='table'?`<button type="button" class="btn btn-sm cm-report-btn" id="btnActivityReport" onclick="event.preventDefault();event.stopPropagation();window.cmOpenActivityReportBuilder();return false;" title="${uiText('Generate report from current filters','Generate laporan sesuai filter aktif')}">✦ ${uiText('Report','Laporan')}</button>`:''}`;
+    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}"><span class="filter-date-sep">${uiText('to','s/d')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}"><button class="btn btn-outline btn-sm context-reset" id="btnResetFilter">${uiText('Reset','Reset')}</button>${typeof cmCtxReportButtons==='function'?cmCtxReportButtons(tab):''}`;
     body.innerHTML=html;populateFilterDropdowns();
     const map={filterKategori:'kategori',filterProgram:'program',filterStatus:'status',filterPic:'pic',filterUnit:'unit',filterLayanan:'layanan',filterTahun:'tahun',filterUnitType:'unitType'};
     Object.entries(map).forEach(([id,key])=>document.getElementById(id)?.addEventListener('change',e=>{state.filters[key]=e.target.value;state.page=1;renderActiveTab();updateFilterActiveBadge();}));
@@ -8276,6 +8873,7 @@ function setupActivityFileEditors(ownerId){
       host.querySelector('[data-add-file]').onclick=()=>host.querySelector('[data-file-input]').click();
       host.querySelector('[data-file-input]').onchange=async e=>{for(const file of [...e.target.files]){try{rows.push(await uploadGenericActivityFile(file,ownerId));sync();draw();toast(uiText('File added.','File ditambahkan.'),'success');}catch(err){toast(err.message==='File too large'?uiText('File exceeds 600 KB. Use a SharePoint/Drive link for larger files.','File melebihi 600 KB. Gunakan link SharePoint/Drive untuk file yang lebih besar.'):uiText('File upload failed.','Upload file gagal.'),'error');}}};
     };draw();
+    host.cmSetRows=r=>{rows=Array.isArray(r)?r:[];sync();draw();};host.cmRowCount=()=>rows.length;
   });
 }
 
@@ -8622,8 +9220,8 @@ function getMeetingMode(a){
   return 'offline';
 }
 function meetingModeLabel(mode){return mode==='online'?'Online':mode==='hybrid'?'Hybrid':'Offline';}
-function getMeetingLocation(a){if(a?.meetingLocation!=null)return String(a.meetingLocation||'');return getMeetingMode(a)==='offline'?String(a?.lokasiChannel||''):'';}
-function getMeetingLink(a){if(a?.meetingLink!=null)return String(a.meetingLink||'');return getMeetingMode(a)==='online'?String(a?.lokasiChannel||''):'';}
+function getMeetingLocation(a){if(a?.meetingLocation!=null)return getMeetingMode(a)==='online'?'':String(a.meetingLocation||'');return getMeetingMode(a)==='offline'?String(a?.lokasiChannel||''):'';}
+function getMeetingLink(a){if(a?.meetingLink!=null)return getMeetingMode(a)==='offline'?'':String(a.meetingLink||'');return getMeetingMode(a)==='online'?String(a?.lokasiChannel||''):'';}
 /* ============================================================
    IMPORT UNDANGAN — read an invitation letter (PDF/DOCX/TXT), map its labelled parts
    (Hal, hari/tanggal, waktu, tempat, …) to Add Activity fields, let the user review/edit,
@@ -8803,23 +9401,29 @@ function cmUndReview(file,text){
   const units=Array.from(new Set((state.unitList||[]).map(u=>u.name).filter(Boolean)));
   const canAttach=file.size<=600*1024;
   const L=f=>uiText(f.en,f.id);
+  const editing=!!state.editingId,form=document.getElementById('agendaForm'),fv=n=>String(form?.querySelector(`[name="${n}"]`)?.value||'').trim();
+  const curUnit=(()=>{const sel=document.getElementById('unitPemohonSelect');if(!sel)return '';if(sel.value==='__ADD_NEW__')return String(document.getElementById('unitPemohonNewInput')?.value||'').trim();return sel.value||'';})();
+  const curMode=form?.querySelector('[name="meetingMode"]:checked')?.value||'';
+  const prevOf={namaKegiatan:fv('namaKegiatan'),tanggal:fv('tglMulai')?[fmtDate(fv('tglMulai')),fv('tglSelesai')&&fv('tglSelesai')!==fv('tglMulai')?fmtDate(fv('tglSelesai')):''].filter(Boolean).join(' – '):'',waktu:fv('jamMulai')?[fv('jamMulai'),fv('jamSelesai')].filter(Boolean).join(' – '):'',tempat:curMode==='online'?'':fv('meetingLocation'),link:curMode==='offline'?'':fv('meetingLink'),unitPemohon:curUnit,pesertaTarget:fv('pesertaTarget'),undangan:fv('undangan')};
+  const undHost=form?.querySelector('[data-file-editor="undanganFiles"]'),prevFiles=undHost&&typeof undHost.cmRowCount==='function'?undHost.cmRowCount():0;
+  const prevTag=key=>editing&&prevOf[key]?`<small class="und-prev">${uiText('Previously','Sebelumnya')}: ${escapeHtml(String(prevOf[key]).slice(0,160))}</small>`:'';
   const srcTag=r=>r?`<small class="und-src">${uiText('from','dari')} “${escapeHtml(r.src||'')}”</small>`:`<small class="und-src none">${uiText('not found','tidak ditemukan')}</small>`;
   const render=()=>{
     const r=res,F=k=>map.find(f=>f.key===k);
-    const row=(key,inner,found)=>`<div class="und-row${found?'':' miss'}"><label class="und-check"><input type="checkbox" data-use="${key}" ${found?'checked':''}></label><div class="und-field"><b>${escapeHtml(L(F(key)))}</b>${srcTag(found?r[key]:null)}</div><div class="und-val">${inner}</div></div>`;
+    const row=(key,inner,found)=>`<div class="und-row${found?'':' miss'}" data-row="${key}"><label class="und-check"><input type="checkbox" data-use="${key}" ${found?'checked':''}></label><div class="und-field"><b>${escapeHtml(L(F(key)))}</b>${srcTag(found?r[key]:null)}</div><div class="und-val">${inner}${prevTag(key)}</div></div>`;
     const unitVal=r.unitPemohon?.value||'',unitMatch=units.find(u=>u.toLowerCase()===String(unitVal).toLowerCase());
-    ov.innerHTML=`<div class="pic-mgr-box und-box"><div class="pic-mgr-head"><div><h3>${uiText('Import from invitation','Import dari Undangan')}</h3><p>📄 ${escapeHtml(file.name)} — ${uiText('Check the values read from the letter. Untick or edit any field before filling the form; other fields are entered manually.','Periksa nilai yang terbaca dari surat. Hapus centang atau ubah nilainya sebelum diisikan ke form; kolom lain diisi manual.')}</p></div><button type="button" class="pic-mgr-x" data-x aria-label="${uiText('Close','Tutup')}">&times;</button></div>
+    ov.innerHTML=`<div class="pic-mgr-box und-box"><div class="pic-mgr-head"><div><h3>${uiText('Import from invitation','Import dari Undangan')}</h3><p>📄 ${escapeHtml(file.name)} — ${editing?uiText('Ticked fields will replace the current values of this activity. Untick any field you want to keep as it is.','Kolom yang dicentang akan menggantikan isian activity ini. Hapus centang pada kolom yang ingin dipertahankan.'):uiText('Check the values read from the letter. Untick or edit any field before filling the form; other fields are entered manually.','Periksa nilai yang terbaca dari surat. Hapus centang atau ubah nilainya sebelum diisikan ke form; kolom lain diisi manual.')}</p></div><button type="button" class="pic-mgr-x" data-x aria-label="${uiText('Close','Tutup')}">&times;</button></div>
       <div class="pic-mgr-list und-list">
         ${row('namaKegiatan',`<input type="text" data-v="namaKegiatan" value="${escapeHtml(r.namaKegiatan?.value||'')}">`,!!r.namaKegiatan)}
         ${row('tanggal',`<div class="und-pair"><input type="date" data-v="tglMulai" value="${r.tanggal?.value.start||''}"><span>–</span><input type="date" data-v="tglSelesai" value="${r.tanggal?.value.end||''}"></div>`,!!r.tanggal)}
         ${row('waktu',`<div class="und-pair"><input type="time" data-v="jamMulai" value="${r.waktu?.value.start||''}"><span>–</span><input type="time" data-v="jamSelesai" value="${r.waktu?.value.end||''}"></div>${r.waktu&&!r.waktu.value.end?`<small class="und-warn">${uiText('End time not stated (e.g. “until finished”) — fill it in the form.','Jam selesai tidak disebut (mis. “s.d. selesai”) — lengkapi di form.')}</small>`:''}${r.waktu?.value.zone?`<small class="und-warn">${uiText('Time zone in letter','Zona waktu di surat')}: ${escapeHtml(r.waktu.value.zone)}</small>`:''}`,!!r.waktu)}
         ${row('tempat',`<input type="text" data-v="meetingLocation" value="${escapeHtml(r.tempat?.value||'')}">`,!!r.tempat)}
         ${row('link',`<input type="text" data-v="meetingLink" value="${escapeHtml(r.link?.value||'')}">`,!!r.link)}
-        <div class="und-row und-mode"><span></span><div class="und-field"><b>${uiText('Meeting mode','Metode Pelaksanaan')}</b><small class="und-src">${uiText('automatic','otomatis')}</small></div><div class="und-val"><select data-v="meetingMode"><option value="offline" ${r.mode.value==='offline'?'selected':''}>Offline</option><option value="online" ${r.mode.value==='online'?'selected':''}>Online</option><option value="hybrid" ${r.mode.value==='hybrid'?'selected':''}>Hybrid</option></select></div></div>
+        <div class="und-row und-mode"><span></span><div class="und-field"><b>${uiText('Meeting mode','Metode Pelaksanaan')}</b><small class="und-src">${uiText('automatic','otomatis')}</small></div><div class="und-val"><select data-v="meetingMode" data-mode-select><option value="offline" ${r.mode.value==='offline'?'selected':''}>Offline</option><option value="online" ${r.mode.value==='online'?'selected':''}>Online</option><option value="hybrid" ${r.mode.value==='hybrid'?'selected':''}>Hybrid</option></select></div></div>
         ${row('unitPemohon',`<select data-v="unitPemohon"><option value="">${uiText('— choose —','— pilih —')}</option>${units.map(u=>`<option value="${escapeHtml(u)}" ${unitMatch===u?'selected':''}>${escapeHtml(u)}</option>`).join('')}${unitVal&&!unitMatch?`<option value="${escapeHtml(unitVal)}" selected>${escapeHtml(unitVal)} (${uiText('new','baru')})</option>`:''}</select>`,!!r.unitPemohon)}
         ${row('pesertaTarget',`<textarea rows="2" data-v="pesertaTarget">${escapeHtml(r.pesertaTarget?.value||'')}</textarea>`,!!r.pesertaTarget)}
         ${row('undangan',`<input type="text" data-v="undangan" value="${escapeHtml(r.undangan?.value||'')}">`,!!r.undangan)}
-        <div class="und-row"><label class="und-check"><input type="checkbox" data-attach ${canAttach?'checked':'disabled'}></label><div class="und-field"><b>${uiText('Attach invitation file','Lampirkan file undangan')}</b><small class="und-src">${canAttach?uiText('to the Invitation field','ke kolom Undangan'):uiText('file > 600 KB — use a link instead','file > 600 KB — gunakan link')}</small></div><div class="und-val"><small class="und-file">${escapeHtml(file.name)} · ${Math.round(file.size/1024)} KB</small></div></div>
+        <div class="und-row"><label class="und-check"><input type="checkbox" data-attach ${canAttach?'checked':'disabled'}></label><div class="und-field"><b>${uiText('Attach invitation file','Lampirkan file undangan')}</b><small class="und-src">${canAttach?uiText('to the Invitation field','ke kolom Undangan'):uiText('file > 600 KB — use a link instead','file > 600 KB — gunakan link')}</small></div><div class="und-val"><small class="und-file">${escapeHtml(file.name)} · ${Math.round(file.size/1024)} KB</small>${editing&&prevFiles&&canAttach?`<label class="und-replace"><input type="checkbox" data-replace-file checked> ${uiText(`Replace the previous invitation file (${prevFiles})`,`Ganti file undangan sebelumnya (${prevFiles})`)}</label>`:''}</div></div>
         <details class="und-more" ${showMap?'open':''} data-mapbox><summary>⚙ ${uiText('Mapping rules (letter label → form field)','Atur pemetaan (label di surat → kolom form)')}</summary>
           <p class="und-hint">${uiText('Comma-separated labels as written in the letter, checked in order. Saved for future imports.','Tulis label persis seperti di surat, pisahkan dengan koma; dicek berurutan. Tersimpan untuk import berikutnya.')}</p>
           ${map.map(f=>`<div class="und-maprow"><b>${escapeHtml(L(f))}</b><span>←</span><input type="text" data-map="${f.key}" value="${escapeHtml(f.labels.join(', '))}"></div>`).join('')}
@@ -8836,22 +9440,25 @@ function cmUndReview(file,text){
     ov.querySelector('[data-map-save]').onclick=async()=>{map=map.map(f=>{const v=ov.querySelector(`[data-map="${f.key}"]`).value.split(',').map(x=>x.trim()).filter(Boolean);return {...f,labels:v.length?v:f.labels};});await cmUndMappingSave(map);res=cmUndParse(text,map);showMap=true;render();toast(uiText('Mapping saved','Pemetaan disimpan'),'success');};
     ov.querySelector('[data-map-reset]').onclick=async()=>{map=CM_UND_FIELDS.map(f=>({...f}));await cmUndMappingSave(map);res=cmUndParse(text,map);showMap=true;render();};
     ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>ov.remove());
+    const modeSel=ov.querySelector('[data-mode-select]');
+    const syncMode=()=>{const m=modeSel.value;[['link',m==='offline'],['tempat',m==='online']].forEach(([k,off])=>{const row=ov.querySelector(`[data-row="${k}"]`);if(!row)return;row.classList.toggle('mode-off',off);const c=row.querySelector('[data-use]');if(off&&c.checked){c.checked=false;row.classList.add('off');}else if(!off&&!c.checked&&String(row.querySelector('[data-v]')?.value||'').trim()){c.checked=true;row.classList.remove('off');}});cnt();};
+    modeSel.addEventListener('change',syncMode);
     ov.querySelector('[data-apply]').onclick=()=>{const used=k=>ov.querySelector(`[data-use="${k}"]`)?.checked,val=k=>(ov.querySelector(`[data-v="${k}"]`)?.value||'').trim();
       const n=cmUndApplyToForm({
         namaKegiatan:used('namaKegiatan')?val('namaKegiatan'):null,
         tglMulai:used('tanggal')?val('tglMulai'):null,tglSelesai:used('tanggal')?(val('tglSelesai')||val('tglMulai')):null,
         jamMulai:used('waktu')?val('jamMulai'):null,jamSelesai:used('waktu')?val('jamSelesai'):null,
-        meetingMode:(used('tempat')||used('link'))?val('meetingMode'):null,
+        meetingMode:(used('tempat')||used('link')||(editing&&val('meetingMode')!==curMode&&(val('meetingLocation')||val('meetingLink'))))?val('meetingMode'):null,
         meetingLocation:used('tempat')?val('meetingLocation'):null,meetingLink:used('link')?val('meetingLink'):null,
         unitPemohon:used('unitPemohon')?val('unitPemohon'):null,pesertaTarget:used('pesertaTarget')?val('pesertaTarget'):null,
         undangan:used('undangan')?val('undangan'):null
-      },ov.querySelector('[data-attach]')?.checked?file:null);
-      ov.remove();toast(uiText(`${n} fields filled from the invitation. Please complete the rest.`,`${n} kolom terisi dari undangan. Silakan lengkapi sisanya.`),'success');};
-    cnt();
+      },ov.querySelector('[data-attach]')?.checked?file:null,{replaceFile:!!ov.querySelector('[data-replace-file]')?.checked});
+      ov.remove();toast(editing?uiText(`${n} fields updated from the invitation. Click Save to keep the changes.`,`${n} kolom diperbarui dari undangan. Klik Simpan untuk menyimpan perubahan.`):uiText(`${n} fields filled from the invitation. Please complete the rest.`,`${n} kolom terisi dari undangan. Silakan lengkapi sisanya.`),'success');};
+    cnt();syncMode();
   };
   render();
 }
-function cmUndApplyToForm(v,file){
+function cmUndApplyToForm(v,file,opt={}){
   const form=document.getElementById('agendaForm');if(!form)return 0;let n=0;
   const fire=el=>{el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));};
   const flash=el=>{const box=el.closest('.form-field')||el;box.classList.remove('und-filled');void box.offsetWidth;box.classList.add('und-filled');setTimeout(()=>box.classList.remove('und-filled'),4000);};
@@ -8861,10 +9468,15 @@ function cmUndApplyToForm(v,file){
     const end=form.querySelector('[name="tglSelesai"]');if(end&&v.tglSelesai){end.value=v.tglSelesai;fire(end);flash(end);}}
   if(v.jamMulai){set('jamMulai',v.jamMulai);n--;if(v.jamSelesai)set('jamSelesai',v.jamSelesai);else n++;}
   if(v.meetingMode){const r=form.querySelector(`[name="meetingMode"][value="${v.meetingMode}"]`);if(r){r.checked=true;fire(r);}}
-  set('meetingLocation',v.meetingLocation);set('meetingLink',v.meetingLink);
+  const mode=v.meetingMode||form.querySelector('[name="meetingMode"]:checked')?.value||'offline';
+  if(mode!=='online')set('meetingLocation',v.meetingLocation);if(mode!=='offline')set('meetingLink',v.meetingLink);
+  // Offline meeting: no meeting link is kept; online: no physical location is kept.
+  const clr=name=>{const el=form.querySelector(`[name="${name}"]`);if(el&&el.value){el.value='';fire(el);}};
+  if(v.meetingMode==='offline')clr('meetingLink');if(v.meetingMode==='online')clr('meetingLocation');
   if(v.unitPemohon){const sel=document.getElementById('unitPemohonSelect');if(sel){const opt=[...sel.options].find(o=>o.value.toLowerCase()===v.unitPemohon.toLowerCase()&&o.value!=='__ADD_NEW__');
       if(opt){sel.value=opt.value;fire(sel);}else{sel.value='__ADD_NEW__';fire(sel);const ni=document.getElementById('unitPemohonNewInput');if(ni){ni.value=v.unitPemohon;fire(ni);}}flash(sel);n++;}}
   set('pesertaTarget',v.pesertaTarget);set('undangan',v.undangan);
+  if(file&&opt.replaceFile){const host=form.querySelector('[data-file-editor="undanganFiles"]');if(host&&typeof host.cmSetRows==='function')host.cmSetRows([]);}
   if(file){const fi=form.querySelector('[data-file-editor="undanganFiles"] [data-file-input]');
     if(fi){try{const dt=new DataTransfer();dt.items.add(file);fi.files=dt.files;fi.dispatchEvent(new Event('change',{bubbles:true}));}catch(e){console.warn('Attach invitation failed',e);}}}
   return n;
@@ -8895,7 +9507,7 @@ function openForm(id) {
     </div>
     <div class="modal-body">
       <form id="agendaForm">
-        ${a?'':`<div class="und-import-card"><span class="und-import-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg></span><div class="und-import-copy"><strong>${uiText('Have an invitation letter?','Punya surat undangan?')}</strong><small>${uiText('Upload the PDF/Word file to auto-fill the activity name, date, time, meeting location, link, unit, participants and letter number. You review the result first.','Unggah file PDF/Word untuk mengisi otomatis nama activity, tanggal, jam, lokasi rapat, link, unit, peserta, dan nomor surat. Hasilnya bisa dicek dulu.')}</small></div><button type="button" class="btn btn-outline btn-sm" id="btnImportUndangan">${uiText('Import invitation','Import Undangan')}</button></div>`}
+        ${`<div class="und-import-card${a?' edit':''}"><span class="und-import-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg></span><div class="und-import-copy"><strong>${a?uiText('Update from an invitation letter','Perbarui dari surat undangan'):uiText('Have an invitation letter?','Punya surat undangan?')}</strong><small>${a?uiText('Upload the PDF/Word invitation. Ticked fields will replace the values entered earlier; you review the changes first.','Unggah file undangan PDF/Word. Kolom yang dicentang akan menggantikan isian sebelumnya; perubahan bisa dicek dulu.'):uiText('Upload the PDF/Word file to auto-fill the activity name, date, time, meeting location, link, unit, participants and letter number. You review the result first.','Unggah file PDF/Word untuk mengisi otomatis nama activity, tanggal, jam, lokasi rapat, link, unit, peserta, dan nomor surat. Hasilnya bisa dicek dulu.')}</small></div><button type="button" class="btn btn-outline btn-sm" id="btnImportUndangan">${uiText('Import invitation','Import Undangan')}</button></div>`}
         <div class="form-grid">
           <div class="form-field full">
             <label>${t('fieldActivityName')} <span class="req">*</span></label>
@@ -9454,6 +10066,8 @@ async function submitForm(options={}) {
   obj.meetingMode = obj.meetingMode || 'offline';
   obj.meetingLocation = String(obj.meetingLocation || '').trim();
   obj.meetingLink = String(obj.meetingLink || '').trim();
+  if (obj.meetingMode === 'offline') obj.meetingLink = '';
+  if (obj.meetingMode === 'online') obj.meetingLocation = '';
   obj.lokasiChannel = obj.meetingMode === 'online' ? obj.meetingLink : obj.meetingMode === 'offline' ? obj.meetingLocation : [obj.meetingLocation,obj.meetingLink].filter(Boolean).join('\n');
 
   if (obj.kategori && !state.categoryList.includes(obj.kategori.trim())) {
@@ -11185,7 +11799,7 @@ async function cmRenderAnalyticsContent(id){const host=document.getElementById('
   <div class="cm-analytics-kpis" style="margin-top:12px"><div class="cm-akpi"><small>Overall readiness</small><b>${pct}%</b><span>${gate.label}</span></div><div class="cm-akpi"><small>${uiText('Responses','Respons')}</small><b>${rows.length}</b><span>${target?completion+'% '+uiText('of target','dari target')+' '+target:uiText('no target','tanpa target')}</span></div><div class="cm-akpi"><small>Bottleneck</small><b style="font-size:16px">${weak[0]?escapeHtml(weak[0].label):uiText('None','Tidak ada')}</b><span>${weak[0]?weak[0].pct+'%':uiText('all ≥80%','semua ≥80%')}</span></div><div class="cm-akpi"><small>Critical Gate</small><b style="font-size:16px">${critical.filter(x=>x.avg<4).length}</b><span>${uiText('below 4/5','di bawah 4/5')}</span></div></div>
   <div class="cm-survey-card" style="margin:12px 0"><h3>${uiText('Role Coverage','Cakupan Role')}</h3><div class="desc">${uiText('One respondent may select multiple roles. The same respondent is counted in every role they selected; general questions are answered only once. Role-level analytics is hidden when n < '+CM_PRIVACY_MIN_N+'.','Satu responden dapat memilih beberapa role. Responden dihitung pada setiap role yang dipilih; pertanyaan general tetap dijawab satu kali. Breakdown analytics disembunyikan bila n < '+CM_PRIVACY_MIN_N+'.')}</div><div class="cm-coverage">${coverage.map(r=>`<div class="cm-coverage-item ${r.n===0?'zero':r.n<CM_PRIVACY_MIN_N?'low':''}"><b>${r.n}</b><small>${escapeHtml(cmRoleTitle(r.role))}</small></div>`).join('')}</div></div>
   ${cmDependencyHtml(cmCrossRoleDependencies(s,rows))}
-  <div class="cm-analytics-grid"><div class="cm-chart-card"><h3>ADKAR & Readiness Dimension</h3><div class="cm-chart-box"><canvas id="cmAnalyticsChart"></canvas></div></div><div class="cm-chart-card"><h3>${uiText('Auto Insight & Recommendations','Auto Insight & Rekomendasi')}</h3>${cmBuildInsights(weak,roleMatrix,critical).map(x=>`<div class="cm-insight ${x.cls}"><b>${escapeHtml(x.title)}</b>${escapeHtml(x.text)}</div>`).join('')}</div></div>
+  <div class="cm-analytics-grid"><div class="cm-chart-card"><h3>ADKAR & Readiness Dimension</h3><div class="cm-chart-box"><canvas id="cmAnalyticsChart"></canvas></div><div class="chart-narr">${typeof cmXNarrAdkar==='function'?cmRptMd(cmXNarrAdkar(dims)):''}</div></div><div class="cm-chart-card"><h3>${uiText('Auto Insight & Recommendations','Auto Insight & Rekomendasi')}</h3>${cmBuildInsights(weak,roleMatrix,critical).map(x=>`<div class="cm-insight ${x.cls}"><b>${escapeHtml(x.title)}</b>${escapeHtml(x.text)}</div>`).join('')}</div></div>
   <div style="height:12px"></div><div class="cm-chart-card"><h3>Role Readiness Heatmap <span style="font-size:10px;color:var(--ink-500)" title="Sel per-role disembunyikan (Privat) selama jumlah responden role tsb belum mencapai ambang privasi ini, agar skor individu tidak bisa ditebak dari kelompok kecil.">privacy threshold n≥${CM_PRIVACY_MIN_N} ⓘ</span></h3><div class="cm-ref-source" style="margin-bottom:10px"><b>${uiText('Purpose of this heatmap:','Fungsi heatmap ini:')}</b> membandingkan skor readiness per dimensi ADKAR antar role/stakeholder, agar gap per-role terlihat (bukan hanya rata-rata gabungan). Sel bertulis <b>Privat</b> bukan error — itu perlindungan privasi: skor role tsb baru ditampilkan bila jumlah responden role tersebut ≥ ${CM_PRIVACY_MIN_N} orang, supaya jawaban individu tidak bisa diidentifikasi dari kelompok yang terlalu kecil. Skor tetap masuk ke rata-rata Overall meski selnya disembunyikan.</div><div class="cm-heatmap"><table><thead><tr><th>Stakeholder</th><th>N</th>${dims.map(d=>`<th>${escapeHtml(d.label)}</th>`).join('')}</tr></thead><tbody>${roleMatrix.map(r=>`<tr><td>${escapeHtml(cmRoleTitle(r.role))}</td><td>${r.n}</td>${dims.map(d=>{const v=r.dims[d.dim],hidden=r.n<CM_PRIVACY_MIN_N,need=CM_PRIVACY_MIN_N-r.n;return `<td><span class="cm-heatcell" style="${hidden?'background:#F3F5FA;color:#9AA3BD':cmHeatStyle(v)}" title="${hidden?`Butuh ${need} responden lagi untuk role ini agar skor ditampilkan`:''}">${hidden?'Privat':v==null?'—':cmPctFromAvg(v)+'%'}</span></td>`}).join('')}</tr>`).join('')}</tbody></table></div></div>
   <div class="cm-analytics-grid" style="margin-top:12px"><div class="cm-chart-card"><h3>Critical Gates</h3>${critical.length?critical.sort((a,b)=>a.avg-b.avg).map(x=>`<div class="cm-insight ${x.avg<3?'danger':x.avg<4?'warn':'good'}"><b>${x.avg.toFixed(2)}/5 · ${escapeHtml(x.q.id)}</b>${escapeHtml(cmResolveText(x.q.text,s.systemName))}</div>`).join(''):'<div class="cm-empty"><b>Tidak ada Critical Gate</b>Tandai pertanyaan critical dari builder.</div>'}</div><div class="cm-chart-card"><h3>${uiText('Root Causes from Low Scores','Root Cause dari Jawaban Rendah')}</h3><div class="desc">Alasan yang ditulis responden saat memberi skor ≤2, untuk pertanyaan apa pun (bukan hanya Critical Gate).</div>${rootCauses.length?rootCauses.slice(0,12).map(x=>`<div class="cm-insight ${x.critical?'danger':'info'}"><b>${escapeHtml(x.role)} · ${escapeHtml(x.q.id)}${x.critical?' · ◆ Critical':''}</b>${escapeHtml(x.why)}</div>`).join(''):'<div class="cm-empty"><b>Belum ada root cause</b>Muncul otomatis saat responden memberi nilai ≤2 pada pertanyaan mana pun.</div>'}</div></div>
   <div class="cm-survey-card" style="margin-top:12px"><h3>${uiText('Response Quality Control','Kontrol Kualitas Respons')}</h3><div class="cm-quality-grid"><div class="cm-quality-card"><b>${quality.flagged}</b><small>respons ter-flag</small></div><div class="cm-quality-card"><b>${quality.fast}</b><small>&lt; 60 detik</small></div><div class="cm-quality-card"><b>${quality.straight}</b><small>straight-line</small></div><div class="cm-quality-card"><b>${quality.dup}</b><small>respons dengan NIP duplikat</small></div></div><div class="desc">Flag tidak menghapus jawaban otomatis; gunakan untuk review kualitas data.</div></div>`;
@@ -11523,7 +12137,7 @@ async function cmRenderActionContent(id){
 }
 
 function cmRenderCompareRounds(el){const groups=[...new Set(cmSurveyState.surveys.filter(s=>cmSurveyMatchesUiFilters(s)).map(cmSeriesKey))].filter(Boolean);if(!groups.length){el.innerHTML=`<div class="cm-empty"><b>${uiText('No measurement series yet','Belum ada measurement series')}</b>${uiText('Set a Measurement Series when creating a survey.','Isi Measurement Series saat membuat survei.')}</div>`;return;}if(!groups.includes(cmSurveyState.compareGroup))cmSurveyState.compareGroup=groups[0];el.innerHTML=`<div class="cm-survey-card"><div class="cm-result-toolbar"><div><h3>${uiText('Compare Measurement Rounds','Bandingkan Measurement Rounds')}</h3><div class="desc">${uiText('Compare Baseline → Pre Go-Live → Go-Live → Post Go-Live to see readiness changes after interventions.','Bandingkan Baseline → Pre Go-Live → Go-Live → Post Go-Live untuk melihat perubahan readiness setelah intervensi.')}</div></div><select id="cmCompareGroup" style="padding:8px 10px;border:1px solid var(--border);border-radius:8px">${groups.map(g=>`<option ${g===cmSurveyState.compareGroup?'selected':''}>${escapeHtml(g)}</option>`).join('')}</select></div><div id="cmCompareContent"><div class="center-loading">${uiText('Calculating comparison...','Menghitung perbandingan...')}</div></div></div>`;document.getElementById('cmCompareGroup').onchange=e=>{cmSurveyState.compareGroup=e.target.value;cmRenderCompareContent(e.target.value)};cmRenderCompareContent(cmSurveyState.compareGroup);}
-async function cmRenderCompareContent(group){const host=document.getElementById('cmCompareContent'),surveys=cmSurveyState.surveys.filter(s=>cmSeriesKey(s)===group&&cmSurveyMatchesUiFilters(s)).sort((a,b)=>cmRoundOrder(a)-cmRoundOrder(b)||Number(a.version||1)-Number(b.version||1));if(!surveys.length)return;const series=[];for(const s of surveys){const rows=await cmLoadResponses(s.id,true),dims=cmDimensionStats(s,rows),vals=[];(s.questions||[]).filter(q=>q.type==='likert').forEach(q=>rows.forEach(r=>{const v=Number(r.answers?.[q.id]);if(v>=1&&v<=5)vals.push(v)}));series.push({s,rows,dims,overall:cmPctFromAvg(cmAvg(vals))});}const withData=series.filter(x=>x.rows.length);if(!withData.length){host.innerHTML=`<div class="cm-empty"><b>${uiText('No responses yet','Belum ada respons')}</b>${uiText('Comparison becomes available after at least one round has data.','Perbandingan aktif setelah setidaknya satu round memiliki data.')}</div>`;return;}const labels=withData.map(x=>(x.s.round||'Round')+' v'+(Number(x.s.version)||1)),dimKeys=CM_SURVEY_DIM_ORDER.filter(d=>withData.some(x=>x.dims.some(y=>y.dim===d)));host.innerHTML=`<div class="cm-chart-card"><h3>${uiText('Readiness Trend','Tren Readiness')}</h3><div class="cm-chart-box"><canvas id="cmCompareChart"></canvas></div></div><div class="cm-compare-table"><table><thead><tr><th>Round</th><th>${uiText('Responses','Respons')}</th><th>Overall</th>${dimKeys.map(d=>`<th>${cmDimLabel(d)}</th>`).join('')}<th>Δ Overall</th></tr></thead><tbody>${withData.map((x,i)=>{const prev=i?withData[i-1].overall:null;return `<tr><td><span class="cm-round-pill">${escapeHtml(x.s.round||'Round')}</span> <span class="cm-version-pill">v${Number(x.s.version)||1}</span></td><td>${x.rows.length}</td><td><b>${x.overall}%</b></td>${dimKeys.map(d=>{const v=x.dims.find(z=>z.dim===d)?.pct;return `<td>${v==null?'—':v+'%'}</td>`}).join('')}<td>${prev==null?'—':(x.overall-prev>=0?'+':'')+(x.overall-prev)+' pp'}</td></tr>`}).join('')}</tbody></table></div>`;if(cmCompareChart)cmCompareChart.destroy();const c=document.getElementById('cmCompareChart');if(c)cmCompareChart=new Chart(c,{type:'line',data:{labels,datasets:[{label:'Overall',data:withData.map(x=>x.overall),borderWidth:3,tension:.25},...dimKeys.map(d=>({label:CM_SURVEY_DIM_LABEL[d],data:withData.map(x=>x.dims.find(y=>y.dim===d)?.pct??null),borderWidth:1.5,tension:.25}))]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}});}
+async function cmRenderCompareContent(group){const host=document.getElementById('cmCompareContent'),surveys=cmSurveyState.surveys.filter(s=>cmSeriesKey(s)===group&&cmSurveyMatchesUiFilters(s)).sort((a,b)=>cmRoundOrder(a)-cmRoundOrder(b)||Number(a.version||1)-Number(b.version||1));if(!surveys.length)return;const series=[];for(const s of surveys){const rows=await cmLoadResponses(s.id,true),dims=cmDimensionStats(s,rows),vals=[];(s.questions||[]).filter(q=>q.type==='likert').forEach(q=>rows.forEach(r=>{const v=Number(r.answers?.[q.id]);if(v>=1&&v<=5)vals.push(v)}));series.push({s,rows,dims,overall:cmPctFromAvg(cmAvg(vals))});}const withData=series.filter(x=>x.rows.length);if(!withData.length){host.innerHTML=`<div class="cm-empty"><b>${uiText('No responses yet','Belum ada respons')}</b>${uiText('Comparison becomes available after at least one round has data.','Perbandingan aktif setelah setidaknya satu round memiliki data.')}</div>`;return;}const labels=withData.map(x=>(x.s.round||'Round')+' v'+(Number(x.s.version)||1)),dimKeys=CM_SURVEY_DIM_ORDER.filter(d=>withData.some(x=>x.dims.some(y=>y.dim===d)));host.innerHTML=`<div class="cm-chart-card"><h3>${uiText('Readiness Trend','Tren Readiness')}</h3><div class="cm-chart-box"><canvas id="cmCompareChart"></canvas></div><div class="chart-narr">${typeof cmXNarrCompare==='function'?cmRptMd(cmXNarrCompare(withData,dimKeys)):''}</div></div><div class="cm-compare-table"><table><thead><tr><th>Round</th><th>${uiText('Responses','Respons')}</th><th>Overall</th>${dimKeys.map(d=>`<th>${cmDimLabel(d)}</th>`).join('')}<th>Δ Overall</th></tr></thead><tbody>${withData.map((x,i)=>{const prev=i?withData[i-1].overall:null;return `<tr><td><span class="cm-round-pill">${escapeHtml(x.s.round||'Round')}</span> <span class="cm-version-pill">v${Number(x.s.version)||1}</span></td><td>${x.rows.length}</td><td><b>${x.overall}%</b></td>${dimKeys.map(d=>{const v=x.dims.find(z=>z.dim===d)?.pct;return `<td>${v==null?'—':v+'%'}</td>`}).join('')}<td>${prev==null?'—':(x.overall-prev>=0?'+':'')+(x.overall-prev)+' pp'}</td></tr>`}).join('')}</tbody></table></div>`;if(cmCompareChart)cmCompareChart.destroy();const c=document.getElementById('cmCompareChart');if(c)cmCompareChart=new Chart(c,{type:'line',data:{labels,datasets:[{label:'Overall',data:withData.map(x=>x.overall),borderWidth:3,tension:.25},...dimKeys.map(d=>({label:CM_SURVEY_DIM_LABEL[d],data:withData.map(x=>x.dims.find(y=>y.dim===d)?.pct??null),borderWidth:1.5,tension:.25}))]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'}}}}});}
 
 function cmOpenExecutiveBrief(s,rows,data){const {pct,dims,weak,critical,roleMatrix,gate,quality,coverage}=data,actions=cmSurveyState.actionCache[s.id]||[],topCrit=critical.filter(x=>x.avg<4).sort((a,b)=>a.avg-b.avg).slice(0,5),topWeak=weak.slice(0,5);const html=`<!doctype html><html><head><meta charset="utf-8"><title>Executive Brief - ${escapeHtml(s.title)}</title><style>body{font-family:Arial,sans-serif;color:#15203a;margin:0;background:#eef1f6}main{max-width:960px;margin:24px auto;background:#fff;padding:28px 32px;border-radius:14px}h1{font-size:22px;margin:0}h2{font-size:13px;margin:22px 0 8px;color:#12275A}.sub{color:#667085;font-size:12px;margin-top:5px}.gate{padding:14px;border-radius:10px;background:${gate.level==='ready'?'#E4F5EF':gate.level==='conditional'?'#E7EFFC':gate.level==='intervention'?'#FBF0DC':'#FBE9E9'};margin:18px 0}.gate b{font-size:20px}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k{border:1px solid #e3e7f1;border-radius:9px;padding:10px}.k b{font-size:19px;display:block}.k small{color:#667085}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:7px;border-bottom:1px solid #e8ebf1;text-align:left}ul{font-size:12px;line-height:1.5;padding-left:18px}.print{float:right;padding:8px 12px}@media print{body{background:#fff}main{margin:0;max-width:none;border-radius:0}.print{display:none}}
 
