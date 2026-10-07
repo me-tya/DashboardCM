@@ -505,6 +505,8 @@ table.data-table tbody tr:hover{background:#F8F9FD;}
 .inv-badge svg{width:12px;height:12px;flex:0 0 auto}.inv-badge span{overflow:hidden;text-overflow:ellipsis}
 a.inv-badge:hover{background:#DCE6F8;border-color:#9DB6E6}
 .rv-hero-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.rv-fb-btn{margin-right:0!important}
+.btn.context-reset,#reviewReset,#taskReset{background:#DC2626;color:#fff;border:1px solid #B91C1C;font-weight:600}
+.btn.context-reset:hover,#reviewReset:hover,#taskReset:hover,.btn.context-reset:focus-visible,#reviewReset:focus-visible,#taskReset:focus-visible{background:#B91C1C;color:#fff;border-color:#991B1B}
 .cm-fb-btn{margin-right:auto;background:#fff;border:1px solid #C9D6F2;color:var(--navy-800,#12275A);display:inline-flex;align-items:center}.cm-fb-btn:hover{background:#EEF3FC;border-color:#9DB6E6}
 .cm-fb-count:not(:empty){margin-left:6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#E25563;color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
 .cm-fb-modal .modal-box{max-width:720px}.cm-fb-modal .modal-head p{margin:4px 0 0;font-size:12.5px;color:var(--ink-500)}
@@ -1818,7 +1820,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .review-form label.rv-unit-pick,.rv-unit-pick{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;margin:0;border:1px solid var(--border,#E3E7EF);border-radius:9px;padding:7px 9px 7px 30px;position:relative;cursor:pointer;background:#fff;font-weight:400}
 .rv-unit-pick input{position:absolute;left:9px;top:9px;margin:0;width:14px;height:14px}
 .rv-unit-pick b{font-size:12px;line-height:1.3;color:var(--navy-800,#12275A)}.rv-unit-pick small{max-width:100%;font-size:10.5px;line-height:1.3;color:var(--ink-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rv-unit-pick.on{border-color:#C8A84B;background:#FFF9EA}
+.rv-unit-pick.on{border-color:#C8A84B;background:#FFF9EA}.rv-unit-pick.new small{color:#2F6FCE}
 .rv-wa{display:inline-flex;align-items:center;gap:6px;margin-top:5px;color:#1d3a66;font:700 11.5px/1.3 'Inter',sans-serif;text-decoration:none}
 .rv-wa svg{width:15px;height:15px;color:#25D366;flex:0 0 15px}
 .rv-wa:hover{text-decoration:underline;color:#102449}
@@ -2794,7 +2796,9 @@ function cmPicCanon(name){
 }
 function cmPicList(str){const out=[],add=c=>{if(c&&!out.some(x=>x.toLowerCase()===c.toLowerCase()))out.push(c);};splitNames(str).forEach(n=>{const c=cmPicCanon(n);if(c!==n.trim().replace(/\s+/g,' ')||CM_PIC_ROSTER.includes(c)){add(c);return;}const words=n.trim().split(/\s+/);if(words.length>1&&words.every(w=>CM_PIC_ALIASES[w.toLowerCase()])){words.forEach(w=>add(CM_PIC_ALIASES[w.toLowerCase()]));return;}add(c);});return out;}
 function cmPicNormalize(str){return cmPicList(str).join(', ');}
-function cmPicHtml(str,empty='-'){const ns=cmPicList(str);if(!ns.length)return escapeHtml(empty);return `<span class="pic-list">${ns.map(n=>`<span class="pic-name">${escapeHtml(n)}</span>`).join('')}</span>`;}
+function cmPicIsPusmantap(name){const k=String(name||'').trim().toLowerCase();if(!k)return false;if(CM_PIC_ROSTER.some(x=>x.toLowerCase()===k))return true;return (state.resources||[]).some(r=>String(r.nama||'').trim().toLowerCase()===k);}
+function cmPicShort(name){const w=String(name||'').trim().split(/\s+/).filter(Boolean);if(w.length<3||w.some(x=>/^[A-Za-z]\.$/.test(x)))return w.join(' ');let idx=-1,len=3;for(let i=0;i<w.length-1;i++){const x=w[i];if(/\.$/.test(x)||/^[A-Z]{2,}$/.test(x))continue;if(x.length>len){len=x.length;idx=i;}}if(idx<0)return w.join(' ');w[idx]=w[idx].charAt(0).toUpperCase()+'.';return w.join(' ');}
+function cmPicHtml(str,empty='-',opt={}){const ns=cmPicList(str);if(!ns.length)return escapeHtml(empty);return `<span class="pic-list">${ns.map(n=>{const sh=opt.short&&cmPicIsPusmantap(n)?cmPicShort(n):n;return `<span class="pic-name"${sh!==n?` title="${escapeHtml(n)}"`:''}>${escapeHtml(sh)}</span>`;}).join('')}</span>`;}
 function cmPicInactiveSet(){const set=new Set();(state.resources||[]).forEach(r=>{if(typeof resourceIsInactive==='function'&&resourceIsInactive(r)){const c=cmPicCanon(r.nama);if(c)set.add(c.toLowerCase());}});return set;}
 /* PIC picker — pop-up picker + "Kelola PIC" manager.
    Groups: Tim CM (CM_PIC_ROSTER + Resource Tim CM), Pegawai Pusmantap (prefs.staff), Tambahan (prefs.extra).
@@ -6419,7 +6423,7 @@ function renderTable() {
       <td><span class="unit-badge ${getUnitType(a.unitPemohon) === 'internal' ? 'unit-internal' : 'unit-external'}" data-unit-key="${escapeHtml(normalizeUnitKey(a.unitPemohon))}">${escapeHtml(a.unitPemohon)}</span></td>
       <td><span class="cat-badge" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(a.kategori)}</span></td>
       <td class="program-cell">${escapeHtml(a.programTerkait)}</td>
-      <td>${cmPicHtml(a.picTimCM)}</td>
+      <td>${cmPicHtml(a.picTimCM,'-',{short:true})}</td>
       <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?` <span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}</td>
       <td>
         <div class="row-actions">
@@ -8238,8 +8242,11 @@ el.querySelector('#reviewFeedback')?.addEventListener('click',reviewOpenFeedback
 function reviewOpenPicEditor(){if(!cmCanMutate())return cmDenyMutation();const group=reviewUi.selected,rows=reviewRows.filter(r=>reviewPicName(r)===group);if(!rows.length)return;
   const modal=document.getElementById('reviewModal'),members=(state.resources||[]).map(r=>r.nama).filter(Boolean),m=reviewPicMember(group),isPlaceholder=group.startsWith('PIC ')||group.startsWith('Belum ');
   const o=reviewPicOverride(group)||{},curNip=reviewPicNip(group,m),curJab=String(o.jabatan||'').trim()||String(m?.peran||'').trim(),curPhone=reviewPicPhone(rows[0]);
-  const mine=new Set(rows.map(r=>r.id)),allRows=[...reviewRows].sort((a,b)=>String(a.unit).localeCompare(String(b.unit)));
-  const unitChecks=allRows.map(r=>{const owner=reviewPicName(r),own=mine.has(r.id);return `<label class="rv-unit-pick${own?' on':''}"><input type="checkbox" name="units" value="${escapeHtml(r.id)}" ${own?'checked':''}><b>${escapeHtml(r.unit)}</b>${own?'':`<small>${escapeHtml(owner)}</small>`}</label>`;}).join('');
+  const mine=new Set(rows.map(r=>r.id)),haveUnits=new Set(reviewRows.map(r=>String(r.unit).toUpperCase()));
+  // Units that have no review row yet (BaTii and other internal units) can be assigned too; a row is created on save.
+  const extraUnits=[...new Set(['BATII',...((state.unitList||[]).filter(u=>{try{return getUnitType(u.name)==='internal';}catch(e){return false;}}).map(u=>String(u.name||'').trim()).filter(n=>n&&n.length<=10))])].filter(u=>!haveUnits.has(u.toUpperCase()));
+  const allRows=[...reviewRows,...extraUnits.map(u=>({id:'NEW:'+u,unit:u,pic:'',_new:true}))].sort((a,b)=>String(a.unit).localeCompare(String(b.unit)));
+  const unitChecks=allRows.map(r=>{const owner=r._new?uiText('New unit','Unit baru'):reviewPicName(r),own=mine.has(r.id);return `<label class="rv-unit-pick${own?' on':''}${r._new?' new':''}"><input type="checkbox" name="units" value="${escapeHtml(r.id)}" ${own?'checked':''}><b>${escapeHtml(r.unit)}</b>${own?'':`<small>${escapeHtml(owner)}</small>`}</label>`;}).join('');
   modal.innerHTML=`<div class="modal-box rv-pic-modal"><div class="modal-head"><h2>${uiText('Edit review PIC','Edit PIC review')}</h2><button type="button" class="modal-close" id="reviewPicClose">&times;</button></div><form class="modal-body review-form" id="reviewPicForm">
    <label class="wide">${uiText('PIC name','Nama PIC')} *<input name="pic" required list="reviewMemberNames" value="${escapeHtml(isPlaceholder?'':group)}" placeholder="${uiText('Select or enter full name','Pilih atau isi nama lengkap')}"><datalist id="reviewMemberNames">${members.map(n=>`<option value="${escapeHtml(n)}"></option>`).join('')}</datalist></label>
    <label>${uiText('Position / role','Jabatan / peran')}<input name="jabatan" list="reviewJabatanList" value="${escapeHtml(curJab)}" placeholder="${uiText('e.g. Team Lead','mis. Ketua Tim')}"><datalist id="reviewJabatanList"><option value="Ketua Tim"></option><option value="Supervisor"></option><option value="Anggota Tim"></option></datalist></label>
@@ -8255,6 +8262,7 @@ function reviewOpenPicEditor(){if(!cmCanMutate())return cmDenyMutation();const g
     const picked=new Set(fd.getAll('units').map(String));if(!picked.size){toast(uiText('Select at least one unit.','Pilih minimal satu unit.'),'error');return;}
     if(nip&&!/^\d{18}$/.test(nip)&&!confirm(uiText('NIP is usually 18 digits. Save anyway?','NIP umumnya 18 digit. Tetap simpan?')))return;
     reviewRows=reviewRows.map(r=>picked.has(String(r.id))?{...r,pic:name,picPhone:phone}:(mine.has(r.id)?{...r,pic:'',picPhone:''}:r));
+    [...picked].filter(id=>id.startsWith('NEW:')).forEach(id=>{const unit=id.slice(4);reviewRows.push({id:'RV-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),unit,pic:name,picPhone:phone,pmo:'',pmoPhone:'',cmo:'',cmoPhone:'',note:'',assignV:2,noteV:1});});
     // Profile overrides shown on this menu only (CM Team data is not changed). Empty value = follow CM Team.
     reviewProfileLoad();const st=reviewProfileStore||(reviewProfileStore={}),mem=reviewPicMember(name),key='pic::'+reviewProfileKey(name),oldKey='pic::'+reviewProfileKey(group);
     const diff=(v,base)=>v&&v!==String(base||'').trim()?v:'';
