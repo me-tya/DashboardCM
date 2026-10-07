@@ -2100,19 +2100,31 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   #tab-table table.data-table col.col-status{width:86px;}
 }
 /* ===== Tamu · mode lihat, kartu masuk, panel Kelola Pengguna & Akses ===== */
-.cm-entry-gate{position:fixed;inset:0;z-index:600;background:linear-gradient(145deg,#07152F 0%,#12275A 58%,#1B3A73 100%);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.cm-entry-gate{position:fixed;inset:0;z-index:600;background:#fff;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
 .cm-entry-gate.hidden{display:none}
 html.cm-entry-open body{overflow:hidden}
 html.cm-entry-open .cm-ai-fab,html.cm-entry-open [class*="cm-ai-panel"]{display:none!important}
-.cm-entry-shell{width:min(980px,100%);display:grid;grid-template-columns:1fr 1.05fr;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
-.cm-entry-side{background:linear-gradient(160deg,#0B1B3D,#1F3F86);color:#fff;padding:38px 36px;display:flex;flex-direction:column;gap:22px;position:relative}
-.cm-entry-side:after{content:'';position:absolute;right:-60px;bottom:-60px;width:220px;height:220px;border-radius:50%;border:28px solid rgba(242,210,122,.10)}
+.cm-entry-shell{width:min(1000px,100%);display:grid;grid-template-columns:1fr 1.05fr;background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px rgba(11,27,61,.22),0 0 0 1px rgba(11,27,61,.06)}
+.cm-entry-side{background:radial-gradient(120% 90% at 20% 15%,#1E4396 0%,#0F2557 45%,#071634 100%);color:#fff;padding:34px 34px;display:flex;flex-direction:column;gap:14px;position:relative;overflow:hidden;min-height:600px}
+.cm-entry-art{position:absolute;left:0;right:0;top:78px;bottom:250px;width:100%;height:calc(100% - 328px);z-index:0;pointer-events:none}
+.cm-entry-brand b,.cm-entry-brand small{color:#fff}.cm-entry-brand small{opacity:.8}
+.cm-entry-side>*:not(.cm-entry-art):not(.cm-entry-pic){position:relative;z-index:2}
+.cm-ap-prev .cm-entry-side{min-height:360px;padding:20px}.cm-ap-prev .cm-entry-art{top:64px;bottom:150px;height:auto}.cm-ap-prev .cm-entry-side h2{font-size:19px}.cm-ap-prev .cm-entry-pts{display:none}
+.cm-entry-pic{position:absolute;inset:0;z-index:0;background:linear-gradient(135deg,#27437E,#142B5E)}
+.cm-entry-pic img{width:100%;height:100%;object-fit:cover;display:block}
+.cm-entry-pic:after{content:'';position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(180deg,transparent,rgba(7,22,52,.93) 62%)}
+.cm-entry-kick{font-size:11px;letter-spacing:.16em;font-weight:800;color:#9FB6E8;text-transform:uppercase}
+.cm-entry-titlebox{margin-top:auto}
+.cm-entry-titlebox h2 span{color:#F2D27A}
+.cm-entry-pts{display:flex;gap:8px;flex-wrap:wrap}.cm-entry-pts span{font-size:11.5px;color:#E3EAF8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 11px}
+.cm-entry-side[data-theme=b]{background:#0F2557}
 .cm-entry-brand{display:flex;gap:12px;align-items:center}.cm-entry-brand>span{width:46px;height:46px;border-radius:12px;background:linear-gradient(180deg,#E7C45E,#C8A84B);color:#12275A;font:800 17px 'Sora',Arial;display:flex;align-items:center;justify-content:center}
 .cm-entry-brand b{display:block;font-size:15px}.cm-entry-brand small{opacity:.8;font-size:12.5px}
-.cm-entry-side h2{font:700 24px/1.3 'Sora',Arial;margin:6px 0 0;color:#fff}
+.cm-entry-side h2{font:800 28px/1.16 'Sora',Arial;margin:8px 0 8px;color:#fff}
 .cm-entry-side ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:13.5px;color:#DCE4F5}
 .cm-entry-side li{display:flex;gap:10px;align-items:flex-start}.cm-entry-side li:before{content:'✓';color:#F2D27A;font-weight:800}
-.cm-entry-foot{margin-top:auto;font-size:12px;opacity:.75}
+.cm-entry-foot{line-height:1.5}
+.cm-entry-foot{font-size:12.5px;color:#BFCBE8}
 .cm-entry-main{padding:34px 36px 28px;position:relative}
 .cm-entry-lang{position:absolute;top:18px;right:20px;display:flex;border:1px solid #D6DCEA;border-radius:999px;padding:2px}.cm-entry-lang button{border:0;background:none;font-size:11.5px;font-weight:800;color:#5D6785;padding:4px 10px;border-radius:999px;cursor:pointer}.cm-entry-lang button.on{background:#12275A;color:#fff}
 .cm-entry-eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#15784F;background:#ECFAF4;border-radius:999px;padding:4px 10px;margin-bottom:10px}
@@ -2128,10 +2140,11 @@ html.cm-entry-open .cm-ai-fab,html.cm-entry-open [class*="cm-ai-panel"]{display:
 .cm-entry-or{display:flex;align-items:center;gap:10px;margin:20px 0 12px;color:#8A94A6;font-size:12px;font-weight:700}.cm-entry-or:before,.cm-entry-or:after{content:'';flex:1;height:1px;background:#E3E7EF}
 .cm-entry-cmo{width:100%;border:1.5px solid #D3A52E;background:linear-gradient(180deg,#FFF8E6,#F6EFDC);color:#0B1B3D;border-radius:11px;padding:11px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
 .cm-entry-cmo:hover{background:linear-gradient(180deg,#E7C45E,#D8AA32)}
-@media(max-width:820px){.cm-entry-shell{grid-template-columns:1fr}.cm-entry-side{padding:22px 22px 18px;gap:12px}.cm-entry-side h2{font-size:18px}.cm-entry-side ul,.cm-entry-foot{display:none}.cm-entry-main{padding:22px}.cm-entry-gate{padding:12px;align-items:flex-start}}
+@media(max-width:820px){.cm-entry-shell{grid-template-columns:1fr}.cm-entry-side{padding:22px 22px 18px;gap:12px}.cm-entry-side h2{font-size:19px}.cm-entry-pts,.cm-entry-foot,.cm-entry-art{display:none}.cm-entry-side{min-height:0}.cm-entry-titlebox{margin-top:0}.cm-entry-main{padding:22px}.cm-entry-gate{padding:12px;align-items:flex-start}}
 .cm-cmo-pill{gap:7px!important;font-weight:700}
-.cm-user-av{width:24px;height:24px;border-radius:50%;background:#F2D27A;color:#12275A;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
-html[data-viewonly="1"] .cm-user-av{background:#EEF3FC;color:#2F5BD3}
+.cm-access-admin-btn{color:#F2D27A!important}.cm-access-admin-btn svg{display:block}
+.cm-user-av{width:24px;height:24px;border-radius:50%;background:#F2D27A!important;color:#12275A!important;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+html[data-viewonly="1"] .cm-user-av{background:#EEF3FC!important;color:#12275A!important}
 .cm-role-badge.guest_login,.cm-role-badge.public_guest{background:#ECFAF4!important;color:#15784F!important;border-color:#BFE7D3!important}
 .cm-viewonly-bar{display:flex;align-items:center;gap:10px;background:#FFF8E6;border:1px solid #EBD9A6;border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:13px;color:#6B5413}
 .cm-viewonly-bar.hidden{display:none}.cm-viewonly-bar b{color:#12275A}
@@ -2246,7 +2259,7 @@ html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[
         <span class="cm-user-av" id="userAvatar" aria-hidden="true"></span>
         <span id="userName" title=""></span>
         <span class="cm-role-badge" id="cmRoleBadge">GUEST</span>
-        <button class="cm-access-admin-btn hidden" id="btnAccessAdmin" type="button" title="Kelola Pengguna & Akses" aria-label="Kelola Pengguna & Akses">👥</button>
+        <button class="cm-access-admin-btn hidden" id="btnAccessAdmin" type="button" title="Kelola Pengguna & Akses" aria-label="Kelola Pengguna & Akses"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#F2D27A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.2c2.6.2 4.5 2.4 4.5 5.3"/></svg></button>
         <button class="btn-logout" id="btnLogout" data-i18n-title="signOut" title="Sign out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
@@ -3692,15 +3705,27 @@ let cmGuestOffline=null; // identitas Tamu saat login anonim belum diaktifkan di
 function cmInitials(name){const p=String(name||'').trim().split(/\s+/).filter(Boolean);return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
 
 /* ---------- Entry gate ---------- */
+const CM_GATE_THEME_KEY='cm_gate_theme_v1',CM_GATE_THEMES=[['a','Tangga Perubahan (ADKAR)'],['b','Ruang gambar sendiri (gate-image.jpg)'],['c','Dari tercerai menjadi terarah']];
+function cmGateTheme(){
+  try{const q=new URLSearchParams(location.search).get('gate');if(q&&CM_GATE_THEMES.some(t=>t[0]===q))return q;}catch(e){}
+  try{const v=localStorage.getItem(CM_GATE_THEME_KEY);if(CM_GATE_THEMES.some(t=>t[0]===v))return v;}catch(e){}
+  return 'a';
+}
+function cmGateSetTheme(t){try{localStorage.setItem(CM_GATE_THEME_KEY,t);}catch(e){}}
+const CM_GATE_ART={a:`<svg class="cm-entry-art" viewBox="0 90 500 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><linearGradient id="gA1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2F5BD3" stop-opacity=".25"/><stop offset="1" stop-color="#7FA0E8" stop-opacity=".55"/></linearGradient><linearGradient id="gA2" x1="0" x2="1"><stop offset="0" stop-color="#F7DD8F"/><stop offset="1" stop-color="#E2B44A"/></linearGradient></defs><g transform="translate(40,0)"><rect x="0" y="372" width="76" height="90" rx="6" fill="url(#gA1)"/><rect x="86" y="326" width="76" height="136" rx="6" fill="url(#gA1)"/><rect x="172" y="272" width="76" height="190" rx="6" fill="url(#gA1)"/><rect x="258" y="212" width="76" height="250" rx="6" fill="url(#gA1)"/><rect x="344" y="146" width="76" height="316" rx="6" fill="url(#gA1)"/><g font-family="Arial" font-size="11" font-weight="700" fill="#DCE6FA" text-anchor="middle" letter-spacing="1"><text x="38" y="436">A</text><text x="124" y="436">D</text><text x="210" y="436">K</text><text x="296" y="436">A</text><text x="382" y="436">R</text></g><g font-family="Arial" font-size="9" fill="#9FB6E8" text-anchor="middle"><text x="38" y="450">Awareness</text><text x="124" y="450">Desire</text><text x="210" y="450">Knowledge</text><text x="296" y="450">Ability</text><text x="382" y="450">Reinforce</text></g><path d="M38 352 C 90 300, 150 316, 210 256 S 330 196, 382 124" fill="none" stroke="url(#gA2)" stroke-width="3" stroke-dasharray="1 7" stroke-linecap="round"/><circle cx="38" cy="352" r="6" fill="#F2D27A"/><circle cx="124" cy="306" r="6" fill="#F2D27A"/><circle cx="210" cy="256" r="6" fill="#F2D27A"/><circle cx="296" cy="196" r="6" fill="#F2D27A"/><g transform="translate(382,124)"><line x1="0" y1="0" x2="0" y2="-44" stroke="#F2D27A" stroke-width="2.5"/><polygon points="0,-44 30,-34 0,-24" fill="#F2D27A"/><circle r="8" fill="#fff"/><circle r="4" fill="#E2B44A"/></g></g></svg>`,c:`<svg class="cm-entry-art" viewBox="0 90 500 380" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><defs><linearGradient id="gC1" x1="0" x2="1"><stop offset="0" stop-color="#7FA0E8" stop-opacity="0"/><stop offset="1" stop-color="#F2D27A" stop-opacity=".9"/></linearGradient></defs><g fill="#9FB6E8"><circle cx="46" cy="190" r="4" opacity=".5"/><circle cx="110" cy="244" r="3" opacity=".4"/><circle cx="64" cy="306" r="5" opacity=".55"/><circle cx="150" cy="188" r="3" opacity=".35"/><circle cx="132" cy="326" r="4" opacity=".5"/><circle cx="196" cy="268" r="3" opacity=".45"/><circle cx="36" cy="388" r="3" opacity=".35"/><circle cx="104" cy="404" r="4" opacity=".5"/><circle cx="206" cy="376" r="3" opacity=".4"/><circle cx="170" cy="130" r="3" opacity=".3"/></g><g fill="#F2D27A"><circle cx="290" cy="300" r="4.5"/><circle cx="330" cy="268" r="4.5"/><circle cx="370" cy="236" r="4.5"/><circle cx="410" cy="204" r="4.5"/><circle cx="290" cy="340" r="4.5" opacity=".7"/><circle cx="330" cy="308" r="4.5" opacity=".7"/><circle cx="370" cy="276" r="4.5" opacity=".7"/><circle cx="410" cy="244" r="4.5" opacity=".7"/><circle cx="290" cy="380" r="4.5" opacity=".45"/><circle cx="330" cy="348" r="4.5" opacity=".45"/><circle cx="370" cy="316" r="4.5" opacity=".45"/><circle cx="410" cy="284" r="4.5" opacity=".45"/></g><path d="M60 330 C 150 300, 210 330, 270 300 S 380 200, 438 150" fill="none" stroke="url(#gC1)" stroke-width="2.5"/><polygon points="452,138 424,146 440,166" fill="#F2D27A"/><g stroke="rgba(159,182,232,.28)" stroke-width="1"><line x1="46" y1="190" x2="110" y2="244"/><line x1="110" y1="244" x2="64" y2="306"/><line x1="132" y1="326" x2="196" y2="268"/><line x1="64" y1="306" x2="132" y2="326"/></g></svg>`,b:`<div class="cm-entry-pic"><img src="gate-image.jpg" alt="" onerror="this.remove()"></div>`};
+function cmEntrySideHtml(theme){
+  const U=uiText;theme=theme||cmGateTheme();
+  return `<section class="cm-entry-side" data-theme="${theme}">${CM_GATE_ART[theme]||CM_GATE_ART.a}
+      <div class="cm-entry-brand"><span>CM</span><div><b>Dashboard Master Agenda</b><small>Change Management Pusat</small></div></div>
+      <div class="cm-entry-titlebox"><div class="cm-entry-kick">Change Management Kemenkeu</div><h2>Dashboard Master Agenda <span>CMO Pusat</span></h2>
+      <div class="cm-entry-foot">Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</div></div>
+      <div class="cm-entry-pts"><span>${U('Agenda & calendar','Agenda & kalender')}</span><span>${U('Workboard & matrix','Workboard & matriks')}</span><span>${U('Activity history','Riwayat kegiatan')}</span></div>
+    </section>`;
+}
 function cmEntryGateHtml(){
   const U=uiText,opts=CM_ESELON1_UNITS.map(u=>`<option value="${u.code}">${escapeHtml(u.code==='EKSTERNAL'?U('External (outside the Ministry of Finance)','Eksternal (di luar Kemenkeu)'):u.name)}</option>`).join('');
   return `<div class="cm-entry-shell" role="dialog" aria-modal="true" aria-labelledby="cmEntryTitle">
-    <section class="cm-entry-side">
-      <div class="cm-entry-brand"><span>CM</span><div><b>Dashboard Master Agenda</b><small>Change Management Pusat</small></div></div>
-      <h2>${U('Ministry of Finance Change Management agenda and progress in one place.','Agenda dan perkembangan Change Management Kemenkeu dalam satu tempat.')}</h2>
-      <ul><li>${U('Latest agenda, calendar and activity status','Agenda, kalender, dan status kegiatan terbaru')}</li><li>${U('Workboard, program matrix and knowledge','Workboard, matriks program, dan knowledge')}</li><li>${U('Change history of every activity','Riwayat perubahan setiap kegiatan')}</li></ul>
-      <div class="cm-entry-foot">Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</div>
-    </section>
+    ${cmEntrySideHtml()}
     <section class="cm-entry-main">
       <div class="cm-entry-lang" role="group" aria-label="Bahasa / Language"><button type="button" data-entry-lang="id" class="${currentLang==='id'?'on':''}">ID</button><button type="button" data-entry-lang="en" class="${currentLang==='en'?'on':''}">EN</button></div>
       <form id="cmGuestForm" novalidate>
@@ -3985,6 +4010,7 @@ function cmOpenAccessManager(tab){
       <button type="button" data-ap-tab="users" role="tab">Pengguna <span class="cm-ap-cnt" id="cmApUserCnt"></span></button>
       <button type="button" data-ap-tab="log" role="tab">Riwayat Akses</button>
       <button type="button" data-ap-tab="stats" role="tab">📊 Statistik Kunjungan Tamu</button>
+      <button type="button" data-ap-tab="gate" role="tab">🎨 Tampilan Gerbang</button>
     </div>
     <div class="cm-ap-body" id="cmApBody"></div>
   </div>`;
@@ -3994,6 +4020,13 @@ function cmOpenAccessManager(tab){
   cmRenderAccessPanel();
 }
 function cmCloseAccessPanel(){cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];document.getElementById('cmAccessPanel')?.remove();}
+function cmRenderApGate(body){
+  const cur=cmGateTheme();
+  body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>Tampilan kartu masuk (gerbang)</b><span>Pilih gaya panel kiri. Pilihan tersimpan di browser ini dan berlaku saat gerbang tampil di browser ini. Untuk mengubah bawaan semua pengunjung, ubah nilai bawaan <code>'a'</code> pada fungsi <code>cmGateTheme</code>.</span>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px">${CM_GATE_THEMES.map(([k,n])=>`<label style="border:2px solid ${k===cur?'#12275A':'#E3E7EF'};border-radius:14px;padding:10px;cursor:pointer;display:block"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="radio" name="cmGateT" value="${k}" ${k===cur?'checked':''}><b>${k.toUpperCase()} · ${n}</b></div><div class="cm-entry-shell cm-ap-prev" style="grid-template-columns:1fr;box-shadow:none;border:1px solid #E3E7EF;pointer-events:none;transform-origin:top left">${cmEntrySideHtml(k)}</div></label>`).join('')}</div>
+  <span style="margin-top:10px">Opsi B memakai file <b>gate-image.jpg</b> (disarankan 1000 × 1200 piksel) yang diunggah ke GitHub satu folder dengan index.html.</span></div>`;
+  body.querySelectorAll('input[name=cmGateT]').forEach(r=>r.onchange=()=>{cmGateSetTheme(r.value);cmRenderApGate(body);});
+}
 function cmAdminRows(){
   const rows=(typeof state!=='undefined'&&Array.isArray(state.resources))?state.resources:[];
   const team=[];rows.forEach(r=>{if(typeof resourceIsInactive==='function'&&resourceIsInactive(r))return;const emails=[r?.emailKemenkeu,r?.emailPribadi].map(cmNormEmail).filter(Boolean);if(emails.length)team.push({name:r.nama||'-',jabatan:r.jabatan||'',emails});});
@@ -4005,6 +4038,7 @@ async function cmRenderAccessPanel(){
   const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length);
   const body=host.querySelector('#cmApBody');
   cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
+  if(cmAL.tab==='gate')return cmRenderApGate(body);
   if(cmAL.tab==='users')return cmRenderApUsers(body,team);
   // log & stats perlu data
   const r=cmALRange(),prev=cmALPrevRange(r);
