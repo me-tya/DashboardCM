@@ -31,7 +31,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
-    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInAnonymously
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot,
@@ -71,6 +71,8 @@
   window.fbOrderBy = orderBy;
   window.fbServerTimestamp = serverTimestamp;
   window.cmGoogleSignIn = () => signInWithPopup(auth, provider);
+  window.cmAnonSignIn = () => signInAnonymously(auth);
+  window.cmSignOut = () => signOut(auth);
   window.cmGetFirebaseIdToken = async () => auth.currentUser ? await auth.currentUser.getIdToken() : '';
 
   // Dashboard tidak diblokir oleh login. Login hanya mengaktifkan akses/sinkronisasi admin Firestore.
@@ -99,6 +101,7 @@
     if (header) header.classList.remove('hidden');
     if (main) main.classList.remove('hidden');
     if (footer) footer.classList.remove('hidden');
+    if (window.cmEntryOnAuth) window.cmEntryOnAuth(user);
   }
 
   function showLoggedIn(user) {
@@ -161,8 +164,7 @@
   const oldAdminBtn = document.getElementById('btnCmAdminLogin');
   if (oldAdminBtn) oldAdminBtn.addEventListener('click', () => loginBtn?.click());
 
-  const logoutBtn = document.getElementById('btnLogout');
-  if (logoutBtn) logoutBtn.addEventListener('click', () => signOut(auth));
+  // Tombol Keluar ditangani di script utama (cmSignOutAll) agar sesi Tamu ikut tertutup rapi.
 </script>
 <style>
 /* CM Team Agenda Dashboard — © 2026 Atitya Pritasari. All rights reserved. */
@@ -2046,15 +2048,15 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 /* Activity table: fit the available panel width without horizontal scrolling. */
 #tab-table .table-wrap{width:100%;max-width:100%;overflow-x:hidden;}
 #tab-table table.data-table{width:100%;min-width:0;table-layout:fixed;font-size:11.5px;}
-#tab-table table.data-table col.col-no{width:3%;}
-#tab-table table.data-table col.col-date{width:9.5%;}
+#tab-table table.data-table col.col-no{width:38px;}
+#tab-table table.data-table col.col-date{width:118px;}
 #tab-table table.data-table col.col-activity{width:auto;}
-#tab-table table.data-table col.col-service{width:5.5%;}
-#tab-table table.data-table col.col-unit{width:7.5%;}
-#tab-table table.data-table col.col-category{width:8.5%;}
-#tab-table table.data-table col.col-program{width:10%;}
-#tab-table table.data-table col.col-pic{width:12.5%;}
-#tab-table table.data-table col.col-status{width:7%;}
+#tab-table table.data-table col.col-service{width:56px;}
+#tab-table table.data-table col.col-unit{width:74px;}
+#tab-table table.data-table col.col-category{width:88px;}
+#tab-table table.data-table col.col-program{width:108px;}
+#tab-table table.data-table col.col-pic{width:124px;}
+#tab-table table.data-table col.col-status{width:90px;}
 #tab-table table.data-table col.col-actions{width:194px;}
 #tab-table table.data-table thead th{padding:9px 10px;font-size:10px;letter-spacing:.025em;}
 #tab-table table.data-table tbody td{padding:10px 10px;}
@@ -2074,6 +2076,9 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 #tab-table .cat-badge,
 #tab-table .unit-badge{padding-left:6px;padding-right:6px;font-size:10px;white-space:normal;line-height:1.25;}
 #tab-table .table-title{font-size:11.5px;line-height:1.35;}
+#tab-table table.data-table tbody tr.row-today>td{background:#F1FAF4;}
+#tab-table table.data-table tbody tr.row-today>td:first-child{box-shadow:inset 3px 0 0 #6CC596;}
+#tab-table table.data-table tbody tr.row-today:hover>td{background:#E6F6EC;}
 #tab-table td .status-badge{display:-webkit-inline-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-width:100%;text-align:center;border-radius:9px;padding-top:3px;padding-bottom:3px;}
 #tab-table .table-meta{font-size:10px;line-height:1.35;}
 
@@ -2085,6 +2090,111 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   #tab-table .row-actions{gap:3px;}
   #tab-table table.data-table col.col-actions{width:166px;}
 }
+@media(max-width:1320px){
+  #tab-table table.data-table col.col-date{width:104px;}
+  #tab-table table.data-table col.col-service{width:54px;}
+  #tab-table table.data-table col.col-unit{width:70px;}
+  #tab-table table.data-table col.col-category{width:84px;}
+  #tab-table table.data-table col.col-program{width:96px;}
+  #tab-table table.data-table col.col-pic{width:118px;}
+  #tab-table table.data-table col.col-status{width:86px;}
+}
+/* ===== Tamu · mode lihat, kartu masuk, panel Kelola Pengguna & Akses ===== */
+.cm-entry-gate{position:fixed;inset:0;z-index:600;background:linear-gradient(145deg,#07152F 0%,#12275A 58%,#1B3A73 100%);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.cm-entry-gate.hidden{display:none}
+html.cm-entry-open body{overflow:hidden}
+html.cm-entry-open .cm-ai-fab,html.cm-entry-open [class*="cm-ai-panel"]{display:none!important}
+.cm-entry-shell{width:min(980px,100%);display:grid;grid-template-columns:1fr 1.05fr;background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.cm-entry-side{background:linear-gradient(160deg,#0B1B3D,#1F3F86);color:#fff;padding:38px 36px;display:flex;flex-direction:column;gap:22px;position:relative}
+.cm-entry-side:after{content:'';position:absolute;right:-60px;bottom:-60px;width:220px;height:220px;border-radius:50%;border:28px solid rgba(242,210,122,.10)}
+.cm-entry-brand{display:flex;gap:12px;align-items:center}.cm-entry-brand>span{width:46px;height:46px;border-radius:12px;background:linear-gradient(180deg,#E7C45E,#C8A84B);color:#12275A;font:800 17px 'Sora',Arial;display:flex;align-items:center;justify-content:center}
+.cm-entry-brand b{display:block;font-size:15px}.cm-entry-brand small{opacity:.8;font-size:12.5px}
+.cm-entry-side h2{font:700 24px/1.3 'Sora',Arial;margin:6px 0 0;color:#fff}
+.cm-entry-side ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:13.5px;color:#DCE4F5}
+.cm-entry-side li{display:flex;gap:10px;align-items:flex-start}.cm-entry-side li:before{content:'✓';color:#F2D27A;font-weight:800}
+.cm-entry-foot{margin-top:auto;font-size:12px;opacity:.75}
+.cm-entry-main{padding:34px 36px 28px;position:relative}
+.cm-entry-lang{position:absolute;top:18px;right:20px;display:flex;border:1px solid #D6DCEA;border-radius:999px;padding:2px}.cm-entry-lang button{border:0;background:none;font-size:11.5px;font-weight:800;color:#5D6785;padding:4px 10px;border-radius:999px;cursor:pointer}.cm-entry-lang button.on{background:#12275A;color:#fff}
+.cm-entry-eyebrow{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#15784F;background:#ECFAF4;border-radius:999px;padding:4px 10px;margin-bottom:10px}
+.cm-entry-main h1{font:800 23px 'Sora',Arial;color:#0B1B3D;margin:0 0 6px}
+.cm-entry-sub{font-size:13px;color:#5D6785;line-height:1.55;margin:0 0 16px}.cm-entry-sub b{color:#12275A}
+.cm-entry-main label{display:block;font-size:12.5px;font-weight:700;color:#3A4560;margin:10px 0 5px}
+.cm-entry-main input,.cm-entry-main select{width:100%;border:1px solid #D6DCEA;border-radius:10px;padding:10px 12px;font-size:14px;color:#141B2E;background:#fff;font-family:inherit}
+.cm-entry-main input:focus,.cm-entry-main select:focus{outline:none;border-color:#2F5BD3;box-shadow:0 0 0 3px rgba(47,91,211,.15)}
+.cm-entry-err{margin-top:12px;background:#FDECEC;border:1px solid #F3C2C2;color:#9E1811;border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.5}
+.cm-entry-go{width:100%;margin-top:16px;border:0;border-radius:11px;padding:12px;background:linear-gradient(180deg,#1B3A73,#12275A);color:#fff;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
+.cm-entry-go:hover{filter:brightness(1.12)}.cm-entry-go:disabled{opacity:.7;cursor:wait}
+.cm-entry-hint{font-size:11.5px;color:#8A94A6;text-align:center;margin-top:8px}
+.cm-entry-or{display:flex;align-items:center;gap:10px;margin:20px 0 12px;color:#8A94A6;font-size:12px;font-weight:700}.cm-entry-or:before,.cm-entry-or:after{content:'';flex:1;height:1px;background:#E3E7EF}
+.cm-entry-cmo{width:100%;border:1.5px solid #D3A52E;background:linear-gradient(180deg,#FFF8E6,#F6EFDC);color:#0B1B3D;border-radius:11px;padding:11px;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.cm-entry-cmo:hover{background:linear-gradient(180deg,#E7C45E,#D8AA32)}
+@media(max-width:820px){.cm-entry-shell{grid-template-columns:1fr}.cm-entry-side{padding:22px 22px 18px;gap:12px}.cm-entry-side h2{font-size:18px}.cm-entry-side ul,.cm-entry-foot{display:none}.cm-entry-main{padding:22px}.cm-entry-gate{padding:12px;align-items:flex-start}}
+.cm-cmo-pill{gap:7px!important;font-weight:700}
+.cm-user-av{width:24px;height:24px;border-radius:50%;background:#F2D27A;color:#12275A;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+html[data-viewonly="1"] .cm-user-av{background:#EEF3FC;color:#2F5BD3}
+.cm-role-badge.guest_login,.cm-role-badge.public_guest{background:#ECFAF4!important;color:#15784F!important;border-color:#BFE7D3!important}
+.cm-viewonly-bar{display:flex;align-items:center;gap:10px;background:#FFF8E6;border:1px solid #EBD9A6;border-radius:12px;padding:9px 14px;margin:0 0 12px;font-size:13px;color:#6B5413}
+.cm-viewonly-bar.hidden{display:none}.cm-viewonly-bar b{color:#12275A}
+.cm-viewonly-bar button{margin-left:auto;border:0;background:#12275A;color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap;font-family:inherit}
+@media(max-width:700px){.cm-viewonly-bar{flex-wrap:wrap}.cm-viewonly-bar button{margin-left:0}}
+/* Tamu: hanya lihat */
+html[data-viewonly="1"] #tab-table table.data-table col.col-actions{width:60px}
+html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[data-viewonly="1"] #btnCompileReport,html[data-viewonly="1"] .cm-report-btn,html[data-viewonly="1"] .cal-export-btn,html[data-viewonly="1"] .cal-export-sep,html[data-viewonly="1"] [data-cm-mutate],html[data-viewonly="1"] #taskExport,html[data-viewonly="1"] #btnContactExport,html[data-viewonly="1"] #taskImport,html[data-viewonly="1"] [data-review-login],html[data-viewonly="1"] #reviewSignIn,html[data-viewonly="1"] [data-edit-survey],html[data-viewonly="1"] [data-close-survey],html[data-viewonly="1"] [data-reopen-survey],html[data-viewonly="1"] [data-qr],html[data-viewonly="1"] [data-res-edit],html[data-viewonly="1"] [data-res-delete]{display:none!important}
+/* Panel Kelola Pengguna & Akses */
+.cm-ap-overlay{z-index:100}
+.cm-ap-box{max-width:1320px!important;width:calc(100vw - 32px)!important;max-height:calc(100vh - 32px);display:flex;flex-direction:column;padding:0!important;overflow:hidden}
+.cm-ap-head{flex:none;display:flex;gap:12px;align-items:flex-start;padding:18px 22px 4px}.cm-ap-head h2{margin:0;font-size:19px;color:#12275A}.cm-ap-head p{margin:3px 0 0;font-size:12.5px;color:#5D6785}.cm-ap-head .modal-close{margin-left:auto}
+.cm-ap-ic{font-size:22px;line-height:1.2}
+.cm-ap-tabs{flex:none;display:flex;gap:4px;padding:10px 22px 0;border-bottom:1px solid #EEF1F6;overflow-x:auto}
+.cm-ap-tabs button{border:0;background:none;padding:10px 14px;font-size:13.5px;font-weight:700;color:#5D6785;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit}
+.cm-ap-tabs button.on{color:#12275A;border-color:#C8A84B}
+.cm-ap-cnt{background:#EEF3FC;color:#2F5BD3;border-radius:999px;padding:1px 7px;font-size:11px;margin-left:4px}
+.cm-ap-body{padding:16px 22px 22px;overflow:auto;flex:1}
+.cm-ap-loading,.cm-ap-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:40px 10px;color:#5D6785;font-size:13px;text-align:center}
+.cm-ap-empty b{color:#12275A;font-size:14.5px}.cm-ap-empty span{max-width:560px;line-height:1.55}
+.cm-ap-fbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.cm-ap-chips{display:flex;gap:4px}
+.cm-ap-chip{border:1px solid #D6DCEA;background:#fff;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;color:#5D6785;cursor:pointer;font-family:inherit}
+.cm-ap-chip.on{background:#12275A;color:#fff;border-color:#12275A}
+.cm-ap-range{font-size:12.5px;color:#3A4560;font-weight:600;padding:0 4px}
+.cm-ap-sel{display:flex;align-items:center;gap:6px;border:1px solid #D6DCEA;border-radius:10px;padding:4px 8px;background:#fff}
+.cm-ap-sel small{font-size:10px;font-weight:800;color:#8A94A6;letter-spacing:.05em;text-transform:uppercase}
+.cm-ap-sel select,.cm-ap-sel input{border:0;font-size:12.5px;color:#141B2E;background:transparent;padding:3px 0;font-family:inherit;max-width:190px}
+.cm-ap-q{border:1px solid #D6DCEA;border-radius:10px;padding:7px 10px;font-size:12.5px;min-width:200px;font-family:inherit}
+.cm-ap-refresh{padding:6px 10px!important}
+.cm-ap-exp{margin-left:auto;position:relative}
+.cm-ap-expbtn{border:0;background:linear-gradient(180deg,#1B3A73,#12275A);color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.cm-ap-expmenu{position:absolute;right:0;top:calc(100% + 6px);width:340px;background:#fff;border:1px solid #E3E7EF;border-radius:14px;box-shadow:0 18px 40px rgba(11,27,61,.25);padding:6px;z-index:20}
+.cm-ap-expmenu.hidden{display:none}
+.cm-ap-expmenu .hd{font-size:10.5px;color:#8A94A6;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px 4px}
+.cm-ap-expmenu button{display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:10px;border-radius:10px;cursor:pointer;font-family:inherit}
+.cm-ap-expmenu button:hover{background:#F4F6FB}
+.cm-ap-expmenu .ic{width:34px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10.5px;flex:none}
+.cm-ap-expmenu .ic.x{background:#E7F6EE;color:#15784F}.cm-ap-expmenu .ic.c{background:#EEF3FC;color:#2F5BD3}.cm-ap-expmenu .ic.p{background:#FDECEC;color:#9E1811}
+.cm-ap-expmenu b{display:block;font-size:13px;color:#12275A}.cm-ap-expmenu small{display:block;font-size:11.5px;color:#5D6785;line-height:1.45;margin-top:2px}
+.cm-ap-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px}
+.cm-ap-kpis .k{border:1px solid #E3E7EF;border-radius:12px;padding:11px 13px;min-width:0}
+.cm-ap-kpis small{display:block;font-size:10.5px;font-weight:800;color:#5D6785;text-transform:uppercase;letter-spacing:.04em}
+.cm-ap-kpis b{display:block;font-size:26px;color:#12275A;margin:3px 0 1px;line-height:1.15}.cm-ap-kpis b.t{font-size:19px;margin:7px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm-ap-kpis i,.cm-ap-kpis em{font-style:normal;font-size:11.5px;color:#5D6785;display:block;line-height:1.35}.cm-ap-kpis i.up{color:#15784F;font-weight:700}.cm-ap-kpis i.down{color:#9E1811;font-weight:700}
+.cm-ap-grid{display:grid;gap:12px;margin-bottom:12px}.cm-ap-grid.g3{grid-template-columns:1.5fr 1fr 1fr}.cm-ap-grid.g2{grid-template-columns:minmax(300px,1fr) 2.1fr}
+.cm-ap-card{border:1px solid #E3E7EF;border-radius:12px;padding:12px 14px;min-width:0}.cm-ap-card h4{margin:0 0 8px;font-size:13.5px;color:#12275A}
+.cm-ap-chart{height:200px;position:relative}
+.cm-ap-heat{display:grid;gap:3px;font-size:10px;color:#8A94A6;align-items:center}.cm-ap-heat .c{height:20px;border-radius:4px}.cm-ap-heat .hh{text-align:center}.cm-ap-heat .hd{font-weight:700}
+.cm-ap-tblwrap{overflow-x:auto}
+.cm-ap-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.cm-ap-table th{background:#F4F6FB;text-align:left;padding:8px 10px;font-size:10.5px;color:#5D6785;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.cm-ap-table td{padding:8px 10px;border-top:1px solid #EEF1F6;vertical-align:top}.cm-ap-table td.nw{white-space:nowrap}
+.cm-ap-mut{color:#8A94A6}
+.cm-ap-role{display:inline-block;font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px;letter-spacing:.04em;white-space:nowrap}
+.cm-ap-role.g{background:#ECFAF4;color:#15784F}.cm-ap-role.cmo{background:#FFF4D6;color:#8A6410}.cm-ap-role.sa{background:#12275A;color:#F2D27A}
+.cm-ap-sec{margin-bottom:18px}.cm-ap-sec h3{display:flex;gap:8px;align-items:center;font-size:13.5px;color:#3A4560;margin:0 0 8px;font-weight:600}
+.cm-ap-add{display:flex;gap:8px;margin-bottom:8px}.cm-ap-add input{flex:1;max-width:360px;border:1px solid #D6DCEA;border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit}
+.cm-ap-note{font-size:11.5px;color:#8A94A6;margin:8px 0 0;line-height:1.5}
+.cm-ap-sum{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:#5D6785;margin-bottom:10px}.cm-ap-sum b{color:#12275A}
+.cm-ap-pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;font-size:12px;color:#5D6785}
+@media(max-width:1100px){.cm-ap-kpis{grid-template-columns:repeat(3,1fr)}.cm-ap-grid.g3,.cm-ap-grid.g2{grid-template-columns:1fr}}
+@media(max-width:640px){.cm-ap-kpis{grid-template-columns:repeat(2,1fr)}.cm-ap-exp{margin-left:0}.cm-ap-expmenu{left:0;right:auto;width:300px}.cm-ap-box{width:100vw!important;max-height:100vh;border-radius:0!important}}
 </style>
 
 </head>
@@ -2131,15 +2241,12 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
   </div>
   <div class="topbar-actions">
     <div id="authPill">
-      <button class="btn-google-pill" id="btnGoogleLogin">
-        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.4 18.9 12.5 24 12.5c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.1-5.1l-6.5-5.5c-2 1.5-4.6 2.4-7.6 2.4-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.4l6.5 5.5C41.4 35.8 44 30.3 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
-        <span data-i18n="signInGoogle">Sign in with Google</span>
-      </button>
+      <button class="btn-google-pill cm-cmo-pill" id="btnGoogleLogin" title="Masuk dengan akun Tim CMO Pusat"><span aria-hidden="true">🛡</span><span>Masuk CMO Pusat</span></button>
       <div class="user-pill hidden" id="userPill">
-        <svg viewBox="0 0 48 48" width="14" height="14"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.4 18.9 12.5 24 12.5c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.1-5.1l-6.5-5.5c-2 1.5-4.6 2.4-7.6 2.4-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.4l6.5 5.5C41.4 35.8 44 30.3 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+        <span class="cm-user-av" id="userAvatar" aria-hidden="true"></span>
         <span id="userName" title=""></span>
         <span class="cm-role-badge" id="cmRoleBadge">GUEST</span>
-        <button class="cm-access-admin-btn hidden" id="btnAccessAdmin" type="button" title="Kelola role & akses" aria-label="Kelola role & akses">⚙</button>
+        <button class="cm-access-admin-btn hidden" id="btnAccessAdmin" type="button" title="Kelola Pengguna & Akses" aria-label="Kelola Pengguna & Akses">👥</button>
         <button class="btn-logout" id="btnLogout" data-i18n-title="signOut" title="Sign out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
@@ -2632,6 +2739,7 @@ function setLanguage(lang) {
   currentLang = lang === 'id' ? 'id' : 'en';
   try { localStorage.setItem(LANG_KEY, currentLang); } catch (e) {}
   applyLanguage();
+  try{const r=document.documentElement.dataset.role;if(r&&typeof cmRoleLabel==='function'){const b=document.getElementById('cmRoleBadge');if(b)b.textContent=cmRoleLabel(r);}if(typeof cmViewOnlyBanner==='function')cmViewOnlyBanner(document.documentElement.dataset.viewonly==='1');}catch(e){}
 }
 
 // T-House ecosystem category styling (color + short code)
@@ -2670,6 +2778,20 @@ function normalizeStatus(raw) {
   if (!s) return 'Scheduled';
   return 'Scheduled';
 }
+/* Re-evaluate automatic statuses every minute so an open dashboard updates without reloading. */
+function cmRefreshAutoStatuses(){
+  try{
+    if(!Array.isArray(state?.agendas)||!state.agendas.length)return;
+    let changed=false;
+    state.agendas.forEach(a=>{const t=activityTimingState(a,a.statusManual||normalizeStatus(a.status));if(t.status!==a.statusNorm||t.needsUpdate!==a.statusNeedsUpdate||t.automatic!==a.statusAutomatic){a.statusNorm=t.status;a.statusNeedsUpdate=t.needsUpdate;a.statusAutomatic=t.automatic;changed=true;}});
+    if(!changed)return;
+    const busy=document.querySelector('.modal-overlay:not(.hidden) form, #formModal:not(.hidden)');if(busy)return;
+    if(typeof renderActiveTab==='function')renderActiveTab();
+    if(typeof renderTodayAgenda==='function')try{renderTodayAgenda();}catch(e){}
+  }catch(e){console.warn('Auto status refresh failed',e);}
+}
+if(!window.cmAutoStatusTimer)window.cmAutoStatusTimer=setInterval(cmRefreshAutoStatuses,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)cmRefreshAutoStatuses();});
 function activityStatusLabel(status) {
   const labels={
     Scheduled:uiText('Scheduled','Terjadwal'), Pending:uiText('Awaiting Confirmation','Menunggu Konfirmasi'),
@@ -2693,7 +2815,8 @@ function activityTimingState(item,manualStatus) {
   const start=dayjs(`${item.tglMulai}T${startClock}`),end=dayjs(`${endDate}T${endClock}`),now=dayjs();
   if(!start.isValid()||!end.isValid()||end.isBefore(start))return {status,needsUpdate:false,automatic:false};
   if(now.isBefore(start))return {status:status==='Ongoing'?'Ongoing':'Scheduled',needsUpdate:false,automatic:false};
-  if(now.isAfter(end))return {status:'Ongoing',needsUpdate:true,automatic:status==='Scheduled'};
+  // Once the end time has passed, a scheduled/ongoing activity is completed automatically.
+  if(now.isAfter(end))return {status:'Completed',needsUpdate:false,automatic:true};
   return {status:'Ongoing',needsUpdate:false,automatic:status==='Scheduled'};
 }
 const STATUS_STYLES = {
@@ -3441,12 +3564,12 @@ function cmGetAccessRole(){return document.documentElement.dataset.role||cmResol
 function cmCanMutate(){const r=cmGetAccessRole();return r===CM_ROLE_SUPERADMIN||r===CM_ROLE_ADMIN;}
 function cmCanManageReferences(){return cmGetAccessRole()===CM_ROLE_SUPERADMIN;}
 function cmRoleLabel(role){
-  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'ADMIN':role===CM_ROLE_GUEST_LOGIN?'GUEST LOGIN':'PUBLIC GUEST';
+  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'CMO PUSAT':uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
 }
 function cmAllowedTabsForRole(role){
   if(role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN)return new Set(['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource']);
-  if(role===CM_ROLE_GUEST_LOGIN)return new Set(['analytics','table','tasks','calendar','kanban','matrix','knowledge','contact','resource']);
-  return new Set(['analytics','calendar','matrix','knowledge','contact','resource']);
+  // Tamu (login anonim, akun Google non-tim, atau mode offline) boleh melihat semua menu dalam mode lihat.
+  return new Set(['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource']);
 }
 function cmDenyMutation(message){
   if(typeof toast==='function')toast(message||uiText('Read-only access. This action is not available for your role.','Akses read-only. Aksi ini tidak tersedia untuk role Anda.'),'info');
@@ -3483,11 +3606,14 @@ function cmApplyRoleUi(role){
   const allowed=cmAllowedTabsForRole(role);
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.toggle('hidden',!allowed.has(b.dataset.tab)));
   const canEdit=role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN;
+  document.documentElement.dataset.viewonly=canEdit?'0':'1';
+  if(typeof cmViewOnlyBanner==='function')cmViewOnlyBanner(!canEdit);
+  if(typeof cmUpdateUserPill==='function')cmUpdateUserPill();
   document.getElementById('btnAdd')?.classList.toggle('hidden',state?.activeTab!=='table'||!canEdit);
   document.getElementById('btnImport')?.classList.toggle('hidden',!canEdit||state.activeTab==='tasks');
   document.getElementById('btnBackupAll')?.classList.toggle('hidden',!canEdit);
   document.getElementById('btnRestoreAll')?.classList.toggle('hidden',!canEdit);
-  document.getElementById('btnExport')?.classList.toggle('hidden',role===CM_ROLE_PUBLIC_GUEST||state.activeTab==='tasks');
+  document.getElementById('btnExport')?.classList.toggle('hidden',!canEdit||state.activeTab==='tasks');
   if(typeof state!=='undefined'&&state.activeTab&&!allowed.has(state.activeTab)&&typeof switchTab==='function')switchTab('analytics');
 }
 window.cmRefreshAccessRole=async function(){
@@ -3499,7 +3625,7 @@ window.cmRefreshAccessRole=async function(){
 };
 function cmCanAccessTab(tab){return cmAllowedTabsForRole(cmGetAccessRole()).has(tab);}
 
-function cmOpenAccessManager(){
+function cmOpenAccessManagerLegacy(){
   if(!cmCanManageReferences())return cmDenyReference();
   const modal=document.getElementById('kpiModal');
   const teamEmails=[...cmTeamAdminEmails()].sort();
@@ -3530,6 +3656,566 @@ function cmOpenAccessManager(){
   };
 }
 document.addEventListener('click',e=>{if(e.target?.closest?.('#btnAccessAdmin')){e.preventDefault();cmOpenAccessManager();}});
+/* ============================================================
+   GUEST ENTRY (Tamu · mode lihat) + ACCESS LOG + KELOLA PENGGUNA & AKSES
+   - Tamu mengisi Nama, Email, Unit (Eselon I / Eksternal) lalu masuk dengan
+     Firebase Anonymous Auth (tanpa kata sandi). Identitas diisi sendiri oleh
+     pengunjung dan tidak diverifikasi; kunjungan dicatat ke koleksi cmAccessLog.
+   - Tim CMO Pusat masuk dengan akun Google (terverifikasi).
+============================================================ */
+const CM_GUEST_ID_KEY='cm_guest_identity_v1';
+const CM_ACCESS_COL='cmAccessLog';
+const CM_ESELON1_UNITS=[
+  {code:'SETJEN',short:'Setjen',name:'Sekretariat Jenderal'},
+  {code:'ITJEN',short:'Itjen',name:'Inspektorat Jenderal'},
+  {code:'DJSEF',short:'DJSEF',name:'Direktorat Jenderal Strategi Ekonomi dan Fiskal'},
+  {code:'DJA',short:'DJA',name:'Direktorat Jenderal Anggaran'},
+  {code:'DJP',short:'DJP',name:'Direktorat Jenderal Pajak'},
+  {code:'DJBC',short:'DJBC',name:'Direktorat Jenderal Bea dan Cukai'},
+  {code:'DJPB',short:'DJPb',name:'Direktorat Jenderal Perbendaharaan'},
+  {code:'DJKN',short:'DJKN',name:'Direktorat Jenderal Kekayaan Negara'},
+  {code:'DJPK',short:'DJPK',name:'Direktorat Jenderal Perimbangan Keuangan'},
+  {code:'DJPPR',short:'DJPPR',name:'Direktorat Jenderal Pengelolaan Pembiayaan dan Risiko'},
+  {code:'DJSPSK',short:'DJSPSK',name:'Direktorat Jenderal Stabilitas dan Pengembangan Sektor Keuangan'},
+  {code:'BATII',short:'BaTii',name:'Badan Teknologi, Informasi, dan Intelijen Keuangan'},
+  {code:'BPPK',short:'BPPK',name:'Badan Pendidikan dan Pelatihan Keuangan'},
+  {code:'LNSW',short:'LNSW',name:'Lembaga National Single Window'},
+  {code:'EKSTERNAL',short:'Eksternal',name:'Eksternal'}
+];
+const CM_ALL_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource'];
+function cmUnitByCode(code){return CM_ESELON1_UNITS.find(u=>u.code===code)||null;}
+function cmGuestIdentity(){try{const x=JSON.parse(localStorage.getItem(CM_GUEST_ID_KEY)||'null');return x&&x.name&&x.email?x:null;}catch(e){return null;}}
+function cmSaveGuestIdentity(o){try{localStorage.setItem(CM_GUEST_ID_KEY,JSON.stringify(o));}catch(e){}}
+function cmIsPublicSurveyMode(){return new URLSearchParams(location.search).has('survey');}
+function cmIsAnonUser(){return !!window.fbAuth?.currentUser?.isAnonymous;}
+let cmGuestOffline=null; // identitas Tamu saat login anonim belum diaktifkan di Firebase
+function cmInitials(name){const p=String(name||'').trim().split(/\s+/).filter(Boolean);return ((p[0]||'?')[0]+(p.length>1?p[p.length-1][0]:'')).toUpperCase();}
+
+/* ---------- Entry gate ---------- */
+function cmEntryGateHtml(){
+  const U=uiText,opts=CM_ESELON1_UNITS.map(u=>`<option value="${u.code}">${escapeHtml(u.code==='EKSTERNAL'?U('External (outside the Ministry of Finance)','Eksternal (di luar Kemenkeu)'):u.name)}</option>`).join('');
+  return `<div class="cm-entry-shell" role="dialog" aria-modal="true" aria-labelledby="cmEntryTitle">
+    <section class="cm-entry-side">
+      <div class="cm-entry-brand"><span>CM</span><div><b>Dashboard Master Agenda</b><small>Change Management Pusat</small></div></div>
+      <h2>${U('Ministry of Finance Change Management agenda and progress in one place.','Agenda dan perkembangan Change Management Kemenkeu dalam satu tempat.')}</h2>
+      <ul><li>${U('Latest agenda, calendar and activity status','Agenda, kalender, dan status kegiatan terbaru')}</li><li>${U('Workboard, program matrix and knowledge','Workboard, matriks program, dan knowledge')}</li><li>${U('Change history of every activity','Riwayat perubahan setiap kegiatan')}</li></ul>
+      <div class="cm-entry-foot">Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</div>
+    </section>
+    <section class="cm-entry-main">
+      <div class="cm-entry-lang" role="group" aria-label="Bahasa / Language"><button type="button" data-entry-lang="id" class="${currentLang==='id'?'on':''}">ID</button><button type="button" data-entry-lang="en" class="${currentLang==='en'?'on':''}">EN</button></div>
+      <form id="cmGuestForm" novalidate>
+        <div class="cm-entry-eyebrow">${U('View mode','Mode lihat')}</div>
+        <h1 id="cmEntryTitle">${U('Enter as Guest','Masuk sebagai Tamu')}</h1>
+        <p class="cm-entry-sub">${U('Fill in your name and office email to view the dashboard. <b>Your visit is recorded for monitoring purposes.</b>','Isi nama dan email kantor Anda untuk melihat dashboard. <b>Kunjungan Anda dicatat untuk keperluan monitoring.</b>')}</p>
+        <label for="cmGuestName">${U('Full name','Nama lengkap')}</label>
+        <input id="cmGuestName" type="text" autocomplete="name" maxlength="80" placeholder="${U('Your full name','Nama lengkap Anda')}">
+        <label for="cmGuestEmail">${U('Office email','Email kantor')}</label>
+        <input id="cmGuestEmail" type="email" autocomplete="email" maxlength="120" placeholder="nama@kemenkeu.go.id">
+        <label for="cmGuestUnit">${U('Unit (Echelon I)','Unit (Eselon I)')}</label>
+        <select id="cmGuestUnit"><option value="">${U('Select your unit','Pilih unit Anda')}</option>${opts}</select>
+        <div id="cmGuestExtWrap" class="hidden"><label for="cmGuestInstansi">${U('Institution / organisation','Nama instansi/organisasi')}</label><input id="cmGuestInstansi" type="text" maxlength="120" placeholder="${U('e.g. Ministry of State Apparatus, University of Indonesia','Contoh: Kementerian PANRB, Universitas Indonesia')}"></div>
+        <div class="cm-entry-err hidden" id="cmGuestErr" role="alert"></div>
+        <button type="submit" class="cm-entry-go" id="cmGuestGo">${U('Enter (view mode)','Masuk (mode lihat)')}</button>
+        <div class="cm-entry-hint">${U('No password. This browser remembers you for your next visit.','Tanpa kata sandi. Browser ini mengingat identitas Anda untuk kunjungan berikutnya.')}</div>
+      </form>
+      <div class="cm-entry-or"><span>${U('CM Team Pusmantap?','Tim CM Pusmantap?')}</span></div>
+      <button type="button" class="cm-entry-cmo" id="cmEntryCmo"><span aria-hidden="true">🛡</span> ${U('Sign in as CMO Pusat','Masuk CMO Pusat')}</button>
+    </section>
+  </div>`;
+}
+function cmEntryGateBind(g){
+  const unit=g.querySelector('#cmGuestUnit'),ext=g.querySelector('#cmGuestExtWrap'),email=g.querySelector('#cmGuestEmail');
+  g._syncUnit=()=>{const isExt=unit.value==='EKSTERNAL';ext.classList.toggle('hidden',!isExt);email.placeholder=isExt?'nama@instansi.go.id':'nama@kemenkeu.go.id';};
+  unit.addEventListener('change',g._syncUnit);
+  g.querySelector('#cmGuestForm').addEventListener('submit',e=>{e.preventDefault();cmGuestSubmit();});
+  g.querySelector('#cmEntryCmo').addEventListener('click',()=>cmStartCmoLogin());
+  g.querySelectorAll('[data-entry-lang]').forEach(b=>b.onclick=()=>{
+    const keep=['cmGuestName','cmGuestEmail','cmGuestUnit','cmGuestInstansi'].map(id=>[id,g.querySelector('#'+id).value]);
+    if(typeof setLanguage==='function')setLanguage(b.dataset.entryLang);
+    g.innerHTML=cmEntryGateHtml();cmEntryGateBind(g);keep.forEach(([id,v])=>{g.querySelector('#'+id).value=v;});g._syncUnit();
+  });
+}
+function cmEntryGateEl(){
+  let g=document.getElementById('cmEntryGate');
+  if(g)return g;
+  g=document.createElement('div');g.id='cmEntryGate';g.className='cm-entry-gate hidden';
+  g.innerHTML=cmEntryGateHtml();document.body.appendChild(g);cmEntryGateBind(g);
+  return g;
+}
+function cmEntryGateShow(){
+  if(cmIsPublicSurveyMode())return;
+  const g=cmEntryGateEl(),id=cmGuestIdentity();
+  g.innerHTML=cmEntryGateHtml();cmEntryGateBind(g);
+  if(id){g.querySelector('#cmGuestName').value=id.name||'';g.querySelector('#cmGuestEmail').value=id.email||'';g.querySelector('#cmGuestUnit').value=id.unit||'';g.querySelector('#cmGuestInstansi').value=id.instansi||'';}
+  g._syncUnit();g.querySelector('#cmGuestErr').classList.add('hidden');
+  const btn=g.querySelector('#cmGuestGo');btn.disabled=false;
+  g.classList.remove('hidden');document.documentElement.classList.add('cm-entry-open');
+}
+function cmEntryGateHide(){document.getElementById('cmEntryGate')?.classList.add('hidden');document.documentElement.classList.remove('cm-entry-open');}
+function cmGuestErr(msg,focusId){const g=cmEntryGateEl(),el=g.querySelector('#cmGuestErr');el.textContent=msg;el.classList.remove('hidden');if(focusId)g.querySelector('#'+focusId)?.focus();}
+async function cmGuestSubmit(){
+  const g=cmEntryGateEl();
+  const name=g.querySelector('#cmGuestName').value.trim().replace(/\s+/g,' ');
+  const email=cmNormEmail(g.querySelector('#cmGuestEmail').value);
+  const unit=g.querySelector('#cmGuestUnit').value;
+  const instansi=g.querySelector('#cmGuestInstansi').value.trim();
+  if(name.length<3)return cmGuestErr(uiText('Please enter your name (at least 3 letters).','Nama wajib diisi (minimal 3 huruf).'),'cmGuestName');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))return cmGuestErr(uiText('Please enter a valid email address.','Format email belum benar.'),'cmGuestEmail');
+  if(!unit)return cmGuestErr(uiText('Please select your unit.','Pilih unit Anda.'),'cmGuestUnit');
+  if(unit!=='EKSTERNAL'&&!/@kemenkeu\.go\.id$/.test(email))return cmGuestErr(uiText('For Ministry of Finance units, use your @kemenkeu.go.id email. If you are from outside the Ministry, choose "External".','Untuk unit Kemenkeu, gunakan email @kemenkeu.go.id. Jika Anda dari luar Kemenkeu, pilih unit "Eksternal".'),'cmGuestEmail');
+  if(unit==='EKSTERNAL'&&instansi.length<2)return cmGuestErr(uiText('Please enter your institution or organisation.','Isi nama instansi/organisasi Anda.'),'cmGuestInstansi');
+  const u=cmUnitByCode(unit);
+  cmSaveGuestIdentity({name,email,unit,unitName:u?.name||unit,instansi:unit==='EKSTERNAL'?instansi:'',auto:true,savedAt:new Date().toISOString()});
+  const btn=g.querySelector('#cmGuestGo');btn.disabled=true;btn.textContent=uiText('Opening dashboard…','Membuka dashboard…');
+  await cmGuestEnter();
+}
+async function cmGuestEnter(){
+  const id=cmGuestIdentity();if(!id)return cmEntryGateShow();
+  if(window.fbAuth?.currentUser){cmEntryGateHide();cmUpdateUserPill();cmAccessScheduleVisit();return;}
+  try{
+    if(typeof window.cmAnonSignIn!=='function')throw new Error('anon-unavailable');
+    await window.cmAnonSignIn(); // onAuthStateChanged → cmEntryOnAuth(user)
+  }catch(e){
+    console.warn('Anonymous sign-in unavailable; guest enters with local data.',e?.code||e);
+    cmGuestOffline=id;cmEntryGateHide();
+    if(window.cmEnforceMenuAccess)window.cmEnforceMenuAccess();
+    cmUpdateUserPill();
+  }
+}
+function cmStartCmoLogin(){
+  const fn=window.cmGoogleSignIn;
+  if(typeof fn!=='function')return toast('Layanan login belum siap. Coba lagi sebentar.','warning');
+  fn().catch(err=>{
+    if(err?.code==='auth/popup-closed-by-user'||err?.code==='auth/cancelled-popup-request')return;
+    toast((err?.code==='auth/unauthorized-domain')?'Domain ini belum diizinkan di Firebase Authentication.':'Gagal masuk: '+(err?.message||err?.code||''),'error');
+  });
+}
+// dipanggil dari script Firebase setiap status login berubah
+window.cmEntryOnAuth=function(user){
+  if(cmIsPublicSurveyMode())return;
+  if(user){
+    if(user.isAnonymous&&!cmGuestIdentity()){cmEntryGateShow();return;}
+    cmGuestOffline=null;cmEntryGateHide();cmUpdateUserPill();cmAccessScheduleVisit();
+    return;
+  }
+  if(cmGuestOffline){cmUpdateUserPill();return;}
+  const id=cmGuestIdentity();
+  if(id&&id.auto!==false){cmGuestEnter();return;}
+  cmEntryGateShow();
+};
+function cmSignOutAll(){
+  const id=cmGuestIdentity();
+  if(id){id.auto=false;cmSaveGuestIdentity(id);} // setelah Keluar, tampilkan kartu masuk (tidak masuk otomatis)
+  if(cmGuestOffline){cmGuestOffline=null;cmUpdateUserPill();cmEntryGateShow();return;}
+  if(typeof window.cmSignOut==='function')window.cmSignOut();
+}
+
+/* ---------- Header user pill ---------- */
+function cmCurrentPerson(){
+  const u=window.fbAuth?.currentUser;
+  if(u&&!u.isAnonymous){const name=String(u.displayName||'').trim()||String(u.email||'').split('@')[0].replace(/[._-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase());return {name,email:cmNormEmail(u.email),unit:'',unitName:'',instansi:'',kind:'google'};}
+  const id=cmGuestIdentity()||cmGuestOffline;
+  if(id)return {...id,kind:'guest'};
+  return null;
+}
+function cmUpdateUserPill(){
+  const pill=document.getElementById('userPill'),loginBtn=document.getElementById('btnGoogleLogin');
+  const p=cmCurrentPerson(),active=!!(window.fbAuth?.currentUser||cmGuestOffline);
+  if(!pill)return;
+  pill.classList.toggle('hidden',!active||!p);loginBtn?.classList.toggle('hidden',active);
+  if(!p||!active)return;
+  const av=document.getElementById('userAvatar');if(av)av.textContent=cmInitials(p.name);
+  const nm=document.getElementById('userName');if(nm){nm.textContent=p.name;nm.title=p.kind==='guest'?`${p.name} · ${p.email}${p.unit?' · '+(p.unit==='EKSTERNAL'?(p.instansi||'Eksternal'):cmUnitByCode(p.unit)?.short||p.unit):''}`:`${p.name} · ${p.email}`;}
+  const lo=document.getElementById('btnLogout');if(lo){lo.title=uiText('Sign out','Keluar');}
+}
+document.addEventListener('click',e=>{
+  if(e.target?.closest?.('#btnLogout')){e.preventDefault();e.stopImmediatePropagation();cmSignOutAll();}
+  if(e.target?.closest?.('[data-cm-cmo-login]')){e.preventDefault();cmStartCmoLogin();}
+},true);
+
+/* ---------- View-only banner ---------- */
+function cmViewOnlyBanner(viewOnly){
+  let bar=document.getElementById('cmViewOnlyBar');
+  const main=document.getElementById('appMain');
+  if(!bar&&main){bar=document.createElement('div');bar.id='cmViewOnlyBar';bar.className='cm-viewonly-bar hidden';main.prepend(bar);}
+  if(!bar)return;
+  bar.innerHTML=`<span class="cm-vo-ic" aria-hidden="true">👁</span><span><b>${uiText('View mode.','Mode lihat.')}</b> ${uiText('You can open every menu and each activity\'s history, but data cannot be changed.','Anda dapat membuka semua menu dan riwayat setiap kegiatan, tetapi data tidak dapat diubah.')}</span><button type="button" data-cm-cmo-login>🛡 ${uiText('Sign in as CMO Pusat','Masuk sebagai CMO Pusat')}</button>`;
+  bar.classList.toggle('hidden',!viewOnly||document.documentElement.classList.contains('cm-entry-open'));
+}
+
+/* ---------- Access log (tulis) ---------- */
+const CM_MENU_LABEL_ID={analytics:'Overview',table:'Agenda',tasks:'Penugasan',calendar:'Kalender',kanban:'Workboard',matrix:'Matriks',knowledge:'Knowledge',survey:'Survei CRA',contact:'Squad Team',resource:'Tim CM',history:'Riwayat kegiatan'};
+function cmMenuLabel(code){const btn=document.querySelector(`.tab-btn[data-tab="${code}"]`);const t=btn?String(btn.textContent||'').replace(/\s+/g,' ').trim():'';return CM_MENU_LABEL_ID[code]||t||code;}
+function cmDeviceInfo(){
+  const ua=navigator.userAgent||'';
+  const device=/iPad|Tablet/i.test(ua)?'Tablet':/Mobi|Android|iPhone/i.test(ua)?'Ponsel':'Desktop';
+  const browser=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/Firefox\//.test(ua)?'Firefox':/Chrome\//.test(ua)?'Chrome':/Safari\//.test(ua)?'Safari':'Lainnya';
+  return {device,browser};
+}
+function cmAccessSessionId(){
+  let s='';try{s=sessionStorage.getItem('cm_access_session')||'';}catch(e){}
+  if(!s){s=Date.now().toString(36)+Math.random().toString(36).slice(2,8);try{sessionStorage.setItem('cm_access_session',s);}catch(e){}}
+  return s;
+}
+function cmAccessRoleKey(){
+  const r=cmGetAccessRole();
+  return r===CM_ROLE_SUPERADMIN?'superadmin':r===CM_ROLE_ADMIN?'cmo':'tamu';
+}
+async function cmAccessWrite(kind,menu){
+  const u=window.fbAuth?.currentUser;
+  if(!u||!window.fbDb||!window.fbAddDoc||cmIsPublicSurveyMode())return false;
+  const p=cmCurrentPerson()||{};const d=cmDeviceInfo();
+  const payload={uid:u.uid,kind,session:cmAccessSessionId(),role:cmAccessRoleKey(),login:u.isAnonymous?'tamu':'google',
+    name:String(p.name||'').slice(0,80),email:String(p.email||'').slice(0,120),unit:p.unit||'',unitName:p.unitName||'',instansi:String(p.instansi||'').slice(0,120),
+    menu:menu||'',menuLabel:menu?cmMenuLabel(menu):'',device:d.device,browser:d.browser,ts:new Date().toISOString()};
+  if(window.fbServerTimestamp)payload.at=window.fbServerTimestamp();
+  try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),payload);return true;}
+  catch(e){if(!cmAccessWarned){cmAccessWarned=true;console.warn('Access log not written (check Firestore rules for cmAccessLog).',e?.code||e);}return false;}
+}
+let cmAccessWarned=false,cmAccessVisitTimer=null,cmAccessLastPing=0;
+function cmAccessFlag(k){try{return sessionStorage.getItem(k)==='1';}catch(e){return false;}}
+function cmAccessSetFlag(k){try{sessionStorage.setItem(k,'1');}catch(e){}}
+function cmAccessScheduleVisit(){
+  clearTimeout(cmAccessVisitTimer);
+  // tunggu sebentar agar peran (Admin dari data Tim CM) sudah terbaca
+  cmAccessVisitTimer=setTimeout(async()=>{
+    const u=window.fbAuth?.currentUser;if(!u)return;
+    const k='cm_access_visit_'+u.uid;if(cmAccessFlag(k))return;
+    if(!(await cmAccessWrite('visit','')))return;
+    cmAccessSetFlag(k);
+    const pend=[...new Set([...cmAccessPending,state?.activeTab||'analytics'])];cmAccessPending=[];
+    pend.forEach(t=>cmAccessLogMenu(t));
+  },3500);
+}
+let cmAccessPending=['analytics'];
+function cmAccessLogMenu(tab){
+  const u=window.fbAuth?.currentUser;if(!tab)return;
+  if(!u||!cmAccessFlag('cm_access_visit_'+u.uid)){if(!cmAccessPending.includes(tab))cmAccessPending.push(tab);return;} // dicatat setelah kunjungan tercatat
+  const k=`cm_access_menu_${u.uid}_${tab}`;if(cmAccessFlag(k))return;
+  cmAccessSetFlag(k);cmAccessWrite('menu',tab).then(ok=>{if(!ok)try{sessionStorage.removeItem(k);}catch(e){}});
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='hidden')return;
+  const u=window.fbAuth?.currentUser;if(!u||!cmAccessFlag('cm_access_visit_'+u.uid))return;
+  if(Date.now()-cmAccessLastPing<60000)return;cmAccessLastPing=Date.now();cmAccessWrite('ping','');
+});
+document.addEventListener('click',e=>{const b=e.target?.closest?.('[data-action="history"]');if(b)cmAccessLogMenu('history');},true);
+
+/* ---------- Access log (baca, khusus Superadmin) ---------- */
+const cmAL={events:[],loadedFrom:'',err:'',loading:false,tab:'stats',period:'30',from:'',to:'',unit:'',menu:'',role:'',q:'',page:1,charts:[]};
+async function cmAccessLoad(fromDate,force){
+  if(!window.fbDb||!window.fbGetDocs)throw new Error('Firestore belum siap.');
+  if(!force&&cmAL.loadedFrom&&cmAL.loadedFrom<=fromDate)return cmAL.events;
+  const q=window.fbQuery(window.fbCollection(window.fbDb,CM_ACCESS_COL),window.fbWhere('ts','>=',dayjs(fromDate).startOf('day').toISOString()),window.fbOrderBy('ts','desc'));
+  const snap=await window.fbGetDocs(q);
+  cmAL.events=snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.ts);
+  cmAL.loadedFrom=fromDate;
+  return cmAL.events;
+}
+function cmALRange(){
+  const today=dayjs().format('YYYY-MM-DD');
+  if(cmAL.period==='custom'){const f=cmAL.from||dayjs().subtract(29,'day').format('YYYY-MM-DD'),t=cmAL.to||today;return f<=t?{from:f,to:t}:{from:t,to:f};}
+  const n=Number(cmAL.period)||30;return {from:dayjs().subtract(n-1,'day').format('YYYY-MM-DD'),to:today};
+}
+function cmALPrevRange(r){const days=dayjs(r.to).diff(dayjs(r.from),'day')+1;return {from:dayjs(r.from).subtract(days,'day').format('YYYY-MM-DD'),to:dayjs(r.from).subtract(1,'day').format('YYYY-MM-DD')};}
+function cmALSessions(events){
+  const m=new Map();
+  events.slice().sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).forEach(e=>{
+    const key=(e.session||'')+'|'+(e.uid||'');
+    let s=m.get(key);
+    if(!s){s={key,uid:e.uid,name:e.name||'',email:cmNormEmail(e.email),unit:e.unit||'',unitName:e.unitName||'',instansi:e.instansi||'',role:e.role||'tamu',login:e.login||'',device:e.device||'',browser:e.browser||'',start:e.ts,end:e.ts,menus:[],menuCodes:[],events:[]};m.set(key,s);}
+    s.events.push(e);if(e.ts<s.start)s.start=e.ts;if(e.ts>s.end)s.end=e.ts;
+    if(e.role==='superadmin'||(e.role==='cmo'&&s.role==='tamu'))s.role=e.role;
+    if(e.kind==='menu'&&e.menu&&!s.menuCodes.includes(e.menu)){s.menuCodes.push(e.menu);s.menus.push(e.menuLabel||cmMenuLabel(e.menu));}
+    if(!s.name&&e.name)s.name=e.name;
+  });
+  return [...m.values()].map(s=>({...s,mins:Math.max(0,Math.round(dayjs(s.end).diff(dayjs(s.start),'second')/60)),visitorKey:s.email||s.uid})).sort((a,b)=>String(b.start).localeCompare(String(a.start)));
+}
+function cmALInRange(s,r){const d=dayjs(s.start).format('YYYY-MM-DD');return d>=r.from&&d<=r.to;}
+function cmALUnitLabel(s,long){if(s.role!=='tamu'&&!s.unit)return 'Tim CMO Pusat';if(s.unit==='EKSTERNAL')return s.instansi?`Eksternal · ${s.instansi}`:'Eksternal';const u=cmUnitByCode(s.unit);return u?(long?u.name:u.short):(s.unitName||s.unit||'-');}
+function cmALRoleLabel(r){return r==='superadmin'?'Superadmin':r==='cmo'?'CMO Pusat':'Tamu';}
+function cmALFiltered(sessions,r,guestOnly){
+  return sessions.filter(s=>cmALInRange(s,r)&&(!guestOnly||s.role==='tamu')&&(!cmAL.unit||s.unit===cmAL.unit)&&(!cmAL.menu||s.menuCodes.includes(cmAL.menu)));
+}
+const CM_DAY_ID=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function cmALWorkdays(r){let n=0,d=dayjs(r.from);const end=dayjs(r.to);while(!d.isAfter(end,'day')){const w=d.day();if(w>0&&w<6)n++;d=d.add(1,'day');}return Math.max(1,n);}
+function cmALStats(sessions,r){
+  const visitors=new Map();sessions.forEach(s=>{const v=visitors.get(s.visitorKey)||{name:s.name,email:s.email,unit:s.unit,unitName:s.unitName,instansi:s.instansi,role:s.role,hits:0,first:s.start,last:s.start,mins:0,menus:{}};v.hits++;v.mins+=s.mins;if(s.start<v.first)v.first=s.start;if(s.start>v.last){v.last=s.start;v.name=s.name||v.name;}s.menus.forEach(m=>v.menus[m]=(v.menus[m]||0)+1);visitors.set(s.visitorKey,v);});
+  const byDay={};let d=dayjs(r.from);while(!d.isAfter(dayjs(r.to),'day')){byDay[d.format('YYYY-MM-DD')]={hits:0,uniq:new Set()};d=d.add(1,'day');}
+  sessions.forEach(s=>{const k=dayjs(s.start).format('YYYY-MM-DD');if(byDay[k]){byDay[k].hits++;byDay[k].uniq.add(s.visitorKey);}});
+  const byMenu={},byMenuUniq={};sessions.forEach(s=>s.menus.forEach(m=>{byMenu[m]=(byMenu[m]||0)+1;(byMenuUniq[m]||(byMenuUniq[m]=new Set())).add(s.visitorKey);}));
+  const byUnit={},byUnitHits={};sessions.forEach(s=>{const u=cmALUnitLabel(s);(byUnit[u]||(byUnit[u]=new Set())).add(s.visitorKey);byUnitHits[u]=(byUnitHits[u]||0)+1;});
+  const heat={},byHour={},byWd={};sessions.forEach(s=>{const t=dayjs(s.start),h=t.hour(),w=t.day();heat[w+'_'+h]=(heat[w+'_'+h]||0)+1;byHour[h]=(byHour[h]||0)+1;byWd[w]=(byWd[w]||0)+1;});
+  const top=o=>Object.entries(o).sort((a,b)=>b[1]-a[1])[0];
+  const menuEvents=Object.values(byMenu).reduce((a,b)=>a+b,0);
+  return {hits:sessions.length,unique:visitors.size,visitors,byDay,byMenu,byMenuUniq,byUnit:Object.fromEntries(Object.entries(byUnit).map(([k,v])=>[k,v.size])),byUnitHits,heat,byHour,byWd,
+    perWorkday:sessions.length/cmALWorkdays(r),topMenu:top(Object.fromEntries(Object.entries(byMenu).filter(([k])=>k!==cmMenuLabel('analytics')))),menuEvents,topHour:top(byHour),topWd:top(byWd),
+    totalMins:sessions.reduce((a,s)=>a+s.mins,0),peakDay:Object.entries(byDay).sort((a,b)=>b[1].hits-a[1].hits)[0]};
+}
+const cmFmtNum=(n,dec=0)=>Number(n||0).toLocaleString('id-ID',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+function cmALDelta(cur,prev){if(!prev)return cur?{txt:'periode sebelumnya belum ada data',cls:''}:{txt:'',cls:''};const p=Math.round((cur-prev)/prev*100);if(!p)return {txt:'sama dengan periode sebelumnya',cls:''};return {txt:`${p>0?'▲':'▼'} ${Math.abs(p)}% vs periode sebelumnya`,cls:p>0?'up':'down'};}
+function cmALHourLabel(h){h=Number(h);return `${String(h).padStart(2,'0')}.00–${String(h+1).padStart(2,'0')}.00`;}
+function cmALNarr(st,r,prevSt,lang){
+  const L=(i,e)=>lang==='en'?e:i;
+  if(!st.hits)return {trend:L('Belum ada kunjungan Tamu pada periode ini.','No guest visits in this period.'),menu:'',unit:'',heat:''};
+  const pk=st.peakDay,pkTxt=pk&&pk[1].hits?`${dayjs(pk[0]).format('DD MMM')} (${pk[1].hits} hits)`:'-';
+  const wk=Object.entries(st.byDay).filter(([k])=>[0,6].includes(dayjs(k).day())).reduce((a,[,v])=>a+v.hits,0);
+  const delta=prevSt?(prevSt.hits?Math.round((st.hits-prevSt.hits)/prevSt.hits*100):null):null;
+  const trend=L(`Tercatat **${st.hits} hits** dari **${st.unique} pengunjung** dengan rata-rata ${cmFmtNum(st.perWorkday,1)} hits per hari kerja${delta===null?'':delta>=0?`, naik ${delta}% dibanding periode sebelumnya`:`, turun ${Math.abs(delta)}% dibanding periode sebelumnya`}. Kunjungan tertinggi terjadi pada **${pkTxt}**${wk?`; ${wk} hits terjadi pada akhir pekan`:'; akhir pekan tanpa kunjungan'}.`,
+    `**${st.hits} hits** from **${st.unique} visitors**, averaging ${cmFmtNum(st.perWorkday,1)} per workday${delta===null?'':` (${delta>=0?'+':''}${delta}% vs previous period)`}. Peak: **${pkTxt}**.`);
+  const ov=cmMenuLabel('analytics'),ms=Object.entries(st.byMenu).filter(([k])=>k!==ov).sort((a,b)=>b[1]-a[1]);
+  const menu=ms.length?L(`Selain ${ov} yang otomatis terbuka saat masuk, menu yang paling sering dibuka Tamu adalah **${ms[0][0]}** (${ms[0][1]} kunjungan, ${Math.round(ms[0][1]/st.hits*100)}%)${ms.length>1?`, disusul ${ms[1][0]} (${ms[1][1]})`:''}${ms.length>2?`. Menu yang paling jarang dibuka: ${ms[ms.length-1][0]} (${ms[ms.length-1][1]})`:''}.`,`Apart from ${ov} (the landing page), the most opened menu is **${ms[0][0]}** (${ms[0][1]} visits).`):(st.byMenu[ov]?L(`Tamu baru membuka ${ov}, halaman yang otomatis terbuka saat masuk.`,`Guests only opened ${ov}, the landing page.`):'');
+  const us=Object.entries(st.byUnit).sort((a,b)=>b[1]-a[1]);
+  const unit=us.length?L(`Pengunjung terbanyak berasal dari **${us[0][0]}** (${us[0][1]} orang)${us.length>1?` dan ${us[1][0]} (${us[1][1]} orang)`:''}. Angka dihitung per orang berdasarkan unit yang diisi Tamu saat masuk.`,`Most visitors come from **${us[0][0]}** (${us[0][1]}).`):'';
+  const heat=st.topHour?L(`Jam paling ramai adalah **${cmALHourLabel(st.topHour[0])}**${st.topWd?` dan hari paling ramai **${CM_DAY_ID[st.topWd[0]]}**`:''}. Pembaruan data sebaiknya sudah selesai sebelum jam tersebut.`,`Busiest hour: **${cmALHourLabel(st.topHour[0])}**.`):'';
+  return {trend,menu,unit,heat};
+}
+const cmMd=s=>escapeHtml(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+
+/* ---------- Panel Kelola Pengguna & Akses ---------- */
+function cmOpenAccessManager(tab){
+  if(!cmCanManageReferences())return cmDenyReference();
+  if(tab)cmAL.tab=tab;
+  let host=document.getElementById('cmAccessPanel');
+  if(!host){host=document.createElement('div');host.id='cmAccessPanel';host.className='modal-overlay cm-ap-overlay';document.body.appendChild(host);
+    host.addEventListener('click',e=>{if(e.target===host)cmCloseAccessPanel();});}
+  host.innerHTML=`<div class="modal-box cm-ap-box" role="dialog" aria-modal="true" aria-labelledby="cmApTitle">
+    <div class="cm-ap-head"><span class="cm-ap-ic" aria-hidden="true">👥</span><div><h2 id="cmApTitle">Kelola Pengguna &amp; Akses</h2><p>Daftar pengguna Tim CMO Pusat, riwayat siapa saja yang masuk, dan statistik kunjungan Tamu.</p></div><button class="modal-close" id="cmApClose" aria-label="Tutup">&times;</button></div>
+    <div class="cm-ap-tabs" role="tablist">
+      <button type="button" data-ap-tab="users" role="tab">Pengguna <span class="cm-ap-cnt" id="cmApUserCnt"></span></button>
+      <button type="button" data-ap-tab="log" role="tab">Riwayat Akses</button>
+      <button type="button" data-ap-tab="stats" role="tab">📊 Statistik Kunjungan Tamu</button>
+    </div>
+    <div class="cm-ap-body" id="cmApBody"></div>
+  </div>`;
+  host.classList.remove('hidden');
+  host.querySelector('#cmApClose').onclick=cmCloseAccessPanel;
+  host.querySelectorAll('[data-ap-tab]').forEach(b=>b.onclick=()=>{cmAL.tab=b.dataset.apTab;cmAL.page=1;cmRenderAccessPanel();});
+  cmRenderAccessPanel();
+}
+function cmCloseAccessPanel(){cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];document.getElementById('cmAccessPanel')?.remove();}
+function cmAdminRows(){
+  const rows=(typeof state!=='undefined'&&Array.isArray(state.resources))?state.resources:[];
+  const team=[];rows.forEach(r=>{if(typeof resourceIsInactive==='function'&&resourceIsInactive(r))return;const emails=[r?.emailKemenkeu,r?.emailPribadi].map(cmNormEmail).filter(Boolean);if(emails.length)team.push({name:r.nama||'-',jabatan:r.jabatan||'',emails});});
+  return team.sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+}
+async function cmRenderAccessPanel(){
+  const host=document.getElementById('cmAccessPanel');if(!host)return;
+  host.querySelectorAll('[data-ap-tab]').forEach(b=>{const on=b.dataset.apTab===cmAL.tab;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
+  const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length);
+  const body=host.querySelector('#cmApBody');
+  cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
+  if(cmAL.tab==='users')return cmRenderApUsers(body,team);
+  // log & stats perlu data
+  const r=cmALRange(),prev=cmALPrevRange(r);
+  const needFrom=cmAL.tab==='stats'?prev.from:r.from;
+  if(!cmAL.loadedFrom||cmAL.loadedFrom>needFrom){
+    body.innerHTML=`<div class="cm-ap-loading"><span class="cm-rpt2-spin"></span>Memuat catatan kunjungan…</div>`;
+    try{cmAL.err='';await cmAccessLoad(needFrom);}
+    catch(e){cmAL.err=e?.code||e?.message||String(e);}
+  }
+  if(cmAL.err){body.innerHTML=cmApFilterBar(cmAL.tab==='stats')+`<div class="cm-ap-empty"><b>Catatan kunjungan belum bisa dibaca.</b><span>${/permission/i.test(cmAL.err)?'Aturan Firebase untuk catatan kunjungan (cmAccessLog) belum dipasang. Ikuti panduan pengaturan Firebase, lalu buka panel ini lagi.':'Terjadi kendala: '+escapeHtml(cmAL.err)}</span><button class="btn btn-outline btn-sm" id="cmApRetry">Coba lagi</button></div>`;cmBindApFilters(body);body.querySelector('#cmApRetry').onclick=()=>{cmAL.loadedFrom='';cmRenderAccessPanel();};return;}
+  if(cmAL.tab==='log')return cmRenderApLog(body,r);
+  return cmRenderApStats(body,r,prev);
+}
+function cmRenderApUsers(body,team){
+  const lastSeen={};cmALSessions(cmAL.events).forEach(s=>{if(s.email&&(!lastSeen[s.email]||s.start>lastSeen[s.email]))lastSeen[s.email]=s.start;});
+  const seen=emails=>{const t=emails.map(e=>lastSeen[e]).filter(Boolean).sort().pop();return t?dayjs(t).format('DD MMM YYYY HH.mm'):'<span class="cm-ap-mut">—</span>';};
+  const supers=[...CM_SUPERADMIN_EMAILS];
+  const teamEmails=new Set(team.flatMap(t=>t.emails));
+  body.innerHTML=`<div class="cm-ap-users">
+    <div class="cm-ap-sec"><h3><span class="cm-ap-role sa">SUPERADMIN</span> Akses penuh, termasuk data referensi dan panel ini</h3>
+      <table class="cm-ap-table"><thead><tr><th>Nama</th><th>Email</th><th>Terakhir masuk</th></tr></thead><tbody><tr><td><b>Atitya Pritasari</b></td><td>${supers.map(escapeHtml).join('<br>')}</td><td>${seen(supers)}</td></tr></tbody></table></div>
+    <div class="cm-ap-sec"><h3><span class="cm-ap-role cmo">CMO PUSAT</span> Otomatis dari data Tim CM (email Kemenkeu/pribadi yang tercatat)</h3>
+      <table class="cm-ap-table"><thead><tr><th>Nama</th><th>Jabatan</th><th>Email</th><th>Terakhir masuk</th></tr></thead><tbody>${team.length?team.map(t=>`<tr><td><b>${escapeHtml(t.name)}</b></td><td>${escapeHtml(t.jabatan||'-')}</td><td>${t.emails.map(escapeHtml).join('<br>')}</td><td>${seen(t.emails)}</td></tr>`).join(''):'<tr><td colspan="4" class="cm-ap-mut">Belum ada email anggota pada data Tim CM.</td></tr>'}</tbody></table>
+      <p class="cm-ap-note">Untuk menambah atau menghapus anggota otomatis, ubah email di menu Tim CM.</p></div>
+    <div class="cm-ap-sec"><h3><span class="cm-ap-role cmo">CMO PUSAT</span> Tambahan manual</h3>
+      <div class="cm-ap-add"><input type="email" id="cmApNewAdmin" placeholder="email@kemenkeu.go.id" aria-label="Email Admin tambahan"><button class="btn btn-gold btn-sm" id="cmApAddAdmin">＋ Tambah</button></div>
+      <table class="cm-ap-table"><thead><tr><th>Email</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApExtraRows"></tbody></table>
+      <p class="cm-ap-note">Akun Google lain yang tidak tercantum di sini otomatis masuk sebagai <b>Tamu (mode lihat)</b>.</p></div>
+  </div>`;
+  const draw=()=>{body.querySelector('#cmApExtraRows').innerHTML=cmRoleAdminOverrides.length?cmRoleAdminOverrides.map(e=>`<tr><td>${escapeHtml(e)}${teamEmails.has(e)?' <span class="cm-ap-mut">(juga ada di Tim CM)</span>':''}</td><td>${seen([e])}</td><td><button class="btn btn-danger btn-sm" data-ap-del="${escapeHtml(e)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="3" class="cm-ap-mut">Belum ada.</td></tr>';
+    body.querySelectorAll('[data-ap-del]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses CMO Pusat untuk ${b.dataset.apDel}?`))return;cmRoleAdminOverrides=cmRoleAdminOverrides.filter(x=>x!==b.dataset.apDel);await save();draw();});};
+  const save=async()=>{try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}const ok=await firestoreSet(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides),{allowRoleRegistry:true});toast(ok?'Daftar pengguna diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal.',ok?'success':'warning');await window.cmRefreshAccessRole?.();};
+  body.querySelector('#cmApAddAdmin').onclick=async()=>{const inp=body.querySelector('#cmApNewAdmin'),e=cmNormEmail(inp.value);if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)){toast('Format email belum benar.','warning');inp.focus();return;}if(cmRoleAdminOverrides.includes(e)){toast('Email sudah ada di daftar.','info');return;}cmRoleAdminOverrides=[...cmRoleAdminOverrides,e];inp.value='';await save();draw();};
+  draw();
+}
+function cmApFilterBar(stats){
+  const r=cmALRange();
+  const chip=(v,l)=>`<button type="button" class="cm-ap-chip ${cmAL.period===v?'on':''}" data-ap-period="${v}">${l}</button>`;
+  const units=`<option value="">Semua unit</option>${CM_ESELON1_UNITS.map(u=>`<option value="${u.code}" ${cmAL.unit===u.code?'selected':''}>${escapeHtml(u.short)}</option>`).join('')}`;
+  const menus=`<option value="">Semua menu</option>${[...CM_ALL_TABS,'history'].map(m=>`<option value="${m}" ${cmAL.menu===m?'selected':''}>${escapeHtml(cmMenuLabel(m))}</option>`).join('')}`;
+  return `<div class="cm-ap-fbar">
+    <div class="cm-ap-chips">${chip('7','7 hari')}${chip('30','30 hari')}${chip('90','90 hari')}${chip('custom','Kustom')}</div>
+    ${cmAL.period==='custom'?`<label class="cm-ap-sel"><small>Dari</small><input type="date" id="cmApFrom" value="${r.from}"></label><label class="cm-ap-sel"><small>Sampai</small><input type="date" id="cmApTo" value="${r.to}"></label>`:`<span class="cm-ap-range">${dayjs(r.from).format('DD MMM YYYY')} – ${dayjs(r.to).format('DD MMM YYYY')}</span>`}
+    <label class="cm-ap-sel"><small>Unit</small><select id="cmApUnit">${units}</select></label>
+    ${stats?`<label class="cm-ap-sel"><small>Menu</small><select id="cmApMenu">${menus}</select></label>`:`<label class="cm-ap-sel"><small>Peran</small><select id="cmApRole"><option value="">Semua</option><option value="tamu" ${cmAL.role==='tamu'?'selected':''}>Tamu</option><option value="cmo" ${cmAL.role==='cmo'?'selected':''}>CMO Pusat</option><option value="superadmin" ${cmAL.role==='superadmin'?'selected':''}>Superadmin</option></select></label><input type="search" id="cmApQ" class="cm-ap-q" placeholder="Cari nama / email" value="${escapeHtml(cmAL.q)}">`}
+    <button type="button" class="btn btn-outline btn-sm cm-ap-refresh" id="cmApRefresh" title="Muat ulang data">↻</button>
+    ${stats?`<div class="cm-ap-exp"><button type="button" class="cm-ap-expbtn" id="cmApExpBtn" aria-haspopup="true" aria-expanded="false">⤓ Ekspor ▾</button>
+      <div class="cm-ap-expmenu hidden" id="cmApExpMenu" role="menu">
+        <div class="hd">Ekspor data kunjungan · sesuai filter</div>
+        <button type="button" data-ap-exp="xlsx" role="menuitem"><span class="ic x">XLSX</span><span><b>Excel untuk analisis</b><small>Sheet Ringkasan, Per Sesi, Log Mentah, Per Hari, Per Pengunjung, Per Menu, Per Unit. Siap Pivot Table.</small></span></button>
+        <button type="button" data-ap-exp="csv" role="menuitem"><span class="ic c">CSV</span><span><b>CSV log mentah</b><small>Satu baris per catatan, untuk Power BI / Python.</small></span></button>
+        <button type="button" data-ap-exp="report" role="menuitem"><span class="ic p">PDF</span><span><b>Laporan Statistik Kunjungan</b><small>Grafik dan narasi, unduh Word / PDF.</small></span></button>
+      </div></div>`:''}
+  </div>`;
+}
+function cmBindApFilters(body){
+  body.querySelectorAll('[data-ap-period]').forEach(b=>b.onclick=()=>{cmAL.period=b.dataset.apPeriod;cmAL.page=1;cmRenderAccessPanel();});
+  const on=(id,fn)=>{const el=body.querySelector('#'+id);if(el)el.addEventListener('change',fn);};
+  on('cmApFrom',e=>{cmAL.from=e.target.value;cmRenderAccessPanel();});on('cmApTo',e=>{cmAL.to=e.target.value;cmRenderAccessPanel();});
+  on('cmApUnit',e=>{cmAL.unit=e.target.value;cmAL.page=1;cmRenderAccessPanel();});on('cmApMenu',e=>{cmAL.menu=e.target.value;cmRenderAccessPanel();});
+  on('cmApRole',e=>{cmAL.role=e.target.value;cmAL.page=1;cmRenderAccessPanel();});
+  const q=body.querySelector('#cmApQ');if(q){let t;q.addEventListener('input',()=>{clearTimeout(t);t=setTimeout(()=>{cmAL.q=q.value;cmAL.page=1;cmRenderAccessPanel().then(()=>{const n=document.getElementById('cmApQ');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}});},300);});}
+  const rf=body.querySelector('#cmApRefresh');if(rf)rf.onclick=()=>{cmAL.loadedFrom='';cmRenderAccessPanel();};
+  const eb=body.querySelector('#cmApExpBtn'),em=body.querySelector('#cmApExpMenu');
+  if(eb&&em){eb.onclick=e=>{e.stopPropagation();const open=em.classList.toggle('hidden')===false;eb.setAttribute('aria-expanded',open?'true':'false');};
+    document.addEventListener('click',function off(ev){if(!em.isConnected){document.removeEventListener('click',off);return;}if(!ev.target.closest('.cm-ap-exp'))em.classList.add('hidden');});
+    em.querySelectorAll('[data-ap-exp]').forEach(b=>b.onclick=()=>{em.classList.add('hidden');const k=b.dataset.apExp;if(k==='xlsx')cmALExportXlsx();else if(k==='csv')cmALExportCsv();else cmALOpenReport();});}
+}
+function cmApSessionRows(list){
+  return list.map(s=>`<tr><td class="nw">${dayjs(s.start).format('DD MMM YYYY')}<br><span class="cm-ap-mut">${dayjs(s.start).format('HH.mm')}</span></td><td><b>${escapeHtml(s.name||'-')}</b></td><td class="cm-ap-mut">${escapeHtml(s.email||'-')}</td><td>${escapeHtml(cmALUnitLabel(s))}</td><td><span class="cm-ap-role ${s.role==='tamu'?'g':s.role==='superadmin'?'sa':'cmo'}">${cmALRoleLabel(s.role).toUpperCase()}</span></td><td>${escapeHtml(s.menus.join(', ')||'-')}</td><td class="cm-ap-mut">${escapeHtml([s.device,s.browser].filter(Boolean).join(' · ')||'-')}</td><td class="nw">${s.mins?s.mins+' mnt':'&lt; 1 mnt'}</td></tr>`).join('');
+}
+function cmApPager(total,per){const pages=Math.max(1,Math.ceil(total/per));if(cmAL.page>pages)cmAL.page=pages;return pages>1?`<div class="cm-ap-pager"><button class="btn btn-outline btn-sm" data-ap-page="-1" ${cmAL.page<=1?'disabled':''}>‹ Sebelumnya</button><span>Halaman ${cmAL.page} dari ${pages}</span><button class="btn btn-outline btn-sm" data-ap-page="1" ${cmAL.page>=pages?'disabled':''}>Berikutnya ›</button></div>`:'';}
+const CM_AP_TH='<thead><tr><th>Waktu</th><th>Nama</th><th>Email</th><th>Unit</th><th>Peran</th><th>Menu dibuka</th><th>Perangkat</th><th>Durasi</th></tr></thead>';
+function cmRenderApLog(body,r){
+  const q=cmAL.q.trim().toLowerCase();
+  const list=cmALSessions(cmAL.events).filter(s=>cmALInRange(s,r)&&(!cmAL.role||s.role===cmAL.role)&&(!cmAL.unit||s.unit===cmAL.unit)&&(!q||(s.name+' '+s.email).toLowerCase().includes(q)));
+  const per=25,pager=cmApPager(list.length,per),page=list.slice((cmAL.page-1)*per,cmAL.page*per);
+  const by=k=>list.filter(s=>s.role===k).length;
+  body.innerHTML=cmApFilterBar(false)+`<div class="cm-ap-sum"><span><b>${list.length}</b> kunjungan</span><span><b>${new Set(list.map(s=>s.visitorKey)).size}</b> orang</span><span>Tamu <b>${by('tamu')}</b></span><span>CMO Pusat <b>${by('cmo')}</b></span><span>Superadmin <b>${by('superadmin')}</b></span></div>
+    <div class="cm-ap-tblwrap"><table class="cm-ap-table">${CM_AP_TH}<tbody>${page.length?cmApSessionRows(page):'<tr><td colspan="8" class="cm-ap-mut" style="text-align:center;padding:26px">Belum ada kunjungan yang sesuai filter.</td></tr>'}</tbody></table></div>${pager}
+    <p class="cm-ap-note">Satu baris = satu kunjungan (sesi browser). Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi; identitas CMO Pusat berasal dari akun Google.</p>`;
+  cmBindApFilters(body);
+  body.querySelectorAll('[data-ap-page]').forEach(b=>b.onclick=()=>{cmAL.page+=Number(b.dataset.apPage);cmRenderAccessPanel();});
+}
+function cmALCurrent(){
+  const r=cmALRange(),prev=cmALPrevRange(r),all=cmALSessions(cmAL.events);
+  const cur=cmALFiltered(all,r,true),pv=cmALFiltered(all,prev,true);
+  return {r,prev,cur,pv,st:cmALStats(cur,r),pst:cmALStats(pv,prev)};
+}
+function cmRenderApStats(body,r){
+  const {cur,st,pst}=cmALCurrent();
+  const newV=[...st.visitors.keys()].filter(k=>!pst.visitors.has(k)).length;
+  const d1=cmALDelta(st.hits,pst.hits),d2=cmALDelta(st.unique,pst.unique);
+  const n=cmALNarr(st,r,pst,'id');
+  const heatHours=[];for(let h=6;h<=20;h++)heatHours.push(h);
+  const days=[1,2,3,4,5].concat([6,0].filter(w=>heatHours.some(h=>st.heat[w+'_'+h])));
+  const maxHeat=Math.max(1,...Object.values(st.heat));
+  const shade=v=>{if(!v)return '#F3F5FA';const t=v/maxHeat;return t>.8?'#12275A':t>.6?'#1F3F86':t>.4?'#2F5BD3':t>.2?'#7FA0E8':'#C2D3F4';};
+  const per=10,pager=cmApPager(cur.length,per),page=cur.slice((cmAL.page-1)*per,cmAL.page*per);
+  body.innerHTML=cmApFilterBar(true)+`
+    <div class="cm-ap-kpis">
+      <div class="k"><small>Total hits</small><b>${cmFmtNum(st.hits)}</b><i class="${d1.cls}">${d1.txt}</i></div>
+      <div class="k"><small>Pengunjung unik</small><b>${cmFmtNum(st.unique)}</b><i class="${d2.cls}">${newV?`${newV} orang tidak berkunjung pada periode sebelumnya`:d2.txt}</i></div>
+      <div class="k"><small>Rata-rata / hari kerja</small><b>${cmFmtNum(st.perWorkday,1)}</b><em>hits per hari</em></div>
+      <div class="k"><small>Menu tersering</small><b class="t">${escapeHtml(st.topMenu?st.topMenu[0]:'-')}</b><em>${st.topMenu?`selain Overview · di ${Math.round(st.topMenu[1]/Math.max(1,st.hits)*100)}% kunjungan`:'belum ada data'}</em></div>
+      <div class="k"><small>Jam tersibuk</small><b class="t">${st.topHour?cmALHourLabel(st.topHour[0]):'-'}</b><em>${st.topWd?CM_DAY_ID[st.topWd[0]]+' paling ramai':'belum ada data'}</em></div>
+    </div>
+    <div class="cm-ap-grid g3">
+      <div class="cm-ap-card"><h4>Tren hits harian</h4><div class="cm-ap-chart"><canvas id="cmApTrend"></canvas></div><div class="chart-narr">${cmMd(n.trend)}</div></div>
+      <div class="cm-ap-card"><h4>Menu yang dibuka</h4><div class="cm-ap-chart"><canvas id="cmApMenuChart"></canvas></div><div class="chart-narr">${cmMd(n.menu)}</div></div>
+      <div class="cm-ap-card"><h4>Unit pengunjung</h4><div class="cm-ap-chart"><canvas id="cmApUnitChart"></canvas></div><div class="chart-narr">${cmMd(n.unit)}</div></div>
+    </div>
+    <div class="cm-ap-grid g2">
+      <div class="cm-ap-card"><h4>Pola jam kunjungan</h4>
+        <div class="cm-ap-heat" style="grid-template-columns:42px repeat(${heatHours.length},1fr)"><span></span>${heatHours.map(h=>`<span class="hh">${String(h).padStart(2,'0')}</span>`).join('')}
+        ${days.map(w=>`<span class="hd">${CM_DAY_ID[w].slice(0,3)}</span>${heatHours.map(h=>{const v=st.heat[w+'_'+h]||0;return `<div class="c" style="background:${shade(v)}" title="${CM_DAY_ID[w]} ${cmALHourLabel(h)}: ${v} hits"></div>`;}).join('')}`).join('')}</div>
+        <div class="chart-narr">${cmMd(n.heat||'Belum ada data.')}</div></div>
+      <div class="cm-ap-card"><h4>Log kunjungan Tamu <span class="cm-ap-mut" style="font-weight:500">· ${cur.length} kunjungan</span></h4>
+        <div class="cm-ap-tblwrap"><table class="cm-ap-table">${CM_AP_TH}<tbody>${page.length?cmApSessionRows(page):'<tr><td colspan="8" class="cm-ap-mut" style="text-align:center;padding:22px">Belum ada kunjungan Tamu yang sesuai filter.</td></tr>'}</tbody></table></div>${pager}</div>
+    </div>
+    <p class="cm-ap-note">Hit = satu kunjungan (sesi browser) oleh Tamu. Durasi dihitung dari catatan pertama sampai terakhir dalam satu sesi, sehingga merupakan perkiraan. Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi.</p>`;
+  cmBindApFilters(body);
+  body.querySelectorAll('[data-ap-page]').forEach(b=>b.onclick=()=>{cmAL.page+=Number(b.dataset.apPage);cmRenderAccessPanel();});
+  if(typeof Chart==='undefined')return;
+  const dayKeys=Object.keys(st.byDay),avg=st.hits/Math.max(1,dayKeys.length);
+  const mk=(id,cfg)=>{const c=document.getElementById(id);if(c)cmAL.charts.push(new Chart(c,cfg));};
+  const base={responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},datalabels:{display:false}}};
+  mk('cmApTrend',{type:'line',data:{labels:dayKeys.map(k=>dayjs(k).format('DD MMM')),datasets:[{data:dayKeys.map(k=>st.byDay[k].hits),borderColor:'#2F5BD3',backgroundColor:'rgba(47,91,211,.10)',fill:true,tension:.3,pointRadius:dayKeys.length>45?0:2.5,borderWidth:2.2},{data:dayKeys.map(()=>Math.round(avg*10)/10),borderColor:'#C8A84B',borderDash:[5,4],pointRadius:0,borderWidth:1.6}]},options:{...base,scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{ticks:{maxTicksLimit:8,autoSkip:true}}},plugins:{...base.plugins,tooltip:{callbacks:{label:c=>c.datasetIndex?`Rata-rata: ${c.raw}`:`${c.raw} hits`}}}}});
+  const ms=Object.entries(st.byMenu).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mk('cmApMenuChart',{type:'bar',data:{labels:ms.map(x=>x[0]),datasets:[{data:ms.map(x=>x[1]),backgroundColor:'#2F5BD3',borderRadius:5,maxBarThickness:18}]},options:{...base,indexAxis:'y',scales:{x:{beginAtZero:true,ticks:{precision:0}}},plugins:{...base.plugins,datalabels:{display:true,anchor:'end',align:'right',color:'#12275A',font:{weight:'bold',size:11}}},layout:{padding:{right:24}}}});
+  const us=Object.entries(st.byUnit).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mk('cmApUnitChart',{type:'bar',data:{labels:us.map(x=>x[0].length>24?x[0].slice(0,23)+'…':x[0]),datasets:[{data:us.map(x=>x[1]),backgroundColor:'#15784F',borderRadius:5,maxBarThickness:18}]},options:{...base,indexAxis:'y',scales:{x:{beginAtZero:true,ticks:{precision:0}}},plugins:{...base.plugins,datalabels:{display:true,anchor:'end',align:'right',color:'#15784F',font:{weight:'bold',size:11}},tooltip:{callbacks:{label:c=>`${c.raw} orang`}}},layout:{padding:{right:24}}}});
+}
+
+/* ---------- Ekspor ---------- */
+function cmALFilterText(r){const u=cmUnitByCode(cmAL.unit);return {periode:`${dayjs(r.from).format('DD/MM/YYYY')} – ${dayjs(r.to).format('DD/MM/YYYY')}`,unit:u?u.name:'Semua unit',menu:cmAL.menu?cmMenuLabel(cmAL.menu):'Semua menu'};}
+function cmALFileStem(r){return `Statistik Kunjungan Tamu ${dayjs(r.from).format('YYYYMMDD')}-${dayjs(r.to).format('YYYYMMDD')}`;}
+function cmALRawRows(cur){
+  const keys=new Set(cur.map(s=>s.key));
+  return cmAL.events.filter(e=>keys.has((e.session||'')+'|'+(e.uid||''))).sort((a,b)=>String(a.ts).localeCompare(String(b.ts))).map(e=>{const t=dayjs(e.ts);const s={role:e.role,unit:e.unit,instansi:e.instansi,unitName:e.unitName};
+    return {Tanggal:t.format('YYYY-MM-DD'),Hari:CM_DAY_ID[t.day()],Jam:t.hour(),Waktu:t.format('HH:mm:ss'),Jenis:e.kind==='visit'?'Kunjungan':e.kind==='menu'?'Buka menu':'Aktivitas',Menu:e.menu?(e.menuLabel||cmMenuLabel(e.menu)):'',Nama:e.name||'',Email:e.email||'',Unit:cmALUnitLabel(s),'Nama Unit':e.unit==='EKSTERNAL'?'Eksternal':(cmUnitByCode(e.unit)?.name||e.unitName||''),Instansi:e.instansi||'',Peran:cmALRoleLabel(e.role),Perangkat:e.device||'',Browser:e.browser||'','ID Sesi':e.session||''};});
+}
+function cmALExportXlsx(){
+  if(typeof XLSX==='undefined')return toast('Library Excel belum termuat.','error');
+  const {r,cur,st}=cmALCurrent(),f=cmALFilterText(r);
+  const wb=XLSX.utils.book_new();
+  const add=(name,rows,widths)=>{const ws=Array.isArray(rows[0])?XLSX.utils.aoa_to_sheet(rows):XLSX.utils.json_to_sheet(rows.length?rows:[{Keterangan:'Tidak ada data sesuai filter'}]);if(widths)ws['!cols']=widths.map(w=>({wch:w}));if(!Array.isArray(rows[0])&&rows.length)ws['!autofilter']={ref:ws['!ref']};XLSX.utils.book_append_sheet(wb,ws,name);};
+  add('Ringkasan',[
+    ['Statistik Kunjungan Tamu — Dashboard Master Agenda Change Management Pusat'],[],
+    ['Periode',f.periode],['Filter unit',f.unit],['Filter menu',f.menu],['Diekspor pada',dayjs().format('DD/MM/YYYY HH:mm')],['Diekspor oleh',cmCurrentPerson()?.name||''],[],
+    ['Total hits (kunjungan)',st.hits],['Pengunjung unik',st.unique],['Rata-rata hits per hari kerja',Math.round(st.perWorkday*10)/10],
+    ['Menu paling sering dibuka (selain Overview)',st.topMenu?`${st.topMenu[0]} (${st.topMenu[1]} kunjungan)`:'-'],['Jam tersibuk',st.topHour?cmALHourLabel(st.topHour[0]):'-'],['Hari tersibuk',st.topWd?CM_DAY_ID[st.topWd[0]]:'-'],
+    ['Total durasi (perkiraan, menit)',st.totalMins],[],
+    ['Catatan','Hit = satu kunjungan (sesi browser). Durasi diperkirakan dari catatan pertama sampai terakhir dalam satu sesi. Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi.']
+  ],[34,70]);
+  add('Per Sesi',cur.slice().reverse().map(s=>{const t=dayjs(s.start);return {Tanggal:t.format('YYYY-MM-DD'),Hari:CM_DAY_ID[t.day()],Jam:t.hour(),'Waktu Masuk':t.format('HH:mm'),Nama:s.name,Email:s.email,Unit:cmALUnitLabel(s),Instansi:s.instansi||'',Peran:cmALRoleLabel(s.role),'Jumlah Menu':s.menus.length,'Menu Dibuka':s.menus.join(', '),'Durasi (menit)':s.mins,Perangkat:s.device,Browser:s.browser,'ID Sesi':s.session||s.key.split('|')[0]};}),[12,9,6,11,24,30,22,24,11,11,40,13,10,10,16]);
+  add('Log Mentah',cmALRawRows(cur),[12,9,6,10,11,18,24,30,22,40,24,11,10,10,16]);
+  add('Per Hari',Object.entries(st.byDay).map(([k,v])=>({Tanggal:k,Hari:CM_DAY_ID[dayjs(k).day()],'Hari Kerja':[0,6].includes(dayjs(k).day())?'Tidak':'Ya',Hits:v.hits,'Pengunjung Unik':v.uniq.size})),[12,10,11,8,16]);
+  add('Per Pengunjung',[...st.visitors.values()].sort((a,b)=>b.hits-a.hits).map(v=>({Nama:v.name,Email:v.email,Unit:cmALUnitLabel(v),Instansi:v.instansi||'','Jumlah Kunjungan':v.hits,'Kunjungan Pertama':dayjs(v.first).format('YYYY-MM-DD HH:mm'),'Kunjungan Terakhir':dayjs(v.last).format('YYYY-MM-DD HH:mm'),'Menu Paling Sering':(Object.entries(v.menus).sort((a,b)=>b[1]-a[1])[0]||['-'])[0],'Total Durasi (menit)':v.mins})),[24,30,22,24,16,18,18,20,18]);
+  add('Per Menu',Object.entries(st.byMenu).sort((a,b)=>b[1]-a[1]).map(([m,v])=>({Menu:m,'Dibuka di Kunjungan':v,'Pengunjung Unik':st.byMenuUniq[m]?.size||0,'% dari Kunjungan':st.hits?Math.round(v/st.hits*1000)/10:0})),[20,20,16,16]);
+  add('Per Unit',Object.entries(st.byUnit).sort((a,b)=>b[1]-a[1]).map(([u,v])=>({Unit:u,'Pengunjung Unik':v,Hits:st.byUnitHits[u]||0})),[34,16,10]);
+  XLSX.writeFile(wb,cmALFileStem(r)+'.xlsx');
+  toast('File Excel diunduh.','success');
+}
+function cmALExportCsv(){
+  const {r,cur}=cmALCurrent(),rows=cmALRawRows(cur);
+  const head=['Tanggal','Hari','Jam','Waktu','Jenis','Menu','Nama','Email','Unit','Nama Unit','Instansi','Peran','Perangkat','Browser','ID Sesi'];
+  const q=v=>{const s=String(v??'');return /[",\n;]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const csv='﻿'+[head.join(','),...rows.map(x=>head.map(h=>q(x[h])).join(','))].join('\r\n');
+  cmRptDownloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),cmALFileStem(r)+' - log.csv');
+  toast('File CSV diunduh.','success');
+}
+async function cmALBuildReportModel(o){
+  const lang=o.lang,L=cmXL(lang);cmRptLangCur=lang;
+  const {r,cur,st,pst}=cmALCurrent(),f=cmALFilterText(r),n=cmALNarr(st,r,pst,lang),blocks=[];
+  const d1=cmALDelta(st.hits,pst.hits);
+  blocks.push({t:'h1',text:L('Ringkasan Kunjungan','Visit Summary')});
+  blocks.push({t:'kpis',items:[
+    {label:L('Total hits','Total hits'),value:st.hits,sub:d1.txt||L('kunjungan','visits'),color:'2F5BD3'},
+    {label:L('Pengunjung unik','Unique visitors'),value:st.unique,sub:L('orang','people'),color:'16A37F'},
+    {label:L('Rata-rata per hari kerja','Average per workday'),value:cmFmtNum(st.perWorkday,1),sub:'hits',color:'F2A93B'},
+    {label:L('Menu tersering (selain Overview)','Top menu (excl. Overview)'),value:st.topMenu?st.topMenu[0]:'-',sub:st.topMenu?`${st.topMenu[1]} ${L('kunjungan','visits')}`:'',color:'7C5CE0'},
+    {label:L('Jam tersibuk','Busiest hour'),value:st.topHour?cmALHourLabel(st.topHour[0]):'-',sub:st.topWd?CM_DAY_ID[st.topWd[0]]:'',color:'E25563'}]});
+  blocks.push({t:'p',text:n.trend});
+  if(st.hits){
+    const dk=Object.keys(st.byDay);
+    const trend=await cmRptChart({type:'line',data:{labels:dk.map(k=>dayjs(k).format('DD/MM')),datasets:[{data:dk.map(k=>st.byDay[k].hits),borderColor:'#2F5BD3',backgroundColor:'rgba(47,91,211,.12)',fill:true,tension:.3,pointRadius:dk.length>45?0:3,borderWidth:3,datalabels:{display:false}}]},options:{plugins:{legend:{display:false},datalabels:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}},x:{ticks:{maxTicksLimit:12}}}}},720,300);
+    blocks.push({t:'charts',items:[{title:L('Tren hits harian','Daily hits'),img:trend}]});
+    blocks.push({t:'h1',text:L('Menu dan Unit Pengunjung','Menus and Visitor Units')});
+    const ms=Object.entries(st.byMenu).sort((a,b)=>b[1]-a[1]).slice(0,10),us=Object.entries(st.byUnit).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    if(ms.length){blocks.push({t:'charts',items:[{title:L('Menu yang dibuka (jumlah kunjungan)','Menus opened (visits)'),img:await cmRptChart(cmRptBarCfg(ms.map(x=>x[0]),ms.map(x=>x[1]),{horizontal:true,colors:ms.map(()=>'#2F5BD3')}),680,Math.max(200,70+ms.length*34))}]});blocks.push({t:'p',text:n.menu});}
+    if(us.length){blocks.push({t:'charts',items:[{title:L('Unit pengunjung (jumlah orang)','Visitor units (people)'),img:await cmRptChart(cmRptBarCfg(us.map(x=>x[0]),us.map(x=>x[1]),{horizontal:true,colors:us.map(()=>'#16A37F')}),680,Math.max(200,70+us.length*34))}]});blocks.push({t:'p',text:n.unit});}
+    blocks.push({t:'h1',text:L('Pola Waktu Kunjungan','Visit Timing')});
+    const hrs=Object.entries(st.byHour).sort((a,b)=>Number(a[0])-Number(b[0]));
+    blocks.push({t:'charts',items:[{title:L('Kunjungan per jam','Visits by hour'),img:await cmRptChart(cmRptBarCfg(hrs.map(x=>String(x[0]).padStart(2,'0')+'.00'),hrs.map(x=>x[1]),{colors:hrs.map(()=>'#1F3F86')}),680,280)}]});
+    blocks.push({t:'p',text:n.heat});
+    blocks.push({t:'h1',text:L('Daftar Pengunjung','Visitor List')});
+    const vs=[...st.visitors.values()].sort((a,b)=>b.hits-a.hits),shown=vs.slice(0,60);
+    blocks.push({t:'table',small:true,head:['No',L('Nama','Name'),'Email','Unit',L('Kunjungan','Visits'),L('Terakhir','Last visit'),L('Menu tersering','Top menu')],widths:[5,20,25,18,9,12,11],
+      rows:shown.map((v,i)=>[String(i+1),v.name||'-',v.email||'-',cmALUnitLabel(v,true),{text:String(v.hits),align:'center',bold:true},dayjs(v.last).format('DD/MM/YY HH.mm'),(Object.entries(v.menus).sort((a,b)=>b[1]-a[1])[0]||['-'])[0]])});
+    if(vs.length>shown.length)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 60 dari ${vs.length} pengunjung. Daftar lengkap tersedia di ekspor Excel.`,`Showing 60 of ${vs.length}.`)});
+  }
+  blocks.push({t:'p',muted:true,text:L('Hit = satu kunjungan (sesi browser). Durasi merupakan perkiraan. Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi.','A hit is one browser session. Guest identities are self-reported and not verified.')});
+  const title=`${dayjs(r.from).format('DD MMM YYYY')} – ${dayjs(r.to).format('DD MMM YYYY')}`;
+  return cmXWrap({lang,signer:o.signer,kicker:L('LAPORAN STATISTIK KUNJUNGAN TAMU','GUEST VISIT STATISTICS REPORT'),title:title.toUpperCase(),subject:'Dashboard Master Agenda Change Management Pusat',
+    chips:[`${st.hits} hits`,`${st.unique} ${L('pengunjung','visitors')}`],scope:[`${L('Periode','Period')}: ${f.periode}`,`Unit: ${f.unit}`,`Menu: ${f.menu}`],
+    meta:[[L('Periode','Period'),f.periode],[L('Posisi data','Data as of'),dayjs().format('DD/MM/YYYY HH.mm')],[L('Total hits','Total hits'),String(st.hits)]],
+    fileName:cmALFileStem(r),header:`${L('Statistik Kunjungan Tamu','Guest Visit Statistics')} · ${title}`,blocks});
+}
+function cmALOpenReport(){cmRptPreviewModal(uiText('Guest Visit Statistics Report','Preview Laporan Statistik Kunjungan Tamu'),o=>cmALBuildReportModel(o),{lang:currentLang,ai:false,noAi:true});}
+
 const CM_DASHBOARD_TITLE_KEY='cm_dashboard_title_v1';
 const CM_DASHBOARD_TITLE_DEFAULT='Dashboard Master Agenda Change Management Pusat';
 let cmDashboardTitle=CM_DASHBOARD_TITLE_DEFAULT;
@@ -5243,7 +5929,7 @@ async function cmRptBuildRangeModel(items,opts){
     blocks.push({t:'h1',text:L('Daftar Kegiatan','Activity List')});
     const shown=items.slice(0,300);
     blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Kegiatan','Activity'),L('Unit','Unit'),'Program','PIC','Status',L('Dok.','Docs')],widths:[5,12,30,10,14,12,11,6],
-      rows:shown.map((a,i)=>[String(i+1),fmtDate(a.tglMulai),cmReportSafe(a.namaKegiatan),cmReportSafe(a.unitPemohon),cmReportSafe(a.programTerkait),((typeof cmPicList==='function'?cmPicList(a.picTimCM):String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean)).join('\n')||'-'),cmRptStatusCell(a.statusNorm,lang),{text:cmRptDocPct(a)+'%',align:'center'}])});
+      rows:shown.map((a,i)=>[String(i+1),fmtDate(a.tglMulai),cmRptActCell(a,lang),cmReportSafe(a.unitPemohon),cmReportSafe(a.programTerkait),((typeof cmPicList==='function'?cmPicList(a.picTimCM):String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean)).join('\n')||'-'),cmRptStatusCell(a.statusNorm,lang),{text:cmRptDocPct(a)+'%',align:'center'}])});
     if(items.length>shown.length)blocks.push({t:'p',text:L(`Ditampilkan 300 dari ${items.length} kegiatan.`,`Showing 300 of ${items.length} activities.`),muted:true});
   }
   if(total&&inc.gallery!==false){
@@ -5341,7 +6027,7 @@ async function cmRptBuildSingleModel(a,opts){cmRptAiFailed='';
     `**${cmReportSafe(a.namaKegiatan)}** took place on **${dateText}**${cmRptHas(a.waktu)?` at ${a.waktu}`:''}${cmRptHas(lokText)?` (${lokText})`:''}, requested by **${cmReportSafe(a.unitPemohon)}**${prog?` for **${prog}**`:''}, with CM PIC(s) ${pics.join(', ')||'-'}. Current status: **${cmRptStatus(a.statusNorm)}**.`)});
   blocks.push({t:'h1',text:L('Detail Kegiatan','Activity Details')});
   const link=typeof getMeetingLink==='function'?getMeetingLink(a):'';
-  blocks.push({t:'kv',rows:[[L('Nama kegiatan','Activity'),cmReportSafe(a.namaKegiatan)],[L('Kategori','Category'),cmReportSafe(a.kategori)],['Program',cmReportSafe(a.programTerkait)],[L('Layanan','Service'),cmReportSafe(a.layanan)],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],[L('Unit asal narasumber','Speaker unit'),cmReportSafe(a.unitAsalNarsum)],[L('Peserta / sasaran','Target participants'),cmReportSafe(a.pesertaTarget)],[L('Tanggal & waktu','Date & time'),`${dateText}${cmRptHas(a.waktu)?' · '+a.waktu:''}`],[L('Lokasi / kanal','Location / channel'),cmReportSafe(lokText)],...(cmRptHas(link)||lokIsUrl?[[L('Tautan rapat','Meeting link'),cmRptHas(link)?link:lokRaw]]:[]),['PIC Tim CM',(pics.join('\n')||'-')],...(Number(a.estimasiBiaya)>0?[[L('Estimasi biaya','Estimated cost'),fmtRupiah(a.estimasiBiaya)]]:[])]});
+  blocks.push({t:'kv',rows:[[L('Nama kegiatan','Activity'),cmReportSafe(a.namaKegiatan)],[L('Nomor undangan','Invitation no.'),cmRptInvNo(a,lang)||'-'],[L('Kategori','Category'),cmReportSafe(a.kategori)],['Program',cmReportSafe(a.programTerkait)],[L('Layanan','Service'),cmReportSafe(a.layanan)],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],[L('Unit asal narasumber','Speaker unit'),cmReportSafe(a.unitAsalNarsum)],[L('Peserta / sasaran','Target participants'),cmReportSafe(a.pesertaTarget)],[L('Tanggal & waktu','Date & time'),`${dateText}${cmRptHas(a.waktu)?' · '+a.waktu:''}`],[L('Lokasi / kanal','Location / channel'),cmReportSafe(lokText)],...(cmRptHas(link)||lokIsUrl?[[L('Tautan rapat','Meeting link'),cmRptHas(link)?link:lokRaw]]:[]),['PIC Tim CM',(pics.join('\n')||'-')],...(Number(a.estimasiBiaya)>0?[[L('Estimasi biaya','Estimated cost'),fmtRupiah(a.estimasiBiaya)]]:[])]});
   if(cmRptHas(a.tujuanOutput))blocks.push({t:'callout',tone:'good',title:L('Tujuan dan output','Objective and output'),lines:[a.tujuanOutput]});
   // ===== analysis of catatan + notula =====
   const sources=await cmRptActivitySources(a,lang);
@@ -5434,7 +6120,7 @@ async function cmRptBuildSingleModel(a,opts){cmRptAiFailed='';
   const qr=cmRptQr(`TTE-PLACEHOLDER | ${title} | ${a.id} | ${cmReportSafe(a.namaKegiatan).slice(0,80)}`);
   return {kind:'single',lang,fileName:cmRptFileName(`Laporan Kegiatan - ${cmReportSafe(a.namaKegiatan).slice(0,90)} - ${start||''}`),title:`${title} — ${cmReportSafe(a.namaKegiatan)}`,
     cover:{kicker:title,title:cmReportSafe(a.namaKegiatan),subject,chips:[cmRptStatus(a.statusNorm),cmReportSafe(a.kategori),dateText],scope:[],
-      meta:[[L('Tanggal kegiatan','Activity date'),dateText],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],['Program',cmReportSafe(a.programTerkait)],['PIC Tim CM',pics.join(', ')||'-'],[L('Disusun oleh','Prepared by'),'Pusmantap — BaTii (CMO Kemenkeu)'],[L('Tanggal penyusunan','Prepared on'),cmRptLongDate(signer.date||dayjs().format('YYYY-MM-DD'),lang)]],
+      meta:[[L('Tanggal kegiatan','Activity date'),dateText],[L('Nomor undangan','Invitation no.'),cmRptInvNo(a,lang)||'-'],[L('Unit pemohon','Requesting unit'),cmReportSafe(a.unitPemohon)],['Program',cmReportSafe(a.programTerkait)],['PIC Tim CM',pics.join(', ')||'-'],[L('Disusun oleh','Prepared by'),'Pusmantap — BaTii (CMO Kemenkeu)'],[L('Tanggal penyusunan','Prepared on'),cmRptLongDate(signer.date||dayjs().format('YYYY-MM-DD'),lang)]],
       tte:{qr,name:signer.name,title:signer.title,label:signer.label,city:signer.city,date:cmRptLongDate(signer.date||dayjs().format('YYYY-MM-DD'),lang)}},
     header:`${L('Laporan Kegiatan','Activity Report')} · ${cmReportSafe(a.namaKegiatan).slice(0,70)}`,blocks};
 }
@@ -5444,6 +6130,8 @@ function cmRptSingleContext(a,flags,lang,sources){
 }
 
 /* ---------- HTML renderer (preview + print to PDF) ---------- */
+function cmRptInvNo(a,lang){const L=(i,e)=>lang==='en'?e:i,info=typeof cmInvitationInfo==='function'?cmInvitationInfo(a?.undangan):null;if(!info)return '';if(info.kind==='official')return info.text;if(info.kind==='informal')return L('Informal (tanpa undangan)','Informal (no invitation)');return L(`Belum terbit (${info.text})`,`Not issued yet (${info.text})`);}
+function cmRptActCell(a,lang){const n=cmRptInvNo(a,lang);return cmReportSafe(a.namaKegiatan)+(n?`\n${lang==='en'?'Invitation':'Undangan'}: ${n}`:'');}
 function cmRptMd(s){return escapeHtml(String(s??'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
 function cmRptHtml(model){
   const c=model.cover,L=(i,e)=>cmRptT(model.lang,i,e);let n=0;
@@ -6041,7 +6729,7 @@ async function cmXBuildCalendarModel(o){
     // Agenda rinci
     blocks.push({t:'h1',text:L('Agenda Kegiatan','Activity Agenda')});
     blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Waktu','Time'),L('Kegiatan','Activity'),L('Kategori','Category'),L('Unit','Unit'),'PIC','Status'],widths:[5,13,9,29,10,10,12,12],
-      rows:d.items.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmReportSafe(a.waktu),cmReportSafe(a.namaKegiatan),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmRptStatusCell(a.statusNorm,lang)])});
+      rows:d.items.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmReportSafe(a.waktu),cmRptActCell(a,lang),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmRptStatusCell(a.statusNorm,lang)])});
   }
   if(d.holidays.length){
     blocks.push({t:'h1',text:L('Hari Libur Nasional dan Cuti Bersama','Public Holidays and Collective Leave')});
@@ -6082,7 +6770,7 @@ function cmXExportCalendarExcel(){
     }
     const ws1=XLSX.utils.aoa_to_sheet(grid);ws1['!cols']=dn.map(()=>({wch:34}));XLSX.utils.book_append_sheet(wb,ws1,L('Kalender','Calendar'));
     // Agenda
-    const ag=d.items.map((a,i)=>({No:i+1,[L('Tanggal Mulai','Start Date')]:a.tglMulai||'',[L('Tanggal Selesai','End Date')]:a.tglSelesai||a.tglMulai||'',[L('Hari','Day')]:cmXDay(a.tglMulai,lang,'dddd'),[L('Waktu','Time')]:a.waktu||'',[L('Nama Kegiatan','Activity')]:a.namaKegiatan||'',[L('Kategori','Category')]:a.kategori||'',[L('Program Terkait','Related Program')]:a.programTerkait||'',[L('Unit Pengusul','Requesting Unit')]:a.unitPemohon||'',[L('Layanan','Service')]:a.layanan==='Yes'?L('Ya','Yes'):L('Tidak','No'),['PIC Tim CM']:cmXPics(a).join(', '),[L('Lokasi / Kanal','Location / Channel')]:a.lokasiChannel||'',Status:cmRptStatus(a.statusNorm)}));
+    const ag=d.items.map((a,i)=>({No:i+1,[L('Tanggal Mulai','Start Date')]:a.tglMulai||'',[L('Tanggal Selesai','End Date')]:a.tglSelesai||a.tglMulai||'',[L('Hari','Day')]:cmXDay(a.tglMulai,lang,'dddd'),[L('Waktu','Time')]:a.waktu||'',[L('Nama Kegiatan','Activity')]:a.namaKegiatan||'',[L('Nomor Undangan','Invitation No.')]:cmRptInvNo(a,lang),[L('Kategori','Category')]:a.kategori||'',[L('Program Terkait','Related Program')]:a.programTerkait||'',[L('Unit Pengusul','Requesting Unit')]:a.unitPemohon||'',[L('Layanan','Service')]:a.layanan==='Yes'?L('Ya','Yes'):L('Tidak','No'),['PIC Tim CM']:cmXPics(a).join(', '),[L('Lokasi / Kanal','Location / Channel')]:a.lokasiChannel||'',Status:cmRptStatus(a.statusNorm)}));
     const ws2=ag.length?XLSX.utils.json_to_sheet(ag):XLSX.utils.aoa_to_sheet([[L('Tidak ada kegiatan pada bulan ini.','No activities this month.')]]);
     ws2['!cols']=[{wch:5},{wch:12},{wch:12},{wch:10},{wch:14},{wch:60},{wch:14},{wch:24},{wch:18},{wch:9},{wch:24},{wch:28},{wch:18}];XLSX.utils.book_append_sheet(wb,ws2,'Agenda');
     // Rekap harian
@@ -6159,7 +6847,7 @@ async function cmXBuildWorkboardModel(o){
       blocks.push({t:'h2',text:`${cmRptStatus(k)} (${list.length})`});
       blocks.push({t:'p',text:cmXNarrWorkStatus(k,list,lang,today)});
       blocks.push({t:'table',small:true,head:['No',L('Tanggal','Date'),L('Kegiatan','Activity'),L('Kategori','Category'),L('Unit','Unit'),'PIC',L('Keterangan','Note')],widths:[5,13,33,11,11,13,14],
-        rows:shown.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmReportSafe(a.namaKegiatan),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmXWorkNote(a,k,lang,today)])});
+        rows:shown.map((a,i)=>[String(i+1),cmXDateRange(a,lang),cmRptActCell(a,lang),cmReportSafe(a.kategori),cmReportSafe(a.unitPemohon),cmXPics(a).join('\n')||'-',cmXWorkNote(a,k,lang,today)])});
       if(list.length>shown.length)blocks.push({t:'p',muted:true,text:L(`Ditampilkan 60 dari ${list.length} kegiatan.`,`Showing 60 of ${list.length}.`)});
     });
     blocks.push({t:'h1',text:L('Hal yang Perlu Ditindaklanjuti','Items Requiring Follow-up')});
@@ -6341,6 +7029,7 @@ function cmOpenWorkboardReport(){cmRptPreviewModal(uiText('Workboard Report Prev
 function cmOpenMatrixReport(){cmRptPreviewModal(uiText('Matrix Report Preview','Preview Laporan Matriks'),o=>cmXBuildMatrixModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true});}
 Object.assign(window,{cmOpenCompiledReportBuilder,cmOpenOverviewReport,cmOpenCalendarReport,cmOpenWorkboardReport,cmOpenMatrixReport,cmXExportCalendarExcel,cmXExportCalendarWord});
 function cmCtxReportButtons(tab){
+  if(!cmCanMutate())return '';
   const map={analytics:['cmOpenOverviewReport',uiText('Overview Report','Laporan Overview')],table:['cmOpenActivityReportBuilder',uiText('Report','Laporan')],calendar:['cmOpenCalendarReport',uiText('Calendar Report','Laporan Kalender')],kanban:['cmOpenWorkboardReport',uiText('Workboard Report','Laporan Workboard')],matrix:['cmOpenMatrixReport',uiText('Matrix Report','Laporan Matriks')]}[tab];
   if(!map)return '';
   const btn=(id,fn,label,cls,title,icon)=>`<button type="button" class="btn btn-sm ${cls}" id="${id}" onclick="event.preventDefault();event.stopPropagation();window.${fn}();return false;" title="${escapeHtml(title)}">${icon}${escapeHtml(label)}</button>`;
@@ -6435,7 +7124,8 @@ function renderTable() {
     const cs = getCategoryStyle(a.kategori);
     const ss = STATUS_STYLES[a.statusNorm] || STATUS_STYLES['Scheduled'];
     const ls = a.layanan === 'Yes' ? { bg:'var(--blue-bg)', fg:'var(--navy-700)' } : { bg:'var(--gold-100)', fg:'#8A6A1B' };
-    html += `<tr data-id="${a.id}">
+    const _td=dayjs().format('YYYY-MM-DD'),_isToday=!!a.tglMulai&&a.tglMulai<=_td&&(a.tglSelesai||a.tglMulai)>=_td;
+    html += `<tr data-id="${a.id}"${_isToday?` class="row-today" title="${uiText('Today\'s activity','Kegiatan hari ini')}"`:''}>
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
       <td class="mono">${formatActivityDateCell(a)}</td>
       <td>
@@ -6450,9 +7140,9 @@ function renderTable() {
       <td><span class="status-badge" style="background:${ss.bg};color:${ss.fg}">${escapeHtml(activityStatusLabel(a.statusNorm))}</span>${a.statusNeedsUpdate?` <span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}</td>
       <td>
         <div class="row-actions">
-          <button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>
+          ${cmCanMutate()?`<button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>`:''}
           <button class="icon-btn" data-action="history" data-id="${a.id}" title="${uiText('Activity history / audit log','Riwayat / audit log Activity')}" aria-label="${uiText('Activity history / audit log','Riwayat / audit log Activity')}">${iconHistory()}</button>
-          <button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></button>
+          ${cmCanMutate()?`<button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></button>`:''}
           ${cmCanMutate()&&cmIsEoEnabled(a.eoEnabled)?`<button class="icon-btn eo-manage-btn" data-action="event" data-id="${a.id}" title="${uiText('Manage Event','Kelola Event')}" aria-label="${uiText('Manage Event','Kelola Event')}">${cmEoWorkspaceIcon()}</button>`:''}
           ${cmCanMutate()?`<button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button><button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>`:''}
         </div>
@@ -7356,9 +8046,10 @@ function switchTab(tab) {
   if (targetPanel) targetPanel.classList.remove('hidden');
   document.getElementById('btnAdd')?.classList.toggle('hidden', tab !== 'table' || !cmCanMutate());
   document.getElementById('btnImport')?.classList.toggle('hidden',tab==='tasks'||!cmCanMutate());
-  document.getElementById('btnExport')?.classList.toggle('hidden',tab==='tasks'||cmGetAccessRole()===CM_ROLE_PUBLIC_GUEST);
+  document.getElementById('btnExport')?.classList.toggle('hidden',tab==='tasks'||!cmCanMutate());
   configureContextToolbar(tab);
   renderActiveTab();
+  if(typeof cmAccessLogMenu==='function')cmAccessLogMenu(tab);
 }
 function renderActiveTab() {
   if (state.activeTab === 'tasks') renderTasks();
@@ -8974,7 +9665,7 @@ function openDetail(id) {
         ${a.statusNeedsUpdate?`<span class="status-update-badge">${uiText('Needs Update','Perlu Update')}</span>`:''}
         ${cmIsEoEnabled(a.eoEnabled)?`<span class="eo-mini-badge" style="margin-left:0;">EO · ${cmEoProgress(a.eoChecklist).pct}%</span>`:''}
       </div>
-      ${a.statusNeedsUpdate?`<div class="status-update-panel"><div><b>${uiText('The activity time has passed.','Waktu kegiatan sudah lewat.')}</b><br>${uiText('Confirm whether this activity is completed or update its status.','Konfirmasi apakah activity sudah selesai atau perbarui statusnya.')}</div><div><button type="button" class="btn btn-gold btn-sm" id="detailQuickComplete">${uiText('Mark Completed','Tandai Selesai')}</button><button type="button" class="btn btn-outline btn-sm" id="detailQuickStatus">${uiText('Update Status','Ubah Status')}</button></div></div>`:''}
+      ${!a.statusNeedsUpdate&&a.statusNorm==='Ongoing'&&cmCanMutate()?`<div class="status-update-panel ongoing"><div><b>${uiText('This activity is in progress.','Kegiatan sedang berlangsung.')}</b><br>${uiText('Finished earlier than scheduled? Mark it completed now; otherwise it completes automatically at the end time.','Selesai lebih awal dari jadwal? Tandai selesai sekarang; jika tidak, status otomatis Selesai saat jam selesai.')}</div><div><button type="button" class="btn btn-gold btn-sm" id="detailQuickComplete">${uiText('Mark Completed','Tandai Selesai')}</button><button type="button" class="btn btn-outline btn-sm" id="detailQuickStatus">${uiText('Update Status','Ubah Status')}</button></div></div>`:''}${a.statusNeedsUpdate?`<div class="status-update-panel"><div><b>${uiText('The activity time has passed.','Waktu kegiatan sudah lewat.')}</b><br>${uiText('Confirm whether this activity is completed or update its status.','Konfirmasi apakah activity sudah selesai atau perbarui statusnya.')}</div><div><button type="button" class="btn btn-gold btn-sm" id="detailQuickComplete">${uiText('Mark Completed','Tandai Selesai')}</button><button type="button" class="btn btn-outline btn-sm" id="detailQuickStatus">${uiText('Update Status','Ubah Status')}</button></div></div>`:''}
       <h3 style="font-family:'Sora',sans-serif;font-size:18px;margin:0 0 4px;color:var(--ink-900);">${escapeHtml(a.namaKegiatan)}</h3>
       <div style="height:8px;"></div>
       <div class="detail-grid">
@@ -11833,7 +12524,8 @@ function renderSurveyHub(){
   }
   cmEnsureSurveyListener();
   const active=cmSurveyState.surveys.filter(s=>s.status==='active').length,closed=cmSurveyState.surveys.filter(s=>s.status==='closed').length,totalResp=Object.values(cmSurveyState.counts).reduce((a,b)=>a+(Number(b)||0),0);
-  const tabs=[['create',uiText('＋ Add Survey','＋ Tambah Survei')],['active',uiText('Active Surveys','Survei Aktif')],['analytics','Analytics'],['actions','Action Plan'],['compare',uiText('Compare Rounds','Bandingkan Round')],['history',uiText('History','Riwayat')],['reference',uiText('Reference','Referensi')]];
+  if(!cmCanMutate()&&cmSurveyState.subtab==='create')cmSurveyState.subtab='active';
+  const tabs=(!cmCanMutate()?[]:[['create',uiText('＋ Add Survey','＋ Tambah Survei')]]).concat([['active',uiText('Active Surveys','Survei Aktif')],['analytics','Analytics'],['actions','Action Plan'],['compare',uiText('Compare Rounds','Bandingkan Round')],['history',uiText('History','Riwayat')],['reference',uiText('Reference','Referensi')]]);
   root.innerHTML=`<div class="cm-survey-shell"><div class="cm-survey-hero"><div><h2>${uiText('Change Readiness Assessment (CRA)','Change Readiness Assessment (CRA)')}</h2><p>${uiText('Create, distribute, monitor, and analyze change readiness in one flow.','Buat, distribusikan, monitor, dan analisis kesiapan perubahan dalam satu alur.')}</p></div><div class="cm-survey-hero-stat"><div class="cm-mini-stat"><b>${active}</b><small>${uiText('Active Surveys','Survei Aktif')}</small></div><div class="cm-mini-stat"><b>${totalResp}</b><small>${uiText('Total Responses','Total Respons')}</small></div><div class="cm-mini-stat"><b>${closed}</b><small>${uiText('History','Riwayat')}</small></div></div></div><div class="cm-survey-subtabs">${tabs.map(([k,l])=>`<button class="cm-survey-subtab ${cmSurveyState.subtab===k?'active':''}" data-cm-subtab="${k}">${l}</button>`).join('')}<button type="button" class="cm-context-help" id="cmCraContextHelp" title="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}" aria-label="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}">?</button></div><div id="cmSurveySubContent"></div></div>`;
   root.querySelectorAll('[data-cm-subtab]').forEach(btn=>btn.onclick=()=>{const next=btn.dataset.cmSubtab;if(next==='create'){cmResetBuilder();cmSurveyState.selectedSurveyId='';}cmSurveyState.subtab=next;renderSurveyHub();});document.getElementById('cmCraContextHelp')?.addEventListener('click',()=>cmOpenUserManual(cmManualArticleForContext('survey')));renderSurveySubtab();
 }
@@ -12708,7 +13400,7 @@ const CM_USER_MANUAL_ARTICLES=[
 {id:'resource',category:{en:'CM Team',id:'Tim CM'},title:{en:'Managing CM Team Profiles and Availability',id:'Mengelola Profil dan Ketersediaan Tim CM'},summary:{en:'Maintain CM Team profiles, contacts, grade, skills, WFH schedule, leave, temporary assignments, Re-Entry, and Intern/Internship members.',id:'Kelola profil Tim CM, kontak, golongan, keahlian, jadwal WFH, cuti, penugasan sementara, Re-Entry, serta anggota Intern/Magang.'},keywords:['Tim CM','CM Team','resource','WFO','WFH','cuti','leave','Re-Entry','intern','magang','golongan','penugasan','availability'],steps:{en:['Open CM Team.','Use Search or Status filters to find a member; the default order shows regular employees from the highest grade, followed by Re-Entry and Intern/Internship members at the bottom.','Read the KPI cards for total employees, WFO/available, WFH today, and leave. National holidays and collective leave override the weekly WFH display.','Click Add Employee or Edit, then complete identity, position, rank/grade, unit, official/personal email, WhatsApp number, role, additional role, skills, and weekly WFH days.','For Re-Entry or internship members, fill Assignment and its start/end dates. The assignment automatically becomes Not Active Yet, Active, or Inactive according to the date.','Use Special Status for temporary WFH or leave, add its period, leave type, and notes, then save.','Upload a profile photo when needed; the dashboard compresses large photos automatically.','Ask T-Agent can list CM Team members and explain their live work and assignment status directly from this tab.'],id:['Buka Tim CM.','Gunakan Search atau filter Status untuk menemukan anggota; urutan default menampilkan pegawai reguler dari golongan tertinggi, kemudian Re-Entry dan Intern/Magang di bagian paling bawah.','Baca kartu KPI untuk total pegawai, WFO/tersedia, WFH hari ini, dan cuti. Hari libur nasional serta cuti bersama mengesampingkan tampilan jadwal WFH mingguan.','Klik Tambah Pegawai atau Edit, lalu isi identitas, jabatan, pangkat/golongan, unit, email kantor/pribadi, nomor WhatsApp, peran, rangkap, keahlian, dan jadwal WFH mingguan.','Untuk anggota Re-Entry atau magang, isi Penugasan beserta tanggal mulai/selesai. Status penugasan otomatis menjadi Belum Aktif, Aktif, atau Nonaktif sesuai tanggal.','Gunakan Status Khusus untuk WFH khusus atau cuti, isi periodenya, jenis cuti, dan catatan, lalu simpan.','Upload foto profil bila diperlukan; dashboard mengompres foto besar secara otomatis.','Ask T-Agent dapat menyebutkan anggota Tim CM beserta status kerja dan status penugasannya langsung dari tab ini.']}},
 {id:'backup',category:{en:'Data & Backup',id:'Data & Backup'},title:{en:'Backup and Restore',id:'Backup dan Restore'},summary:{en:'Create and restore dashboard backups including Activity audit logs while preserving the separation between dashboard data and the external AI service.',id:'Buat dan pulihkan backup dashboard termasuk Activity audit log sambil menjaga pemisahan data dashboard dengan layanan AI eksternal.'},keywords:['backup','restore','json','data'],steps:{en:['Use Backup All in the header to create a backup of supported dashboard data.','Store the backup file in an approved secure location.','Use Restore All to restore supported data from a backup file or supported text-code flow.','Review counts and scope in the confirmation dialog before restoring.'],id:['Gunakan Backup All di header untuk membuat backup data dashboard yang didukung.','Simpan file backup pada lokasi yang aman dan sesuai ketentuan.','Gunakan Restore All untuk memulihkan data yang didukung dari file backup atau alur text-code yang tersedia.','Review jumlah dan scope data pada dialog konfirmasi sebelum restore.']}},
 {id:'ai-assistant',category:{en:'AI',id:'AI'},title:{en:'Using Ask T-Agent',id:'Menggunakan Ask T-Agent'},summary:{en:'Ask questions about Dashboard CM procedures, current dashboard context, or general Change Management concepts.',id:'Ajukan pertanyaan tentang cara menggunakan Dashboard CM, konteks dashboard yang tersedia, atau konsep Change Management umum.'},keywords:['AI','assistant','Groq','Cloudflare Worker','question','help','change management'],steps:{en:['Click the floating Ask T-Agent button at the bottom-right of the dashboard.','Ask a procedural question such as “How do I generate a QR for a CRA survey?” or a CM question such as “What is the difference between stakeholder engagement and communication planning?”','The assistant retrieves relevant User Manual and Knowledge content locally before sending context to the configured Worker.','When signed in, the assistant can include relevant Activity and CRA summaries; private dashboard context is sent only with a Firebase ID token for Worker validation.','Use Clear Chat in the Ask T-Agent header when you want to reset only the visible conversation. It does not delete Activity, CRA, Knowledge, or AI Reference data.','The Dashboard CM Worker endpoint is preconfigured in this build. Use AI Settings only if the Worker URL changes or you need to point to another environment.'],id:['Klik tombol floating Ask T-Agent di kanan bawah dashboard.','Ajukan pertanyaan prosedural seperti “Gimana bikin QR untuk survei CRA?” atau pertanyaan CM seperti “Apa beda stakeholder engagement dan communication planning?”','Assistant mencari konteks User Manual dan Knowledge secara lokal sebelum mengirim konteks ke Worker yang dikonfigurasi.','Saat login, assistant dapat menyertakan ringkasan Activity dan CRA yang relevan; konteks private dikirim bersama Firebase ID token untuk validasi Worker.','Gunakan Clear Chat di header Ask T-Agent untuk mengosongkan percakapan yang tampil saja. Fitur ini tidak menghapus Activity, CRA, Knowledge, atau data AI Reference.','Endpoint Worker Dashboard CM sudah diprakonfigurasi pada build ini. Gunakan AI Settings hanya jika URL Worker berubah atau perlu diarahkan ke environment lain.']},note:{en:'The Groq API key is never stored in this HTML; keep it as a Cloudflare Worker Secret.',id:'Groq API key tidak pernah disimpan di HTML ini; simpan sebagai Cloudflare Worker Secret.'}},
-{id:'activity-auto-status',category:{en:'Activity',id:'Activity'},title:{en:'Using Automatic Activity Status',id:'Menggunakan Status Otomatis Activity'},summary:{en:'Activity status follows its scheduled date and time while manual exception statuses remain protected.',id:'Status Activity mengikuti tanggal dan jam pelaksanaan, sedangkan status pengecualian manual tetap dipertahankan.'},keywords:['activity status','automatic','ongoing','needs update','scheduled','jam mulai','jam selesai','perlu update'],steps:{en:['In Add/Edit Activity, enter Start Date, End Date, Start Time, and End Time.','Choose Scheduled for a confirmed future activity, or Awaiting Confirmation when the schedule is not final.','At the start time, Scheduled changes automatically to Ongoing.','After the end time, the activity remains Ongoing and receives a Needs Update badge.','Open Activity Details and choose Mark Completed, or choose Update Status to set another status.','Awaiting Confirmation, Postponed, Completed, and Cancelled are never changed automatically.'],id:['Pada Tambah/Edit Activity, isi Tanggal Mulai, Tanggal Selesai, Jam Mulai, dan Jam Selesai.','Pilih Terjadwal untuk kegiatan yang jadwalnya sudah pasti, atau Menunggu Konfirmasi jika belum final.','Saat jam mulai tiba, status Terjadwal otomatis berubah menjadi Sedang Berlangsung.','Setelah jam selesai lewat, status tetap Sedang Berlangsung dan mendapat badge Perlu Update.','Buka Detail Activity lalu pilih Tandai Selesai, atau pilih Ubah Status untuk menetapkan status lain.','Status Menunggu Konfirmasi, Ditunda, Selesai, dan Dibatalkan tidak pernah diubah otomatis.']},note:{en:'Both time fields are required for accurate automatic status calculation.',id:'Kedua field jam wajib diisi agar status otomatis dihitung dengan akurat.'}},
+{id:'activity-auto-status',category:{en:'Activity',id:'Activity'},title:{en:'Using Automatic Activity Status',id:'Menggunakan Status Otomatis Activity'},summary:{en:'Activity status follows its scheduled date and time while manual exception statuses remain protected.',id:'Status Activity mengikuti tanggal dan jam pelaksanaan, sedangkan status pengecualian manual tetap dipertahankan.'},keywords:['activity status','automatic','ongoing','needs update','scheduled','jam mulai','jam selesai','perlu update'],steps:{en:['In Add/Edit Activity, enter Start Date, End Date, Start Time, and End Time.','Choose Scheduled for a confirmed future activity, or Awaiting Confirmation when the schedule is not final.','At the start time, Scheduled changes automatically to Ongoing.','After the end time, the activity changes automatically to Completed (the dashboard re-checks every minute).','If the activity did not take place, open Activity Details and choose Update Status to set Postponed, Cancelled, or Not Attended.','Awaiting Confirmation, Postponed, Completed, and Cancelled are never changed automatically.'],id:['Pada Tambah/Edit Activity, isi Tanggal Mulai, Tanggal Selesai, Jam Mulai, dan Jam Selesai.','Pilih Terjadwal untuk kegiatan yang jadwalnya sudah pasti, atau Menunggu Konfirmasi jika belum final.','Saat jam mulai tiba, status Terjadwal otomatis berubah menjadi Sedang Berlangsung.','Setelah jam selesai lewat, status otomatis berubah menjadi Selesai (dashboard memeriksa ulang setiap menit).','Jika kegiatan ternyata tidak terlaksana, buka Detail Activity lalu pilih Ubah Status untuk menetapkan Ditunda, Dibatalkan, atau Tidak Dihadiri.','Status Menunggu Konfirmasi, Ditunda, Selesai, dan Dibatalkan tidak pernah diubah otomatis.']},note:{en:'Both time fields are required for accurate automatic status calculation.',id:'Kedua field jam wajib diisi agar status otomatis dihitung dengan akurat.'}},
 {id:'crud-guide',category:{en:'Data Management',id:'Pengelolaan Data'},title:{en:'Adding, Editing, Deleting, Importing, and Exporting Data',id:'Menambah, Mengedit, Menghapus, Import, dan Export Data'},summary:{en:'Understand the common data-management pattern used across Activity, Knowledge, Squad Team, categories, units, and survey configuration.',id:'Pahami pola pengelolaan data yang digunakan pada Activity, Knowledge, Squad Team, kategori, unit, dan konfigurasi survei.'},keywords:['CRUD','add','edit','delete','import','export','excel','undo','data management','tambah','ubah','hapus'],steps:{en:['Sign in before changing shared data.','Open the menu containing the record. Use Search and Filters to verify that the record does not already exist.','Click Add, complete required fields marked with *, then save.','To change data, open Details or use the Edit icon, update only the required fields, then save and verify the result.','Before deleting, confirm the exact record name and review whether linked data or evidence must be retained.','Use Import only with the supported template/format and review the preview or confirmation scope.','Use Export or Backup before a large update so recovery remains possible.'],id:['Login sebelum mengubah data bersama.','Buka menu tempat record berada. Gunakan Search dan Filter untuk memastikan record belum tersedia.','Klik Add/Tambah, lengkapi field wajib bertanda *, lalu simpan.','Untuk mengubah data, buka Detail atau gunakan ikon Edit, ubah hanya field yang diperlukan, lalu simpan dan periksa hasilnya.','Sebelum menghapus, pastikan nama record yang tepat dan periksa apakah data terhubung atau evidence perlu dipertahankan.','Gunakan Import hanya dengan template/format yang didukung dan periksa preview atau scope konfirmasi.','Gunakan Export atau Backup sebelum perubahan massal agar data dapat dipulihkan.']},note:{en:'Deletion can be difficult to reverse. Use the confirmation dialog as a final target check.',id:'Penghapusan dapat sulit dipulihkan. Gunakan dialog konfirmasi sebagai pemeriksaan target terakhir.'}},
 {id:'ai-reference-library',category:{en:'Knowledge',id:'Knowledge'},title:{en:'Managing the CM Reference Library for AI Search',id:'Mengelola CM Reference Library untuk Pencarian AI'},summary:{en:'Upload and maintain authoritative CM documents so extracted text can be searched from Knowledge and used as grounded Ask T-Agent context.',id:'Upload dan kelola dokumen CM otoritatif agar teks hasil ekstraksi dapat dicari dari Knowledge dan digunakan sebagai konteks Ask T-Agent yang ter-grounding.'},keywords:['CM Reference Library','AI reference','framework CM Kemenkeu','upload PDF','DOCX','PPTX','XLSX','version','archive','chunks'],steps:{en:['Sign in and open Knowledge.','Open CM Reference Library and click Upload Reference.','Select one or several supported files: PDF, DOCX, PPTX, XLSX/XLS, TXT, MD, HTML, or JSON.','Review the extracted title, category, access level, description, tags, source URL, and extraction preview.','Correct metadata before publishing; use a clear source URL so users can return to the authoritative original.','Click Publish to AI and wait for indexing to finish.','Search the document by title, tag, distinctive phrase, or framework term.','Use Upload New Version for a revision. The previous active version is archived instead of silently overwritten.','Use Preview to inspect extracted chunks, Edit for metadata, and Delete only after confirming the exact version.'],id:['Login dan buka Knowledge.','Buka CM Reference Library lalu klik Upload Reference.','Pilih satu atau beberapa file yang didukung: PDF, DOCX, PPTX, XLSX/XLS, TXT, MD, HTML, atau JSON.','Periksa judul hasil ekstraksi, kategori, level akses, deskripsi, tag, URL sumber, dan preview ekstraksi.','Perbaiki metadata sebelum publish; gunakan URL sumber yang jelas agar pengguna dapat kembali ke dokumen asli yang otoritatif.','Klik Publish to AI lalu tunggu indexing selesai.','Cari dokumen berdasarkan judul, tag, frasa khas, atau istilah framework.','Gunakan Upload New Version untuk revisi. Versi aktif sebelumnya diarsipkan, bukan ditimpa diam-diam.','Gunakan Preview untuk memeriksa chunk, Edit untuk metadata, dan Delete hanya setelah memastikan versi yang tepat.']}},
 {id:'reminders',category:{en:'Notifications',id:'Notifikasi'},title:{en:'Creating and Managing Personal Reminders',id:'Membuat dan Mengelola Reminder Pribadi'},summary:{en:'Create due-date reminders with H-minus timing, recurrence, running text, banner, popup, and automatic Notification Center listing.',id:'Buat reminder jatuh tempo dengan waktu H-minus, pengulangan, running text, banner, popup, dan daftar otomatis di Pusat Notifikasi.'},keywords:['reminder','notification','bell','H-minus','running text','banner','popup','repeat','jatuh tempo','lonceng'],steps:{en:['Click the bell icon in the header.','Click Create Reminder.','Enter Name/recipient, Message, Due Date, and Start Reminder at H-minus.','Choose a repeat pattern, or Custom to set the interval and stopping rule.','Select optional Running Text, Banner, and/or Popup. Every reminder is listed in Notification Center even if none is selected.','Review the live preview and scheduling summary.','Click Save Reminder. The bell turns gold and shows a count when notifications are scheduled today.','Open Notification Center to edit, mark completed/reactivate, or delete a reminder.'],id:['Klik ikon lonceng pada header.','Klik Buat Reminder.','Isi Nama/penerima, Pesan, Tanggal jatuh tempo, dan Reminder mulai H-.','Pilih pola pengulangan, atau Kustom untuk menentukan interval dan aturan berhenti.','Pilih Running Text, Banner, dan/atau Pop-up bila diperlukan. Semua reminder tetap masuk Pusat Notifikasi meskipun tidak ada tipe tambahan yang dipilih.','Periksa live preview dan ringkasan jadwal.','Klik Simpan Reminder. Lonceng berubah gold dan menampilkan angka saat ada notifikasi yang terjadwal hari ini.','Buka Pusat Notifikasi untuk edit, tandai selesai/aktifkan kembali, atau hapus reminder.']}},
@@ -12822,6 +13514,43 @@ Object.assign(CM_USER_MANUAL_ARTICLES.find(a=>a.id==='whats-new'),{title:{en:"Wh
     wn.steps={en:['Reports: Overview, Calendar, Workboard, and Matrix now have their own Report button next to the existing Activity report, each previewed and downloaded as Word or PDF.','Compilation: Compile Reports combines several menu reports into one document with Parts I to V.','Calendar: the displayed month can be exported directly to Word or Excel.','Charts: every Overview and CRA chart has an explanation that can be shown or hidden per chart.','Activity: invitation number shown above the title with colour status, import invitation in Edit Activity, offline meetings without links, and redesigned Actions icons.','WhatsApp: sharing copies the text for pasting into the WhatsApp tab already open, and multi-day activities show the full date range.','User Manual: can now be downloaded as Word in addition to PDF.',...((wn.steps&&wn.steps.en)||[])],
       id:['Laporan: Overview, Kalender, Workboard, dan Matriks kini memiliki tombol Laporan sendiri selain laporan Activity yang sudah ada; masing-masing dapat di-preview dan diunduh sebagai Word atau PDF.','Kompilasi: Kompilasi Laporan menggabungkan beberapa laporan menu menjadi satu dokumen dengan Bagian I sampai V.','Kalender: bulan yang tampil dapat diekspor langsung ke Word atau Excel.','Grafik: setiap grafik Overview dan CRA memiliki penjelasan yang dapat ditampilkan atau disembunyikan per grafik.','Activity: nomor undangan tampil di atas judul dengan status warna, import undangan di Edit Activity, rapat offline tanpa link, dan ikon Aksi yang diperbarui.','WhatsApp: share menyalin teks untuk ditempel di tab WhatsApp yang sudah terbuka, dan kegiatan lintas hari menampilkan rentang tanggal lengkap.','User Manual: kini dapat diunduh sebagai Word selain PDF.',...((wn.steps&&wn.steps.id)||[])]};
     wn.keywords=[...new Set(['v20.4','Oktober 2026','laporan','kompilasi','word','pdf','excel','penjelasan grafik','undangan','whatsapp',...(wn.keywords||[])])];
+  }
+})();
+
+/* ===== User Manual v20.5 (7 Oktober 2026): masuk sebagai Tamu, mode lihat, Kelola Pengguna & Akses, statistik kunjungan, status otomatis ===== */
+(function(){
+  const A=CM_USER_MANUAL_ARTICLES,find=id=>A.find(a=>a.id===id);
+  const addSteps=(id,en,idn)=>{const a=find(id);if(!a||!a.steps)return;a.steps.en=[...(a.steps.en||[]),...en];a.steps.id=[...(a.steps.id||[]),...idn];};
+  const insertBefore=(beforeId,art)=>{if(find(art.id))return;const i=A.findIndex(a=>a.id===beforeId);if(i<0)A.push(art);else A.splice(i,0,art);};
+  insertBefore('backup',{id:'guest-access',category:{en:'Access & Users',id:'Akses & Pengguna'},
+    title:{en:'Entering as a Guest or as CMO Pusat',id:'Masuk sebagai Tamu atau sebagai CMO Pusat'},
+    summary:{en:'Visitors enter as Guest (view mode) by filling in their name, office email, and unit. The CM Team signs in as CMO Pusat with a Google account to change data.',id:'Pengunjung masuk sebagai Tamu (mode lihat) dengan mengisi nama, email kantor, dan unit. Tim CM masuk sebagai CMO Pusat dengan akun Google untuk mengubah data.'},
+    location:{en:'Entry card shown when the dashboard is opened; name badge at the top right',id:'Kartu masuk yang tampil saat dashboard dibuka; label nama di kanan atas'},
+    functions:{en:['Guest (view mode): every menu can be opened; in the Activity table only the History action is available. Add, Edit, Delete, Import, Export, Report, WhatsApp share, and Feedback are hidden.','CMO Pusat: CM Team members whose email is listed in the CM Team menu, or added by the Superadmin, get full operational access.','Other Google accounts that are not on the list enter as Guest.'],
+      id:['Tamu (mode lihat): semua menu dapat dibuka; pada tabel Activity hanya tersedia aksi Riwayat. Tombol Tambah, Edit, Hapus, Import, Ekspor, Laporan, share WhatsApp, dan Feedback disembunyikan.','CMO Pusat: anggota Tim CM yang emailnya tercantum di menu Tim CM, atau ditambahkan oleh Superadmin, mendapat akses operasional penuh.','Akun Google lain yang tidak tercantum masuk sebagai Tamu.']},
+    steps:{en:['Open the dashboard; the entry card appears.','To enter as Guest, fill in your full name, office email, and Echelon I unit. Ministry of Finance units must use an @kemenkeu.go.id email.','If you are from outside the Ministry, choose External and fill in your institution; any valid email is accepted.','Click Enter (view mode). The browser remembers you, so the next visit opens directly.','CM Team members click Sign in as CMO Pusat and choose their Google account. A Guest can also click Sign in as CMO Pusat in the yellow View mode bar.','Click the exit icon next to your name to sign out; the entry card appears again with your details filled in.'],
+      id:['Buka dashboard; kartu masuk akan tampil.','Untuk masuk sebagai Tamu, isi nama lengkap, email kantor, dan unit Eselon I. Unit Kemenkeu wajib memakai email @kemenkeu.go.id.','Jika Anda dari luar Kemenkeu, pilih Eksternal lalu isi nama instansi/organisasi; email apa pun yang valid diterima.','Klik Masuk (mode lihat). Browser mengingat identitas Anda sehingga kunjungan berikutnya langsung terbuka.','Anggota Tim CM klik Masuk CMO Pusat lalu pilih akun Google. Tamu juga dapat mengklik Masuk sebagai CMO Pusat pada bilah kuning Mode lihat.','Klik ikon keluar di samping nama untuk keluar; kartu masuk tampil kembali dengan identitas yang sudah terisi.']},
+    outcome:{en:'Guests see the same live data as the CM Team without being able to change it, and every visit is recorded for monitoring.',id:'Tamu melihat data terbaru yang sama dengan Tim CM tanpa dapat mengubahnya, dan setiap kunjungan tercatat untuk monitoring.'},
+    note:{en:'There is no password for Guests. Guest identities are self-reported and are not verified; only CMO Pusat sign-in uses a verified Google account.',id:'Tamu tidak memakai kata sandi. Identitas Tamu diisi sendiri dan tidak diverifikasi; hanya masuk CMO Pusat yang memakai akun Google terverifikasi.'},
+    keywords:['tamu','guest','mode lihat','view only','login','masuk','CMO Pusat','eksternal','eselon I','keluar','logout']});
+  insertBefore('backup',{id:'user-access-admin',category:{en:'Access & Users',id:'Akses & Pengguna'},
+    title:{en:'Managing Users and Guest Visit Statistics',id:'Kelola Pengguna dan Statistik Kunjungan Tamu'},
+    summary:{en:'The Superadmin manages CMO Pusat access, sees who entered the dashboard, analyses guest visits, and exports them to Excel, CSV, or a report.',id:'Superadmin mengelola akses CMO Pusat, melihat siapa saja yang masuk ke dashboard, menganalisis kunjungan Tamu, dan mengekspornya ke Excel, CSV, atau laporan.'},
+    location:{en:'People icon next to the Superadmin name at the top right',id:'Ikon orang di samping nama Superadmin di kanan atas'},
+    functions:{en:['Users: Superadmin, CMO Pusat taken automatically from CM Team emails, and manually added CMO Pusat accounts, each with its last sign-in.','Access History: one row per visit (name, email, unit, role, menus opened, device, approximate duration), with period, unit, role, and name/email filters.','Guest Visit Statistics: total hits, unique visitors, average per workday, top menu, busiest hour, daily trend, menus opened, visitor units, and a day-by-hour pattern, each with an explanation.','Export: Excel for analysis (Summary, Per Session, Raw Log, Per Day, Per Visitor, Per Menu, Per Unit sheets), raw CSV, or the Guest Visit Statistics report as Word/PDF. Exports follow the active filters.'],
+      id:['Pengguna: Superadmin, CMO Pusat yang diambil otomatis dari email Tim CM, dan CMO Pusat tambahan manual, masing-masing dengan waktu terakhir masuk.','Riwayat Akses: satu baris per kunjungan (nama, email, unit, peran, menu yang dibuka, perangkat, perkiraan durasi), dengan filter periode, unit, peran, dan nama/email.','Statistik Kunjungan Tamu: total hits, pengunjung unik, rata-rata per hari kerja, menu tersering, jam tersibuk, tren harian, menu yang dibuka, unit pengunjung, dan pola hari × jam, masing-masing dengan penjelasan.','Ekspor: Excel untuk analisis (sheet Ringkasan, Per Sesi, Log Mentah, Per Hari, Per Pengunjung, Per Menu, Per Unit), CSV log mentah, atau Laporan Statistik Kunjungan dalam Word/PDF. Ekspor mengikuti filter yang aktif.']},
+    steps:{en:['Click the people icon next to your name.','On Users, type an email and click + Add to give CMO Pusat access, or click Delete to remove it.','Open Access History to see who entered and when.','Open Guest Visit Statistics, choose 7, 30, or 90 days or Custom, and filter by unit or menu.','Click Export and choose Excel, CSV, or Report.'],
+      id:['Klik ikon orang di samping nama Anda.','Pada Pengguna, ketik email lalu klik + Tambah untuk memberi akses CMO Pusat, atau klik Hapus untuk mencabutnya.','Buka Riwayat Akses untuk melihat siapa yang masuk dan kapan.','Buka Statistik Kunjungan Tamu, pilih 7, 30, atau 90 hari atau Kustom, lalu filter per unit atau menu.','Klik Ekspor lalu pilih Excel, CSV, atau Laporan.']},
+    tips:{en:['A hit is one browser session. Overview opens automatically on entry, so the top-menu indicator excludes it.','If the panel says the visit records cannot be read, the Firebase rules for cmAccessLog have not been installed yet.'],id:['Satu hit = satu sesi browser. Overview otomatis terbuka saat masuk, sehingga indikator menu tersering tidak menghitungnya.','Jika panel menyatakan catatan kunjungan belum bisa dibaca, aturan Firebase untuk cmAccessLog belum dipasang.']},
+    keywords:['kelola pengguna','user management','akses','superadmin','admin','riwayat akses','statistik kunjungan','hits','pengunjung','ekspor','excel','csv']});
+  addSteps('activities',['Activities change to Completed automatically once their end time has passed (checked every minute). For an activity that ends early, open the activity detail and click Mark as Completed in the "This activity is in progress" box.'],['Kegiatan otomatis berubah menjadi Selesai setelah jam selesainya lewat (dicek setiap menit). Untuk kegiatan yang selesai lebih awal, buka detail kegiatan lalu klik Tandai Selesai pada kotak "Kegiatan sedang berlangsung".']);
+  const wn=find('whats-new');
+  if(wn){
+    wn.title={en:"What's New in User Manual v20.5",id:'Yang Baru di User Manual v20.5'};
+    wn.summary={en:'Adds Guest entry with view mode, user and access management, guest visit statistics with export, and automatic activity completion, through 7 October 2026.',id:'Menambahkan masuk sebagai Tamu dengan mode lihat, kelola pengguna dan akses, statistik kunjungan Tamu beserta ekspornya, dan status Selesai otomatis, sampai 7 Oktober 2026.'};
+    wn.steps={en:['Guest entry: visitors fill in name, office email, and Echelon I unit (or External) and view every menu in view mode.','Manage Users & Access: CMO Pusat list, access history, guest visit statistics, and Excel/CSV/report export for the Superadmin.','Activity status: automatically Completed after the end time, with Mark as Completed for early finishes.',...((wn.steps&&wn.steps.en)||[])],
+      id:['Masuk sebagai Tamu: pengunjung mengisi nama, email kantor, dan unit Eselon I (atau Eksternal) lalu melihat semua menu dalam mode lihat.','Kelola Pengguna & Akses: daftar CMO Pusat, riwayat akses, statistik kunjungan Tamu, dan ekspor Excel/CSV/laporan untuk Superadmin.','Status kegiatan: otomatis Selesai setelah jam selesai lewat, dengan tombol Tandai Selesai untuk kegiatan yang selesai lebih awal.',...((wn.steps&&wn.steps.id)||[])]};
+    wn.keywords=[...new Set(['v20.5','tamu','mode lihat','kelola pengguna','statistik kunjungan',...(wn.keywords||[])])];
   }
 })();
 
