@@ -2208,6 +2208,76 @@ html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[
 .cm-ap-pager{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:10px;font-size:12px;color:#5D6785}
 @media(max-width:1100px){.cm-ap-kpis{grid-template-columns:repeat(3,1fr)}.cm-ap-grid.g3,.cm-ap-grid.g2{grid-template-columns:1fr}}
 @media(max-width:640px){.cm-ap-kpis{grid-template-columns:repeat(2,1fr)}.cm-ap-exp{margin-left:0}.cm-ap-expmenu{left:0;right:auto;width:300px}.cm-ap-box{width:100vw!important;max-height:100vh;border-radius:0!important}}
+/* ===== Ajukan Jadwal / Setujui Jadwal ===== */
+.cm-svc{margin-top:16px;border:1px solid #EBD9A6;background:linear-gradient(180deg,#FFFBF0,#FFF6DF);border-radius:14px;padding:13px 14px;display:grid;grid-template-columns:40px 1fr;gap:4px 12px;align-items:start}
+.cm-svc>i{grid-row:1/3;width:40px;height:40px;border-radius:11px;background:#12275A;color:#F2D27A;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:19px}
+.cm-svc>b{font:800 14px 'Sora',Arial;color:#0B1B3D}.cm-svc>p{margin:0;font-size:12px;color:#5D6785;line-height:1.5}
+.cm-svc .tags{grid-column:2;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.cm-svc .tags span{font-size:11px;font-weight:700;color:#6D5310;background:#fff;border:1px solid #EBD9A6;border-radius:999px;padding:2px 9px}
+.cm-svc button{grid-column:1/3;margin-top:10px;width:100%;border:0;border-radius:11px;padding:11px;background:linear-gradient(180deg,#E7C45E,#D8AA32);color:#0B1B3D;font-weight:800;font-size:14px;font-family:inherit;cursor:pointer}
+.cm-svc button:hover{filter:brightness(1.05)}.cm-svc button:disabled{opacity:.7;cursor:wait}
+.cm-entry-cmo{background:#fff!important;border:1.5px solid #C9D3EA!important;color:#12275A!important;font-weight:700!important}
+.cm-entry-cmo:hover{background:#F4F6FB!important}
+.cm-entry-gate.cm-gate-req .cm-svc{border-color:#D3A52E;box-shadow:0 0 0 3px rgba(211,165,46,.18)}
+@media(max-width:820px){.cm-svc>p{font-size:11.5px}}
+.cm-bell{position:relative;overflow:visible}
+.cm-bell .cm-bell-cnt{position:absolute;top:-6px;right:-7px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:#E5484D;color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1}
+.cm-sr-notif{margin:0 16px 12px;border:1px solid #EBD9A6;background:#FFFBF0;border-radius:12px;padding:6px}
+.cm-sr-notif-head{display:flex;align-items:center;gap:6px;padding:6px 8px}.cm-sr-notif-head b{color:#12275A;font-size:13px}.cm-sr-notif-head button{margin-left:auto;border:0;background:none;color:#5D6785;font-size:11.5px;font-weight:700;cursor:pointer}
+.cm-sr-notif .cm-sr-bm-item{background:#fff;margin-bottom:4px;border:1px solid #F0E6C8}.cm-sr-notif .cm-sr-bm-all{background:#12275A;color:#fff}
+.cm-sr-bellmenu{position:fixed;z-index:700;width:340px;max-width:calc(100vw - 16px);background:#fff;border-radius:12px;box-shadow:0 14px 34px rgba(11,27,61,.28);padding:6px;font-size:12.5px;color:#141B2E}
+.cm-sr-bm-head{display:flex;justify-content:space-between;align-items:center;padding:8px 10px}.cm-sr-bm-head b{color:#12275A;font-size:13.5px}.cm-sr-bm-head button{border:0;background:none;color:#5D6785;font-size:11.5px;font-weight:700;cursor:pointer}
+.cm-sr-bm-item{display:block;width:100%;text-align:left;border:0;background:none;border-radius:8px;padding:9px 10px;cursor:pointer;font-family:inherit;font-size:12.5px;color:#141B2E;border-bottom:1px solid #F0F2F7}
+.cm-sr-bm-item:hover{background:#F4F6FB}.cm-sr-bm-item b{color:#12275A}.cm-sr-bm-item small{display:block;color:#8A94A6;margin-top:2px}
+.cm-sr-bm-item.unread{background:#FFFBF0}.cm-sr-bm-item.unread b:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#D8AA32;margin-right:6px;vertical-align:1px}
+.cm-sr-bm-empty{padding:14px 10px;color:#5D6785}.cm-sr-bm-all{display:block;width:100%;border:0;background:#F4F6FB;color:#12275A;font-weight:800;border-radius:8px;padding:9px;margin-top:4px;cursor:pointer;font-family:inherit}
+.cm-sr-calbtns{display:inline-flex;gap:8px;align-items:center}
+.cm-sr-hint{display:flex;gap:10px;align-items:center;margin:0 18px 10px;background:#FFFBF0;border:1px solid #EBD9A6;border-radius:10px;padding:9px 12px;font-size:13px;color:#6B5413}.cm-sr-hint b{color:#12275A}
+.cm-sr-hint.on{border-color:#D3A52E;box-shadow:0 0 0 3px rgba(211,165,46,.2)}
+.cal-cell.cm-sr-pick{cursor:pointer}.cal-cell.cm-sr-pick:hover{box-shadow:inset 0 0 0 2px #D3A52E}
+@keyframes cmSRPulse{0%,100%{box-shadow:0 0 0 0 rgba(231,196,94,.7)}50%{box-shadow:0 0 0 8px rgba(231,196,94,0)}}
+.cm-sr-pulse{animation:cmSRPulse 1.4s ease-in-out 6}
+.cm-sr-btn-wa{background:#1FA855!important;color:#fff!important;border:1px solid #1FA855!important;display:inline-flex!important;gap:6px;align-items:center;justify-content:center}
+.cm-sr-btn-wa:disabled{opacity:.45;cursor:not-allowed}
+.cm-sr-wasent{font-size:11px;color:#15784F;text-align:center}
+.cm-sr-box.cm-sr-done{width:min(480px,100%)!important;text-align:center;padding:26px 26px 6px!important}
+.cm-sr-done h2{margin:12px 0 6px;color:#12275A;font-size:19px}.cm-sr-done p{margin:0;color:#3A4560;font-size:13.5px;line-height:1.6}
+.cm-sr-done-ic{width:56px;height:56px;border-radius:50%;background:#ECFAF4;color:#15784F;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto}.cm-sr-done-ic.no{background:#FDECEC;color:#9E1811}
+.cm-sr-done-sum{margin:14px 0 0;background:#F8FAFE;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:#5D6785}.cm-sr-done-sum b{color:#12275A;font-size:13.5px}
+.cm-sr-wa-preview{text-align:left;white-space:pre-wrap;font-size:12px;line-height:1.5;font-family:inherit;background:#E7F8EE;border:1px solid #BFE8CF;border-radius:10px;padding:10px 12px;margin:12px 0 0;max-height:200px;overflow:auto;color:#14381F}
+.cm-sr-btn-gold{background:linear-gradient(180deg,#E7C45E,#D8AA32)!important;color:#0B1B3D!important;border:1px solid #D3A52E!important;font-weight:800!important}
+.cm-sr-btn-navy{background:#12275A!important;color:#fff!important;border:1px solid #12275A!important}
+.cm-sr-btn-green{background:#15784F!important;color:#fff!important;border:1px solid #15784F!important}
+.cm-sr-btn-red{background:#B42318!important;color:#fff!important;border:1px solid #B42318!important}
+.cm-sr-btn-redsoft{background:#FDECEC!important;color:#9E1811!important;border:1px solid #F3C2C2!important}
+.cm-sr-cnt{display:inline-block;background:#E5484D;color:#fff;border-radius:999px;font-size:10.5px;font-weight:800;padding:1px 7px;margin-left:4px;vertical-align:1px}
+.cal-event.cm-sr-calev{background:#FFF3D6!important;color:#8A5B00!important;border:1px dashed #D3A52E;cursor:pointer}
+.cm-sr-overlay{z-index:120}
+.cm-sr-box{width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:0!important}.cm-sr-box.wide{width:min(860px,100%)}
+.cm-sr-head{display:flex;gap:12px;align-items:flex-start;padding:18px 22px 10px;position:sticky;top:0;background:#fff;z-index:2}
+.cm-sr-head h2{margin:0;font-size:18px;color:#12275A}.cm-sr-head p{margin:3px 0 0;font-size:12.5px;color:#5D6785;line-height:1.5}.cm-sr-head .modal-close{margin-left:auto}
+.cm-sr-ic{width:38px;height:38px;border-radius:11px;background:#12275A;color:#F2D27A;display:flex;align-items:center;justify-content:center;font-size:18px;flex:none;font-weight:800}
+.cm-sr-form{padding:4px 22px 18px}
+.cm-sr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.cm-sr-grid .w{grid-column:1/3}
+.cm-sr-grid label,.cm-sr-edit label,.cm-sr-reject label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:#3A4560}
+.cm-sr-grid input,.cm-sr-grid select,.cm-sr-grid textarea,.cm-sr-edit input,.cm-sr-edit select,.cm-sr-reject textarea{border:1px solid #D6DCEA;border-radius:9px;padding:8px 10px;font-size:13.5px;font-family:inherit;color:#141B2E;background:#fff;font-weight:400}
+.cm-sr-grid input:disabled{background:#F4F6FB;color:#3A4560}.cm-sr-grid small{font-weight:400;color:#8A94A6;font-size:11.5px}
+.cm-sr-time{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cm-sr-ok,.cm-sr-warn{font-size:12px;border-radius:9px;padding:7px 10px;margin-top:2px}.cm-sr-ok{background:#ECFAF4;color:#15784F}.cm-sr-warn{background:#FFF3D6;color:#8A5B00}
+.cm-sr-foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 22px 18px}.cm-sr-form .cm-sr-foot{padding:14px 0 0}.cm-sr-done .cm-sr-foot{padding:16px 0 18px}
+.cm-sr-list{padding:6px 22px 4px;display:grid;gap:10px}
+.cm-sr-card{border:1px solid #E3E7EF;border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;background:#fff}
+.cm-sr-card.focus{border-color:#D3A52E;box-shadow:0 0 0 3px rgba(211,165,46,.2)}
+.cm-sr-card-main{min-width:0;overflow-wrap:anywhere}.cm-sr-list{min-width:0}
+.cm-sr-card-title b{color:#12275A;font-size:14px}.cm-sr-meta{font-size:12px;color:#5D6785;margin-top:3px;line-height:1.5}.cm-sr-meta b{color:#3A4560}
+.cm-sr-purpose{font-size:12.5px;color:#3A4560;background:#F8FAFE;border-radius:8px;padding:7px 9px;margin-top:6px;white-space:pre-wrap}
+.cm-sr-att{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#1B3A73}
+.cm-sr-reason{font-size:12.5px;background:#FDECEC;color:#9E1811;border-radius:8px;padding:7px 9px;margin-top:6px}
+.cm-sr-note{font-size:12.5px;background:#ECFAF4;color:#15784F;border-radius:8px;padding:7px 9px;margin-top:6px}
+.cm-sr-st{font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 9px;vertical-align:2px}.cm-sr-st.pending{background:#FFF3D6;color:#8A5B00}.cm-sr-st.approved{background:#ECFAF4;color:#15784F}.cm-sr-st.rejected{background:#FDECEC;color:#9E1811}
+.cm-sr-card-side{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:104px}
+.cm-sr-edit{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;background:#F8FAFE;border-radius:10px;padding:10px}.cm-sr-edit .cm-sr-editconf{grid-column:1/5}
+.cm-sr-reject{margin-top:10px;background:#FFF7F7;border-radius:10px;padding:10px}.cm-sr-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+@media(max-width:640px){.cm-sr-grid,.cm-sr-edit{grid-template-columns:1fr}.cm-sr-grid .w,.cm-sr-edit .cm-sr-editconf{grid-column:auto}.cm-sr-card{grid-template-columns:1fr}.cm-sr-card-side{flex-direction:row;flex-wrap:wrap}}
 </style>
 
 </head>
@@ -2310,6 +2380,7 @@ html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[
       <button class="cm-reminder-close" type="button" id="btnReminderClose" aria-label="Close">&times;</button>
     </div>
   </div>
+  <div id="cmSRNotifHost" class="cm-sr-notif hidden"></div>
   <div class="cm-reminder-summary" id="cmReminderSummary"></div>
   <div class="cm-reminder-toolbar">
     <div class="cm-reminder-segment" id="cmReminderSegment">
@@ -3317,8 +3388,10 @@ function cmReminderRender() {
   const upcoming=rows.filter(r=>{const st=cmReminderState(r);return st.kind==='future'&&!r.completedAt&&r.active!==false;});
   const overdue=rows.filter(r=>{const st=cmReminderState(r);return st.kind==='overdue'&&!r.completedAt&&r.active!==false;});
   const badge=document.getElementById('cmReminderBadge'),btn=document.getElementById('btnReminderCenter');
-  if(badge){badge.textContent=scheduled.length>99?'99+':String(scheduled.length);badge.classList.toggle('hidden',scheduled.length===0);}
-  if(btn){btn.classList.toggle('has-notifications',scheduled.length>0);const ttl=scheduled.length?uiText(`${scheduled.length} reminder(s) scheduled today`,`${scheduled.length} reminder terjadwal hari ini`):uiText('Reminder / Notification Center','Reminder / Pusat Notifikasi');btn.title=ttl;btn.setAttribute('aria-label',ttl);}
+  let srN=0;try{srN=cmSRIsStaff()?cmSRPending().length:0;cmSRRenderNotifHost();}catch(e){}
+  const notifN=scheduled.length+srN;
+  if(badge){badge.textContent=notifN>99?'99+':String(notifN);badge.classList.toggle('hidden',notifN===0);}
+  if(btn){btn.classList.toggle('has-notifications',notifN>0);const ttl=notifN?[scheduled.length?uiText(`${scheduled.length} reminder(s) scheduled today`,`${scheduled.length} reminder terjadwal hari ini`):'',srN?uiText(`${srN} schedule request(s) waiting`,`${srN} pengajuan jadwal menunggu`):''].filter(Boolean).join(' · '):uiText('Reminder / Notification Center','Reminder / Pusat Notifikasi');btn.title=ttl;btn.setAttribute('aria-label',ttl);}
   const title=document.getElementById('cmReminderPanelTitle');if(title)title.textContent=uiText('Notification Center','Pusat Notifikasi');
   const sub=document.getElementById('cmReminderPanelSub');if(sub)sub.textContent=uiText('Personal reminders for important dates','Pengingat pribadi untuk tanggal penting');
   const add=document.getElementById('btnReminderAdd');if(add)add.textContent=uiText('+ Create Reminder','+ Buat Reminder');
@@ -3616,6 +3689,7 @@ function cmApplyRoleUi(role){
   if(badge){badge.textContent=cmRoleLabel(role);badge.className=`cm-role-badge ${role}`;}
   const accessBtn=document.getElementById('btnAccessAdmin');
   if(accessBtn)accessBtn.classList.toggle('hidden',role!==CM_ROLE_SUPERADMIN);
+  if(typeof cmSRRoleChanged==='function')setTimeout(cmSRRoleChanged,0);
   const allowed=cmAllowedTabsForRole(role);
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.toggle('hidden',!allowed.has(b.dataset.tab)));
   const canEdit=role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN;
@@ -3669,6 +3743,418 @@ function cmOpenAccessManagerLegacy(){
   };
 }
 document.addEventListener('click',e=>{if(e.target?.closest?.('#btnAccessAdmin')){e.preventDefault();cmOpenAccessManager();}});
+/* ===== Ajukan Jadwal (unit) → Setujui Jadwal (Tim CM) ===== */
+const CM_SR_COL='cmScheduleRequests';
+const CM_SR_SUPPORT=[['Narasumber','Narasumber','Speaker'],['Pendampingan','Pendampingan','Facilitation'],['FGD / Konsultasi','FGD / Konsultasi','FGD / Consultation'],['Lainnya','Lainnya','Other']];
+const cmSR={items:[],loaded:false,unsub:null,known:null,tab:'pending',openAfterEntry:false,lastErr:'',timer:null};
+function cmSRIsStaff(){return typeof cmCanMutate==='function'&&cmCanMutate();}
+function cmSRUid(){return window.fbAuth?.currentUser?.uid||'';}
+function cmSRParamAjukan(){if(window.__cmSRParamUsed)return false;try{return new URLSearchParams(location.search).get('ajukan')==='1';}catch(e){return false;}}
+function cmSRConsumeParam(){window.__cmSRParamUsed=true;try{const u=new URL(location.href);if(u.searchParams.has('ajukan')){u.searchParams.delete('ajukan');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);}}catch(e){}}
+function cmSRStatusLabel(s){return s==='approved'?uiText('Approved','Disetujui'):s==='rejected'?uiText('Rejected','Ditolak'):s==='cancelled'?uiText('Cancelled','Dibatalkan'):uiText('Waiting','Menunggu');}
+function cmSRFmtDate(d){return d?dayjs(d).locale(currentLang).format('ddd, DD MMM YYYY'):'—';}
+function cmSRAgo(iso){if(!iso)return '';const m=Math.max(0,dayjs().diff(dayjs(iso),'minute'));if(m<1)return uiText('just now','baru saja');if(m<60)return uiText(`${m} min ago`,`${m} menit lalu`);const h=Math.floor(m/60);if(h<24)return uiText(`${h} h ago`,`${h} jam lalu`);const d=Math.floor(h/24);return d===1?uiText('yesterday','kemarin'):uiText(`${d} days ago`,`${d} hari lalu`);}
+function cmSRUnitText(r){const q=r.requester||{};return q.unit==='EKSTERNAL'?`${uiText('External','Eksternal')}${q.instansi?` (${q.instansi})`:''}`:(q.unit||'-');}
+function cmSRSeenKey(){return 'cm_sr_seen_'+(cmSRIsStaff()?'staff_'+(getCurrentUserEmail()||''):'guest_'+cmSRUid());}
+function cmSRSeen(){try{return new Set(JSON.parse(localStorage.getItem(cmSRSeenKey())||'[]'));}catch(e){return new Set();}}
+function cmSRMarkSeen(ids){try{const s=cmSRSeen();ids.forEach(i=>s.add(i));localStorage.setItem(cmSRSeenKey(),JSON.stringify([...s].slice(-400)));}catch(e){}}
+function cmSRSeenToken(r){return cmSRIsStaff()?r.id:r.id+':'+r.status;}
+
+/* ---------- WhatsApp ---------- */
+function cmSRNormPhone(p){let d=String(p||'').replace(/\D/g,'');if(d.startsWith('0'))d='62'+d.slice(1);else if(d.startsWith('8'))d='62'+d;return d;}
+function cmSRPhoneOk(d){return /^62\d{8,13}$/.test(d);}
+function cmSRPhoneShow(d){d=String(d||'');return d.startsWith('62')?'0'+d.slice(2):d;}
+function cmSRWaText(r){
+  const q=r.requester||{},date=r.finalDate||r.date,start=r.finalStart||r.start,end=r.finalEnd||r.end;
+  const mode=r.mode==='online'?'Online':r.mode==='hybrid'?'Hybrid':'Offline',place=[r.location,r.link].filter(Boolean).join(' · ');
+  const sapa=`Yth. Bapak/Ibu ${q.name||''},`;
+  const link=location.origin+location.pathname+'?ajukan=1';
+  if(r.status==='rejected')return `${sapa}\n\nTerima kasih atas pengajuan jadwal kegiatan *${r.title}* (${cmSRFmtDate(r.date)}, ${r.start}–${r.end} WIB).\n\nMohon maaf, pengajuan tersebut *belum dapat kami setujui*.\nAlasan: ${r.reason||'-'}\n\nBapak/Ibu dapat mengajukan jadwal lain melalui: ${link}\n\nSalam,\nTim Change Management Pusmantap – BaTii`;
+  return `${sapa}\n\nPengajuan jadwal Anda telah *DISETUJUI* oleh Tim CM Pusmantap.\n\n📌 ${r.title}\n📅 ${cmSRFmtDate(date)}\n🕘 ${start}–${end} WIB\n📍 ${mode}${place?' · '+place:''}\n🤝 Dukungan: ${r.support||'-'}\n\nTim CM akan berkoordinasi lebih lanjut terkait persiapan kegiatan. Terima kasih.\n\nSalam,\nTim Change Management Pusmantap – BaTii`;
+}
+async function cmSRSendWa(id){
+  const r=cmSR.items.find(x=>x.id===id);if(!r)return;
+  const ph=cmSRNormPhone(r.phone||r.requester?.phone);
+  if(!cmSRPhoneOk(ph))return toast(uiText('This request has no WhatsApp number.','Pengajuan ini tidak memiliki nomor WhatsApp.'),'warning');
+  window.open(`https://wa.me/${ph}?text=${encodeURIComponent(cmSRWaText(r))}`,'_blank','noopener');
+  try{const p={waSentAt:new Date().toISOString(),waSentBy:getCurrentUserEmail()||''};await window.fbUpdateDoc(window.fbDoc(window.fbDb,CM_SR_COL,id),p);Object.assign(r,p);}catch(e){}
+  cmSRRefreshUi();
+}
+function cmSRWaPrompt(id){
+  const r=cmSR.items.find(x=>x.id===id);if(!r)return;
+  const ph=cmSRNormPhone(r.phone||r.requester?.phone),ok=cmSRPhoneOk(ph),appr=r.status==='approved';
+  document.getElementById('cmSRWaAsk')?.remove();
+  const ov=document.createElement('div');ov.id='cmSRWaAsk';ov.className='modal-overlay cm-sr-overlay';ov.style.zIndex='130';
+  ov.innerHTML=`<div class="modal-box cm-sr-box cm-sr-done" role="dialog" aria-modal="true"><div class="cm-sr-done-ic ${appr?'':'no'}">${appr?'✓':'✕'}</div>
+   <h2>${appr?uiText('Request approved','Pengajuan disetujui'):uiText('Request rejected','Pengajuan ditolak')}</h2>
+   <p>${appr?uiText('The activity has been added to the Agenda and Calendar.','Kegiatan sudah masuk ke Agenda dan Kalender.'):uiText('The requester can see the reason under My requests.','Pemohon dapat melihat alasannya di Status saya.')} ${ok?uiText(`Let ${escapeHtml(r.requester?.name||'the requester')} know via WhatsApp (${cmSRPhoneShow(ph)}).`,`Kabari ${escapeHtml(r.requester?.name||'pemohon')} melalui WhatsApp (${cmSRPhoneShow(ph)}).`):uiText('This request has no WhatsApp number.','Pengajuan ini tidak memiliki nomor WhatsApp.')}</p>
+   ${ok?`<pre class="cm-sr-wa-preview">${escapeHtml(cmSRWaText(r))}</pre>`:''}
+   <div class="cm-sr-foot" style="justify-content:center"><button type="button" class="btn btn-outline" data-sr-close>${uiText('Later','Nanti saja')}</button>${ok?`<button type="button" class="btn cm-sr-btn-wa" data-sr-wa>${CM_SR_WA_ICON} ${uiText('Send via WhatsApp','Kirim via WhatsApp')}</button>`:''}</div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('[data-sr-close]').forEach(b=>b.onclick=()=>ov.remove());
+  ov.querySelector('[data-sr-wa]')?.addEventListener('click',()=>{ov.remove();cmSRSendWa(id);});
+}
+const CM_SR_WA_ICON='<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" style="vertical-align:-2px"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>';
+
+/* ---------- calendar entry (unit) ---------- */
+function cmSRGoCalendar(){
+  cmSR.hint=true;
+  try{state.calMonth=dayjs().format('YYYY-MM');switchTab('calendar');}catch(e){}
+  setTimeout(()=>{const b=document.querySelector('.cm-sr-calbtns [data-sr-new]');b?.scrollIntoView({block:'center',behavior:'smooth'});},300);
+}
+
+/* ---------- conflict check ---------- */
+function cmSRConflicts(date,start,end,ignoreActivityId){
+  if(!date||!Array.isArray(state?.agendas))return [];
+  return state.agendas.filter(a=>{
+    if(a.id===ignoreActivityId)return false;
+    if(['Cancelled','Postponed'].includes(a.statusNorm))return false;
+    const s=a.tglMulai,e=a.tglSelesai||a.tglMulai;if(!s||date<s||date>e)return false;
+    const as=a.jamMulai||'',ae=a.jamSelesai||'';
+    if(!start||!end||!as||!ae)return true;
+    return start<ae&&as<end;
+  }).map(a=>({name:a.namaKegiatan,time:(a.jamMulai&&a.jamSelesai)?`${a.jamMulai}–${a.jamSelesai}`:uiText('all day','sepanjang hari')}));
+}
+function cmSRConflictHtml(list){
+  if(!list.length)return `<div class="cm-sr-ok">✓ ${uiText('No clash with other activities on this date.','Tidak bentrok dengan kegiatan lain pada tanggal ini.')}</div>`;
+  return `<div class="cm-sr-warn">⚠ ${uiText('Clashes with','Bentrok dengan')}: ${list.slice(0,3).map(x=>`<b>${escapeHtml(x.name)}</b> (${escapeHtml(x.time)})`).join(', ')}${list.length>3?` +${list.length-3}`:''}</div>`;
+}
+
+/* ---------- data ---------- */
+function cmSRQuery(){
+  const col=window.fbCollection(window.fbDb,CM_SR_COL);
+  return cmSRIsStaff()?window.fbQuery(col,window.fbOrderBy('createdAt','desc')):window.fbQuery(col,window.fbWhere('uid','==',cmSRUid()));
+}
+function cmSRApply(rows,fromSnapshot){
+  rows.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const before=cmSR.known;cmSR.items=rows;cmSR.loaded=true;
+  const now=new Set(rows.map(r=>cmSRSeenToken(r)));
+  if(before){
+    const fresh=rows.filter(r=>!before.has(cmSRSeenToken(r)));
+    if(cmSRIsStaff())fresh.filter(r=>r.status==='pending').slice(0,3).forEach(r=>toast(uiText(`New schedule request from ${cmSRUnitText(r)}: ${r.title}`,`Pengajuan jadwal baru dari ${cmSRUnitText(r)}: ${r.title}`),'info'));
+    else fresh.filter(r=>r.status==='approved'||r.status==='rejected').forEach(r=>toast(`${uiText('Your schedule request','Pengajuan jadwal Anda')} "${r.title}" ${cmSRStatusLabel(r.status).toLowerCase()}.`,r.status==='approved'?'success':'warning'));
+  }
+  cmSR.known=now;
+  cmSRRefreshUi();
+}
+function cmSRMineIds(){try{return JSON.parse(localStorage.getItem('cm_sr_mine_v1')||'[]');}catch(e){return [];}}
+function cmSRRememberMine(id){try{const a=cmSRMineIds().filter(x=>x!==id);a.unshift(id);localStorage.setItem('cm_sr_mine_v1',JSON.stringify(a.slice(0,60)));}catch(e){}}
+async function cmSRWithMine(rows){
+  if(cmSRIsStaff())return rows;
+  const have=new Set(rows.map(r=>r.id)),extra=cmSRMineIds().filter(id=>!have.has(id)).slice(0,30);
+  const got=await Promise.all(extra.map(async id=>{try{const d=await window.fbGetDoc(window.fbDoc(window.fbDb,CM_SR_COL,id));return d.exists()?{id,...d.data()}:null;}catch(e){return null;}}));
+  return rows.concat(got.filter(Boolean));
+}
+async function cmSRLoad(){
+  if(!window.fbDb||!window.fbGetDocs||!cmSRUid()||cmIsPublicSurveyMode())return;
+  try{const snap=await window.fbGetDocs(cmSRQuery());cmSR.lastErr='';cmSRApply(await cmSRWithMine(snap.docs.map(d=>({id:d.id,...d.data()}))));}
+  catch(e){cmSR.lastErr=e?.code||e?.message||'error';console.warn('Schedule requests not readable (check Firestore rules for cmScheduleRequests).',cmSR.lastErr);cmSRRefreshUi();}
+}
+function cmSRSubscribe(){
+  try{cmSR.unsub?.();}catch(e){}cmSR.unsub=null;cmSR.known=null;cmSR.items=[];cmSR.loaded=false;
+  clearInterval(cmSR.timer);cmSR.timer=null;
+  if(!window.fbDb||!cmSRUid()||cmIsPublicSurveyMode()){cmSRRefreshUi();return;}
+  cmSRLoad();
+  try{if(window.fbOnSnapshot)cmSR.unsub=window.fbOnSnapshot(cmSRQuery(),async snap=>{if(snap?.docs)cmSRApply(await cmSRWithMine(snap.docs.map(d=>({id:d.id,...d.data()}))),true);},err=>{cmSR.lastErr=err?.code||'error';});}catch(e){}
+  cmSR.timer=setInterval(()=>{if(document.visibilityState==='visible')cmSRLoad();},90000);
+}
+let cmSRRoleSig='';
+function cmSRRoleChanged(){
+  const sig=(cmSRUid()||'-')+'|'+(cmSRIsStaff()?'staff':'guest');
+  cmSRRefreshUi();
+  if(sig===cmSRRoleSig)return;cmSRRoleSig=sig;
+  setTimeout(cmSRSubscribe,50);
+  if((cmSR.openAfterEntry||cmSRParamAjukan())&&cmSRUid()&&!cmSRIsStaff()){cmSR.openAfterEntry=false;cmSRConsumeParam();setTimeout(()=>{if(!document.getElementById('cmEntryGate')||document.getElementById('cmEntryGate').classList.contains('hidden'))cmSRGoCalendar();},700);}
+}
+
+/* ---------- notifikasi (Pusat Notifikasi yang sudah ada) ---------- */
+function cmSRPending(){return cmSR.items.filter(r=>r.status==='pending');}
+function cmSRRefreshUi(){
+  try{cmReminderRender();}catch(e){}
+  if(state?.activeTab==='calendar'&&document.getElementById('tab-calendar')?.querySelector('.cal-grid'))cmSRDecorateCalendar();
+  const panel=document.getElementById('cmSRPanel');if(panel&&!panel._busy)cmSRRenderPanel();
+}
+function cmSRRenderNotifHost(){
+  const host=document.getElementById('cmSRNotifHost');if(!host)return;
+  if(!cmSRIsStaff()||!cmSRUid()){host.classList.add('hidden');host.innerHTML='';return;}
+  const seen=cmSRSeen(),list=cmSRPending(),denied=cmSR.lastErr&&/permission/i.test(cmSR.lastErr);
+  host.classList.remove('hidden');
+  host.innerHTML=`<div class="cm-sr-notif-head"><b>📅 ${uiText('Schedule requests','Pengajuan jadwal')}</b>${list.length?`<span class="cm-sr-cnt">${list.length}</span>`:''}${list.some(r=>!seen.has(r.id))?`<button type="button" data-sr-markall>${uiText('Mark as read','Tandai dibaca')}</button>`:''}</div>
+  ${denied?`<div class="cm-sr-bm-empty">${uiText('Schedule requests cannot be read yet. Install the Firebase rules for cmScheduleRequests.','Pengajuan jadwal belum bisa dibaca. Pasang aturan Firebase untuk cmScheduleRequests.')}</div>`:
+   list.length?list.slice(0,6).map(r=>`<button type="button" class="cm-sr-bm-item ${seen.has(r.id)?'':'unread'}" data-sr-open="${escapeHtml(r.id)}"><b>${uiText('New schedule request','Pengajuan jadwal baru')}</b> · ${escapeHtml(cmSRUnitText(r))}<small>${escapeHtml(r.title||'')} · ${escapeHtml(cmSRFmtDate(r.date))} ${escapeHtml(r.start||'')} · ${escapeHtml(cmSRAgo(r.createdAt))}</small></button>`).join('')
+   :`<div class="cm-sr-bm-empty">${uiText('No schedule requests waiting.','Tidak ada pengajuan jadwal yang menunggu.')}</div>`}
+  <button type="button" class="cm-sr-bm-all" data-sr-panel>${uiText('Open Approve Schedule','Buka Setujui Jadwal')} →</button>`;
+  host.querySelector('[data-sr-markall]')?.addEventListener('click',()=>{cmSRMarkSeen(list.map(r=>r.id));cmSRRenderNotifHost();});
+  host.querySelector('[data-sr-panel]').onclick=()=>{try{cmReminderClosePanel();}catch(e){}cmSROpenPanel();};
+  host.querySelectorAll('[data-sr-open]').forEach(b=>b.onclick=()=>{try{cmReminderClosePanel();}catch(e){}cmSROpenPanel(b.dataset.srOpen);});
+}
+
+/* ---------- calendar ---------- */
+function cmSRDecorateCalendar(){
+  const box=document.getElementById('tab-calendar');if(!box)return;
+  const head=box.querySelector('.cal-header');
+  if(head&&!head.querySelector('.cm-sr-calbtns')){
+    const anchor=head.querySelector('#calExportExcel')?.parentElement||head;
+    const w=document.createElement('span');w.className='cm-sr-calbtns';anchor.appendChild(w);
+  }
+  const w=head?.querySelector('.cm-sr-calbtns');
+  if(w){
+    if(!cmSRUid()&&!cmGuestOffline){w.innerHTML='';}
+    else if(cmSRIsStaff()){const n=cmSRPending().length;w.innerHTML=`<span class="cal-export-sep"></span><button type="button" class="btn btn-sm cm-sr-btn-gold" data-sr-approve>✓ ${uiText('Approve Schedule','Setujui Jadwal')}${n?` <span class="cm-sr-cnt">${n}</span>`:''}</button>`;}
+    else{const seen=cmSRSeen(),mine=cmSR.items.filter(r=>r.status!=='cancelled'),fresh=mine.filter(r=>(r.status==='approved'||r.status==='rejected')&&!seen.has(cmSRSeenToken(r))).length;
+      w.innerHTML=`<span class="cal-export-sep"></span><button type="button" class="btn btn-outline btn-sm" data-sr-mine>${uiText('My requests','Status saya')} (${mine.length})${fresh?` <span class="cm-sr-cnt">${fresh}</span>`:''}</button><button type="button" class="btn btn-sm cm-sr-btn-gold" data-sr-new>＋ ${uiText('Request Schedule','Ajukan Jadwal')}</button>`;}
+    w.querySelector('[data-sr-approve]')?.addEventListener('click',()=>cmSROpenPanel());
+    w.querySelector('[data-sr-new]')?.addEventListener('click',()=>cmSROpenForm());
+    w.querySelector('[data-sr-mine]')?.addEventListener('click',()=>cmSROpenMine());
+  }
+  box.querySelector('.cm-sr-hint')?.remove();
+  if(!cmSRIsStaff()&&(cmSRUid()||cmGuestOffline)){
+    const legend=box.querySelector('.cal-holiday-legend');
+    if(legend){const h=document.createElement('div');h.className='cm-sr-hint'+(cmSR.hint?' on':'');
+      h.innerHTML=`<span aria-hidden="true">📅</span><span><b>${uiText('Request a schedule:','Ajukan jadwal:')}</b> ${uiText('check the dates that are still free, then click a date or the <b>＋ Request Schedule</b> button.','lihat tanggal yang masih kosong, lalu klik tanggalnya atau tombol <b>＋ Ajukan Jadwal</b>.')}</span>`;
+      legend.after(h);}
+    w?.querySelector('[data-sr-new]')?.classList.toggle('cm-sr-pulse',!!cmSR.hint);
+    const today=dayjs().format('YYYY-MM-DD');
+    box.querySelectorAll('.cal-cell[data-date]').forEach(c=>{
+      const d=c.dataset.date;if(d<today){c.classList.remove('cm-sr-pick');c.onclick=null;return;}
+      c.classList.add('cm-sr-pick');c.title=c.title||uiText('Click to request this date','Klik untuk mengajukan tanggal ini');
+      c.onclick=e=>{if(e.target.closest('.cal-event,.cal-more'))return;cmSROpenForm({date:d});};
+    });
+  }
+  box.querySelectorAll('.cm-sr-calev').forEach(e=>e.remove());
+  const shown=cmSR.items.filter(r=>r.status==='pending'&&r.date);
+  shown.forEach(r=>{
+    const cell=box.querySelector(`.cal-cell[data-date="${r.date}"] .cal-events-scroll`);if(!cell)return;
+    const el=document.createElement('div');el.className='cal-event cm-sr-calev';el.title=`${uiText('Requested','Diajukan')}: ${r.title} · ${cmSRUnitText(r)}`;
+    el.textContent=`⏳ ${r.title}`;el.onclick=e=>{e.stopPropagation();cmSRIsStaff()?cmSROpenPanel(r.id):cmSROpenMine();};
+    cell.prepend(el);
+  });
+}
+
+/* ---------- form (unit) ---------- */
+function cmSROpenForm(preset){
+  preset=preset||{};cmSR.hint=false;document.querySelector('.cm-sr-hint')?.classList.remove('on');document.querySelector('.cm-sr-pulse')?.classList.remove('cm-sr-pulse');
+  if(cmSRIsStaff())return cmSROpenPanel();
+  const id=cmGuestIdentity();
+  if(!id){cmSR.openAfterEntry=true;return cmEntryGateShow();}
+  if(!cmSRUid())return toast(uiText('Requests need an active connection to the server. Reload the page and try again.','Pengajuan butuh koneksi ke server. Muat ulang halaman lalu coba lagi.'),'warning');
+  document.getElementById('cmSRForm')?.remove();
+  const ov=document.createElement('div');ov.id='cmSRForm';ov.className='modal-overlay cm-sr-overlay';
+  const sup=CM_SR_SUPPORT.map(([v,i,e])=>`<option value="${v}">${uiText(e,i)}</option>`).join('');
+  const who=`${escapeHtml(id.name)} · ${escapeHtml(id.unit==='EKSTERNAL'?(id.instansi||uiText('External','Eksternal')):id.unit)}`;
+  ov.innerHTML=`<div class="modal-box cm-sr-box" role="dialog" aria-modal="true" aria-labelledby="cmSRFormTitle">
+   <div class="cm-sr-head"><span class="cm-sr-ic" aria-hidden="true">📅</span><div><h2 id="cmSRFormTitle">${uiText('Schedule Request Form','Form Pengajuan Jadwal')}</h2><p>${uiText('Your request is reviewed by the CM Team, and the decision is sent to your WhatsApp.','Usulan Anda ditinjau Tim CM, dan keputusannya dikirim ke WhatsApp Anda.')}</p></div><button class="modal-close" type="button" data-sr-close aria-label="${uiText('Close','Tutup')}">×</button></div>
+   <form class="cm-sr-form" novalidate>
+    <div class="cm-sr-grid">
+     <label class="w">${uiText('Activity name','Nama kegiatan')} *<input name="title" maxlength="160" placeholder="${uiText('e.g. Change Management Socialisation','Contoh: Sosialisasi Change Management')}"></label>
+     <label>${uiText('Proposed date','Tanggal usulan')} *<input type="date" name="date" min="${dayjs().format('YYYY-MM-DD')}"></label>
+     <div class="cm-sr-time"><label>${uiText('Start','Jam mulai')} *<input type="time" name="start"></label><label>${uiText('End','Jam selesai')} *<input type="time" name="end"></label></div>
+     <div class="w" id="cmSRConf"></div>
+     <label>${uiText('Format','Format')}<select name="mode"><option value="offline">Offline</option><option value="online">Online</option><option value="hybrid">Hybrid</option></select></label>
+     <label>${uiText('Support needed from Pusmantap','Dukungan yang dibutuhkan dari Pusmantap')}<select name="support">${sup}</select></label>
+     <label data-sr-loc>${uiText('Location','Lokasi')}<input name="location" maxlength="200" placeholder="${uiText('Room / building','Ruang / gedung')}"></label>
+     <label data-sr-link class="hidden">${uiText('Meeting link','Tautan rapat')}<input name="link" maxlength="400" placeholder="https://"></label>
+     <label>${uiText('Estimated participants','Perkiraan peserta')}<input type="number" name="participants" min="1" max="100000" placeholder="${uiText('e.g. 60','Contoh: 60')}"></label>
+     <label>${uiText('Alternative date','Alternatif tanggal')}<input type="date" name="altDate" min="${dayjs().format('YYYY-MM-DD')}"></label>
+     <label class="w">${uiText('Purpose / notes','Tujuan / catatan')} *<textarea name="purpose" rows="3" maxlength="1500" placeholder="${uiText('Briefly describe the need, audience, and expected output.','Jelaskan singkat kebutuhan, sasaran peserta, dan output yang diharapkan.')}"></textarea></label>
+     <label class="w">${uiText('Official memo / invitation (optional)','Nota dinas / undangan (opsional)')}<input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"><small>${uiText('PDF, image, or Word, max ± 700 KB. Images are compressed automatically.','PDF, gambar, atau Word, maks. ± 700 KB. Gambar dikompres otomatis.')}</small></label>
+     <label>${uiText('Requester','Pemohon')}<input value="${who}" disabled></label>
+     <label>${uiText('WhatsApp number','No. WhatsApp')} *<input type="tel" name="phone" inputmode="tel" maxlength="20" placeholder="08xxxxxxxxxx" value="${escapeHtml(cmSRPhoneShow(id.phone||''))}"><small>${uiText('The decision will be sent to this number.','Keputusan akan dikirim ke nomor ini.')}</small></label>
+    </div>
+    <div class="cm-entry-err hidden" data-sr-err role="alert"></div>
+    <div class="cm-sr-foot"><button type="button" class="btn btn-outline" data-sr-close>${uiText('Cancel','Batal')}</button><button type="submit" class="btn cm-sr-btn-navy" data-sr-send>${uiText('Send request','Kirim pengajuan')}</button></div>
+   </form></div>`;
+  document.body.appendChild(ov);
+  const f=ov.querySelector('form'),val=n=>String(f.elements[n].value||'').trim();
+  ov.querySelectorAll('[data-sr-close]').forEach(b=>b.onclick=()=>ov.remove());
+  const syncMode=()=>{const m=val('mode');ov.querySelector('[data-sr-loc]').classList.toggle('hidden',m==='online');ov.querySelector('[data-sr-link]').classList.toggle('hidden',m==='offline');};
+  const syncConf=()=>{const d=val('date');ov.querySelector('#cmSRConf').innerHTML=d?cmSRConflictHtml(cmSRConflicts(d,val('start'),val('end'))):'';};
+  if(preset.date){f.elements.date.value=preset.date;}
+  f.elements.mode.onchange=syncMode;['date','start','end'].forEach(n=>f.elements[n].addEventListener('change',syncConf));syncMode();syncConf();
+  f.onsubmit=async e=>{e.preventDefault();
+    const err=m=>{const x=ov.querySelector('[data-sr-err]');x.textContent=m;x.classList.remove('hidden');};
+    const r={title:val('title'),date:val('date'),start:val('start'),end:val('end'),mode:val('mode'),support:val('support'),location:val('location'),link:val('link'),participants:Number(val('participants'))||0,altDate:val('altDate'),purpose:val('purpose')};
+    if(r.title.length<4)return err(uiText('Activity name is required.','Nama kegiatan wajib diisi.'));
+    if(!r.date)return err(uiText('Choose the proposed date.','Pilih tanggal usulan.'));
+    if(r.date<dayjs().format('YYYY-MM-DD'))return err(uiText('The proposed date cannot be in the past.','Tanggal usulan tidak boleh sebelum hari ini.'));
+    if(!r.start||!r.end||r.end<=r.start)return err(uiText('Fill in a valid start and end time.','Isi jam mulai dan jam selesai yang valid.'));
+    if(r.purpose.length<5)return err(uiText('Purpose / notes is required.','Tujuan / catatan wajib diisi.'));
+    r.phone=cmSRNormPhone(val('phone'));
+    if(!cmSRPhoneOk(r.phone))return err(uiText('Enter an active WhatsApp number, e.g. 081234567890.','Isi nomor WhatsApp aktif, contoh 081234567890.'));
+    if(r.mode==='offline')r.link='';if(r.mode==='online')r.location='';
+    const btn=ov.querySelector('[data-sr-send]');btn.disabled=true;btn.textContent=uiText('Sending…','Mengirim…');
+    try{
+      let attachment=null;const file=f.elements.file.files[0];
+      if(file){const dataUrl=String(file.type||'').startsWith('image/')?await compressImageFile(file):await readFileAsDataURL(file);
+        if(dataUrl.length>950000)throw new Error(uiText('The attachment is too large (max ± 700 KB).','Lampiran terlalu besar (maks. ± 700 KB).'));
+        attachment={name:file.name.slice(0,120),mime:file.type||'application/octet-stream',dataUrl};}
+      const q=cmGuestIdentity()||{};
+      const payload={...r,attachment,uid:cmSRUid(),status:'pending',requester:{name:q.name||'',email:q.email||'',unit:q.unit||'',unitName:q.unitName||'',instansi:q.instansi||'',phone:r.phone},createdAt:new Date().toISOString()};
+      const ref=await window.fbAddDoc(window.fbCollection(window.fbDb,CM_SR_COL),payload);
+      if(ref?.id)cmSRRememberMine(ref.id);cmSR.items.unshift({id:ref?.id||uid('SR'),...payload});if(cmSR.known)cmSR.known.add(cmSRSeenToken(cmSR.items[0]));
+      try{const gi=cmGuestIdentity();if(gi){gi.phone=r.phone;cmSaveGuestIdentity(gi);}}catch(x){}
+      ov.remove();cmSRRefreshUi();cmSRShowSent(payload);
+      if(typeof cmAccessLogMenu==='function')try{cmAccessLogMenu('schedule-request');}catch(x){}
+    }catch(ex){btn.disabled=false;btn.textContent=uiText('Send request','Kirim pengajuan');
+      err(/permission/i.test(ex?.code||ex?.message||'')?uiText('The server rejected the request. The Firebase rules for cmScheduleRequests have not been installed yet.','Server menolak pengajuan. Aturan Firebase untuk cmScheduleRequests belum dipasang.'):(ex?.message||uiText('Failed to send.','Gagal mengirim.')));}
+  };
+  setTimeout(()=>f.elements.title.focus(),50);
+}
+
+function cmSRShowSent(r){
+  document.getElementById('cmSRSent')?.remove();
+  const ov=document.createElement('div');ov.id='cmSRSent';ov.className='modal-overlay cm-sr-overlay';
+  ov.innerHTML=`<div class="modal-box cm-sr-box cm-sr-done" role="dialog" aria-modal="true" aria-labelledby="cmSRSentT"><div class="cm-sr-done-ic">✓</div>
+   <h2 id="cmSRSentT">${uiText('Request sent','Pengajuan terkirim')}</h2>
+   <p>${uiText('The CM Team will process your request shortly, and you will be informed via WhatsApp','Tim CM akan segera memproses pengajuan Anda dan akan diinformasikan melalui WhatsApp')} <b>${escapeHtml(cmSRPhoneShow(r.phone))}</b>.</p>
+   <div class="cm-sr-done-sum"><b>${escapeHtml(r.title)}</b><span>${escapeHtml(cmSRFmtDate(r.date))} · ${escapeHtml(r.start)}–${escapeHtml(r.end)}</span></div>
+   <div class="cm-sr-foot" style="justify-content:center"><button type="button" class="btn btn-outline" data-sr-mine>${uiText('View my requests','Lihat status saya')}</button><button type="button" class="btn cm-sr-btn-navy" data-sr-close>${uiText('Done','Selesai')}</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('[data-sr-close]').onclick=()=>ov.remove();
+  ov.querySelector('[data-sr-mine]').onclick=()=>{ov.remove();cmSROpenMine();};
+}
+
+/* ---------- my requests (unit) ---------- */
+function cmSROpenMine(){
+  document.getElementById('cmSRMine')?.remove();
+  const ov=document.createElement('div');ov.id='cmSRMine';ov.className='modal-overlay cm-sr-overlay';document.body.appendChild(ov);
+  const render=()=>{
+    const list=cmSR.items;
+    ov.innerHTML=`<div class="modal-box cm-sr-box" role="dialog" aria-modal="true"><div class="cm-sr-head"><span class="cm-sr-ic" aria-hidden="true">🗂</span><div><h2>${uiText('My schedule requests','Status pengajuan saya')}</h2><p>${uiText('Requests sent from this browser and their decisions.','Pengajuan yang dikirim dari browser ini beserta keputusannya.')}</p></div><button class="modal-close" type="button" data-sr-close>×</button></div>
+    <div class="cm-sr-list">${list.length?list.map(r=>cmSRCard(r,false)).join(''):`<div class="cm-ap-empty"><b>${uiText('No requests yet.','Belum ada pengajuan.')}</b><span>${uiText('Use Request Schedule to propose an activity with the CM Team.','Gunakan Ajukan Jadwal untuk mengusulkan kegiatan bersama Tim CM.')}</span></div>`}</div>
+    <div class="cm-sr-foot"><button type="button" class="btn btn-outline" data-sr-close>${uiText('Close','Tutup')}</button><button type="button" class="btn cm-sr-btn-gold" data-sr-new>＋ ${uiText('Request Schedule','Ajukan Jadwal')}</button></div></div>`;
+    ov.querySelectorAll('[data-sr-close]').forEach(b=>b.onclick=()=>ov.remove());
+    ov.querySelector('[data-sr-new]').onclick=()=>{ov.remove();cmSROpenForm();};
+    ov.querySelectorAll('[data-sr-cancel]').forEach(b=>b.onclick=async()=>{
+      if(!confirm(uiText('Cancel this request?','Batalkan pengajuan ini?')))return;
+      try{await window.fbDeleteDoc(window.fbDoc(window.fbDb,CM_SR_COL,b.dataset.srCancel));cmSR.items=cmSR.items.filter(x=>x.id!==b.dataset.srCancel);cmSRRefreshUi();render();toast(uiText('Request cancelled.','Pengajuan dibatalkan.'),'success');}
+      catch(e){toast(uiText('Failed to cancel: ','Gagal membatalkan: ')+(e?.code||e?.message||''),'error');}});
+  };
+  render();ov._render=render;
+  cmSRMarkSeen(cmSR.items.map(cmSRSeenToken));setTimeout(cmSRRefreshUi,0);
+}
+function cmSRCard(r,staff){
+  const st=r.status||'pending',conf=staff&&st==='pending'?cmSRConflicts(r.date,r.start,r.end):null;
+  const mode=r.mode==='online'?'Online':r.mode==='hybrid'?'Hybrid':'Offline',q=r.requester||{};
+  const final=(st==='approved'&&(r.finalDate&&(r.finalDate!==r.date||r.finalStart!==r.start||r.finalEnd!==r.end)))?`<div class="cm-sr-note">${uiText('Scheduled as','Dijadwalkan pada')} <b>${escapeHtml(cmSRFmtDate(r.finalDate))} · ${escapeHtml(r.finalStart||'')}–${escapeHtml(r.finalEnd||'')}</b></div>`:'';
+  const cats=(state?.categoryList||[]).slice();if(!cats.includes('Lainnya'))cats.push('Lainnya');
+  return `<div class="cm-sr-card st-${st}" data-sr-card="${escapeHtml(r.id)}">
+   <div class="cm-sr-card-main"><div class="cm-sr-card-title"><b>${escapeHtml(r.title||'')}</b> <span class="cm-sr-st ${st}">${escapeHtml(cmSRStatusLabel(st))}</span></div>
+    <div class="cm-sr-meta">${escapeHtml(cmSRFmtDate(r.date))} · ${escapeHtml(r.start||'')}–${escapeHtml(r.end||'')} · ${mode}${r.participants?` · ${r.participants} ${uiText('participants','peserta')}`:''} · ${escapeHtml(r.support||'')}</div>
+    ${staff?`<div class="cm-sr-meta">${uiText('Requester','Pemohon')}: <b>${escapeHtml(q.name||'-')}</b> (${escapeHtml(cmSRUnitText(r))}) · ${escapeHtml(q.email||'')}${(r.phone||q.phone)?` · WA ${escapeHtml(cmSRPhoneShow(r.phone||q.phone))}`:''} · ${escapeHtml(cmSRAgo(r.createdAt))}</div>`:''}
+    ${(r.location||r.link)?`<div class="cm-sr-meta">${escapeHtml([r.location,r.link].filter(Boolean).join(' · '))}</div>`:''}
+    ${r.altDate?`<div class="cm-sr-meta">${uiText('Alternative date','Alternatif tanggal')}: ${escapeHtml(cmSRFmtDate(r.altDate))}</div>`:''}
+    ${r.purpose?`<div class="cm-sr-purpose">${escapeHtml(r.purpose)}</div>`:''}
+    ${r.attachment?.dataUrl?`<a class="cm-sr-att" href="${escapeHtml(r.attachment.dataUrl)}" download="${escapeHtml(r.attachment.name||'lampiran')}">📎 ${escapeHtml(r.attachment.name||uiText('Attachment','Lampiran'))}</a>`:''}
+    ${conf?cmSRConflictHtml(conf):''}
+    ${st==='rejected'&&r.reason?`<div class="cm-sr-reason"><b>${uiText('Reason','Alasan')}:</b> ${escapeHtml(r.reason)}</div>`:''}
+    ${final}
+    ${st!=='pending'&&r.decidedByName?`<div class="cm-sr-meta">${uiText('Decided by','Diputuskan oleh')} ${escapeHtml(r.decidedByName)} · ${escapeHtml(cmSRAgo(r.decidedAt))}</div>`:''}
+    ${staff&&st==='pending'?`<div class="cm-sr-edit hidden" data-sr-edit>
+      <label>${uiText('Date','Tanggal')}<input type="date" data-f="date" value="${escapeHtml(r.date||'')}"></label>
+      <label>${uiText('Start','Mulai')}<input type="time" data-f="start" value="${escapeHtml(r.start||'')}"></label>
+      <label>${uiText('End','Selesai')}<input type="time" data-f="end" value="${escapeHtml(r.end||'')}"></label>
+      <label>${uiText('Category','Kategori')}<select data-f="kategori">${cats.map(c=>`<option ${c==='Lainnya'?'selected':''}>${escapeHtml(c)}</option>`).join('')}</select></label>
+      <div class="cm-sr-editconf" data-sr-editconf></div></div>
+     <div class="cm-sr-reject hidden" data-sr-rej><label>${uiText('Reason for rejection (shown to the requester)','Alasan penolakan (dilihat pemohon)')} *<textarea rows="2" maxlength="600" data-f="reason"></textarea></label><div class="cm-sr-actions"><button type="button" class="btn btn-outline btn-sm" data-sr-rejcancel>${uiText('Back','Kembali')}</button><button type="button" class="btn btn-sm cm-sr-btn-red" data-sr-rejok="${escapeHtml(r.id)}">${uiText('Reject request','Tolak pengajuan')}</button></div></div>`:''}
+   </div>
+   <div class="cm-sr-card-side">
+    ${staff&&st==='pending'?`<button type="button" class="btn btn-sm cm-sr-btn-green" data-sr-approve="${escapeHtml(r.id)}">✓ ${uiText('Approve','Setujui')}</button><button type="button" class="btn btn-outline btn-sm" data-sr-change>${uiText('Edit','Ubah')}</button><button type="button" class="btn btn-sm cm-sr-btn-redsoft" data-sr-reject>${uiText('Reject','Tolak')}</button>`:''}
+    ${staff&&(st==='approved'||st==='rejected')?`<button type="button" class="btn btn-sm cm-sr-btn-wa" data-sr-wa="${escapeHtml(r.id)}" ${cmSRPhoneOk(cmSRNormPhone(r.phone||q.phone))?'':'disabled title="'+uiText('No WhatsApp number','Tidak ada nomor WhatsApp')+'"'}>${CM_SR_WA_ICON} ${r.waSentAt?uiText('Resend WA','Kirim ulang WA'):uiText('Send WA','Kirim WA')}</button>${r.waSentAt?`<small class="cm-sr-wasent">✓ ${uiText('WA opened','WA dibuka')} ${escapeHtml(cmSRAgo(r.waSentAt))}</small>`:''}`:''}
+    ${staff&&st==='approved'&&r.activityId?`<button type="button" class="btn btn-outline btn-sm" data-sr-act="${escapeHtml(r.activityId)}">${uiText('Open activity','Buka kegiatan')}</button>`:''}
+    ${!staff&&st==='pending'&&r.uid===cmSRUid()?`<button type="button" class="btn btn-outline btn-sm" data-sr-cancel="${escapeHtml(r.id)}">${uiText('Cancel','Batalkan')}</button>`:''}
+   </div></div>`;
+}
+
+/* ---------- approval panel (Tim CM) ---------- */
+function cmSROpenPanel(focusId){
+  if(!cmSRIsStaff())return cmDenyMutation();
+  document.getElementById('cmSRPanel')?.remove();
+  const ov=document.createElement('div');ov.id='cmSRPanel';ov.className='modal-overlay cm-sr-overlay';ov._focus=focusId||'';
+  if(focusId){const r=cmSR.items.find(x=>x.id===focusId);if(r)cmSR.tab=r.status==='approved'?'approved':r.status==='rejected'?'rejected':'pending';}
+  document.body.appendChild(ov);cmSRRenderPanel();cmSRLoad();
+}
+function cmSRRenderPanel(){
+  const ov=document.getElementById('cmSRPanel');if(!ov)return;
+  const by=s=>cmSR.items.filter(r=>(r.status||'pending')===s);
+  const tabs=[['pending',uiText('Waiting','Menunggu')],['approved',uiText('Approved','Disetujui')],['rejected',uiText('Rejected','Ditolak')]];
+  const list=by(cmSR.tab);
+  ov.innerHTML=`<div class="modal-box cm-sr-box wide" role="dialog" aria-modal="true" aria-labelledby="cmSRPanelTitle">
+   <div class="cm-sr-head"><span class="cm-sr-ic" aria-hidden="true">✓</span><div><h2 id="cmSRPanelTitle">${uiText('Approve Schedule','Setujui Jadwal')} ${by('pending').length?`<span class="cm-sr-cnt">${by('pending').length}</span>`:''}</h2><p>${uiText('Schedule requests from units. Approving creates the activity in Agenda and Calendar (status Scheduled).','Pengajuan jadwal dari unit. Menyetujui akan membuat kegiatan di Agenda dan Kalender (status Terjadwal).')}</p></div><button class="modal-close" type="button" data-sr-close>×</button></div>
+   <div class="cm-ap-tabs">${tabs.map(([k,l])=>`<button type="button" data-sr-tab="${k}" class="${cmSR.tab===k?'on':''}">${l} <span class="cm-ap-cnt">${by(k).length}</span></button>`).join('')}</div>
+   <div class="cm-sr-list">${cmSR.lastErr&&/permission/i.test(cmSR.lastErr)?`<div class="cm-ap-empty"><b>${uiText('Requests cannot be read yet.','Pengajuan belum bisa dibaca.')}</b><span>${uiText('Install the Firebase rules for cmScheduleRequests, then reopen this panel.','Pasang aturan Firebase untuk cmScheduleRequests, lalu buka panel ini lagi.')}</span></div>`:
+     list.length?list.map(r=>cmSRCard(r,true)).join(''):`<div class="cm-ap-empty"><b>${cmSR.tab==='pending'?uiText('No requests waiting.','Tidak ada pengajuan yang menunggu.'):uiText('Nothing here yet.','Belum ada data.')}</b><span>${uiText('Units submit requests from the entry card or the Calendar menu.','Unit mengajukan dari kartu masuk atau menu Kalender.')}</span></div>`}</div>
+  </div>`;
+  ov.querySelectorAll('[data-sr-close]').forEach(b=>b.onclick=()=>ov.remove());
+  ov.querySelectorAll('[data-sr-tab]').forEach(b=>b.onclick=()=>{cmSR.tab=b.dataset.srTab;cmSRRenderPanel();});
+  ov.querySelectorAll('[data-sr-card]').forEach(card=>{
+    const id=card.dataset.srCard,edit=card.querySelector('[data-sr-edit]'),rej=card.querySelector('[data-sr-rej]');
+    const fv=n=>card.querySelector(`[data-f="${n}"]`)?.value||'';
+    const syncConf=()=>{const box=card.querySelector('[data-sr-editconf]');if(box)box.innerHTML=cmSRConflictHtml(cmSRConflicts(fv('date'),fv('start'),fv('end')));};
+    card.querySelectorAll('[data-sr-edit] input').forEach(i=>i.addEventListener('change',syncConf));
+    card.querySelector('[data-sr-change]')?.addEventListener('click',()=>{edit.classList.toggle('hidden');rej?.classList.add('hidden');syncConf();});
+    card.querySelector('[data-sr-reject]')?.addEventListener('click',()=>{rej.classList.remove('hidden');edit?.classList.add('hidden');rej.querySelector('textarea').focus();});
+    card.querySelector('[data-sr-rejcancel]')?.addEventListener('click',()=>rej.classList.add('hidden'));
+    card.querySelector('[data-sr-approve]')?.addEventListener('click',e=>cmSRApprove(id,{date:fv('date'),start:fv('start'),end:fv('end'),kategori:fv('kategori')},e.currentTarget));
+    card.querySelector('[data-sr-rejok]')?.addEventListener('click',e=>cmSRReject(id,fv('reason'),e.currentTarget));
+    card.querySelector('[data-sr-act]')?.addEventListener('click',e=>{ov.remove();openDetail(e.currentTarget.dataset.srAct);});
+    card.querySelector('[data-sr-wa]')?.addEventListener('click',e=>cmSRSendWa(e.currentTarget.dataset.srWa));
+  });
+  if(ov._focus){const c=ov.querySelector(`[data-sr-card="${CSS.escape(ov._focus)}"]`);if(c){c.classList.add('focus');c.scrollIntoView({block:'center'});}ov._focus='';}
+  cmSRMarkSeen(by('pending').map(r=>r.id));
+  setTimeout(()=>{try{cmReminderRender();}catch(e){}},0);
+}
+async function cmSRDecide(id,patch){
+  const ref=window.fbDoc(window.fbDb,CM_SR_COL,id);
+  const p={...patch,decidedBy:getCurrentUserEmail()||'',decidedByName:(cmCurrentPerson?.()?.name)||getCurrentUserEmail()||'',decidedAt:new Date().toISOString()};
+  await window.fbUpdateDoc(ref,p);
+  const r=cmSR.items.find(x=>x.id===id);if(r)Object.assign(r,p);if(cmSR.known&&r)cmSR.known.add(cmSRSeenToken(r));
+}
+async function cmSRApprove(id,opt,btn){
+  const r=cmSR.items.find(x=>x.id===id);if(!r)return;
+  if(!cmSRIsStaff())return cmDenyMutation();
+  const date=opt.date||r.date,start=opt.start||r.start,end=opt.end||r.end;
+  if(!date||!start||!end||end<=start)return toast(uiText('Fill in a valid date, start and end time.','Isi tanggal, jam mulai, dan jam selesai yang valid.'),'error');
+  const conf=cmSRConflicts(date,start,end);
+  if(conf.length&&!confirm(uiText(`This clashes with ${conf.length} activity(ies). Approve anyway?`,`Jadwal ini bentrok dengan ${conf.length} kegiatan. Tetap setujui?`)))return;
+  const panel=document.getElementById('cmSRPanel');if(panel)panel._busy=true;
+  if(btn){btn.disabled=true;btn.textContent=uiText('Saving…','Menyimpan…');}
+  try{
+    const q=r.requester||{};
+    let unitPemohon=q.unit==='EKSTERNAL'?(q.instansi||uiText('External','Eksternal')):(q.unit||'-');
+    if(q.unit==='EKSTERNAL'&&unitPemohon&&!state.unitList.some(u=>u.name===unitPemohon))await addUnitIfNew(unitPemohon,'external');
+    let dok='[]';
+    if(r.attachment?.dataUrl&&window.fbSetDoc){
+      const refId=uid('IMG');
+      await window.fbSetDoc(window.fbDoc(window.fbDb,'dashboardImages',refId),{dataUrl:r.attachment.dataUrl,name:r.attachment.name||'lampiran',mime:r.attachment.mime||'application/octet-stream',activityId:'',createdAt:new Date().toISOString()});
+      dok=JSON.stringify([{refId,name:r.attachment.name||'lampiran',mime:r.attachment.mime||'application/octet-stream'}]);
+    }
+    const mode=['online','offline','hybrid'].includes(r.mode)?r.mode:'offline';
+    const obj={namaKegiatan:r.title,tglMulai:date,tglSelesai:date,jamMulai:start,jamSelesai:end,waktu:`${start} - ${end}`,jadwalHarian:[],jamBerbedaPerHari:false,
+      meetingMode:mode,meetingLocation:mode==='online'?'':(r.location||''),meetingLink:mode==='offline'?'':(r.link||''),
+      layanan:'Yes',unitPemohon,kategori:opt.kategori||'Lainnya',programTerkait:'-',status:'Scheduled',
+      pesertaTarget:r.participants?`± ${r.participants} ${uiText('participants','peserta')}`:'',tujuanOutput:r.purpose||'',
+      catatan:[uiText('Submitted via Request Schedule','Diajukan melalui Ajukan Jadwal'),`${q.name||'-'} (${q.email||'-'}) · ${cmSRUnitText(r)}`,`${uiText('Support','Dukungan')}: ${r.support||'-'}`,r.altDate?`${uiText('Alternative date','Alternatif tanggal')}: ${cmSRFmtDate(r.altDate)}`:''].filter(Boolean).join('\n'),
+      dokumentasi:dok,picTimCM:'',updatedBy:getCurrentUserEmail()||null,updatedAt:new Date().toISOString(),scheduleRequestId:id};
+    obj.lokasiChannel=mode==='online'?obj.meetingLink:mode==='offline'?obj.meetingLocation:[obj.meetingLocation,obj.meetingLink].filter(Boolean).join('\n');
+    obj.id=uid('AGD');obj.no=state.agendas.length+1;
+    const saved=preprocess([obj])[0];state.agendas.push(saved);
+    await persist();refreshAll();
+    try{await cmActivityLogRecord(saved,'activity_created',[uiText('Created from a unit schedule request (Request Schedule).','Dibuat dari pengajuan jadwal unit (Ajukan Jadwal).'),`${uiText('Requester','Pemohon')}: ${q.name||'-'} · ${cmSRUnitText(r)}`,`Tanggal: ${date} ${start}–${end}`]);}catch(e){}
+    await cmSRDecide(id,{status:'approved',activityId:saved.id,finalDate:date,finalStart:start,finalEnd:end});
+    cmSR.tab='approved';setTimeout(()=>cmSRWaPrompt(id),50);
+  }catch(e){toast(uiText('Failed to approve: ','Gagal menyetujui: ')+(e?.code||e?.message||''),'error');}
+  finally{if(panel)panel._busy=false;cmSRRefreshUi();}
+}
+async function cmSRReject(id,reason,btn){
+  reason=String(reason||'').trim();
+  if(reason.length<3)return toast(uiText('Please write the reason for rejection.','Tulis alasan penolakan terlebih dahulu.'),'error');
+  if(btn){btn.disabled=true;}
+  try{await cmSRDecide(id,{status:'rejected',reason});cmSR.tab='rejected';setTimeout(()=>cmSRWaPrompt(id),50);}
+  catch(e){toast(uiText('Failed to reject: ','Gagal menolak: ')+(e?.code||e?.message||''),'error');if(btn)btn.disabled=false;}
+  cmSRRefreshUi();
+}
+
 /* ============================================================
    GUEST ENTRY (Tamu · mode lihat) + ACCESS LOG + KELOLA PENGGUNA & AKSES
    - Tamu mengisi Nama, Email, Unit (Eselon I / Eksternal) lalu masuk dengan
@@ -3728,6 +4214,37 @@ async function cmGateSaveCfg(patch){
   cmGateCfg=next;cmGateCacheCfg();cmGateRerender();
 }
 function cmGateSetTheme(t){try{localStorage.setItem(CM_GATE_THEME_KEY,t);}catch(e){}}
+function cmGateCropDialog(file){return new Promise((res,rej)=>{
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('File bukan gambar yang valid.'));};
+  img.onload=()=>{
+    const VW=320,VH=384,OW=1000,OH=1200;let zoom=1,ox=0,oy=0;const base=Math.max(VW/img.width,VH/img.height);
+    const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:900;background:rgba(7,22,52,.62);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+    ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px 20px;width:min(420px,100%);box-shadow:0 24px 60px rgba(0,0,0,.35)"><b style="font-size:16px;color:#12275A">Atur potongan gambar</b>
+    <div style="font-size:12.5px;color:#5D6785;margin:4px 0 10px">Geser gambar untuk menentukan posisi, gunakan penggeser untuk zoom. Bagian gelap di bawah adalah area judul.</div>
+    <div id="cgBox" style="position:relative;width:${VW}px;height:${VH}px;max-width:100%;margin:0 auto;border-radius:12px;overflow:hidden;background:#0F2557;touch-action:none;cursor:grab"><canvas id="cgCv" width="${VW}" height="${VH}" style="display:block;width:100%;height:100%"></canvas>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(180deg,transparent,rgba(7,22,52,.93) 62%);pointer-events:none"></div>
+      <div style="position:absolute;left:14px;top:14px;width:30px;height:30px;border-radius:8px;background:linear-gradient(180deg,#E7C45E,#C8A84B);pointer-events:none"></div>
+      <div style="position:absolute;left:14px;right:14px;bottom:16px;color:#fff;font:800 17px/1.2 Arial;pointer-events:none">Dashboard Master Agenda <span style="color:#F2D27A">CMO Pusat</span></div></div>
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0 4px"><span style="font-size:12px;color:#5D6785">Zoom</span><input type="range" id="cgZoom" min="1" max="3" step="0.01" value="1" style="flex:1"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button type="button" class="btn btn-outline btn-sm" id="cgCancel">Batal</button><button type="button" class="btn btn-sm" id="cgOk" style="background:#12275A;color:#fff;border:1px solid #12275A">Simpan potongan</button></div></div>`;
+    document.body.appendChild(ov);
+    const cv=ov.querySelector('#cgCv'),cx=cv.getContext('2d'),box=ov.querySelector('#cgBox');
+    const clamp=()=>{const w=img.width*base*zoom,h=img.height*base*zoom;ox=Math.min(Math.max(ox,(VW-w)/2),(w-VW)/2);oy=Math.min(Math.max(oy,(VH-h)/2),(h-VH)/2);};
+    const draw=(c,k)=>{const w=img.width*base*zoom*k,h=img.height*base*zoom*k;c.fillStyle='#0F2557';c.fillRect(0,0,VW*k,VH*k);c.drawImage(img,(VW*k-w)/2+ox*k,(VH*k-h)/2+oy*k,w,h);};
+    const paint=()=>{clamp();draw(cx,1);};paint();
+    let drag=null;
+    box.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,ox,oy};box.setPointerCapture(e.pointerId);box.style.cursor='grabbing';});
+    box.addEventListener('pointermove',e=>{if(!drag)return;const r=box.getBoundingClientRect(),f=VW/r.width;ox=drag.ox+(e.clientX-drag.x)*f;oy=drag.oy+(e.clientY-drag.y)*f;paint();});
+    const up=()=>{drag=null;box.style.cursor='grab';};box.addEventListener('pointerup',up);box.addEventListener('pointercancel',up);
+    ov.querySelector('#cgZoom').oninput=e=>{zoom=Number(e.target.value);paint();};
+    const close=()=>{ov.remove();URL.revokeObjectURL(url);};
+    ov.querySelector('#cgCancel').onclick=()=>{close();res(null);};
+    ov.querySelector('#cgOk').onclick=()=>{
+      const c=document.createElement('canvas');c.width=OW;c.height=OH;draw(c.getContext('2d'),OW/VW);
+      let q=.86,d=c.toDataURL('image/jpeg',q);while(d.length>720000&&q>.4){q-=.08;d=c.toDataURL('image/jpeg',q);}
+      close();d.length>900000?rej(new Error('Gambar terlalu besar setelah dikompres.')):res(d);};
+  };img.src=url;});}
 function cmGateImageFile(file){return new Promise((res,rej)=>{
   const img=new Image(),url=URL.createObjectURL(file);
   img.onload=()=>{const W=1000,H=1200,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
@@ -3753,9 +4270,9 @@ function cmEntryGateHtml(){
     <section class="cm-entry-main">
       <div class="cm-entry-lang" role="group" aria-label="Bahasa / Language"><button type="button" data-entry-lang="id" class="${currentLang==='id'?'on':''}">ID</button><button type="button" data-entry-lang="en" class="${currentLang==='en'?'on':''}">EN</button></div>
       <form id="cmGuestForm" novalidate>
-        <div class="cm-entry-eyebrow">${U('View mode','Mode lihat')}</div>
-        <h1 id="cmEntryTitle">${U('Enter as Guest','Masuk sebagai Tamu')}</h1>
-        <p class="cm-entry-sub">${U('Fill in your name and office email to view the dashboard. <b>Your visit is recorded for monitoring purposes.</b>','Isi nama dan email kantor Anda untuk melihat dashboard. <b>Kunjungan Anda dicatat untuk keperluan monitoring.</b>')}</p>
+        <div class="cm-entry-eyebrow">${cmSRParamAjukan()?U('Change Management Services','Layanan Manajemen Perubahan'):U('View mode','Mode lihat')}</div>
+        <h1 id="cmEntryTitle">${cmSRParamAjukan()?U('Request a Schedule with the CM Team','Ajukan Jadwal ke Tim CM'):U('Enter as Guest','Masuk sebagai Tamu')}</h1>
+        <p class="cm-entry-sub">${cmSRParamAjukan()?U('Fill in your name, office email, and unit, then click <b>Request Schedule</b> below.','Isi nama, email kantor, dan unit Anda, lalu klik <b>Ajukan Jadwal</b> di bawah.'):U('Fill in your name and office email to view the dashboard. <b>Your visit is recorded for monitoring purposes.</b>','Isi nama dan email kantor Anda untuk melihat dashboard. <b>Kunjungan Anda dicatat untuk keperluan monitoring.</b>')}</p>
         <label for="cmGuestName">${U('Full name','Nama lengkap')}</label>
         <input id="cmGuestName" type="text" autocomplete="name" maxlength="80" placeholder="${U('Your full name','Nama lengkap Anda')}">
         <label for="cmGuestEmail">${U('Office email','Email kantor')}</label>
@@ -3765,8 +4282,10 @@ function cmEntryGateHtml(){
         <div id="cmGuestExtWrap" class="hidden"><label for="cmGuestInstansi">${U('Institution / organisation','Nama instansi/organisasi')}</label><input id="cmGuestInstansi" type="text" maxlength="120" placeholder="${U('e.g. Ministry of State Apparatus, University of Indonesia','Contoh: Kementerian PANRB, Universitas Indonesia')}"></div>
         <div class="cm-entry-err hidden" id="cmGuestErr" role="alert"></div>
         <button type="submit" class="cm-entry-go" id="cmGuestGo">${U('Enter (view mode)','Masuk (mode lihat)')}</button>
-        <div class="cm-entry-hint">${U('No password. This browser remembers you for your next visit.','Tanpa kata sandi. Browser ini mengingat identitas Anda untuk kunjungan berikutnya.')}</div>
+        <div class="cm-entry-hint">${U('Fill in your details above, then choose Enter or Request Schedule. No password needed.','Isi identitas di atas, lalu pilih Masuk atau Ajukan Jadwal. Tanpa kata sandi.')}</div>
       </form>
+      <div class="cm-svc"><i aria-hidden="true">📅</i><b>${U('Change Management Services','Layanan Manajemen Perubahan')}</b><p>${U('Need a speaker, facilitation, or a Change Management FGD for your unit? Request a schedule with the Pusmantap CM Team.','Butuh narasumber, pendampingan, atau FGD Change Management untuk unit Anda? Ajukan jadwal ke Tim CM Pusmantap.')}</p>
+        <div class="tags"><span>${U('Speaker','Narasumber')}</span><span>${U('Facilitation','Pendampingan')}</span><span>${U('FGD / Consultation','FGD / Konsultasi')}</span></div><button type="button" id="cmEntryAjukan">📅 ${U('Request Schedule','Ajukan Jadwal')}</button></div>
       <div class="cm-entry-or"><span>${U('CM Team Pusmantap?','Tim CM Pusmantap?')}</span></div>
       <button type="button" class="cm-entry-cmo" id="cmEntryCmo"><span aria-hidden="true">🛡</span> ${U('Sign in as CMO Pusat','Masuk CMO Pusat')}</button>
     </section>
@@ -3778,6 +4297,8 @@ function cmEntryGateBind(g){
   unit.addEventListener('change',g._syncUnit);
   g.querySelector('#cmGuestForm').addEventListener('submit',e=>{e.preventDefault();cmGuestSubmit();});
   g.querySelector('#cmEntryCmo').addEventListener('click',()=>cmStartCmoLogin());
+  g.querySelector('#cmEntryAjukan')?.addEventListener('click',()=>cmGuestSubmit('request'));
+  g.classList.toggle('cm-gate-req',cmSRParamAjukan());
   g.querySelectorAll('[data-entry-lang]').forEach(b=>b.onclick=()=>{
     const keep=['cmGuestName','cmGuestEmail','cmGuestUnit','cmGuestInstansi'].map(id=>[id,g.querySelector('#'+id).value]);
     if(typeof setLanguage==='function')setLanguage(b.dataset.entryLang);
@@ -3802,7 +4323,7 @@ function cmEntryGateShow(){
 }
 function cmEntryGateHide(){document.getElementById('cmEntryGate')?.classList.add('hidden');document.documentElement.classList.remove('cm-entry-open');}
 function cmGuestErr(msg,focusId){const g=cmEntryGateEl(),el=g.querySelector('#cmGuestErr');el.textContent=msg;el.classList.remove('hidden');if(focusId)g.querySelector('#'+focusId)?.focus();}
-async function cmGuestSubmit(){
+async function cmGuestSubmit(intent){
   const g=cmEntryGateEl();
   const name=g.querySelector('#cmGuestName').value.trim().replace(/\s+/g,' ');
   const email=cmNormEmail(g.querySelector('#cmGuestEmail').value);
@@ -3815,8 +4336,11 @@ async function cmGuestSubmit(){
   if(unit==='EKSTERNAL'&&instansi.length<2)return cmGuestErr(uiText('Please enter your institution or organisation.','Isi nama instansi/organisasi Anda.'),'cmGuestInstansi');
   const u=cmUnitByCode(unit);
   cmSaveGuestIdentity({name,email,unit,unitName:u?.name||unit,instansi:unit==='EKSTERNAL'?instansi:'',auto:true,savedAt:new Date().toISOString()});
-  const btn=g.querySelector('#cmGuestGo');btn.disabled=true;btn.textContent=uiText('Opening dashboard…','Membuka dashboard…');
+  const btn=intent==='request'?g.querySelector('#cmEntryAjukan'):g.querySelector('#cmGuestGo');btn.disabled=true;btn.textContent=intent==='request'?uiText('Opening the calendar…','Membuka kalender…'):uiText('Opening dashboard…','Membuka dashboard…');
+  if(intent==='request')cmSR.openAfterEntry=true;
+  cmSRConsumeParam();
   await cmGuestEnter();
+  if(intent==='request')setTimeout(()=>{if(cmSR.openAfterEntry&&(cmSRUid()||cmGuestOffline)){cmSR.openAfterEntry=false;cmSRGoCalendar();}},900);
 }
 async function cmGuestEnter(){
   const id=cmGuestIdentity();if(!id)return cmEntryGateShow();
@@ -4049,7 +4573,7 @@ function cmRenderApGate(body){
   body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>Tampilan kartu masuk (gerbang)</b><span>Pilih gaya panel kiri. Pilihan disimpan di server dan berlaku untuk semua pengunjung.</span>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px">${CM_GATE_THEMES.map(([k,n])=>`<label style="border:2px solid ${k===cur?'#12275A':'#E3E7EF'};border-radius:14px;padding:10px;cursor:pointer;display:block"><div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="radio" name="cmGateT" value="${k}" ${k===cur?'checked':''}><b>${k.toUpperCase()} · ${n}</b></div><div class="cm-entry-shell cm-ap-prev" style="grid-template-columns:1fr;box-shadow:none;border:1px solid #E3E7EF;pointer-events:none">${cmEntrySideHtml(k)}</div></label>`).join('')}</div>
   <div style="margin-top:14px;border:1px dashed #C9D3EA;border-radius:12px;padding:14px;background:#F8FAFE"><b>Gambar untuk tema B</b>
-    <div style="font-size:12.5px;color:#5D6785;margin:4px 0 10px">${hasImg?'Gambar kustom aktif.':'Belum ada gambar kustom.'} Pilih foto/poster apa saja (JPG/PNG); otomatis dipotong rasio 5:6 dan dikompres.</div>
+    <div style="font-size:12.5px;color:#5D6785;margin:4px 0 10px">${hasImg?'Gambar kustom aktif.':'Belum ada gambar kustom.'} Pilih foto/poster apa saja (JPG/PNG), lalu atur potongan (geser dan zoom) sebelum disimpan. Hasil otomatis dikompres.</div>
     <input type="file" id="cmGateFile" accept="image/*" style="display:none">
     <button class="btn btn-outline btn-sm" id="cmGatePick" type="button">⬆ Pilih &amp; unggah gambar</button>
     ${hasImg?'<button class="btn btn-outline btn-sm" id="cmGateDel" type="button" style="margin-left:6px">Hapus gambar</button>':''}
@@ -4059,7 +4583,7 @@ function cmRenderApGate(body){
   body.querySelectorAll('input[name=cmGateT]').forEach(r=>r.onchange=async()=>{cmGateSetTheme(r.value);cmGateCfg.theme=r.value;cmGateCacheCfg();try{await cmGateSaveCfg({theme:r.value});}catch(e){}cmRenderApGate(body);});
   body.querySelector('#cmGatePick').onclick=()=>body.querySelector('#cmGateFile').click();
   body.querySelector('#cmGateFile').onchange=async ev=>{const f=ev.target.files[0];if(!f)return;msg('Memproses gambar…');
-    try{const d=await cmGateImageFile(f);await cmGateSaveCfg({image:d,theme:'b'});cmGateSetTheme('b');cmRenderApGate(body);body.querySelector('#cmGateMsg').innerHTML='<span style="color:#15784F">Gambar tersimpan dan tema B aktif untuk semua pengunjung.</span>';}catch(e){fail(e);}};
+    try{const d=await cmGateCropDialog(f);ev.target.value='';if(!d){msg('');return;}await cmGateSaveCfg({image:d,theme:'b'});cmGateSetTheme('b');cmRenderApGate(body);body.querySelector('#cmGateMsg').innerHTML='<span style="color:#15784F">Gambar tersimpan dan tema B aktif untuk semua pengunjung.</span>';}catch(e){fail(e);}};
   const del=body.querySelector('#cmGateDel');if(del)del.onclick=async()=>{try{await cmGateSaveCfg({image:''});cmRenderApGate(body);}catch(e){fail(e);}};
 }
 function cmAdminRows(){
@@ -7695,7 +8219,7 @@ function renderCalendar() {
     const dateStr=state.calMonth+'-'+String(d).padStart(2,'0'),isToday=dateStr===todayStr,dow=(firstDow+d-1)%7,isWeekend=dow===5||dow===6,evs=eventsByDay[d]||[],holiday=cmIndonesiaHolidayForDate(dateStr),holidayLabel=cmIndonesiaHolidayLabel(holiday);
     const holidayClass=holiday?`holiday-${holiday.type}`:'';
     const cellTitle=holidayLabel?` title="${escapeHtml(holidayLabel)}"`:'';
-    html+=`<div class="cal-cell ${isToday?'today':''} ${isWeekend&&!isToday?'weekend':''} ${holidayClass}"${cellTitle}><div class="cal-daynum">${d}</div>`;
+    html+=`<div class="cal-cell ${isToday?'today':''} ${isWeekend&&!isToday?'weekend':''} ${holidayClass}" data-date="${dateStr}"${cellTitle}><div class="cal-daynum">${d}</div>`;
     if(holiday) html+=`<div class="cal-holiday-label ${holiday.type}" title="${escapeHtml(holidayLabel)}">${escapeHtml(holidayLabel)}</div>`;
     html+='<div class="cal-events-scroll">';
     evs.slice(0,4).forEach(ev=>{const cs=getCategoryStyle(ev.kategori);html+=`<div class="cal-event" data-id="${ev.id}" title="${escapeHtml(ev.namaKegiatan)}" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(ev.namaKegiatan)}</div>`;});
@@ -7714,6 +8238,7 @@ function renderCalendar() {
   cmHolidayEnsureYear(holidayYear);
   container.querySelectorAll('.cal-event').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
   container.querySelectorAll('.cal-more').forEach(el=>el.onclick=()=>toast((eventsByDay[el.dataset.day]||[]).map(x=>x.namaKegiatan).join(' · '),'info'));
+  if(typeof cmSRDecorateCalendar==='function')cmSRDecorateCalendar();
 }
 
 /* ============================================================
@@ -10152,18 +10677,27 @@ function parseDokumentasi(raw) {
 // In-memory cache so re-opening the same activity's detail/edit view doesn't
 // re-fetch every image document from Firestore each time.
 const _docImageCache = new Map();
+let _docImageLastError='';
 async function fetchDocImageDataUrl(refId) {
   if (_docImageCache.has(refId)) return _docImageCache.get(refId);
-  if (!isLoggedIn() || !window.fbDb) return null;
-  try {
-    const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
-    const snap = await window.fbGetDoc(ref);
-    const url = (snap && snap.exists()) ? (snap.data().dataUrl || null) : null;
-    if (url) _docImageCache.set(refId, url);
-    return url;
-  } catch (e) {
-    return null;
+  // Tunggu sesi Firebase siap (login Tamu/CMO bisa selesai beberapa detik setelah halaman terbuka).
+  for (let i = 0; i < 24 && !(isLoggedIn() && window.fbDb); i++) await new Promise(r => setTimeout(r, 250));
+  if (!isLoggedIn() || !window.fbDb) { _docImageLastError = 'Belum masuk ke Firebase (login Tamu/CMO belum aktif).'; return null; }
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const ref = window.fbDoc(window.fbDb, 'dashboardImages', refId);
+      const snap = await window.fbGetDoc(ref);
+      if (!(snap && snap.exists())) { _docImageLastError = 'Berkas tidak ditemukan di server (kemungkinan sudah dihapus).'; return null; }
+      const url = snap.data().dataUrl || null;
+      if (url) _docImageCache.set(refId, url);
+      return url;
+    } catch (e) {
+      _docImageLastError = /permission/i.test(e?.code || e?.message || '') ? 'Ditolak aturan Firebase (permission-denied).' : 'Gagal memuat: ' + (e?.code || e?.message || 'tidak diketahui');
+      console.warn('Dokumentasi gagal dimuat', refId, e?.code || e);
+      if (attempt === 0) await new Promise(r => setTimeout(r, 800));
+    }
   }
+  return null;
 }
 
 // Renders placeholder tiles for the read-only Documentation gallery in the Activity
@@ -10193,7 +10727,8 @@ async function hydrateDocThumbs(container) {
       else {node.download=node.dataset.name||'documentation';node.innerHTML=`<span style="padding:10px;text-align:center;font-size:10px;overflow-wrap:anywhere">📎<br>${escapeHtml(node.dataset.name||uiText('Document','Dokumen'))}</span>`;}
     } else {
       node.removeAttribute('href');
-      node.innerHTML = `<span class="doc-thumb-error">!</span>`;
+      node.title = _docImageLastError || node.title;
+      node.innerHTML = `<span class="doc-thumb-error" title="${escapeHtml(_docImageLastError||'')}">!</span>`;
     }
   }));
 }
@@ -13620,6 +14155,29 @@ Object.assign(CM_USER_MANUAL_ARTICLES.find(a=>a.id==='whats-new'),{title:{en:"Wh
     wn.steps={en:['Guest entry: visitors fill in name, office email, and Echelon I unit (or External) and view every menu in view mode.','Manage Users & Access: CMO Pusat list, access history, guest visit statistics, and Excel/CSV/report export for the Superadmin.','Activity status: automatically Completed after the end time, with Mark as Completed for early finishes.',...((wn.steps&&wn.steps.en)||[])],
       id:['Masuk sebagai Tamu: pengunjung mengisi nama, email kantor, dan unit Eselon I (atau Eksternal) lalu melihat semua menu dalam mode lihat.','Kelola Pengguna & Akses: daftar CMO Pusat, riwayat akses, statistik kunjungan Tamu, dan ekspor Excel/CSV/laporan untuk Superadmin.','Status kegiatan: otomatis Selesai setelah jam selesai lewat, dengan tombol Tandai Selesai untuk kegiatan yang selesai lebih awal.',...((wn.steps&&wn.steps.id)||[])]};
     wn.keywords=[...new Set(['v20.5','tamu','mode lihat','kelola pengguna','statistik kunjungan',...(wn.keywords||[])])];
+  }
+})();
+
+/* ===== User Manual v20.6 (8 Oktober 2026): Ajukan Jadwal oleh unit dan Setujui Jadwal oleh Tim CM ===== */
+(function(){
+  const A=CM_USER_MANUAL_ARTICLES,find=id=>A.find(a=>a.id===id);
+  const insertBefore=(beforeId,art)=>{if(find(art.id))return;const i=A.findIndex(a=>a.id===beforeId);if(i<0)A.push(art);else A.splice(i,0,art);};
+  insertBefore('backup',{id:'schedule-request',category:{en:'Access & Users',id:'Akses & Pengguna'},
+    title:{en:'Requesting and Approving a Schedule',id:'Ajukan Jadwal dan Setujui Jadwal'},
+    summary:{en:'Units outside the CM Team request a speaker, facilitation, or FGD schedule. CM Team members review each request and approve, adjust, or reject it.',id:'Unit di luar Tim CM mengajukan jadwal narasumber, pendampingan, atau FGD. Anggota Tim CM meninjau setiap pengajuan lalu menyetujui, menyesuaikan, atau menolaknya.'},
+    location:{en:'Change Management Services box on the entry card; Request Schedule and My requests buttons in the Calendar menu; Approve Schedule button in the Calendar and the bell (Notification Center) for the CM Team',id:'Kotak Layanan Manajemen Perubahan di kartu masuk; tombol Ajukan Jadwal dan Status saya di menu Kalender; tombol Setujui Jadwal di Kalender dan lonceng (Pusat Notifikasi) untuk Tim CM'},
+    functions:{en:['Request Schedule: activity name, proposed date and time, format, location or link, support needed, estimated participants, alternative date, purpose, WhatsApp number, and an optional memo or invitation. The requester identity is taken from the entry card.','Clash check: the form and the approval panel warn when the proposed time overlaps an existing activity.','Pending requests appear in the Calendar with a dashed yellow border until they are decided.','My requests: the requester sees Waiting, Approved, or Rejected with the reason, and can cancel a request that is still waiting.','Approve Schedule (CM Team): Approve creates the activity in Agenda and Calendar with status Scheduled; Edit adjusts the date, time, and category first; Reject requires a reason. After each decision a Send via WhatsApp button opens a ready-made message to the requester.','The link with ?ajukan=1 opens the entry card directly in request mode, ready to share with units. Request Schedule on the entry card opens the Calendar first so the requester can see which dates are already taken.'],
+      id:['Ajukan Jadwal: nama kegiatan, tanggal dan jam usulan, format, lokasi atau tautan, dukungan yang dibutuhkan, perkiraan peserta, alternatif tanggal, tujuan, nomor WhatsApp, dan lampiran nota dinas/undangan (opsional). Identitas pemohon diambil dari kartu masuk.','Cek bentrok: form dan panel persetujuan memberi peringatan bila jam usulan bertabrakan dengan kegiatan yang sudah ada.','Pengajuan yang menunggu tampil di Kalender dengan garis putus-putus kuning sampai diputuskan.','Status saya: pemohon melihat status Menunggu, Disetujui, atau Ditolak beserta alasannya, dan dapat membatalkan pengajuan yang masih menunggu.','Setujui Jadwal (Tim CM): Setujui membuat kegiatan di Agenda dan Kalender dengan status Terjadwal; Ubah menyesuaikan tanggal, jam, dan kategori lebih dulu; Tolak wajib disertai alasan. Setelah setiap keputusan, tombol Kirim via WhatsApp membuka pesan siap kirim ke pemohon.','Tautan dengan ?ajukan=1 membuka kartu masuk langsung dalam mode pengajuan, siap dibagikan ke unit. Tombol Ajukan Jadwal di kartu masuk membuka Kalender lebih dulu agar pemohon melihat tanggal yang sudah terisi.']},
+    steps:{en:['Unit: on the entry card, fill in name, office email, and unit, then click Request Schedule. The Calendar opens.','Check the free dates, then click a date or + Request Schedule to open the Schedule Request Form.','Complete the form, including your WhatsApp number, and click Send request. A confirmation says the CM Team will process it and inform you via WhatsApp.','CM Team: when the bell shows a new schedule request, click it and choose Open Approve Schedule (or click Approve Schedule in the Calendar).','Review the request and any clash warning. Click Edit to adjust date, time, or category if needed.','Click Approve to add it to the Agenda, or Reject and write the reason.','In the window that appears, click Send via WhatsApp to inform the requester. The button stays available on the request card.'],
+      id:['Unit: di kartu masuk, isi nama, email kantor, dan unit, lalu klik Ajukan Jadwal. Kalender akan terbuka.','Lihat tanggal yang masih kosong, lalu klik tanggalnya atau tombol + Ajukan Jadwal untuk membuka Form Pengajuan Jadwal.','Lengkapi form termasuk nomor WhatsApp, lalu klik Kirim pengajuan. Muncul konfirmasi bahwa Tim CM akan segera memproses dan menginformasikannya melalui WhatsApp.','Tim CM: saat lonceng menampilkan pengajuan jadwal baru, klik lonceng lalu pilih Buka Setujui Jadwal (atau klik Setujui Jadwal di Kalender).','Tinjau pengajuan dan peringatan bentrok bila ada. Klik Ubah untuk menyesuaikan tanggal, jam, atau kategori bila perlu.','Klik Setujui agar masuk ke Agenda, atau Tolak lalu tulis alasannya.','Pada jendela yang muncul, klik Kirim via WhatsApp untuk mengabari pemohon. Tombol ini juga tetap tersedia di kartu pengajuan.']},
+    outcome:{en:'Requests from units reach the CM Team in one queue, approved requests become regular activities, and requesters can see the decision without a follow-up message.',id:'Pengajuan dari unit masuk ke Tim CM dalam satu antrean, pengajuan yang disetujui menjadi kegiatan biasa, dan pemohon dapat melihat keputusannya tanpa perlu menanyakan ulang.'},
+    note:{en:'Requests need the Firebase rules for cmScheduleRequests. Approved activities start with category Lainnya unless changed with Edit, and the PIC can be filled in afterwards from Edit Activity.',id:'Pengajuan membutuhkan aturan Firebase untuk cmScheduleRequests. Kegiatan yang disetujui berkategori Lainnya kecuali diubah melalui Ubah, dan PIC dapat diisi kemudian melalui Edit Activity.'},
+    keywords:['ajukan jadwal','setujui jadwal','pengajuan','approval','persetujuan','layanan manajemen perubahan','narasumber','pendampingan','FGD','kalender','notifikasi','status saya','request schedule']});
+  const wn=find('whats-new');
+  if(wn){
+    wn.title={en:"What's New in User Manual v20.6",id:'Yang Baru di User Manual v20.6'};
+    wn.summary={en:'Adds schedule requests from units with CM Team approval, the Change Management Services box on the entry card, and selectable entry-card themes, through 8 October 2026.',id:'Menambahkan pengajuan jadwal oleh unit dengan persetujuan Tim CM, kotak Layanan Manajemen Perubahan di kartu masuk, dan pilihan tema kartu masuk, sampai 8 Oktober 2026.'};
+    wn.keywords=[...new Set(['v20.6','ajukan jadwal','setujui jadwal','tema gerbang',...(wn.keywords||[])])];
   }
 })();
 
