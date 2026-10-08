@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V19.45-RBAC-ROLES-20260914">
+<meta name="cm-build" content="CM-DASHBOARD-V20.6-AJUKAN-JADWAL-20261008">
 <title>Dashboard Master Agenda Change Management Pusat</title>
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1315,6 +1315,48 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
 .peran-badge.peran-other{background:var(--gray-bg);color:var(--ink-500);}
 .unit-badge-sm{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:600;background:var(--gray-bg);color:var(--ink-700);white-space:normal;line-height:1.3;}
 .contact-nip{font-size:10.5px;color:var(--ink-300);}
+.contact-card{position:relative;}
+.contact-avatar.has-photo{background:var(--gray-bg);overflow:hidden;}
+.contact-avatar.has-photo img{width:100%;height:100%;object-fit:cover;display:block;}
+.sq-card-edit{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--ink-500);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .12s ease;}
+.contact-card:hover .sq-card-edit,.sq-card-edit:focus-visible{opacity:1;}
+@media (hover:none){.sq-card-edit{opacity:1;}}
+.sq-card-edit:hover{color:var(--navy-800);border-color:var(--gold-400);}
+.contact-card .contact-name{padding-right:22px;}
+.sq-card-extra{margin-top:5px;padding-top:5px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:2px;}
+.sq-card-line{font-size:10.5px;color:var(--ink-500);overflow-wrap:anywhere;line-height:1.35;}
+.sq-card-line a{color:var(--navy-700);text-decoration:none;}
+.sq-card-line a:hover{text-decoration:underline;}
+.sq-modal{max-width:760px;}
+.sq-import{display:flex;gap:12px;align-items:center;padding:12px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);cursor:pointer;transition:border-color .12s,background .12s;}
+.sq-import:hover,.sq-import.drag,.sq-import:focus-visible{border-color:var(--gold-400);outline:none;}
+.sq-import.drag{background:var(--gold-100);}
+.sq-import.busy{cursor:progress;}
+.sq-import-shot{width:64px;height:64px;flex-shrink:0;border-radius:9px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--ink-400);overflow:hidden;}
+.sq-import-shot img{width:100%;height:100%;object-fit:cover;object-position:left top;}
+.sq-import-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-500);line-height:1.45;}
+.sq-import-text b{font-size:13px;color:var(--ink-900);}
+.sq-link{color:var(--navy-700);font-weight:700;text-decoration:underline;cursor:pointer;}
+.sq-progress{display:flex;align-items:center;gap:8px;margin-top:3px;}
+.sq-progress-bar{flex:1;height:6px;border-radius:6px;background:var(--gray-bg);overflow:hidden;}
+.sq-progress-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--navy-700),var(--gold-400));transition:width .2s;}
+.sq-progress em{font-style:normal;font-size:11px;white-space:nowrap;}
+.sq-note{margin-top:10px;padding:9px 12px;border-radius:9px;font-size:12px;line-height:1.5;background:var(--blue-bg);color:var(--ink-700);}
+.sq-note.warn{background:var(--amber-bg);}
+.sq-form{display:flex;gap:16px;margin-top:14px;align-items:flex-start;}
+.sq-photo-col{display:flex;flex-direction:column;align-items:center;gap:6px;width:112px;flex-shrink:0;}
+.sq-photo{width:96px;height:96px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--navy-700),var(--navy-800));color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:26px;border:3px solid var(--surface);box-shadow:var(--shadow-sm);}
+.sq-photo img{width:100%;height:100%;object-fit:cover;}
+.sq-photo-btn{width:100%;justify-content:center;font-size:11.5px;}
+.sq-fields{flex:1;min-width:0;gap:10px 12px;}
+.sq-fields textarea{min-height:0;resize:vertical;}
+.sq-divider{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-400);border-top:1px solid var(--border);padding-top:10px;margin-top:2px;}
+.sq-hint{display:block;font-size:10.5px;color:var(--ink-400);margin-top:3px;min-height:0;}
+.sq-hint.warn{color:#9A6A00;font-weight:600;}
+.sq-filled{animation:sqFilled 2.4s ease;}
+@keyframes sqFilled{0%,55%{background:var(--gold-100);border-color:var(--gold-400);}100%{}}
+.sq-del{color:var(--red);}
+@media (max-width:640px){.sq-form{flex-direction:column;align-items:stretch;}.sq-photo-col{flex-direction:row;width:auto;}.sq-photo{width:64px;height:64px;font-size:18px;flex-shrink:0;}.sq-photo-btn{width:auto;}}
 
 /* ===== TOAST ===== */
 #toastContainer{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:10px;}
@@ -2118,6 +2160,7 @@ html.cm-entry-open .cm-ai-fab,html.cm-entry-open [class*="cm-ai-panel"]{display:
 .cm-entry-titlebox h2 span{color:#F2D27A}
 .cm-entry-pts{display:flex;gap:8px;flex-wrap:wrap}.cm-entry-pts span{font-size:11.5px;color:#E3EAF8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 11px}
 .cm-entry-side[data-theme=b]{background:#0F2557}
+.cm-entry-side[data-theme=b] .cm-entry-brand{align-self:flex-start;background:rgba(7,22,52,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);padding:6px 14px 6px 6px;border-radius:14px}
 .cm-entry-brand{display:flex;gap:12px;align-items:center}.cm-entry-brand>span{width:46px;height:46px;border-radius:12px;background:linear-gradient(180deg,#E7C45E,#C8A84B);color:#12275A;font:800 17px 'Sora',Arial;display:flex;align-items:center;justify-content:center}
 .cm-entry-brand b{display:block;font-size:15px}.cm-entry-brand small{opacity:.8;font-size:12.5px}
 .cm-entry-side h2{font:800 28px/1.16 'Sora',Arial;margin:8px 0 8px;color:#fff}
@@ -2231,6 +2274,13 @@ html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[
 .cm-sr-bm-item.unread{background:#FFFBF0}.cm-sr-bm-item.unread b:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#D8AA32;margin-right:6px;vertical-align:1px}
 .cm-sr-bm-empty{padding:14px 10px;color:#5D6785}.cm-sr-bm-all{display:block;width:100%;border:0;background:#F4F6FB;color:#12275A;font-weight:800;border-radius:8px;padding:9px;margin-top:4px;cursor:pointer;font-family:inherit}
 .cm-sr-calbtns{display:inline-flex;gap:8px;align-items:center}
+.cm-mn-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;background:#fff;border-radius:10px;overflow:hidden}
+.cm-mn-table th{background:#F4F6FB;color:#5D6785;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;padding:9px 12px;text-align:center}.cm-mn-table th:first-child{text-align:left}
+.cm-mn-table td{padding:9px 12px;border-top:1px solid #EEF1F6;color:#141B2E}
+.cm-mn-sw{position:relative;display:inline-block;width:38px;height:22px;cursor:pointer}.cm-mn-sw input{opacity:0;width:0;height:0}
+.cm-mn-sw span{position:absolute;inset:0;background:#D6DCEA;border-radius:999px;transition:.2s}.cm-mn-sw span:before{content:'';position:absolute;left:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.cm-mn-sw input:checked+span{background:#15784F}.cm-mn-sw input:checked+span:before{transform:translateX(16px)}.cm-mn-sw input:disabled+span{opacity:.5;cursor:not-allowed}
+.tab-btn.cm-tab-limited{position:relative}.tab-btn.cm-tab-limited:after{content:'';position:absolute;top:10px;left:calc(50% - 20px);width:8px;height:8px;border-radius:50%;background:#C2410C;box-shadow:0 0 0 2px #fff}
 .cm-sr-hint{display:flex;gap:10px;align-items:center;margin:0 18px 10px;background:#FFFBF0;border:1px solid #EBD9A6;border-radius:10px;padding:9px 12px;font-size:13px;color:#6B5413}.cm-sr-hint b{color:#12275A}
 .cm-sr-hint.on{border-color:#D3A52E;box-shadow:0 0 0 3px rgba(211,165,46,.2)}
 .cal-cell.cm-sr-pick{cursor:pointer}.cal-cell.cm-sr-pick:hover{box-shadow:inset 0 0 0 2px #D3A52E}
@@ -2488,7 +2538,7 @@ html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V19.45-RBAC-ROLES-20260914">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V19.45-RBAC-ROLES-20260914</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V20.6-AJUKAN-JADWAL-20261008">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V20.6-AJUKAN-JADWAL-20261008</span></footer>
 
 <div id="reviewModal" class="modal-overlay hidden review-modal"></div>
 <div id="detailModal" class="modal-overlay hidden"></div>
@@ -3652,11 +3702,24 @@ function cmCanManageReferences(){return cmGetAccessRole()===CM_ROLE_SUPERADMIN;}
 function cmRoleLabel(role){
   return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'CMO PUSAT':uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
 }
+const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource'];
+var cmMenuCfg=(()=>{try{return JSON.parse(localStorage.getItem('cm_menu_cfg_v1')||'{}')||{};}catch(e){return {};}})();
+function cmMenuHidden(key){const h=cmMenuCfg?.hidden?.[key];return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
 function cmAllowedTabsForRole(role){
-  if(role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN)return new Set(['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource']);
-  // Tamu (login anonim, akun Google non-tim, atau mode offline) boleh melihat semua menu dalam mode lihat.
-  return new Set(['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource']);
+  const all=new Set(CM_MENU_TABS);
+  if(role===CM_ROLE_SUPERADMIN)return all;
+  // Superadmin dapat menyembunyikan menu per peran (Tamu / CMO Pusat). Overview selalu tampil.
+  cmMenuHidden(role===CM_ROLE_ADMIN?'admin':'guest').forEach(t=>all.delete(t));
+  return all;
 }
+async function cmMenuLoadCfg(){
+  for(let i=0;i<40&&!(window.fbDb&&window.fbGetDoc);i++)await new Promise(r=>setTimeout(r,250));
+  if(!window.fbDb||!window.fbGetDoc)return;
+  try{const snap=await window.fbGetDoc(window.fbDoc(window.fbDb,'cmPublicConfig','menus'));
+    cmMenuCfg=snap.exists()?(snap.data()||{}):{};try{localStorage.setItem('cm_menu_cfg_v1',JSON.stringify(cmMenuCfg));}catch(e){}
+    if(typeof window.cmEnforceMenuAccess==='function')window.cmEnforceMenuAccess();}catch(e){console.warn('Menu config not readable.',e?.code||e);}
+}
+setTimeout(cmMenuLoadCfg,0);
 function cmDenyMutation(message){
   if(typeof toast==='function')toast(message||uiText('Read-only access. This action is not available for your role.','Akses read-only. Aksi ini tidak tersedia untuk role Anda.'),'info');
   return false;
@@ -3692,6 +3755,7 @@ function cmApplyRoleUi(role){
   if(typeof cmSRRoleChanged==='function')setTimeout(cmSRRoleChanged,0);
   const allowed=cmAllowedTabsForRole(role);
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.toggle('hidden',!allowed.has(b.dataset.tab)));
+  {const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin');document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>{const t=b.dataset.tab,mark=role===CM_ROLE_SUPERADMIN&&(hg.has(t)||ha.has(t));b.classList.toggle('cm-tab-limited',mark);if(mark)b.title=uiText('Hidden for: ','Disembunyikan untuk: ')+[hg.has(t)?uiText('Guest','Tamu'):'',ha.has(t)?'CMO Pusat':''].filter(Boolean).join(', ');else if(b.title&&/Disembunyikan|Hidden for/.test(b.title))b.removeAttribute('title');});}
   const canEdit=role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN;
   document.documentElement.dataset.viewonly=canEdit?'0':'1';
   if(typeof cmViewOnlyBanner==='function')cmViewOnlyBanner(!canEdit);
@@ -3798,6 +3862,7 @@ const CM_SR_WA_ICON='<svg viewBox="0 0 24 24" width="15" height="15" fill="curre
 
 /* ---------- calendar entry (unit) ---------- */
 function cmSRGoCalendar(){
+  if(!cmCanAccessTab('calendar')){cmSROpenForm();return;}
   cmSR.hint=true;
   try{state.calMonth=dayjs().format('YYYY-MM');switchTab('calendar');}catch(e){}
   setTimeout(()=>{const b=document.querySelector('.cm-sr-calbtns [data-sr-new]');b?.scrollIntoView({block:'center',behavior:'smooth'});},300);
@@ -4256,8 +4321,8 @@ const CM_GATE_ART={a:`<svg class="cm-entry-art" viewBox="0 90 500 380" preserveA
 function cmEntrySideHtml(theme){
   const U=uiText;theme=theme||cmGateTheme();
   return `<section class="cm-entry-side" data-theme="${theme}">${CM_GATE_ART[theme]||CM_GATE_ART.a}
-      <div class="cm-entry-brand"><span>CM</span><div><b>Dashboard Master Agenda</b><small>Change Management Pusat</small></div></div>
-      <div class="cm-entry-titlebox"><div class="cm-entry-kick">Change Management Kemenkeu</div><h2>Dashboard Master Agenda <span>CMO Pusat</span></h2>
+      <div class="cm-entry-brand"><span>CM</span><div><b>Change Management</b><small>${U('Ministry of Finance','Kementerian Keuangan')}</small></div></div>
+      <div class="cm-entry-titlebox"><h2>Dashboard Master Agenda <span>CMO Pusat</span></h2>
       <div class="cm-entry-foot">Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</div></div>
       <div class="cm-entry-pts"><span>${U('Agenda & calendar','Agenda & kalender')}</span><span>${U('Workboard & matrix','Workboard & matriks')}</span><span>${U('Activity history','Riwayat kegiatan')}</span></div>
     </section>`;
@@ -4559,6 +4624,7 @@ function cmOpenAccessManager(tab){
       <button type="button" data-ap-tab="log" role="tab">Riwayat Akses</button>
       <button type="button" data-ap-tab="stats" role="tab">📊 Statistik Kunjungan Tamu</button>
       <button type="button" data-ap-tab="gate" role="tab">🎨 Tampilan Gerbang</button>
+      <button type="button" data-ap-tab="menus" role="tab">🧭 Pengaturan Menu</button>
     </div>
     <div class="cm-ap-body" id="cmApBody"></div>
   </div>`;
@@ -4568,6 +4634,25 @@ function cmOpenAccessManager(tab){
   cmRenderAccessPanel();
 }
 function cmCloseAccessPanel(){cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];document.getElementById('cmAccessPanel')?.remove();}
+function cmRenderApMenus(body){
+  const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin');
+  const row=t=>{const lock=t==='analytics';return `<tr><td><b>${escapeHtml(cmMenuLabel(t))}</b>${lock?` <small style="color:#8A94A6">(${uiText('always shown','selalu tampil')})</small>`:''}</td>
+    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="guest" value="${t}" ${!hg.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
+    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="admin" value="${t}" ${!ha.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
+    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" checked disabled><span></span></label></td></tr>`;};
+  body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>${uiText('Menu visibility','Pengaturan menu')}</b><span>${uiText('Turn a menu off to hide it for that role. The Superadmin always sees every menu (hidden ones are marked with a dot). Changes apply to all visitors.','Matikan menu untuk menyembunyikannya dari peran tersebut. Superadmin selalu melihat semua menu (menu yang disembunyikan diberi tanda titik). Perubahan berlaku untuk semua pengunjung.')}</span>
+   <table class="cm-mn-table"><thead><tr><th>${uiText('Menu','Menu')}</th><th>${uiText('Guest','Tamu')}</th><th>CMO Pusat</th><th>Superadmin</th></tr></thead><tbody>${CM_MENU_TABS.map(row).join('')}</tbody></table>
+   <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px"><span id="cmMnMsg" style="font-size:12.5px;margin-right:auto"></span><button type="button" class="btn btn-outline btn-sm" id="cmMnReset">${uiText('Show all','Tampilkan semua')}</button><button type="button" class="btn btn-sm cm-sr-btn-navy" id="cmMnSave">${uiText('Save','Simpan')}</button></div></div>`;
+  const msg=(t,ok)=>{const m=body.querySelector('#cmMnMsg');m.style.color=ok?'#15784F':'#9E1811';m.textContent=t;};
+  const save=async(hidden)=>{
+    const next={hidden,updatedAt:new Date().toISOString(),updatedBy:getCurrentUserEmail()||''};
+    try{await window.fbSetDoc(window.fbDoc(window.fbDb,'cmPublicConfig','menus'),next);cmMenuCfg=next;try{localStorage.setItem('cm_menu_cfg_v1',JSON.stringify(next));}catch(e){}
+      if(window.cmEnforceMenuAccess)window.cmEnforceMenuAccess();cmRenderApMenus(body);body.querySelector('#cmMnMsg')&&(msg(uiText('Saved. Applies to all visitors.','Tersimpan. Berlaku untuk semua pengunjung.'),true));}
+    catch(e){msg(/permission/i.test(e?.code||e?.message||'')?uiText('Rejected by Firebase. Check the cmPublicConfig rules.','Ditolak Firebase. Cek aturan cmPublicConfig.'):(e?.message||'Gagal menyimpan.'),false);}
+  };
+  body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
+  body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[]});
+}
 function cmRenderApGate(body){
   const cur=cmGateTheme(),hasImg=!!cmGateCfg.image;
   body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>Tampilan kartu masuk (gerbang)</b><span>Pilih gaya panel kiri. Pilihan disimpan di server dan berlaku untuk semua pengunjung.</span>
@@ -4598,6 +4683,7 @@ async function cmRenderAccessPanel(){
   const body=host.querySelector('#cmApBody');
   cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
   if(cmAL.tab==='gate')return cmRenderApGate(body);
+  if(cmAL.tab==='menus')return cmRenderApMenus(body);
   if(cmAL.tab==='users')return cmRenderApUsers(body,team);
   // log & stats perlu data
   const r=cmALRange(),prev=cmALPrevRange(r);
@@ -9211,7 +9297,12 @@ function normalizeContactList(raw) {
     nip: c.nip || '',
     jabatan: c.jabatan || '',
     peran: c.peran || '',
-    _search: [c.nama, c.nip, c.jabatan, c.peran, c.squadTeam, c.unitEselonI, c.sheetTitle].join(' ').toLowerCase(),
+    email: c.email || '',
+    hp: c.hp || '',
+    pangkat: c.pangkat || '',
+    unitKerja: c.unitKerja || '',
+    fotoId: c.fotoId || '',
+    _search: [c.nama, c.nip, c.jabatan, c.peran, c.squadTeam, c.unitEselonI, c.sheetTitle, c.email, c.hp, c.pangkat, c.unitKerja].join(' ').toLowerCase(),
   }));
 }
 let contactsUnsub = null;
@@ -9368,6 +9459,7 @@ function renderContactResults() {
   const f = state.contactFilters;
   const isFiltering = !!(f.search && f.search.trim()) || f.sheet !== 'ALL' || f.peran !== 'ALL' || f.unit !== 'ALL';
 
+  const canEditSquad = cmCanMutate();
   // Group by sheet, then by squad team, preserving first-seen order
   const sheetMap = new Map();
   filtered.forEach(c => {
@@ -9392,7 +9484,8 @@ function renderContactResults() {
         </summary>
         <div class="contact-grid">${members.map(m => `
           <div class="contact-card">
-            <div class="contact-avatar">${escapeHtml(contactInitials(m.nama))}</div>
+            ${sqAvatarHtml(m)}
+            ${canEditSquad?`<button type="button" class="sq-card-edit" data-sq-edit="${escapeHtml(m.id)}" title="${uiText('Edit member','Edit anggota')}" aria-label="${uiText('Edit member','Edit anggota')}">${iconEdit()}</button>`:''}
             <div class="contact-info">
               <div class="contact-name">${escapeHtml(m.nama || uiText('Not assigned yet','Belum ditunjuk'))}</div>
               <div class="contact-jabatan">${escapeHtml(m.jabatan || '-')}</div>
@@ -9401,6 +9494,7 @@ function renderContactResults() {
                 <span class="unit-badge-sm">${escapeHtml(m.unitEselonI)}</span>
               </div>
               ${m.nip ? `<div class="contact-nip mono">NIP ${escapeHtml(m.nip)}</div>` : ''}
+              ${sqContactExtrasHtml(m)}
             </div>
           </div>`).join('')}</div>
       </details>`).join('');
@@ -9412,6 +9506,7 @@ function renderContactResults() {
       <div class="contact-squads">${squadsHtml}</div>
     </details>`;
   }).join('');
+  sqHydrateAvatars(wrap);
 }
 
 
@@ -9586,15 +9681,349 @@ function renderContact() {
     container.innerHTML = `<div id="reviewDirectory"></div><div class="context-section-head">
       <div><h3>${uiText('Squad Team Directory','Direktori Tim Squad')}</h3><p>${uiText('Search and filter all squad members using the toolbar above.','Cari dan filter seluruh anggota squad melalui toolbar di atas.')}</p></div>
       <div class="context-section-actions">
+        <button class="btn btn-gold btn-sm ${cmCanMutate()?'':'hidden'}" id="btnContactAdd">+ ${uiText('Add Member','Tambah Anggota')}</button>
         <button class="btn btn-outline btn-sm ${cmCanMutate()?'':'hidden'}" id="btnContactImport">${iconUpload()} ${uiText('Import','Impor')}</button>
         <button class="btn btn-outline btn-sm" id="btnContactExport">${iconDownload()} ${uiText('Export','Ekspor')}</button>
       </div>
     </div><div class="contact-sheets-wrap" id="contactResultsWrap"></div>`;
     document.getElementById('btnContactImport')?.addEventListener('click', openContactImportModal);
+    document.getElementById('btnContactAdd')?.addEventListener('click', () => sqOpenMemberModal(''));
+    document.getElementById('contactResultsWrap')?.addEventListener('click', e => { const b = e.target.closest('[data-sq-edit]'); if (b) { e.preventDefault(); e.stopPropagation(); sqOpenMemberModal(b.dataset.sqEdit); } });
     document.getElementById('btnContactExport')?.addEventListener('click', exportContactsToExcel);
   }
+  ['btnContactAdd','btnContactImport'].forEach(id=>document.getElementById(id)?.classList.toggle('hidden',!cmCanMutate()));
   renderReviewDirectory();
   renderContactResults();
+}
+
+/* ============================================================
+   SQUAD TEAM — TAMBAH / EDIT ANGGOTA + IMPORT SCREENSHOT PROFIL
+   SATU KEMENKEU (OCR lokal di browser via Tesseract.js)
+   - Screenshot dibaca di browser (tidak dikirim ke server mana pun).
+   - Hasil OCR mengisi form; semua field tetap bisa diedit manual.
+   - Foto profil dipotong otomatis dari screenshot dan disimpan di
+     dokumen Firestore terpisah (contact_photo_v1_<id>) agar dokumen
+     utama Squad Team tidak membengkak melewati batas 1 MB.
+============================================================ */
+const CONTACT_PHOTO_PREFIX='contact_photo_v1_';
+const CONTACT_PHOTO_LOCAL_KEY='contact_photos_cache_v1';
+const SQUAD_TESSERACT_SRC='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let sqPhotoCache=null,sqPhotoPending=new Map(),sqTesseractPromise=null,sqOcrWorkerPromise=null;
+function sqPhotoCacheLoad(){if(sqPhotoCache)return sqPhotoCache;try{sqPhotoCache=JSON.parse(localStorage.getItem(CONTACT_PHOTO_LOCAL_KEY)||'{}')||{};}catch(e){sqPhotoCache={};}return sqPhotoCache;}
+function sqPhotoCacheSave(){try{localStorage.setItem(CONTACT_PHOTO_LOCAL_KEY,JSON.stringify(sqPhotoCache||{}));}catch(e){}}
+async function sqPhotoGet(id){
+  if(!id)return '';const cache=sqPhotoCacheLoad();if(cache[id])return cache[id];
+  if(sqPhotoPending.has(id))return sqPhotoPending.get(id);
+  const p=(async()=>{const v=await firestoreGet(CONTACT_PHOTO_PREFIX+id);if(v&&/^data:image\//.test(v)){cache[id]=v;sqPhotoCacheSave();return v;}return '';})();
+  sqPhotoPending.set(id,p);try{return await p;}finally{sqPhotoPending.delete(id);}
+}
+async function sqPhotoSet(id,dataUrl){const cache=sqPhotoCacheLoad();cache[id]=dataUrl;sqPhotoCacheSave();return firestoreSet(CONTACT_PHOTO_PREFIX+id,dataUrl);}
+async function sqPhotoRemove(id){if(!id)return;const cache=sqPhotoCacheLoad();delete cache[id];sqPhotoCacheSave();await firestoreSet(CONTACT_PHOTO_PREFIX+id,'');}
+async function sqPhotoCollectAll(){
+  const out={};const ids=[...new Set((state.contacts||[]).map(c=>c.fotoId).filter(Boolean))];
+  for(const id of ids){const v=await sqPhotoGet(id);if(v)out[id]=v;}
+  return out;
+}
+async function sqPhotoRestoreAll(map){
+  if(!map||typeof map!=='object')return;
+  for(const [id,v] of Object.entries(map)){if(/^[A-Za-z0-9_-]{4,80}$/.test(id)&&typeof v==='string'&&/^data:image\//.test(v))await sqPhotoSet(id,v);}
+}
+function sqAvatarHtml(m){
+  const cache=sqPhotoCacheLoad();
+  if(m.fotoId&&cache[m.fotoId])return `<div class="contact-avatar has-photo"><img src="${escapeHtml(cache[m.fotoId])}" alt=""></div>`;
+  return `<div class="contact-avatar" ${m.fotoId?`data-foto-id="${escapeHtml(m.fotoId)}"`:''}>${escapeHtml(contactInitials(m.nama))}</div>`;
+}
+async function sqHydrateAvatars(root){
+  const els=[...(root||document).querySelectorAll('.contact-avatar[data-foto-id]')];if(!els.length)return;
+  const ids=[...new Set(els.map(e=>e.dataset.fotoId))];let i=0;
+  const run=async()=>{while(i<ids.length){const id=ids[i++];const v=await sqPhotoGet(id);if(!v)continue;
+    document.querySelectorAll(`.contact-avatar[data-foto-id="${CSS.escape(id)}"]`).forEach(el=>{el.classList.add('has-photo');el.removeAttribute('data-foto-id');el.innerHTML=`<img src="${escapeHtml(v)}" alt="">`;});}};
+  await Promise.all([run(),run(),run(),run()]);
+}
+function sqContactExtrasHtml(m){
+  const bits=[];
+  if(m.pangkat)bits.push(`<div class="sq-card-line">${escapeHtml(m.pangkat)}</div>`);
+  if(m.email)bits.push(`<div class="sq-card-line"><a href="mailto:${escapeHtml(m.email)}">${escapeHtml(m.email)}</a></div>`);
+  if(m.hp)bits.push(`<div class="sq-card-line mono">${/\*/.test(m.hp)?escapeHtml(m.hp):`<a href="tel:${escapeHtml(m.hp.replace(/[^\d+]/g,''))}">${escapeHtml(m.hp)}</a>`}</div>`);
+  return bits.length?`<div class="sq-card-extra">${bits.join('')}</div>`:'';
+}
+
+/* ---------- OCR engine ---------- */
+function sqLoadTesseract(){
+  if(window.Tesseract)return Promise.resolve(window.Tesseract);
+  if(sqTesseractPromise)return sqTesseractPromise;
+  sqTesseractPromise=new Promise((res,rej)=>{const s=document.createElement('script');s.src=SQUAD_TESSERACT_SRC;s.async=true;s.onload=()=>window.Tesseract?res(window.Tesseract):rej(new Error('Tesseract tidak tersedia'));s.onerror=()=>{sqTesseractPromise=null;rej(new Error('Gagal memuat mesin OCR. Periksa koneksi internet.'));};document.head.appendChild(s);});
+  return sqTesseractPromise;
+}
+let sqOcrProgressCb=null;
+async function sqGetOcrWorker(){
+  if(sqOcrWorkerPromise)return sqOcrWorkerPromise;
+  sqOcrWorkerPromise=(async()=>{const T=await sqLoadTesseract();return T.createWorker('ind+eng',1,{logger:m=>{try{sqOcrProgressCb&&sqOcrProgressCb(m);}catch(e){}}});})();
+  sqOcrWorkerPromise.catch(()=>{sqOcrWorkerPromise=null;});
+  return sqOcrWorkerPromise;
+}
+function sqLoadImage(src){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=()=>rej(new Error('Gambar tidak dapat dibaca'));img.src=src;});}
+function sqFileToDataUrl(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(file);});}
+async function sqRunOcr(img){
+  // Upscale small screenshots so Tesseract reads them reliably.
+  const scale=Math.max(1,Math.min(3,1800/Math.max(img.naturalWidth,1)));
+  const cv=document.createElement('canvas');cv.width=Math.round(img.naturalWidth*scale);cv.height=Math.round(img.naturalHeight*scale);
+  const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,0,cv.width,cv.height);
+  const worker=await sqGetOcrWorker();
+  const {data}=await worker.recognize(cv);
+  const sb=b=>({x0:b.x0/scale,y0:b.y0/scale,x1:b.x1/scale,y1:b.y1/scale});
+  let lines=(data.lines||[]).map(l=>({text:String(l.text||'').replace(/\s+/g,' ').trim(),bbox:sb(l.bbox),words:(l.words||[]).map(w=>({text:String(w.text||'').trim(),bbox:sb(w.bbox)})).filter(w=>w.text)})).filter(l=>l.text);
+  if(!lines.length&&data.text)lines=String(data.text).split(/\n/).map(t=>({text:t.replace(/\s+/g,' ').trim(),bbox:null})).filter(l=>l.text);
+  return lines;
+}
+
+/* ---------- Parser profil Satu Kemenkeu ---------- */
+const SQ_ESELON1=[
+  [/direktorat\s+jenderal\s+stabilitas\s+dan\s+pengembangan\s+sektor\s+keuangan/i,'DJSPSK'],
+  [/direktorat\s+jenderal\s+strategi\s+ekonomi\s+dan\s+fiskal/i,'DJSEF'],
+  [/direktorat\s+jenderal\s+pengelolaan\s+pembiayaan\s+dan\s+risiko/i,'DJPPR'],
+  [/direktorat\s+jenderal\s+perimbangan\s+keuangan/i,'DJPK'],
+  [/direktorat\s+jenderal\s+kekayaan\s+negara/i,'DJKN'],
+  [/direktorat\s+jenderal\s+perbendaharaan/i,'DJPB'],
+  [/direktorat\s+jenderal\s+bea\s+dan\s+cukai/i,'DJBC'],
+  [/direktorat\s+jenderal\s+anggaran/i,'DJA'],
+  [/direktorat\s+jenderal\s+pajak/i,'DJP'],
+  [/badan\s+teknologi,?\s+informasi,?\s+dan\s+intelijen\s+keuangan/i,'BaTii'],
+  [/badan\s+pendidikan\s+dan\s+pelatihan\s+keuangan/i,'BPPK'],
+  [/lembaga\s+national\s+single\s+window/i,'LNSW'],
+  [/inspektorat\s+jenderal/i,'Itjen'],
+  [/sekretariat\s+jenderal/i,'Setjen'],
+];
+const SQ_UNIT_START=/^(Direktorat|Sekretariat|Biro|Pusat|Inspektorat|Badan|Kantor|Balai|Lembaga|Subdirektorat|Bagian|Subbagian|Seksi|Kanwil|KPP|KPPN|KPKNL|Pusdiklat|Pangkalan)\b/i;
+function sqCleanName(t){return String(t||'').replace(/[^A-Za-zÀ-ɏ.,'`\- ]/g,' ').replace(/\s+/g,' ').replace(/^[^A-Za-z]+|[^A-Za-z.]+$/g,'').trim();}
+function sqSuggestUnitEselonI(unitKerja){
+  const u=String(unitKerja||'').replace(/\s+/g,' ').trim();if(!u)return '';
+  let abbr='',idx=-1;
+  for(const [re,ab] of SQ_ESELON1){const m=u.match(re);if(m){abbr=ab;idx=m.index;break;}}
+  let unit=idx>=0?u.slice(0,idx).replace(/[,\s]+$/,'').trim():u;
+  let suggestion=abbr?(unit?`${unit}, ${abbr}`:u.slice(idx).trim()):u;
+  const existing=[...new Set((state.contacts||[]).map(c=>c.unitEselonI).filter(x=>x&&x!=='-'))];
+  const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const hit=existing.find(x=>norm(x)===norm(suggestion))||(unit&&abbr?existing.find(x=>norm(x)===norm(unit+abbr)):null);
+  return hit||suggestion;
+}
+function sqParseProfile(lines){
+  const out={nama:'',nip:'',email:'',hp:'',jabatan:'',unitKerja:'',pangkat:'',_nameLine:null,_nipLine:null,_emailLine:null};
+  const T=lines.map(l=>l.text);
+  // NIP: 18 digit (toleran spasi & huruf O/o yang terbaca sebagai 0)
+  let nipIdx=-1;
+  for(let i=0;i<T.length;i++){const d=T[i].replace(/[Oo]/g,'0').replace(/[Il|]/g,'1').replace(/[\s.\-]/g,'');const m=d.match(/(?<!\d)(\d{18})(?!\d)/);if(m&&/^[\d\s.\-OoIl|]+$/.test(T[i].trim().replace(/^NIP[:\s]*/i,''))){out.nip=m[1];nipIdx=i;break;}}
+  if(nipIdx<0){for(let i=0;i<T.length;i++){const m=T[i].replace(/\s/g,'').match(/(?<!\d)(\d{18})(?!\d)/);if(m){out.nip=m[1];nipIdx=i;break;}}}
+  // Email
+  for(let i=0;i<T.length;i++){const t=T[i].replace(/[®©]/g,'@').replace(/\s*@\s*/g,'@');const m=t.match(/[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+/);if(m){out.email=m[0].replace(/[.,;]+$/,'').toLowerCase();out._emailLine=lines[i];break;}}
+  // HP (boleh tersamar ******)
+  for(let i=0;i<T.length;i++){if(i===nipIdx)continue;const t=T[i].replace(/[•·xX]/g,'*');const m=t.match(/(\+?62|0)\s?8[0-9*\s\-]{6,18}[0-9*]/);if(m){let hp=m[0].replace(/\s+/g,'').replace(/-+/g,'');
+    // Satu Kemenkeu menyamarkan nomor (0857******49); OCR sering membaca * sebagai deretan angka sama.
+    hp=hp.replace(/^(\+?\d{4})(\d)\2{4,}(\d{2,3})$/,(a,h,c,t2)=>h+'*'.repeat(a.length-h.length-t2.length)+t2);out.hp=hp;break;}}
+  // Nama: baris berhuruf tepat di atas NIP
+  const isNameLike=t=>{const c=sqCleanName(t);return c.length>=3&&!/@|\d{4,}/.test(t)&&!/jabatan|pangkat|golongan|unit|satu\s*kemenkeu/i.test(t)&&c.replace(/[^A-Za-z]/g,'').length>=c.length*0.6;};
+  // Buang token sampah di depan nama (foto/ikon sering terbaca "O", "@", "&").
+  const takeName=i=>{const L=lines[i];const words=(L.words&&L.words.length)?L.words:T[i].split(' ').map(t=>({text:t,bbox:null}));
+    let k=0;while(k<words.length-1&&(/^[^A-Za-z]+$/.test(words[k].text)||(/^[A-Za-z]$/.test(words[k].text)&&words.length>2)))k++;
+    const kept=words.slice(k);out.nama=sqCleanName(kept.map(w=>w.text).join(' '));
+    const fb=kept[0]&&kept[0].bbox;out._nameLine={text:out.nama,bbox:fb?{x0:fb.x0,y0:L.bbox.y0,x1:L.bbox.x1,y1:L.bbox.y1}:L.bbox};};
+  if(nipIdx>0){for(let i=nipIdx-1;i>=0;i--){if(isNameLike(T[i])){takeName(i);break;}}}
+  if(!out.nama){for(let i=0;i<T.length;i++){if(isNameLike(T[i])&&T[i].split(' ').length>=2){takeName(i);break;}}}
+  if(nipIdx>=0)out._nipLine=lines[nipIdx];
+  // Bagian Jabatan & Pangkat
+  const hdrJab=T.findIndex(t=>/jabatan\s*(saat\s*ini)?\s*:?/i.test(t)&&t.length<40);
+  const hdrPkt=T.findIndex(t=>/^\s*(pangkat|golongan)/i.test(t));
+  const isHeader=t=>/:\s*$/.test(t)&&t.length<40;
+  if(hdrJab>=0){
+    const inline=T[hdrJab].split(':').slice(1).join(':').trim();
+    const block=[];if(inline)block.push(inline);
+    for(let i=hdrJab+1;i<T.length;i++){if(i===hdrPkt||isHeader(T[i])||/^\s*(pangkat|golongan)/i.test(T[i]))break;block.push(T[i]);}
+    let cut=block.findIndex((t,i)=>i>0&&SQ_UNIT_START.test(t));
+    if(cut<0&&block.length>=2)cut=1;
+    const jab=(cut<0?block:block.slice(0,cut)).join(' '),unit=(cut<0?[]:block.slice(cut)).join(' ');
+    out.jabatan=jab.replace(/\s+/g,' ').replace(/^[^A-Za-z]+/,'').trim();
+    out.unitKerja=unit.replace(/\s+/g,' ').replace(/\s+,/g,',').trim();
+  }
+  // Pangkat / golongan
+  const pktSrc=(hdrPkt>=0?T.slice(hdrPkt,hdrPkt+3):T).join(' \n ');
+  const pm=pktSrc.match(/(Juru|Pengatur|Penata|Pembina)[A-Za-z .]*?\s*[-–—]?\s*([IVl1|]{1,3})\s*\/\s*([a-eA-E])/);
+  if(pm){const rom=pm[2].replace(/[l1|]/g,'I');const name=pm[0].split(/[-–—]/)[0].replace(/[IVl1|]{1,3}\s*\/.*$/,'').trim();out.pangkat=`${name} - ${rom}/${pm[3].toLowerCase()}`;}
+  else if(hdrPkt>=0){const nx=(T[hdrPkt].split(':').slice(1).join(':').trim())||T[hdrPkt+1]||'';out.pangkat=nx.trim();}
+  return out;
+}
+// Potong foto profil (lingkaran kiri atas) memakai posisi teks nama sebagai patokan.
+function sqCropAvatar(img,parsed){
+  try{
+    const W=img.naturalWidth,H=img.naturalHeight,nb=parsed._nameLine&&parsed._nameLine.bbox;if(!nb)return '';
+    const xMax=Math.floor(nb.x0-3);if(xMax<24)return '';
+    const nipB=parsed._nipLine&&parsed._nipLine.bbox,emB=parsed._emailLine&&parsed._emailLine.bbox;
+    let yMax=emB&&emB.y0>nb.y1?Math.floor(emB.y0-2):Math.floor(Math.min(H,nb.y0+Math.max(xMax*1.3,(nipB?nipB.y1-nb.y0:40)*3)));
+    yMax=Math.min(H,Math.max(yMax,Math.floor(nb.y1)));
+    const cv=document.createElement('canvas');cv.width=xMax;cv.height=yMax;const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0);
+    const d=ctx.getImageData(0,0,xMax,yMax).data;
+    // Warna latar = warna terbanyak pada tepi kanan region (sisi dekat teks nama).
+    const counts=new Map();const key=(r,g,b)=>((r>>4)<<8)|((g>>4)<<4)|(b>>4);
+    for(let y=0;y<yMax;y++){const p=(y*xMax+(xMax-1))*4;const k=key(d[p],d[p+1],d[p+2]);counts.set(k,(counts.get(k)||0)+1);}
+    for(let x=0;x<xMax;x++){const p=((yMax-1)*xMax+x)*4;const k=key(d[p],d[p+1],d[p+2]);counts.set(k,(counts.get(k)||0)+1);}
+    const bk=[...counts.entries()].sort((a,b)=>b[1]-a[1])[0][0];const br=((bk>>8)&15)*16+8,bg=((bk>>4)&15)*16+8,bb=(bk&15)*16+8;
+    const rowHits=new Array(yMax).fill(0),colHits=new Array(xMax).fill(0);
+    for(let y=0;y<yMax;y++)for(let x=0;x<xMax;x++){const p=(y*xMax+x)*4;if(Math.abs(d[p]-br)+Math.abs(d[p+1]-bg)+Math.abs(d[p+2]-bb)>60){rowHits[y]++;colHits[x]++;}}
+    const thr=3;let y0=rowHits.findIndex(v=>v>thr),y1=yMax-1-[...rowHits].reverse().findIndex(v=>v>thr),x0=colHits.findIndex(v=>v>thr),x1=xMax-1-[...colHits].reverse().findIndex(v=>v>thr);
+    if(y0<0||x0<0||x1-x0<20||y1-y0<20)return '';
+    const side=Math.max(x1-x0,y1-y0)+1,cx=(x0+x1)/2,cy=(y0+y1)/2;
+    const out=document.createElement('canvas');out.width=out.height=128;const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,128,128);o.imageSmoothingQuality='high';
+    o.drawImage(img,cx-side/2,cy-side/2,side,side,0,0,128,128);
+    return out.toDataURL('image/jpeg',0.82);
+  }catch(e){console.warn('Avatar crop failed',e);return '';}
+}
+async function sqResizePhotoFile(file){
+  const img=await sqLoadImage(await sqFileToDataUrl(file));const s=Math.min(img.naturalWidth,img.naturalHeight);
+  const cv=document.createElement('canvas');cv.width=cv.height=128;const c=cv.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,128,128);c.imageSmoothingQuality='high';
+  c.drawImage(img,(img.naturalWidth-s)/2,(img.naturalHeight-s)/2,s,s,0,0,128,128);return cv.toDataURL('image/jpeg',0.82);
+}
+
+/* ---------- Modal Tambah / Edit Anggota ---------- */
+function sqEnsureModal(){let m=document.getElementById('squadMemberModal');if(!m){m=document.createElement('div');m.id='squadMemberModal';m.className='modal-overlay hidden';document.body.appendChild(m);}return m;}
+function sqOpenMemberModal(contactId){
+  if(!cmCanMutate())return cmDenyMutation();
+  const c=contactId?(state.contacts||[]).find(x=>x.id===contactId):null;
+  if(contactId&&!c){toast(uiText('Member not found. The list may have just been refreshed.','Anggota tidak ditemukan. Daftar mungkin baru diperbarui.'),'error');return;}
+  const orig=c?{nama:c.nama,nip:c.nip,sheet:c.sheet,squadTeam:c.squadTeam}:null;
+  const sheets=[];const seen=new Set();(state.contacts||[]).forEach(x=>{if(!seen.has(x.sheet)){seen.add(x.sheet);sheets.push({v:x.sheet,l:x.sheetTitle});}});
+  const defSheet=c?c.sheet:(state.contactFilters.sheet!=='ALL'?state.contactFilters.sheet:(sheets[0]?.v||''));
+  const perans=[...new Set(['Ketua','Anggota',...(state.contacts||[]).map(x=>x.peran).filter(Boolean)])];
+  const units=[...new Set((state.contacts||[]).map(x=>x.unitEselonI).filter(x=>x&&x!=='-'))].sort((a,b)=>a.localeCompare(b));
+  let photo=c&&c.fotoId?(sqPhotoCacheLoad()[c.fotoId]||''):'',photoChanged=false;
+  const modal=sqEnsureModal();
+  const v=k=>escapeHtml(c?(c[k]==='-'?'':(c[k]||'')):'');
+  modal.innerHTML=`<div class="modal-box sq-modal"><div class="modal-head"><h2>${c?uiText('Edit Squad Member','Edit Anggota Squad'):uiText('Add Squad Member','Tambah Anggota Squad')}</h2><button class="modal-close" id="sqClose">&times;</button></div>
+  <div class="modal-body">
+    <div class="sq-import" id="sqDrop" tabindex="0">
+      <div class="sq-import-shot" id="sqShot"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2.2"/><path d="M21 15l-5-5-8 8"/></svg></div>
+      <div class="sq-import-text"><b>${uiText('Import from Satu Kemenkeu screenshot','Import dari screenshot profil Satu Kemenkeu')}</b>
+        <span>${uiText('Drop the image here, paste it (Ctrl+V), or','Tarik gambar ke sini, tempel (Ctrl+V), atau')} <label for="sqShotFile" class="sq-link">${uiText('choose a file','pilih file')}</label>. ${uiText('Read locally in your browser.','Dibaca lokal di browser.')}</span>
+        <div class="sq-progress hidden" id="sqProg"><div class="sq-progress-bar"><i id="sqProgBar"></i></div><em id="sqProgText"></em></div>
+      </div>
+      <input type="file" id="sqShotFile" accept="image/*" hidden>
+    </div>
+    <div class="sq-note hidden" id="sqNote"></div>
+    <form id="sqForm" class="sq-form" autocomplete="off">
+      <div class="sq-photo-col">
+        <div class="sq-photo" id="sqPhoto"></div>
+        <label for="sqPhotoFile" class="btn btn-outline btn-sm sq-photo-btn">${uiText('Change photo','Ganti foto')}</label>
+        <button type="button" class="btn btn-outline btn-sm sq-photo-btn sq-del" id="sqPhotoDel">${uiText('Remove','Hapus')}</button>
+        <input type="file" id="sqPhotoFile" accept="image/*" hidden>
+      </div>
+      <div class="form-grid sq-fields">
+        <div class="form-field full"><label>${uiText('Full name','Nama lengkap')} <span class="req">*</span></label><input name="nama" required value="${v('nama')}"></div>
+        <div class="form-field"><label>NIP</label><input name="nip" inputmode="numeric" maxlength="21" value="${v('nip')}"><small class="sq-hint" id="sqNipHint"></small></div>
+        <div class="form-field"><label>${uiText('Rank / grade','Pangkat / golongan')}</label><input name="pangkat" value="${v('pangkat')}" placeholder="Penata Muda - III/a"></div>
+        <div class="form-field"><label>Email</label><input name="email" type="email" value="${v('email')}" placeholder="nama@kemenkeu.go.id"></div>
+        <div class="form-field"><label>${uiText('Phone','No. HP')}</label><input name="hp" value="${v('hp')}" placeholder="08xxxxxxxxxx"><small class="sq-hint" id="sqHpHint"></small></div>
+        <div class="form-field full"><label>${uiText('Position','Jabatan')}</label><textarea name="jabatan" rows="2">${v('jabatan')}</textarea></div>
+        <div class="form-field full"><label>${uiText('Work unit (full)','Unit kerja (lengkap)')}</label><textarea name="unitKerja" rows="2">${v('unitKerja')}</textarea></div>
+        <div class="sq-divider full">${uiText('Squad placement','Penempatan squad')}</div>
+        <div class="form-field"><label>${uiText('Team','Tim')} <span class="req">*</span></label><select name="sheet" id="sqSheet">${sheets.map(s=>`<option value="${escapeHtml(s.v)}" ${s.v===defSheet?'selected':''}>${escapeHtml(s.l)}</option>`).join('')}<option value="__new">+ ${uiText('New team…','Tim baru…')}</option></select></div>
+        <div class="form-field hidden" id="sqNewSheetWrap"><label>${uiText('New team name','Nama tim baru')} <span class="req">*</span></label><input name="newSheetTitle" placeholder="${uiText('e.g. Tim Digitalisasi …','mis. Tim Digitalisasi …')}"></div>
+        <div class="form-field"><label>Squad Team <span class="req">*</span></label><input name="squadTeam" list="sqSquadList" required value="${v('squadTeam')}"><datalist id="sqSquadList"></datalist></div>
+        <div class="form-field"><label>${uiText('Role','Peran')}</label><input name="peran" list="sqPeranList" value="${v('peran')}" placeholder="Anggota"><datalist id="sqPeranList">${perans.map(p=>`<option value="${escapeHtml(p)}">`).join('')}</datalist></div>
+        <div class="form-field"><label>Unit Eselon I / II</label><input name="unitEselonI" list="sqUnitList" value="${v('unitEselonI')}"><datalist id="sqUnitList">${units.map(u=>`<option value="${escapeHtml(u)}">`).join('')}</datalist></div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-foot">${c?`<button class="btn btn-ghost btn-sm sq-del" id="sqDelete">${iconTrash()} ${uiText('Delete','Hapus')}</button>`:''}<span style="flex:1"></span><button class="btn btn-outline btn-sm" id="sqCancel">${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" id="sqSave">${uiText('Save','Simpan')}</button></div></div>`;
+  modal.classList.remove('hidden');
+  const $=id=>document.getElementById(id),form=$('sqForm');
+  const renderPhoto=()=>{const nama=form.nama.value;$('sqPhoto').innerHTML=photo?`<img src="${escapeHtml(photo)}" alt="">`:`<span>${escapeHtml(contactInitials(nama))}</span>`;$('sqPhotoDel').classList.toggle('hidden',!photo);};
+  const fillSquads=()=>{const sh=$('sqSheet').value;const sq=[...new Set((state.contacts||[]).filter(x=>x.sheet===sh).map(x=>x.squadTeam).filter(x=>x&&x!=='-'))];$('sqSquadList').innerHTML=sq.map(s=>`<option value="${escapeHtml(s)}">`).join('');$('sqNewSheetWrap').classList.toggle('hidden',sh!=='__new');form.newSheetTitle.required=sh==='__new';};
+  const nipHint=()=>{const nip=form.nip.value.replace(/\D/g,'');const h=$('sqNipHint');if(!nip){h.textContent='';return;}
+    const dup=(state.contacts||[]).filter(x=>x.nip===nip&&(!c||x.id!==c.id));
+    h.className='sq-hint'+(dup.length?' warn':'');h.textContent=dup.length?uiText('Already listed in: ','Sudah terdaftar di: ')+dup.slice(0,3).map(x=>`${x.sheetTitle} › ${x.squadTeam}`).join('; '):(nip.length!==18?uiText('NIP usually has 18 digits','NIP biasanya 18 digit'):'');};
+  const hpHint=()=>{$('sqHpHint').textContent=/\*/.test(form.hp.value)?uiText('Number is masked in Satu Kemenkeu — complete it manually if needed.','Nomor tersamar di Satu Kemenkeu — lengkapi manual bila perlu.'):'';};
+  renderPhoto();fillSquads();nipHint();hpHint();
+  const close=()=>{modal.classList.add('hidden');document.removeEventListener('paste',onPaste);sqOcrProgressCb=null;};
+  $('sqClose').onclick=close;$('sqCancel').onclick=close;
+  $('sqSheet').onchange=fillSquads;form.nip.oninput=nipHint;form.hp.oninput=hpHint;form.nama.oninput=()=>{if(!photo)renderPhoto();};
+  $('sqPhotoFile').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{photo=await sqResizePhotoFile(f);photoChanged=true;renderPhoto();}catch(err){toast(err.message,'error');}};
+  $('sqPhotoDel').onclick=()=>{photo='';photoChanged=true;renderPhoto();};
+
+  // ---- Import screenshot ----
+  let busy=false;
+  const setProg=(p,txt)=>{$('sqProg').classList.remove('hidden');$('sqProgBar').style.width=Math.round(p*100)+'%';$('sqProgText').textContent=txt||'';};
+  const handleShot=async file=>{
+    if(busy||!file||!/^image\//.test(file.type)){if(file&&!/^image\//.test(file.type))toast(uiText('Please use an image file (PNG/JPG).','Gunakan file gambar (PNG/JPG).'),'error');return;}
+    busy=true;$('sqDrop').classList.add('busy');
+    try{
+      const src=await sqFileToDataUrl(file);const img=await sqLoadImage(src);
+      $('sqShot').innerHTML=`<img src="${escapeHtml(src)}" alt="">`;
+      setProg(0.05,uiText('Loading OCR engine…','Memuat mesin OCR…'));
+      sqOcrProgressCb=m=>{if(m.status==='recognizing text')setProg(0.35+0.65*(m.progress||0),uiText('Reading text… ','Membaca teks… ')+Math.round((m.progress||0)*100)+'%');else if(/load|initiali/i.test(m.status||''))setProg(0.05+0.3*(m.progress||0),uiText('Preparing OCR (first time may take a moment)…','Menyiapkan OCR (pertama kali agak lama)…'));};
+      const lines=await sqRunOcr(img);const p=sqParseProfile(lines);
+      const filled=[];const set=(k,val)=>{if(!val)return;form[k].value=val;form[k].classList.remove('sq-filled');void form[k].offsetWidth;form[k].classList.add('sq-filled');filled.push(k);};
+      set('nama',p.nama);set('nip',p.nip);set('email',p.email);set('hp',p.hp);set('jabatan',p.jabatan);set('unitKerja',p.unitKerja);set('pangkat',p.pangkat);
+      if(p.unitKerja){const ue=sqSuggestUnitEselonI(p.unitKerja);if(ue&&(!form.unitEselonI.value||!c))set('unitEselonI',ue);}
+      const face=sqCropAvatar(img,p);if(face){photo=face;photoChanged=true;filled.push('foto');}
+      renderPhoto();nipHint();hpHint();
+      setProg(1,uiText('Done','Selesai'));
+      const missing=['nama','nip','jabatan'].filter(k=>!form[k].value.trim());
+      const note=$('sqNote');note.classList.remove('hidden');note.classList.toggle('warn',!filled.length||missing.length>0);
+      note.innerHTML=filled.length?`${uiText('Filled automatically','Terisi otomatis')}: <b>${filled.length}</b> field${face?'':' · '+uiText('photo not detected — upload manually if needed','foto tidak terdeteksi — unggah manual bila perlu')}. ${uiText('Please check the highlighted fields before saving.','Periksa kembali field yang disorot sebelum menyimpan.')}${missing.length?`<br>${uiText('Still empty','Masih kosong')}: ${missing.join(', ')}`:''}`
+        :uiText('No profile text could be read. Make sure the screenshot shows the profile card clearly, or fill in manually.','Teks profil tidak terbaca. Pastikan screenshot memuat kartu profil dengan jelas, atau isi manual.');
+    }catch(err){console.error(err);setProg(0,'');$('sqProg').classList.add('hidden');const note=$('sqNote');note.classList.remove('hidden');note.classList.add('warn');note.textContent=uiText('OCR failed: ','OCR gagal: ')+(err.message||err)+'. '+uiText('You can still fill the form manually.','Form tetap bisa diisi manual.');}
+    finally{busy=false;$('sqDrop').classList.remove('busy');sqOcrProgressCb=null;}
+  };
+  const onPaste=e=>{if(modal.classList.contains('hidden'))return;const it=[...(e.clipboardData?.items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();handleShot(it.getAsFile());}};
+  document.addEventListener('paste',onPaste);
+  $('sqShotFile').onchange=e=>{const f=e.target.files[0];e.target.value='';handleShot(f);};
+  const drop=$('sqDrop');
+  drop.onclick=e=>{if(e.target.closest('label'))return;if(!busy)$('sqShotFile').click();};
+  drop.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('sqShotFile').click();}};
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
+  drop.ondragleave=()=>drop.classList.remove('drag');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');handleShot(e.dataTransfer.files[0]);};
+
+  // ---- Delete ----
+  if(c)$('sqDelete').onclick=async()=>{
+    if(!window.confirm(uiText(`Delete ${c.nama} from ${c.squadTeam}?`,`Hapus ${c.nama} dari ${c.squadTeam}?`)))return;
+    const idx=sqLocate(c.id,orig);if(idx<0){toast(uiText('Member not found.','Anggota tidak ditemukan.'),'error');return;}
+    const removed=state.contacts.splice(idx,1)[0];
+    if(removed.fotoId&&!state.contacts.some(x=>x.fotoId===removed.fotoId))await sqPhotoRemove(removed.fotoId);
+    await sqCommit();close();toast(uiText('Member deleted.','Anggota dihapus.'),'success');
+  };
+  // ---- Save ----
+  $('sqSave').onclick=async()=>{
+    if(!form.checkValidity()){form.reportValidity();return;}
+    const fd=new FormData(form),g=k=>String(fd.get(k)||'').replace(/\s+/g,' ').trim();
+    let sheet=g('sheet'),sheetTitle=(sheets.find(s=>s.v===sheet)||{}).l||sheet;
+    if(sheet==='__new'){sheetTitle=g('newSheetTitle');sheet=('ST '+sheetTitle.split(' ').filter(w=>/^[A-Za-z]/.test(w)&&!/^(tim|dan|untuk|di|ke)$/i.test(w)).map(w=>w[0].toUpperCase()).join('')).slice(0,28)||'ST NEW';let base=sheet,n=2;while(sheets.some(s=>s.v===sheet))sheet=base+' '+(n++);}
+    const nip=g('nip').replace(/\D/g,'');
+    const rec={sheet,sheetTitle,squadTeam:g('squadTeam')||'-',unitEselonI:g('unitEselonI')||'-',nama:g('nama'),nip,jabatan:g('jabatan'),peran:g('peran'),email:g('email').toLowerCase(),hp:g('hp'),pangkat:g('pangkat'),unitKerja:g('unitKerja'),fotoId:c?c.fotoId||'':''};
+    if(nip&&(state.contacts||[]).some(x=>x.nip===nip&&x.sheet===rec.sheet&&x.squadTeam===rec.squadTeam&&(!c||x.id!==c.id))){toast(uiText('This NIP is already in that squad.','NIP ini sudah ada di squad tersebut.'),'error');return;}
+    $('sqSave').disabled=true;
+    try{
+      if(photoChanged){
+        if(photo){const fid=rec.fotoId||('ph'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));await sqPhotoSet(fid,photo);rec.fotoId=fid;}
+        else if(rec.fotoId){const old=rec.fotoId;rec.fotoId='';if(!state.contacts.some(x=>x.fotoId===old&&(!c||x.id!==c.id)))await sqPhotoRemove(old);}
+      }
+      if(c){const idx=sqLocate(c.id,orig);if(idx<0){toast(uiText('Member not found. The list may have just been refreshed.','Anggota tidak ditemukan. Daftar mungkin baru diperbarui.'),'error');return;}state.contacts[idx]=Object.assign({},state.contacts[idx],rec);}
+      else{let at=-1;state.contacts.forEach((x,i)=>{if(x.sheet===rec.sheet&&x.squadTeam===rec.squadTeam)at=i;});if(at<0)state.contacts.forEach((x,i)=>{if(x.sheet===rec.sheet)at=i;});if(at<0)state.contacts.push(rec);else state.contacts.splice(at+1,0,rec);}
+      await sqCommit();close();toast(c?uiText('Member updated.','Data anggota diperbarui.'):uiText('Member added.','Anggota ditambahkan.'),'success');
+    }finally{const b=$('sqSave');if(b)b.disabled=false;}
+  };
+}
+function sqLocate(id,orig){
+  const list=state.contacts||[];let idx=list.findIndex(x=>x.id===id);
+  if(idx>=0&&orig&&(list[idx].nama!==orig.nama||list[idx].nip!==orig.nip))idx=-1;
+  if(idx<0&&orig)idx=list.findIndex(x=>x.nama===orig.nama&&x.nip===orig.nip&&x.sheet===orig.sheet&&x.squadTeam===orig.squadTeam);
+  return idx;
+}
+async function sqCommit(){
+  state.contacts=normalizeContactList(state.contacts);
+  await persistContacts();
+  updateNavigationCounts();populateContactFilterDropdowns();
+  if(state.activeTab==='contact')configureContextToolbar('contact');
+  renderContactResults();
+  if(state.activeTab==='resource'&&typeof renderResource==='function')renderResource();
 }
 
 
@@ -12190,11 +12619,15 @@ function exportToExcel() {
 ============================================================ */
 const CONTACT_FIELD_MATCHERS = [
   ['squadTeam', ['squad team', 'squad']],
+  ['unitKerja', ['unit kerja']],
   ['unitEselonI', ['unit eselon', 'unit']],
   ['nama', ['nama']],
   ['nip', ['nip']],
   ['jabatan', ['jabatan']],
   ['peran', ['peran', 'role']],
+  ['email', ['email', 'e-mail']],
+  ['hp', ['no hp', 'no. hp', 'nomor hp', 'telepon', 'whatsapp', 'phone']],
+  ['pangkat', ['pangkat', 'golongan']],
 ];
 function findContactHeaderRow(aoa) {
   const scanRows = Math.min(aoa.length, 8);
@@ -12246,6 +12679,10 @@ function importContactsFromSheet(sheetName, aoa) {
       nip,
       jabatan: String(get(row, 'jabatan') || '').trim(),
       peran: String(get(row, 'peran') || '').trim(),
+      email: String(get(row, 'email') || '').trim(),
+      hp: String(get(row, 'hp') || '').trim(),
+      pangkat: String(get(row, 'pangkat') || '').trim(),
+      unitKerja: String(get(row, 'unitKerja') || '').trim(),
     };
   }).filter(Boolean);
 }
@@ -12369,6 +12806,9 @@ function finalizeContactImport(imported, sourceLabel) {
   document.getElementById('confirmContactImportBtn').addEventListener('click', async () => {
     close();
     showLoading('Saving squad team data...');
+    const prevByKey = new Map();
+    (state.contacts || []).forEach(c => { if (c.nip) prevByKey.set('n:' + c.nip, c); if (c.nama) prevByKey.set('m:' + c.nama.toLowerCase(), c); });
+    imported.forEach(r => { const old = (r.nip && prevByKey.get('n:' + r.nip)) || prevByKey.get('m:' + String(r.nama || '').toLowerCase()); if (!old) return; ['email','hp','pangkat','unitKerja','fotoId'].forEach(k => { if (!r[k] && old[k]) r[k] = old[k]; }); });
     state.contacts = normalizeContactList(imported);
     state.contactFilters = { search:'', sheet:'ALL', peran:'ALL', unit:'ALL' };
     await persistContacts();
@@ -12391,13 +12831,13 @@ function exportContactsToExcel() {
     const aoa = [
       [sheetData.sheetTitle],
       [],
-      ['Squad Team', 'Unit Eselon I', 'No', 'Nama', 'NIP', 'Jabatan', 'Peran'],
+      ['Squad Team', 'Unit Eselon I', 'No', 'Nama', 'NIP', 'Jabatan', 'Peran', 'Pangkat', 'Email', 'No HP', 'Unit Kerja'],
     ];
     sheetData.rows.forEach((r, i) => {
-      aoa.push([r.squadTeam, r.unitEselonI, i + 1, r.nama, r.nip, r.jabatan, r.peran]);
+      aoa.push([r.squadTeam, r.unitEselonI, i + 1, r.nama, r.nip, r.jabatan, r.peran, r.pangkat || '', r.email || '', r.hp || '', r.unitKerja || '']);
     });
     const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws['!cols'] = [{wch:45},{wch:30},{wch:5},{wch:26},{wch:20},{wch:40},{wch:10}];
+    ws['!cols'] = [{wch:45},{wch:30},{wch:5},{wch:26},{wch:20},{wch:40},{wch:10},{wch:22},{wch:30},{wch:16},{wch:50}];
     const safeName = String(sheetKey || 'Sheet').slice(0, 31);
     XLSX.utils.book_append_sheet(wb, ws, safeName);
   });
@@ -12489,6 +12929,7 @@ async function buildBackupPayload() {
     agendas: state.agendas,
     knowledge: state.knowledge,
     contacts: state.contacts,
+    contactPhotos: await sqPhotoCollectAll(),
     resources: state.resources,
     reminders: cmReminderLoad(),
     activityLogs: await cmActivityLogLoadAll(),
@@ -12834,6 +13275,9 @@ async function applyFullRestore(parsed) {
   }
   if (Array.isArray(parsed.contacts)) {
     state.contacts = normalizeContactList(parsed.contacts);
+  }
+  if (parsed.contactPhotos && typeof parsed.contactPhotos === 'object') {
+    try { await sqPhotoRestoreAll(parsed.contactPhotos); } catch (e) { console.warn('Photo restore failed', e); }
   }
   if (Array.isArray(parsed.resources)) {
     state.resources = parsed.resources.map(resourceNormalize);
@@ -14173,6 +14617,7 @@ Object.assign(CM_USER_MANUAL_ARTICLES.find(a=>a.id==='whats-new'),{title:{en:"Wh
     outcome:{en:'Requests from units reach the CM Team in one queue, approved requests become regular activities, and requesters can see the decision without a follow-up message.',id:'Pengajuan dari unit masuk ke Tim CM dalam satu antrean, pengajuan yang disetujui menjadi kegiatan biasa, dan pemohon dapat melihat keputusannya tanpa perlu menanyakan ulang.'},
     note:{en:'Requests need the Firebase rules for cmScheduleRequests. Approved activities start with category Lainnya unless changed with Edit, and the PIC can be filled in afterwards from Edit Activity.',id:'Pengajuan membutuhkan aturan Firebase untuk cmScheduleRequests. Kegiatan yang disetujui berkategori Lainnya kecuali diubah melalui Ubah, dan PIC dapat diisi kemudian melalui Edit Activity.'},
     keywords:['ajukan jadwal','setujui jadwal','pengajuan','approval','persetujuan','layanan manajemen perubahan','narasumber','pendampingan','FGD','kalender','notifikasi','status saya','request schedule']});
+  {const ua=find('user-access-admin');if(ua&&ua.functions){ua.functions.en=[...ua.functions.en,'Entry Card Theme: choose theme A, B, or C for the entry card, and upload and crop your own image for theme B.','Menu Settings: hide any menu (except Overview) for Guests or CMO Pusat with on/off switches. The Superadmin still sees every menu; hidden ones are marked with an orange dot.'];ua.functions.id=[...ua.functions.id,'Tampilan Gerbang: pilih tema A, B, atau C untuk kartu masuk, serta unggah dan potong gambar sendiri untuk tema B.','Pengaturan Menu: sembunyikan menu apa pun (kecuali Overview) untuk Tamu atau CMO Pusat dengan sakelar nyala/mati. Superadmin tetap melihat semua menu; menu yang disembunyikan diberi titik oranye.'];ua.keywords=[...new Set([...(ua.keywords||[]),'sembunyikan menu','hide menu','pengaturan menu','tema gerbang'])];}}
   const wn=find('whats-new');
   if(wn){
     wn.title={en:"What's New in User Manual v20.6",id:'Yang Baru di User Manual v20.6'};
