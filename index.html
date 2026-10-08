@@ -9746,6 +9746,7 @@ function reviewUnitSelectBind(modal,cur){const uSel=modal.querySelector('[name=u
 function reviewUnitValue(fd){return fd.get('unit')==='__other'?String(fd.get('unitOther')||'').trim().toUpperCase():String(fd.get('unit')||'').trim();}
 function reviewPicSelectHtml(cur){const names=[...new Set((state.resources||[]).map(x=>x.nama).filter(Boolean))];cur=String(cur||'').trim();const curName=cur?reviewPicName({pic:cur}):'';return `<select name="pic" required><option value="">${uiText('Select CM Team member','Pilih anggota Tim CM')}</option>${cur&&cur!=='Aji Intern'&&!names.includes(curName)?`<option value="${escapeHtml(cur)}" selected>${escapeHtml(cur)} (${uiText('not in CM Team','tidak ada di Tim CM')})</option>`:''}${names.map(x=>`<option value="${escapeHtml(x)}" ${curName===x?'selected':''}>${escapeHtml(x)}</option>`).join('')}</select>`;}
 function reviewRolePillsHtml(name,cur,roles){return `<div class="rv-role-pills" role="radiogroup">${roles.map(x=>`<label style="--rc:${reviewRoleColor(x.label)}"><input type="radio" name="${name}" value="${escapeHtml(x.key)}" ${x.key===cur?'checked':''}><span>${escapeHtml(reviewRoleLabel(x))}</span></label>`).join('')}</div>`;}
+function reviewPersonPreviewHtml(roleKey,roleLabel,prof,phone){const cls=roleKey==='pmo'?'pmo':roleKey==='dual'?'dual':'cmo',p=prof||{},n=p.nama||'';return `<div class="review-people rv-single rv-preview"><div class="rv-person rv-${cls} rv-role-colored" style="${reviewRoleStyle(roleLabel)}"><span class="rv-person-edit rv-preview-edit" aria-hidden="true">✎ ${uiText('Edit','Edit')}</span>${reviewAvatar(n||'?',p.foto||'','')}<div class="rv-person-main"><span class="rv-tag">${escapeHtml(roleLabel)}</span><strong class="rv-name">${escapeHtml(n||uiText('Name not entered','Nama belum diisi'))}</strong>${(p.nip||p.jabatan||p.pangkat)?`<div class="rv-nip">NIP&nbsp;&nbsp;${escapeHtml(p.nip||'-')}</div><div class="rv-job">${escapeHtml([p.jabatan,p.pangkat].filter(Boolean).join(' · ')||'-')}</div>`:`<div class="rv-job">${uiText('Profile not available yet','Profil belum tersedia')}</div>`}${p.email?`<span class="rv-mail">✉ ${escapeHtml(p.email)}</span>`:''}${reviewWa(phone)}</div></div></div>`;}
 function reviewOpenEditor(id,preset){if(!cmCanMutate())return cmDenyMutation();if(id&&reviewRows.some(x=>x.id===id))return reviewOpenUnitEditor(id);return reviewOpenContactAdd(preset||{});}
 
 /* ---------- Tambah kontak: satu form = satu orang ---------- */
@@ -9777,9 +9778,15 @@ function reviewOpenContactAdd(preset){
  let imported=null;
  cmpiMount(modal.querySelector('#rvImport'),{form,targets:[{key:'person',label:'',map:{unitAbbr:'unit',nama:'nama',hp:'phone'},need:['unit','pic','phone']}],onApply:(p,x)=>{
    imported={nama:p.nama,nip:p.nip||'',jabatan:p.jabatan||'',pangkat:p.pangkat||'',email:p.email||'',foto:x.photo||''};
-   form.unit.dispatchEvent(new Event('change'));
-   const chip=modal.querySelector('#rvProfChip');chip.classList.remove('hidden');
-   chip.innerHTML=`<div class="rv-prof-chip">${reviewAvatar(p.nama||'?',x.photo||'','rv-chip-photo')}<div><b>${escapeHtml(p.nama||'-')}</b><small>${[p.nip?'NIP '+escapeHtml(p.nip):'',escapeHtml(p.pangkat||'')].filter(Boolean).join(' · ')}<br>${[escapeHtml(p.jabatan||''),escapeHtml(p.email||'')].filter(Boolean).join(' · ')}</small></div><span class="rv-chip-tag">✓ ${uiText('saved to profile','disimpan ke profil')}</span></div>`;}});
+   form.unit.dispatchEvent(new Event('change'));renderPreview();}});
+ // Pratinjau kartu — markup sama dengan kartu di direktori, diperbarui langsung.
+ function renderPreview(){const chip=modal.querySelector('#rvProfChip'),nama=String(form.nama.value||'').trim().replace(/\s+/g,' ');
+   if(!nama&&!imported){chip.classList.add('hidden');chip.innerHTML='';return;}
+   const stored=nama?reviewProfile(nama):null,useImp=imported&&(!nama||String(imported.nama).trim().toLowerCase()===nama.toLowerCase());
+   const prof={...(stored||{}),...(useImp?Object.fromEntries(Object.entries(imported).filter(([k,v])=>v)):{}),nama:nama||(imported&&imported.nama)||''};
+   const ro=roleObj();chip.classList.remove('hidden');
+   chip.innerHTML=`<div class="rv-preview-head"><span>${uiText('Card preview','Pratinjau kartu')}</span>${useImp?`<em>✓ ${uiText('profile will be saved','profil ikut disimpan')}</em>`:''}</div>${reviewPersonPreviewHtml(ro.key,ro.label,prof,cmFormatPhone(String(form.phone.value||'').trim()))}`;}
+ ['nama','phone'].forEach(n=>form[n].addEventListener('input',renderPreview));form.querySelectorAll('input[name=role]').forEach(i=>i.addEventListener('change',renderPreview));
  form.onsubmit=async e=>{e.preventDefault();if(!form.checkValidity()){form.reportValidity();return;}
   const fd=new FormData(form),unit=reviewUnitValue(fd),pic=String(fd.get('pic')||'').trim(),nama=String(fd.get('nama')||'').trim().replace(/\s+/g,' '),phone=cmFormatPhone(String(fd.get('phone')||'').trim()),note=String(fd.get('note')||'').trim(),rk=roleKey(),ro=roleObj();
   if(!unit){toast(uiText('Choose or type the unit.','Pilih atau ketik unit.'),'error');return;}
@@ -10029,10 +10036,16 @@ function sqCropAvatar(img,parsed){
     for(let y=0;y<yMax;y++)for(let x=0;x<xMax;x++){const p=(y*xMax+x)*4;if(Math.abs(d[p]-br)+Math.abs(d[p+1]-bg)+Math.abs(d[p+2]-bb)>60){rowHits[y]++;colHits[x]++;}}
     const thr=3;let y0=rowHits.findIndex(v=>v>thr),y1=yMax-1-[...rowHits].reverse().findIndex(v=>v>thr),x0=colHits.findIndex(v=>v>thr),x1=xMax-1-[...colHits].reverse().findIndex(v=>v>thr);
     if(y0<0||x0<0||x1-x0<20||y1-y0<20)return '';
-    const side=Math.max(x1-x0,y1-y0)+1,cx=(x0+x1)/2,cy=(y0+y1)/2;
-    const out=document.createElement('canvas');out.width=out.height=128;const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,128,128);o.imageSmoothingQuality='high';
-    o.drawImage(img,cx-side/2,cy-side/2,side,side,0,0,128,128);
-    return out.toDataURL('image/jpeg',0.82);
+    const side=Math.max(x1-x0,y1-y0)+1,cx=(x0+x1)/2,cy=(y0+y1)/2,R=side/2;
+    // Ambil lingkaran foto Satu Kemenkeu secara utuh (proporsi asli), dipotong sedikit ke dalam tepi lingkaran
+    // supaya tidak ada sisa tepi/sudut putih — garis putih di kartu murni dari bingkai CSS: tipis & merata.
+    // Pusat lingkaran diperhalus dari titik tengah baris/kolom terlebar subjek.
+    let ccx=cx,ccy=cy;{let best=0;for(let y=y0;y<=y1;y++){let a=-1,b=-1;for(let x=x0;x<=x1;x++){const q=(y*xMax+x)*4;if(Math.abs(d[q]-br)+Math.abs(d[q+1]-bg)+Math.abs(d[q+2]-bb)>60){if(a<0)a=x;b=x;}}if(b-a>best){best=b-a;ccx=(a+b)/2;ccy=y;}}
+      let bestC=0;for(let x=x0;x<=x1;x++){let a=-1,b=-1;for(let y=y0;y<=y1;y++){const q=(y*xMax+x)*4;if(Math.abs(d[q]-br)+Math.abs(d[q+1]-bg)+Math.abs(d[q+2]-bb)>60){if(a<0)a=y;b=y;}}if(b-a>bestC){bestC=b-a;ccy=(a+b)/2;}}}
+    const S=side*.94,sx=ccx,sy=ccy;
+    const OUT=160,out=document.createElement('canvas');out.width=out.height=OUT;const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,OUT,OUT);o.imageSmoothingQuality='high';
+    o.drawImage(img,sx-S/2,sy-S/2,S,S,0,0,OUT,OUT);
+    return out.toDataURL('image/jpeg',0.86);
   }catch(e){console.warn('Avatar crop failed',e);return '';}
 }
 async function sqResizePhotoFile(file){
@@ -10232,7 +10245,7 @@ function cmpiMount(host,opts){
    form&&form.querySelectorAll('.cmpi-need').forEach(x=>x.classList.remove('cmpi-need'));
    const needEls=(t.need||[]).map(n=>form&&form.elements[n]).filter(el=>el&&!el.disabled&&!String(el.value||'').trim());
    needEls.forEach(el=>{el.classList.add('cmpi-need');const clr=()=>{if(String(el.value||'').trim())el.classList.remove('cmpi-need');};el.addEventListener('input',clr);el.addEventListener('change',clr);});
-   const needLabels=needEls.map(el=>{const lb=el.closest('label');return lb?String(lb.childNodes[0]?.textContent||lb.textContent||'').replace(/\*/g,'').trim():el.name;}).filter(Boolean);
+   const needLabels=needEls.map(el=>{const wrap=el.closest('label'),lb=wrap||el.parentElement?.querySelector('label');const txt=wrap?String(wrap.childNodes[0]?.textContent||''):String(lb?.textContent||'');return txt.replace(/\*/g,'').trim()||el.name;}).filter(Boolean);
    if(needEls[0])setTimeout(()=>{try{needEls[0].focus();}catch(e){}},50);
    prog(1,uiText('Done','Selesai'));
    const miss=['nama','nip'].filter(k=>!p[k]);
@@ -15871,7 +15884,12 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 .rv-pl-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid #E6EAF1;border-left:4px solid var(--rc);border-radius:10px;background:#FAFBFD}
 .rv-pl-role{font-size:10.5px;font-weight:800;color:#fff;background:var(--rc);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .rv-pl-item b{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rv-pl-item small{font-size:11px;color:var(--ink-500);white-space:nowrap}
-.rv-pl-add{align-self:flex-start}.rv-pl-empty{font-size:12px;color:var(--ink-400);font-style:italic}
+.rv-pl-add{align-self:flex-start}
+.rv-preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-400)}
+.rv-preview-head em{font-style:normal;text-transform:none;letter-spacing:0;font-size:10.5px;color:#15805F;background:#E5F5EE;border-radius:999px;padding:2px 8px}
+.rv-preview{display:block!important;grid-template-columns:none!important;pointer-events:none}
+.rv-preview .rv-person{width:100%;max-width:none}
+.rv-preview-edit{pointer-events:none}.rv-pl-empty{font-size:12px;color:var(--ink-400);font-style:italic}
 @media(max-width:640px){.rv-pl-item{grid-template-columns:auto minmax(0,1fr) auto}.rv-pl-item small{display:none}}
 /* ===== IMPORT PROFIL SATU KEMENKEU (umum) ===== */
 .cmpi{display:flex;flex-direction:column;gap:6px;margin-bottom:4px}
