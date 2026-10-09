@@ -630,6 +630,9 @@ button.inv-badge{cursor:pointer;font-family:'JetBrains Mono',ui-monospace,SFMono
   box-shadow:0 1px 2px rgba(0,0,0,.06);
 }
 .cal-event:hover{filter:brightness(0.95);}
+.cal-clash-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#E5322D;box-shadow:0 0 0 2px #fff;margin-right:5px;vertical-align:1px;flex-shrink:0}
+.cal-time{font-weight:800;margin-right:4px;opacity:.75;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.cal-clash-dot{width:6px;height:6px;margin-right:3px}.cal-time{margin-right:2px}}
 .cal-more{font-size:10px;color:var(--navy-700);font-weight:700;cursor:pointer;padding:2px 6px;flex-shrink:0;}
 
 /* ===== INDONESIA HOLIDAY CALENDAR — MULTI-YEAR AUTO SYNC ===== */
@@ -4003,10 +4006,11 @@ function cmSRDecorateCalendar(){
   const w=head?.querySelector('.cm-sr-calbtns');
   if(w){
     if(!cmSRUid()&&!cmGuestOffline){w.innerHTML='';}
-    else if(cmSRIsStaff()){const n=cmSRPending().length;w.innerHTML=`<span class="cal-export-sep"></span><button type="button" class="btn btn-sm cm-sr-btn-gold" data-sr-approve>✓ ${uiText('Approve Schedule','Setujui Jadwal')}${n?` <span class="cm-sr-cnt">${n}</span>`:''}</button>`;}
+    else if(cmSRIsStaff()){const n=cmSRPending().length;w.innerHTML=`<span class="cal-export-sep"></span>${cmCanMutate()?`<button type="button" class="btn btn-sm cm-cal-addbtn" data-cal-add>＋ ${uiText('Add Activity','Tambah Activity')}</button>`:''}<button type="button" class="btn btn-sm cm-sr-btn-gold" data-sr-approve>✓ ${uiText('Approve Schedule','Setujui Jadwal')}${n?` <span class="cm-sr-cnt">${n}</span>`:''}</button>`;}
     else{const seen=cmSRSeen(),mine=cmSR.items.filter(r=>r.status!=='cancelled'),fresh=mine.filter(r=>(r.status==='approved'||r.status==='rejected')&&!seen.has(cmSRSeenToken(r))).length;
       w.innerHTML=`<span class="cal-export-sep"></span><button type="button" class="btn btn-outline btn-sm" data-sr-mine>${uiText('My requests','Status saya')} (${mine.length})${fresh?` <span class="cm-sr-cnt">${fresh}</span>`:''}</button><button type="button" class="btn btn-sm cm-sr-btn-gold" data-sr-new>＋ ${uiText('Request Schedule','Ajukan Jadwal')}</button>`;}
     w.querySelector('[data-sr-approve]')?.addEventListener('click',()=>cmSROpenPanel());
+    w.querySelector('[data-cal-add]')?.addEventListener('click',()=>cmCalAddActivity(''));
     w.querySelector('[data-sr-new]')?.addEventListener('click',()=>cmSROpenForm());
     w.querySelector('[data-sr-mine]')?.addEventListener('click',()=>cmSROpenMine());
   }
@@ -4023,6 +4027,12 @@ function cmSRDecorateCalendar(){
       c.classList.add('cm-sr-pick');c.title=c.title||uiText('Click to request this date','Klik untuk mengajukan tanggal ini');
       c.onclick=e=>{if(e.target.closest('.cal-event,.cal-more'))return;cmSROpenForm({date:d});};
     });
+  }
+  // Superadmin / Tim CM: klik tanggal = tambah Activity langsung (tanpa approval).
+  if(cmCanMutate()){
+    box.querySelectorAll('.cal-cell[data-date]').forEach(c=>{const d=c.dataset.date;c.classList.remove('cm-sr-pick');c.classList.add('cm-cal-add');
+      c.title=uiText('Click to add an activity on this date','Klik untuk menambah activity di tanggal ini');c.dataset.addLabel=uiText('Add','Tambah');
+      c.onclick=e=>{if(e.target.closest('.cal-event,.cal-more'))return;cmCalAddActivity(d);};});
   }
   box.querySelectorAll('.cm-sr-calev').forEach(e=>e.remove());
   const shown=cmSR.items.filter(r=>r.status==='pending'&&r.date);
@@ -4307,6 +4317,125 @@ const CM_ESELON1_UNITS=[
 ];
 const CM_ALL_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource'];
 function cmUnitByCode(code){return CM_ESELON1_UNITS.find(u=>u.code===code)||null;}
+
+/* ============================================================
+   REFERENSI UNIT ESELON I — satu sumber untuk seluruh dashboard
+   Dipakai: kartu masuk tamu & Schedule Request (CM_ESELON1_UNITS),
+   Log Akses, kontak PMO/CMO & Edit PIC, import Satu Kemenkeu,
+   pembaca undangan, deteksi aktor laporan, Kelola Unit (UNIT_SEED)
+   & klasifikasi internal. Ubah di Kelola Unit → semua ikut berubah.
+============================================================ */
+const CM_UNIT_REF_KEY='cm_unit_ref_v1';
+const CM_UNIT_REF_DEFAULT=CM_ESELON1_UNITS.filter(u=>u.code!=='EKSTERNAL').map(u=>({...u}));
+let cmUnitRefList=CM_UNIT_REF_DEFAULT.map(u=>({...u})),cmUnitRefUnsub=null,cmUnitRefUi={open:false,draft:null};
+function cmUnitRefNormalize(list){const seen=new Set();return (Array.isArray(list)?list:[]).map(u=>({code:String(u&&u.code||'').trim().toUpperCase().replace(/\s+/g,''),short:String(u&&u.short||'').trim(),name:String(u&&u.name||'').trim().replace(/\s+/g,' ')})).filter(u=>u.code&&u.code!=='EKSTERNAL'&&!seen.has(u.code)&&seen.add(u.code)).map(u=>({...u,short:u.short||u.code,name:u.name||u.code}));}
+function cmUnitRef(){return cmUnitRefList;}
+function cmUnitRefCodes(){return cmUnitRefList.map(u=>u.code);}
+function cmUnitRefEsc(s){return String(s).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+function cmUnitRefNameRe(name){return cmUnitRefEsc(name.toLowerCase()).replace(/,/g,',?').replace(/\s+/g,'\\s+');}
+/* Terapkan referensi ke semua konsumen (array diperbarui di tempat agar semua kode lama otomatis ikut). */
+function cmUnitRefApply(list){
+ cmUnitRefList=cmUnitRefNormalize(list);if(!cmUnitRefList.length)cmUnitRefList=CM_UNIT_REF_DEFAULT.map(u=>({...u}));
+ const ext=CM_ESELON1_UNITS.find(u=>u.code==='EKSTERNAL')||{code:'EKSTERNAL',short:'Eksternal',name:'Eksternal'};
+ CM_ESELON1_UNITS.splice(0,CM_ESELON1_UNITS.length,...cmUnitRefList.map(u=>({...u})),ext);
+ const byLen=[...cmUnitRefList].sort((a,b)=>b.name.length-a.name.length);
+ try{SQ_ESELON1.splice(0,SQ_ESELON1.length,...byLen.map(u=>[new RegExp(cmUnitRefNameRe(u.name),'i'),u.short||u.code]));}catch(e){}
+ try{CM_UND_UNIT_NAMES.splice(0,CM_UND_UNIT_NAMES.length,...byLen.map(u=>[u.code,new RegExp(`${cmUnitRefNameRe(u.name)}|\\b${cmUnitRefEsc(u.code.toLowerCase())}\\b${u.short&&u.short.toLowerCase()!==u.code.toLowerCase()?`|\\b${cmUnitRefEsc(u.short.toLowerCase())}\\b`:''}`,'i')]));}catch(e){}
+ try{UNIT_SEED.splice(0,UNIT_SEED.length,...cmUnitRefList.map(u=>({name:u.code,type:'internal'})));}catch(e){}
+ try{cmUnitRefList.forEach(u=>KEMENKEU_INTERNAL_UNITS.add(normalizeUnitKey(u.code)));}catch(e){}
+}
+function cmUnitRefCodeOf(shortOrCode){const k=String(shortOrCode||'').toLowerCase();const u=cmUnitRefList.find(x=>x.code.toLowerCase()===k||String(x.short).toLowerCase()===k);return u?u.code:shortOrCode;}
+/* Pastikan unit referensi ada di Kelola Unit sebagai internal (untuk filter, matriks, grafik). */
+async function cmUnitRefSyncUnitList(persistIt){
+ if(!Array.isArray(state.unitList))return false;let changed=false;
+ cmUnitRefList.forEach(u=>{const k=normalizeUnitKey(u.code);const ex=state.unitList.find(x=>normalizeUnitKey(x.name)===k);if(!ex){state.unitList.push({name:u.code,type:'internal'});changed=true;}else if(ex.type!=='internal'){ex.type='internal';changed=true;}});
+ if(changed&&persistIt&&cmCanMutate())await persistUnitList();return changed;
+}
+function cmUnitRefRerender(){try{if(typeof refreshAll==='function')refreshAll();}catch(e){}try{if(state.activeTab==='contact'&&typeof renderContact==='function')renderContact();}catch(e){}}
+function cmUnitRefLoadLocal(){try{const raw=localStorage.getItem(CM_UNIT_REF_KEY);if(raw)cmUnitRefApply(JSON.parse(raw));else cmUnitRefApply(cmUnitRefList);}catch(e){cmUnitRefApply(cmUnitRefList);}}
+async function cmUnitRefLoadRemote(){
+ if(!isLoggedIn()||!window.fbDb)return;
+ const v=await firestoreGet(CM_UNIT_REF_KEY);
+ if(v){try{const list=JSON.parse(v);if(JSON.stringify(cmUnitRefNormalize(list))!==JSON.stringify(cmUnitRefList)){cmUnitRefApply(list);localStorage.setItem(CM_UNIT_REF_KEY,JSON.stringify(cmUnitRefList));cmUnitRefRerender();}}catch(e){}}
+ if(!cmUnitRefUnsub&&window.fbOnSnapshot){try{cmUnitRefUnsub=window.fbOnSnapshot(window.fbDoc(window.fbDb,'dashboard',CM_UNIT_REF_KEY),snap=>{if(!snap.exists())return;let list;try{list=JSON.parse(snap.data().value||'[]');}catch(e){return;}if(JSON.stringify(cmUnitRefNormalize(list))===JSON.stringify(cmUnitRefList))return;cmUnitRefApply(list);try{localStorage.setItem(CM_UNIT_REF_KEY,JSON.stringify(cmUnitRefList));}catch(e){}cmUnitRefRerender();});}catch(e){}}
+}
+function cmUnitRefUsage(code){const k=String(code).toUpperCase();return {contacts:((typeof reviewRows!=='undefined'&&reviewRows)||[]).filter(r=>String(r.unit).toUpperCase()===k).length,agendas:(state.agendas||[]).filter(a=>String(a.unitPemohon||'').toUpperCase()===k||String(a.unitAsalNarsum||'').toUpperCase().split(',').map(s=>s.trim()).includes(k)).length};}
+/* Simpan referensi baru; rename kode memigrasikan kontak, Agenda, dan Kelola Unit. */
+function cmUnitRefAgendaHas(a,code){const k=String(code).toUpperCase();return String(a.unitPemohon||'').toUpperCase()===k||String(a.unitAsalNarsum||'').toUpperCase().split(',').map(x=>x.trim()).includes(k);}
+function cmUnitRefIsPast(a,today){const end=String(a.tglSelesai||a.tglMulai||'');return !!end&&end<today;}
+/* Dialog pilihan sinkronisasi saat kode unit berganti (restrukturisasi organisasi). */
+function cmUnitRefSyncDialog(renames,removed){return new Promise(resolve=>{
+ const today=dayjs().format('YYYY-MM-DD'),ag=state.agendas||[],rv=(typeof reviewRows!=='undefined'&&reviewRows)||[];
+ const stat=renames.map(([a,b])=>{const k=a.toUpperCase();const ags=ag.filter(x=>cmUnitRefAgendaHas(x,a));return {a,b,contacts:rv.filter(r=>String(r.unit).toUpperCase()===k).length,future:ags.filter(x=>!cmUnitRefIsPast(x,today)).length,past:ags.filter(x=>cmUnitRefIsPast(x,today)).length};});
+ const tot=k=>stat.reduce((s,x)=>s+x[k],0);
+ const ov=document.createElement('div');ov.className='modal-overlay';ov.id='cmUnitRefDlg';
+ ov.innerHTML=`<div class="modal-box ur-dlg"><div class="modal-head"><h2>${uiText('Save unit reference','Simpan referensi unit')}</h2><button class="modal-close" data-x>&times;</button></div><div class="modal-body">
+  ${stat.length?`<div class="ur-dlg-sec">${uiText('Code changes','Perubahan kode')}</div><table class="ur-dlg-tbl"><thead><tr><th>${uiText('Old','Lama')}</th><th>${uiText('New','Baru')}</th><th>${uiText('Contacts','Kontak')}</th><th>${uiText('Upcoming','Mendatang')}</th><th>${uiText('Past','Lampau')}</th></tr></thead><tbody>${stat.map(x=>`<tr><td><b>${escapeHtml(x.a)}</b></td><td><b>${escapeHtml(x.b)}</b></td><td>${x.contacts}</td><td>${x.future}</td><td>${x.past}</td></tr>`).join('')}</tbody></table>
+  <div class="ur-dlg-sec">${uiText('Also update existing data? (optional)','Ikut perbarui data yang sudah ada? (opsional)')}</div>
+  <label class="ur-opt"><input type="checkbox" data-o="contacts" checked ${tot('contacts')?'':'disabled'}><span><b>${uiText('PMO/CMO contacts','Kontak PMO/CMO')}</b> · ${tot('contacts')} ${uiText('rows','baris')}<small>${uiText('Active data — usually follows the new organisation.','Data aktif — biasanya mengikuti organisasi baru.')}</small></span></label>
+  <label class="ur-opt"><input type="checkbox" data-o="future" checked ${tot('future')?'':'disabled'}><span><b>${uiText('Upcoming & ongoing activities','Agenda mendatang & berjalan')}</b> · ${tot('future')} ${uiText('activities','kegiatan')}<small>${uiText('Activities ending today or later.','Kegiatan yang berakhir hari ini atau setelahnya.')}</small></span></label>
+  <label class="ur-opt"><input type="checkbox" data-o="past" ${tot('past')?'':'disabled'}><span><b>${uiText('Past activities','Agenda yang sudah lewat')}</b> · ${tot('past')} ${uiText('activities','kegiatan')}<small>${uiText('Left unchecked, history keeps the unit name used at that time.','Bila tidak dicentang, riwayat tetap memakai nama unit pada saat itu.')}</small></span></label>`:''}
+  ${removed.length?`<div class="ur-dlg-sec">${uiText('Removed from the reference','Dihapus dari referensi')}</div><p class="ur-dlg-note">${removed.map(escapeHtml).join(', ')} — ${uiText('no longer offered as a choice. Existing data is kept as is (no migration); new entries start fresh with the current units.','tidak lagi muncul sebagai pilihan. Data yang sudah ada dibiarkan apa adanya (tanpa migrasi); entri baru mulai dari unit yang berlaku.')}</p>`:''}
+ </div><div class="modal-foot"><button class="btn btn-outline btn-sm" data-x>${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" data-ok>${uiText('Save reference','Simpan referensi')}</button></div></div>`;
+ document.body.appendChild(ov);
+ const done=v=>{ov.remove();resolve(v);};
+ ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>done(null));
+ ov.querySelector('[data-ok]').onclick=()=>{const o={};ov.querySelectorAll('[data-o]').forEach(c=>o[c.dataset.o]=c.checked&&!c.disabled);done(o);};
+});}
+/* Simpan referensi baru. Sinkronisasi data lama bersifat opsional; agenda lampau tidak diubah kecuali dipilih. */
+async function cmUnitRefSave(rows){
+ if(!cmCanMutate())return cmDenyMutation();
+ const next=cmUnitRefNormalize(rows.map(r=>({code:r.code,short:r.short,name:r.name})));
+ if(!next.length){toast(uiText('The reference cannot be empty.','Referensi tidak boleh kosong.'),'error');return false;}
+ const codes=rows.map(r=>String(r.code||'').trim().toUpperCase()).filter(Boolean);if(new Set(codes).size!==codes.length){toast(uiText('Unit codes must be unique.','Kode unit tidak boleh kembar.'),'error');return false;}
+ const renames=rows.filter(r=>r.orig&&String(r.code).trim().toUpperCase()!==r.orig).map(r=>[r.orig,String(r.code).trim().toUpperCase()]);
+ const removed=cmUnitRefList.map(u=>u.code).filter(c=>!rows.some(r=>r.orig===c));
+ let opt={contacts:false,future:false,past:false};
+ if(renames.length||removed.length){const o=await cmUnitRefSyncDialog(renames,removed);if(!o)return false;opt={...opt,...o};}
+ showLoading&&showLoading(uiText('Updating unit reference…','Memperbarui referensi unit…'));
+ let n={contacts:0,agendas:0};
+ try{
+  cmUnitRefApply(next);try{localStorage.setItem(CM_UNIT_REF_KEY,JSON.stringify(cmUnitRefList));}catch(e){}
+  await firestoreSet(CM_UNIT_REF_KEY,JSON.stringify(cmUnitRefList));
+  const today=dayjs().format('YYYY-MM-DD');let agChanged=false;
+  for(const [a,b] of renames){
+   const k=a.toUpperCase();
+   if(opt.contacts&&Array.isArray(reviewRows))reviewRows=reviewRows.map(r=>{if(String(r.unit).toUpperCase()===k){n.contacts++;return {...r,unit:b};}return r;});
+   try{const gi=cmGuestIdentity();if(gi&&gi.unit===a){gi.unit=b;cmSaveGuestIdentity(gi);}}catch(e){}
+   if(opt.future||opt.past)(state.agendas||[]).forEach(x=>{if(!cmUnitRefAgendaHas(x,a))return;const past=cmUnitRefIsPast(x,today);if(past?!opt.past:!opt.future)return;
+     if(String(x.unitPemohon||'').toUpperCase()===k)x.unitPemohon=b;x.unitAsalNarsum=String(x.unitAsalNarsum||'').split(',').map(t=>t.trim()).filter(Boolean).map(t=>t.toUpperCase()===k?b:t).join(', ')||x.unitAsalNarsum;n.agendas++;agChanged=true;});
+  }
+  if(n.contacts&&typeof reviewPersist==='function')await reviewPersist();
+  if(agChanged){state.agendas=preprocess(state.agendas);await persist();}
+  // Kode lama tetap ada di Kelola Unit (dipakai riwayat); kode baru ditambahkan sebagai internal.
+  await cmUnitRefSyncUnitList(true);
+ }finally{hideLoading&&hideLoading();}
+ cmUnitRefRerender();
+ toast(uiText(`Unit reference saved${renames.length?` — updated ${n.contacts} contacts, ${n.agendas} activities`:''}.`,`Referensi unit disimpan${renames.length?` — ${n.contacts} kontak & ${n.agendas} kegiatan diperbarui`:''}.`),'success');return true;
+}
+/* Editor di modal Kelola Unit */
+function cmUnitRefMountEditor(host,onDone){
+ if(!host)return;const can=cmCanMutate();
+ const draft=cmUnitRefUi.draft||cmUnitRefList.map(u=>({...u,orig:u.code}));cmUnitRefUi.draft=draft;
+ const rowHtml=(r,i)=>{const u=r.orig?cmUnitRefUsage(r.orig):{contacts:0,agendas:0};return `<div class="ur-row" data-i="${i}"><input class="ur-code" data-f="code" value="${escapeHtml(r.code)}" maxlength="12" ${can?'':'disabled'} aria-label="Kode"><input data-f="short" value="${escapeHtml(r.short)}" maxlength="20" ${can?'':'disabled'} aria-label="Singkatan"><input data-f="name" value="${escapeHtml(r.name)}" maxlength="140" ${can?'':'disabled'} aria-label="Nama lengkap"><span class="ur-use" title="${uiText('Used by contacts / activities','Dipakai kontak / kegiatan')}">${u.contacts}·${u.agendas}</span>${can?`<button type="button" class="ur-del" data-del="${i}" title="${uiText('Remove','Hapus')}">×</button>`:'<span></span>'}</div>`;};
+ host.innerHTML=`<details class="ur-box" ${cmUnitRefUi.open?'open':''}><summary><b>${uiText('Eselon I Unit Reference','Referensi Unit Eselon I')}</b><span>${cmUnitRefList.length} unit · ${uiText('used across the whole dashboard','dipakai di seluruh dashboard')}</span></summary>
+  <p class="ur-help">${uiText('Single source for the entry card, Schedule Request, Access Log, PMO/CMO contacts, Edit PIC, Satu Kemenkeu import, invitation reader, and unit filters. When the organisation changes, old data may keep its former name — syncing contacts and activities is optional when saving.','Satu sumber untuk kartu masuk, Schedule Request, Log Akses, kontak PMO/CMO, Edit PIC, import Satu Kemenkeu, pembaca undangan, dan filter unit. Saat organisasi berubah, data lama boleh tetap memakai nama lamanya — sinkronisasi ke kontak dan agenda dipilih saat menyimpan.')}</p>
+  <div class="ur-head"><span>${uiText('Code','Kode')}</span><span>${uiText('Short','Singkatan')}</span><span>${uiText('Full name','Nama lengkap')}</span><span title="${uiText('contacts · activities','kontak · kegiatan')}">${uiText('Used','Dipakai')}</span><span></span></div>
+  <div class="ur-list">${draft.map(rowHtml).join('')}</div>
+  ${can?`<div class="ur-actions"><button type="button" class="btn btn-outline btn-sm" data-ur-add>+ ${uiText('Add unit','Tambah unit')}</button><button type="button" class="btn btn-outline btn-sm" data-ur-reset>${uiText('Reset to default','Kembalikan default')}</button><span style="flex:1"></span><button type="button" class="btn btn-outline btn-sm" data-ur-cancel>${uiText('Discard','Batalkan')}</button><button type="button" class="btn btn-gold btn-sm" data-ur-save>${uiText('Save reference','Simpan referensi')}</button></div>`:''}
+ </details>`;
+ const box=host.querySelector('.ur-box');box.addEventListener('toggle',()=>{cmUnitRefUi.open=box.open;});
+ host.querySelectorAll('.ur-row input').forEach(inp=>inp.addEventListener('input',()=>{const i=Number(inp.closest('.ur-row').dataset.i);draft[i][inp.dataset.f]=inp.dataset.f==='code'?inp.value.toUpperCase().replace(/\s+/g,''):inp.value;if(inp.dataset.f==='code')inp.value=draft[i].code;}));
+ const rerender=()=>cmUnitRefMountEditor(host,onDone);
+ host.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{draft.splice(Number(b.dataset.del),1);rerender();});
+ host.querySelector('[data-ur-add]')?.addEventListener('click',()=>{draft.push({code:'',short:'',name:'',orig:''});rerender();setTimeout(()=>host.querySelector('.ur-row:last-child .ur-code')?.focus(),0);});
+ host.querySelector('[data-ur-reset]')?.addEventListener('click',()=>{const byCode=new Map(cmUnitRefList.map(u=>[u.code,u]));cmUnitRefUi.draft=CM_UNIT_REF_DEFAULT.map(u=>({...u,orig:byCode.has(u.code)?u.code:''}));rerender();});
+ host.querySelector('[data-ur-cancel]')?.addEventListener('click',()=>{cmUnitRefUi.draft=null;rerender();});
+ host.querySelector('[data-ur-save]')?.addEventListener('click',async()=>{const rows=draft.filter(r=>String(r.code||'').trim()||String(r.name||'').trim());if(rows.some(r=>!String(r.code||'').trim())){toast(uiText('Every unit needs a code.','Setiap unit wajib punya kode.'),'error');return;}const ok=await cmUnitRefSave(rows);if(ok){cmUnitRefUi.draft=null;if(typeof onDone==='function')onDone();else rerender();}});
+}
+setTimeout(()=>{cmUnitRefLoadLocal();try{cmUnitRefRerender();}catch(e){}},0);
+if(typeof waitForFirebaseAuthReady==='function')waitForFirebaseAuthReady().then(()=>cmUnitRefLoadRemote()).catch(()=>{});
+
 function cmGuestIdentity(){try{const x=JSON.parse(localStorage.getItem(CM_GUEST_ID_KEY)||'null');return x&&x.name&&x.email?x:null;}catch(e){return null;}}
 function cmSaveGuestIdentity(o){try{localStorage.setItem(CM_GUEST_ID_KEY,JSON.stringify(o));}catch(e){}}
 function cmIsPublicSurveyMode(){return new URLSearchParams(location.search).has('survey');}
@@ -5253,6 +5382,8 @@ async function loadUnitListInitial() {
   const { changedList, changedAgendas } = normalizeUnitListAndData();
   if (changedList) await persistUnitList();
   if (changedAgendas) await persist();
+  // Unit di Referensi Unit Eselon I selalu ada di daftar ini sebagai internal.
+  if (await cmUnitRefSyncUnitList(false) && cmCanMutate()) await persistUnitList();
 
   attachUnitListLiveSync();
 }
@@ -5642,6 +5773,7 @@ function openManageUnitsModal() {
         <button class="modal-close" id="closeUnitManage">&times;</button>
       </div>
       <div class="modal-body">
+        <div id="unitRefHost"></div>
         <p style="font-size:12.5px;color:var(--ink-500);margin:0 0 16px;line-height:1.5;">${t('manageUnitsSubtitle')}</p>
         <div id="unitManageList">${rows}</div>
         <div style="display:flex;gap:8px;margin-top:12px;">
@@ -5659,6 +5791,7 @@ function openManageUnitsModal() {
     </div>`;
 
     document.getElementById('closeUnitManage').addEventListener('click', () => modal.classList.add('hidden'));
+    cmUnitRefMountEditor(document.getElementById('unitRefHost'), renderList);
     document.getElementById('closeUnitManage2').addEventListener('click', () => modal.classList.add('hidden'));
 
     document.getElementById('unitAddNewBtn').addEventListener('click', async () => {
@@ -6415,7 +6548,7 @@ function cmRptSegment(text){
 }
 function cmRptTheme(s){const t=CM_RPT_THEMES.find(x=>x.re.test(s));return t||{key:'lainnya',id:'Lainnya',en:'Other',color:'#8A94A6'};}
 function cmRptActors(extra=[]){
-  const base=['Pusmantap','Tim CM','BaTii','Pusintek','Puspensi','Pusakti','Pusilki','Pusdiklat','Setjen','Itjen','BPPK','DJA','DJPb','DJPK','DJKN','DJSPSK','DJPPR','DJP','DJBC','DJSEF','LNSW','Biro SDM','Biro Organta','Biro KLI','Biro Umum','Biro Perencanaan','Biro Hukum','Kemenkeu Prime','Service Desk','PMO','UIC','CMO','Tim Teknis','Tim IT','Pak Ka','Kapus','Narasumber','Peserta'];
+  const base=[...cmUnitRef().map(u=>u.short||u.code),'Pusmantap','Tim CM','BaTii','Pusintek','Puspensi','Pusakti','Pusilki','Pusdiklat','Setjen','Itjen','BPPK','DJA','DJPb','DJPK','DJKN','DJSPSK','DJPPR','DJP','DJBC','DJSEF','LNSW','Biro SDM','Biro Organta','Biro KLI','Biro Umum','Biro Perencanaan','Biro Hukum','Kemenkeu Prime','Service Desk','PMO','UIC','CMO','Tim Teknis','Tim IT','Pak Ka','Kapus','Narasumber','Peserta'];
   const units=(state.agendas||[]).map(a=>String(a.unitPemohon||'').trim()).filter(x=>x&&x.length>=3&&x!=='-');
   const pics=(state.agendas||[]).flatMap(a=>(typeof cmPicList==='function'?cmPicList(a.picTimCM):String(a.picTimCM||'').split(',').map(x=>x.trim()).filter(Boolean))).filter(x=>x.length>=3);
   const aliasNames=typeof CM_PIC_ALIASES==='object'?Object.keys(CM_PIC_ALIASES).filter(k=>k.length>=3).map(k=>k.replace(/\b\w/g,c=>c.toUpperCase())):[];
@@ -8063,7 +8196,7 @@ const CM_INDONESIA_HOLIDAYS_2027={
 /* Provisional internet estimates for planning only. These are NOT official SKB 3 Menteri data.
    The Holiday Sync Worker remains authoritative and replaces these estimates automatically
    once an official calendar for the selected year becomes available. */
-const CM_CALENDAR_YEARS=[2026,2027,2028,2029,2030];
+const CM_CALENDAR_YEARS=Array.from({length:Math.max(2030,new Date().getFullYear()+20)-2026+1},(_,i)=>2026+i);
 const CM_INDONESIA_HOLIDAY_ESTIMATES={
   2027:{
     sourceUrl:'https://publicholidays.co.id/',sourceLabel:'PublicHolidays.co.id — estimasi 2027',
@@ -8154,9 +8287,81 @@ const CM_INDONESIA_HOLIDAY_ESTIMATES={
     }
   }
 };
+
+/* ---------- Perkiraan libur nasional (dihitung, bukan resmi) ---------- */
+function cmHolEaster(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;return new Date(Date.UTC(y,mo-1,da));}
+/* Fase bulan (Meeus, Astronomical Algorithms bab 49) → waktu UTC (ms). phase: 0 baru, 0.5 purnama */
+function cmHolMoonPhase(k,phase){
+ k=Math.floor(k)+phase;const T=k/1236.85,R=Math.PI/180;
+ let JDE=2451550.09766+29.530588861*k+0.00015437*T*T-0.00000015*T*T*T+0.00000000073*T*T*T*T;
+ const E=1-0.002516*T-0.0000074*T*T,M=(2.5534+29.1053567*k-0.0000014*T*T)*R,Mp=(201.5643+385.81693528*k+0.0107582*T*T+0.00001238*T*T*T)*R,F=(160.7108+390.67050284*k-0.0016118*T*T)*R,Om=(124.7746-1.56375588*k+0.0020672*T*T)*R;
+ const s=Math.sin;
+ if(phase===0)JDE+=-0.40720*s(Mp)+0.17241*E*s(M)+0.01608*s(2*Mp)+0.01039*s(2*F)+0.00739*E*s(Mp-M)-0.00514*E*s(Mp+M)+0.00208*E*E*s(2*M)-0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)-0.00024*E*s(2*Mp-M)-0.00017*s(Om);
+ else JDE+=-0.40614*s(Mp)+0.17302*E*s(M)+0.01614*s(2*Mp)+0.01043*s(2*F)+0.00734*E*s(Mp-M)-0.00515*E*s(Mp+M)+0.00209*E*E*s(2*M)-0.00111*s(Mp-2*F)-0.00057*s(Mp+2*F)+0.00056*E*s(2*Mp+M)-0.00042*s(3*Mp)+0.00042*E*s(M+2*F)+0.00038*E*s(M-2*F)-0.00024*E*s(2*Mp-M)-0.00017*s(Om);
+ return (JDE-2440587.5)*86400000-69000; /* TT→UTC ≈ 69 detik */
+}
+function cmHolLocalDate(ms,tzHours){const d=new Date(ms+tzHours*3600000);return d.toISOString().slice(0,10);}
+/* Semua fase dalam rentang tahun (tanggal lokal) */
+function cmHolPhases(year,phase,tz){const out=[];const k0=Math.floor((year-2000)*12.3685)-2;for(let k=k0;k<k0+16;k++){const ms=cmHolMoonPhase(k,phase),d=cmHolLocalDate(ms,tz);if(d.slice(0,4)==String(year))out.push(d);}return out;}
+function cmHolAddDays(iso,n){const d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+/* Kalender Hijriah via Intl (Umm al-Qura) */
+function cmHolHijriFmt(){for(const cal of ['islamic-umalqura','islamic-civil','islamic']){try{const f=new Intl.DateTimeFormat('en-u-ca-'+cal+'-nu-latn',{day:'numeric',month:'numeric',year:'numeric',timeZone:'UTC'});const p=f.formatToParts(new Date(Date.UTC(2026,2,20)));if(p.some(x=>x.type==='month'))return f;}catch(e){}}return null;}
+function cmHolHijriDays(year){const f=cmHolHijriFmt();if(!f)return [];const out=[];for(let t=Date.UTC(year,0,1);t<Date.UTC(year+1,0,1);t+=86400000){const p=f.formatToParts(new Date(t)),g=k=>Number((p.find(x=>x.type===k)||{}).value);out.push({iso:new Date(t).toISOString().slice(0,10),d:g('day'),m:g('month'),y:Number(String((p.find(x=>x.type==='relatedYear'||x.type==='year')||{}).value).replace(/\D/g,''))});}return out;}
+
+/* Posisi matahari & bulan presisi rendah (Meeus) → awal bulan Hijriah kriteria MABIMS
+   (tinggi hilal ≥ 3°, elongasi ≥ 6,4° saat matahari terbenam; titik uji Aceh, wilayah paling barat). */
+const CM_HOL_R=Math.PI/180;
+function cmHolJd(ms){return ms/86400000+2440587.5;}
+function cmHolEq(l,b,e){return {ra:Math.atan2(Math.sin(l)*Math.cos(e)-Math.tan(b)*Math.sin(e),Math.cos(l)),dec:Math.asin(Math.sin(b)*Math.cos(e)+Math.cos(b)*Math.sin(e)*Math.sin(l))};}
+function cmHolSun(J){const R=CM_HOL_R,T=(J-2451545)/36525,L0=280.46646+36000.76983*T,M=(357.52911+35999.05029*T)*R,C=(1.914602-0.004817*T)*Math.sin(M)+0.019993*Math.sin(2*M)+0.000289*Math.sin(3*M);return cmHolEq(((L0+C)%360)*R,0,(23.439291-0.0130042*T)*R);}
+function cmHolMoon(J){const R=CM_HOL_R,T=(J-2451545)/36525,Lp=218.3164477+481267.88123421*T,D=(297.8501921+445267.1114034*T)*R,M=(357.5291092+35999.0502909*T)*R,Mp=(134.9633964+477198.8675055*T)*R,F=(93.272095+483202.0175233*T)*R,s=Math.sin;
+ const lon=Lp+6.288774*s(Mp)+1.274027*s(2*D-Mp)+0.658314*s(2*D)+0.213618*s(2*Mp)-0.185116*s(M)-0.114332*s(2*F)+0.058793*s(2*D-2*Mp)+0.057066*s(2*D-M-Mp)+0.053322*s(2*D+Mp)+0.045758*s(2*D-M)-0.040923*s(M-Mp)-0.034720*s(D)-0.030383*s(M+Mp);
+ const lat=5.128122*s(F)+0.280602*s(Mp+F)+0.277693*s(Mp-F)+0.173237*s(2*D-F)+0.055413*s(2*D-Mp+F)+0.046271*s(2*D-Mp-F);
+ return cmHolEq(lon*R,lat*R,(23.439291-0.0130042*T)*R);}
+function cmHolAlt(p,J,latD,lonD){const R=CM_HOL_R,T=(J-2451545)/36525,gmst=280.46061837+360.98564736629*(J-2451545)+0.000387933*T*T,H=(gmst+lonD)*R-p.ra,la=latD*R;return Math.asin(Math.sin(la)*Math.sin(p.dec)+Math.cos(la)*Math.cos(p.dec)*Math.cos(H))/R;}
+function cmHolElong(a,b){return Math.acos(Math.sin(a.dec)*Math.sin(b.dec)+Math.cos(a.dec)*Math.cos(b.dec)*Math.cos(a.ra-b.ra))/CM_HOL_R;}
+const CM_HOL_OBS={lat:5.55,lon:95.32};
+function cmHolSunset(iso){let t=Date.parse(iso+'T09:30:00Z');for(let i=0;i<240;i++){const J=cmHolJd(t);if(cmHolAlt(cmHolSun(J),J,CM_HOL_OBS.lat,CM_HOL_OBS.lon)<-0.83)return t;t+=60000;}return t;}
+function cmHolMabimsStart(conjMs){const wib=cmHolLocalDate(conjMs,7);let d=wib;for(let i=0;i<3;i++){const ss=cmHolSunset(d);if(ss>conjMs){const J=cmHolJd(ss),sn=cmHolSun(J),mn=cmHolMoon(J);if(cmHolAlt(mn,J,CM_HOL_OBS.lat,CM_HOL_OBS.lon)>=3&&cmHolElong(sn,mn)>=6.4)return cmHolAddDays(d,1);}d=cmHolAddDays(d,1);}return cmHolAddDays(wib,2);}
+/* Hari besar Islam tahun tertentu: [{iso,m,d,y}] — awal bulan MABIMS, nomor bulan dari kalender Hijriah browser. */
+function cmHolIslamicDays(year){const f=cmHolHijriFmt();if(!f)return [];const lab=iso=>{const p=f.formatToParts(new Date(iso+'T00:00:00Z')),g=k=>Number(String((p.find(x=>x.type===k)||{}).value||'').replace(/\D/g,''));return {m:g('month'),y:g('relatedYear')||g('year')};};
+ const out=[],k0=Math.floor((year-2000)*12.3685)-2;for(let k=k0;k<k0+16;k++){const st=cmHolMabimsStart(cmHolMoonPhase(k,0)),h=lab(cmHolAddDays(st,14));[[7,27],[10,1],[10,2],[12,10],[1,1],[3,12]].forEach(([m,dd])=>{if(h.m!==m)return;const iso=cmHolAddDays(st,dd-1);if(iso.slice(0,4)===String(year))out.push({iso,m,d:dd,y:h.y});});}return out;}
+function cmHolidayComputeEstimate(year){
+ year=Number(year);const items={},est=uiText(' (estimate)',' (perkiraan)');
+ const add=(iso,id,en,approx)=>{if(!iso||iso.slice(0,4)!==String(year))return;if(items[iso])return;items[iso]={type:'national',id:id+(approx?est:''),en:en+(approx?' (estimate)':''),estimated:true};};
+ add(`${year}-01-01`,`Tahun Baru ${year} Masehi`,`New Year ${year}`);
+ add(`${year}-05-01`,'Hari Buruh Internasional','International Labour Day');
+ add(`${year}-06-01`,'Hari Lahir Pancasila','Pancasila Day');
+ add(`${year}-08-17`,'Proklamasi Kemerdekaan','Independence Day');
+ add(`${year}-12-25`,'Kelahiran Yesus Kristus','Christmas Day');
+ const easter=cmHolEaster(year).toISOString().slice(0,10);
+ add(cmHolAddDays(easter,-2),'Wafat Yesus Kristus','Good Friday');
+ add(easter,'Kebangkitan Yesus Kristus (Paskah)','Easter Sunday');
+ add(cmHolAddDays(easter,39),'Kenaikan Yesus Kristus','Ascension of Jesus Christ');
+ // Imlek: bulan baru pertama (WIB+1 = UTC+8) pada/sesudah 21 Januari
+ const nmCN=cmHolPhases(year,0,8).find(d=>d>=`${year}-01-21`);if(nmCN)add(nmCN,`Tahun Baru Imlek ${year+551} Kongzili`,`Chinese New Year ${year+551} Kongzili`,true);
+ // Nyepi: tanggal (WITA) bulan baru Tilem Kasanga pertama mulai 1 Maret
+ const nmBali=cmHolPhases(year,0,8).find(d=>d>=`${year}-03-01`&&d<=`${year}-04-05`);if(nmBali)add(nmBali,`Hari Suci Nyepi (Tahun Baru Saka ${year-78})`,`Nyepi (Saka New Year ${year-78})`,true);
+ // Waisak: purnama (WIB) pertama pada/sesudah 6 Mei
+ const fm=cmHolPhases(year,0.5,7).find(d=>d>=`${year}-05-06`);if(fm)add(fm,`Hari Raya Waisak ${year+544} BE`,`Vesak Day ${year+544} BE`,true);
+ // Hari besar Islam (hisab kriteria MABIMS; keputusan pemerintah bisa berbeda ±1 hari)
+ cmHolIslamicDays(year).forEach(h=>{
+  if(h.m===7&&h.d===27)add(h.iso,`Isra Mikraj Nabi Muhammad S.A.W. ${h.y} Hijriah`,`Prophet Muhammad's Isra Mi'raj ${h.y} H`,true);
+  if(h.m===10&&h.d===1)add(h.iso,`Idul Fitri ${h.y} Hijriah`,`Eid al-Fitr ${h.y} H`,true);
+  if(h.m===10&&h.d===2)add(h.iso,`Idul Fitri ${h.y} Hijriah (hari kedua)`,`Eid al-Fitr ${h.y} H (day 2)`,true);
+  if(h.m===12&&h.d===10)add(h.iso,`Iduladha ${h.y} Hijriah`,`Eid al-Adha ${h.y} H`,true);
+  if(h.m===1&&h.d===1)add(h.iso,`1 Muharam Tahun Baru Islam ${h.y} Hijriah`,`Islamic New Year ${h.y} H`,true);
+  if(h.m===3&&h.d===12)add(h.iso,'Maulid Nabi Muhammad S.A.W.',"Prophet Muhammad's Birthday",true);
+ });
+ const sorted={};Object.keys(items).sort().forEach(k=>sorted[k]=items[k]);
+ return {year,items:sorted,source:'computed-estimate',sourceUrl:'',sourceLabel:uiText('Automatic estimate (astronomical & Hijri calendar)','Perkiraan otomatis (astronomis & kalender Hijriah)'),official:false,estimated:true,computed:true,fetchedAt:Date.now(),available:true};
+}
+
+const CM_HOL_COMPUTED={};
 function cmHolidayEstimateEntry(year,stamp=0){
-  const e=CM_INDONESIA_HOLIDAY_ESTIMATES[Number(year)];
-  return e?{year:Number(year),items:{...e.items},source:'internet-estimate',sourceUrl:e.sourceUrl,sourceLabel:e.sourceLabel,official:false,estimated:true,fetchedAt:stamp,available:true}:null;
+  year=Number(year);if(!year||year<2000||year>2100)return null;
+  if(!CM_HOL_COMPUTED[year]){try{CM_HOL_COMPUTED[year]=cmHolidayComputeEstimate(year);}catch(e){console.info('Holiday estimate:',e);return null;}}
+  const e=CM_HOL_COMPUTED[year];return {...e,items:{...e.items},fetchedAt:stamp||e.fetchedAt};
 }
 
 const CM_HOLIDAY_CACHE_PREFIX='cm_indonesia_holiday_cache_v3_';
@@ -8171,10 +8376,7 @@ const CM_HOLIDAY_EMBEDDED_OFFICIAL={
 };
 const CM_HOLIDAY_RUNTIME={
   2026:{year:2026,items:{...CM_INDONESIA_HOLIDAYS_2026},source:'embedded-official',sourceUrl:'Kemensetneg — SKB 3 Menteri 2026',official:true,estimated:false,fetchedAt:Date.now(),available:true},
-  2027:{year:2027,items:{...CM_INDONESIA_HOLIDAYS_2027},source:'embedded-official',sourceUrl:'SKB 3 Menteri Nomor 1205/2026, 3/2026, 2/2026 tentang Hari Libur Nasional dan Cuti Bersama Tahun 2027',official:true,estimated:false,fetchedAt:Date.now(),available:true},
-  2028:cmHolidayEstimateEntry(2028,0),
-  2029:cmHolidayEstimateEntry(2029,0),
-  2030:cmHolidayEstimateEntry(2030,0)
+  2027:{year:2027,items:{...CM_INDONESIA_HOLIDAYS_2027},source:'embedded-official',sourceUrl:'SKB 3 Menteri Nomor 1205/2026, 3/2026, 2/2026 tentang Hari Libur Nasional dan Cuti Bersama Tahun 2027',official:true,estimated:false,fetchedAt:Date.now(),available:true}
 };
 const CM_HOLIDAY_FETCHING={};
 
@@ -8184,6 +8386,7 @@ function cmHolidayReadCache(year){
   try{
     const raw=localStorage.getItem(cmHolidayCacheKey(year)); if(!raw)return null;
     const parsed=JSON.parse(raw); if(!parsed||Number(parsed.year)!==Number(year))return null;
+    if(parsed.source==='internet-estimate'||parsed.source==='unavailable'||(parsed.source==='computed-estimate'&&!parsed.computedV))return null;
     CM_HOLIDAY_RUNTIME[year]=parsed; return parsed;
   }catch(e){return null;}
 }
@@ -8193,10 +8396,17 @@ function cmHolidayWriteCache(entry){
   return entry;
 }
 function cmHolidayGetYearEntry(year){
+  year=Number(year);
   const runtime=CM_HOLIDAY_RUNTIME[year];
-  if(runtime?.source==='embedded-official')return runtime;
+  if(runtime?.source==='official-pdf')return runtime;
   const cached=cmHolidayReadCache(year);
+  if(cached?.source==='official-pdf')return cached;
+  if(runtime?.source==='embedded-official')return runtime;
   if(cached)return cached;
+  if(runtime&&runtime.available!==false)return runtime;
+  // Belum ada data resmi / sinkron → perkiraan otomatis (astronomis & kalender Hijriah)
+  const est=cmHolidayEstimateEntry(year,0);
+  if(est){CM_HOLIDAY_RUNTIME[year]=est;return est;}
   return runtime||null;
 }
 function cmHolidayWorkerUrl(year){
@@ -8224,7 +8434,7 @@ function cmHolidayNormalizeRows(rows,source){
 }
 function cmHolidayEntryFresh(entry){
   if(!entry)return false;
-  if(entry.source==='embedded-official')return true;
+  if(entry.source==='embedded-official'||entry.source==='official-pdf'||entry.source==='computed-applied')return true;
   const age=Date.now()-Number(entry.fetchedAt||0);
   const ttl=(entry.available===false||entry.estimated===true)?CM_HOLIDAY_EMPTY_TTL_MS:CM_HOLIDAY_CACHE_TTL_MS;
   return age>=0&&age<ttl;
@@ -8235,6 +8445,9 @@ function cmHolidayStatusText(year){
   if(!e)return uiText(`${year} · not synced yet`,`${year} · belum disinkronkan`);
   if(e.available===false)return uiText(`${year} · official calendar not available yet`,`${year} · kalender resmi belum tersedia`);
   if(e.source==='embedded-official')return uiText(`${year} · official · built-in`,`${year} · resmi · tersimpan di aplikasi`);
+  if(e.source==='official-pdf')return uiText(`${year} · official · imported document`,`${year} · resmi · dari dokumen import`);
+  if(e.source==='computed-applied')return uiText(`${year} · prediction applied · not official`,`${year} · prediksi diterapkan · belum resmi`);
+  if(e.computed)return uiText(`${year} · automatic estimate · not official`,`${year} · perkiraan otomatis · belum resmi`);
   if(e.official)return uiText(`${year} · official auto-sync`,`${year} · auto-sync resmi`);
   if(e.estimated)return uiText(`${year} · internet estimate · not official`,`${year} · estimasi internet · belum resmi`);
   return uiText(`${year} · automatic fallback`,`${year} · auto-sync cadangan`);
@@ -8244,7 +8457,7 @@ function cmHolidayStatusTitle(year){
   if(!e)return uiText('Holiday data will be checked automatically.','Data hari libur akan dicek otomatis.');
   const when=e.fetchedAt?dayjs(Number(e.fetchedAt)).format('DD MMM YYYY HH:mm'):'';
   const src=e.sourceUrl||e.source||'';
-  const sourceKind=e.official?uiText('Official source','Sumber resmi'):(e.estimated?uiText('Internet estimate — not official','Estimasi internet — belum resmi'):uiText('Fallback source','Sumber cadangan'));
+  const sourceKind=e.official?uiText('Official source','Sumber resmi'):e.computed?uiText('Automatic estimate (astronomical calculation & Hijri calendar) — not official; collective leave cannot be estimated. Import the SKB PDF once published.','Perkiraan otomatis (hitungan astronomis & kalender Hijriah) — belum resmi; cuti bersama tidak bisa diperkirakan. Import PDF SKB setelah terbit.'):(e.estimated?uiText('Internet estimate — not official','Estimasi internet — belum resmi'):uiText('Fallback source','Sumber cadangan'));
   return [sourceKind,e.sourceLabel||src,when?`${uiText('Updated','Diperbarui')} ${when}`:''].filter(Boolean).join(' · ');
 }
 function cmIndonesiaHolidayForDate(dateStr){
@@ -8268,6 +8481,10 @@ async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
   year=Number(year); if(!year||year<2020||year>2100)return null;
   const existing=cmHolidayGetYearEntry(year);
   if(!force&&cmHolidayEntryFresh(existing))return existing;
+  if(existing?.source==='official-pdf'){
+    if(notify)toast(uiText(`${year} already uses official data from the SKB PDF.`,`${year} sudah memakai data resmi dari PDF SKB.`),'info');
+    return existing;
+  }
   if(CM_HOLIDAY_FETCHING[year])return CM_HOLIDAY_FETCHING[year];
   CM_HOLIDAY_FETCHING[year]=(async()=>{
     let lastError=null;
@@ -8287,6 +8504,11 @@ async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
       }catch(e){lastError=e;}
     }
     // Automatic fallback keeps the dashboard usable before/without the official Worker route.
+    if(existing?.source==='computed-applied'){
+      if(notify)toast(uiText(`No official ${year} data from the automatic sources yet; the applied prediction is kept.`,`Belum ada data resmi ${year} dari sumber otomatis; prediksi yang diterapkan tetap dipakai.`),'info');
+      if(lastError)console.info('Holiday sync:',lastError.message||lastError);
+      return existing;
+    }
     try{
       const payload=await cmHolidayFetchJson(`${CM_HOLIDAY_PUBLIC_API}?year=${encodeURIComponent(year)}`);
       const rows=Array.isArray(payload)?payload:(payload?.data||[]);
@@ -8303,10 +8525,10 @@ async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
     const embeddedFallback=CM_HOLIDAY_EMBEDDED_OFFICIAL[year];
     const fallback=embeddedFallback
       ?{year,items:{...embeddedFallback.items},source:'embedded-official',sourceUrl:embeddedFallback.label,official:true,estimated:false,fetchedAt:Date.now(),available:true}
-      :(cmHolidayEstimateEntry(year,Date.now())||{year,items:{},source:'unavailable',sourceUrl:'',official:false,estimated:false,fetchedAt:Date.now(),available:false});
-    cmHolidayWriteCache(fallback);
+      :(cmHolidayEstimateEntry(year,0)||{year,items:{},source:'unavailable',sourceUrl:'',official:false,estimated:false,fetchedAt:Date.now(),available:false});
+    if(fallback.computed)CM_HOLIDAY_RUNTIME[year]=fallback; else cmHolidayWriteCache(fallback);
     if(notify){
-      if(fallback.estimated)toast(uiText(`Official ${year} calendar is not available yet; using an internet estimate.`,`Kalender resmi ${year} belum tersedia; sementara menggunakan estimasi internet.`),'info');
+      if(fallback.estimated)toast(uiText(`Official ${year} calendar is not available yet; showing an automatic estimate (holidays only, no collective leave).`,`Kalender resmi ${year} belum tersedia; sementara ditampilkan perkiraan otomatis (hari libur saja, tanpa cuti bersama).`),'info');
       else toast(uiText(`Official holiday data for ${year} is not available yet.`,`Data libur resmi ${year} belum tersedia.`),'info');
     }
     if(lastError)console.info('Holiday sync:',lastError.message||lastError);
@@ -8316,11 +8538,256 @@ async function cmHolidaySyncYear(year,{force=false,notify=false}={}){
   finally{delete CM_HOLIDAY_FETCHING[year]; if(cmHolidayYear()===year)renderCalendar();}
 }
 function cmHolidayEnsureYear(year){
+  cmHolLoadShared(year);
   const entry=cmHolidayGetYearEntry(year);
   if(cmHolidayEntryFresh(entry))return;
   setTimeout(()=>cmHolidaySyncYear(year,{force:false,notify:false}),0);
 }
 
+
+/* ---------- Import PDF SKB Hari Libur Nasional & Cuti Bersama ---------- */
+const CM_HOL_MONTHS={januari:1,februari:2,pebruari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,nopember:11,desember:12};
+const CM_HOL_MONTH_RE='(januari|februari|pebruari|maret|april|mei|juni|juli|agustus|september|oktober|november|nopember|desember)';
+const CM_HOL_DAY_RE=/\b(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu|ahad)\b/gi;
+const CM_HOL_SHARED_PREFIX='cm_holiday_official_';
+/* Ambil baris teks dari PDF (urut posisi). Jika hampir tanpa teks (hasil scan) → OCR halaman. */
+async function cmHolPdfLines(file,onProgress){
+ if(!window.pdfjsLib)throw new Error(uiText('PDF reader library is not loaded.','Library pembaca PDF belum termuat.'));
+ window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+ const pdf=await window.pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise,lines=[];let chars=0;
+ for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p),tc=await page.getTextContent(),rows=[];
+  tc.items.forEach(it=>{const str=String(it.str||'');if(!str.trim())return;chars+=str.trim().length;const x=it.transform[4],y=it.transform[5];let row=rows.find(r=>Math.abs(r.y-y)<3.5);if(!row){row={y,parts:[]};rows.push(row);}row.parts.push({x,str});});
+  rows.sort((a,b)=>b.y-a.y).forEach(r=>{r.parts.sort((a,b)=>a.x-b.x);lines.push(r.parts.map(q=>q.str).join(' ').replace(/\s+/g,' ').trim());});
+  onProgress&&onProgress(p/pdf.numPages*.4,uiText(`Reading page ${p}/${pdf.numPages}…`,`Membaca halaman ${p}/${pdf.numPages}…`));}
+ if(chars>=120)return {lines,ocr:false};
+ // PDF hasil scan: render tiap halaman lalu OCR
+ const ocrLines=[];const worker=await sqGetOcrWorker();
+ for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p),vp=page.getViewport({scale:2.2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);await page.render({canvasContext:ctx,viewport:vp}).promise;
+  onProgress&&onProgress(.4+.6*(p-1)/pdf.numPages,uiText(`OCR page ${p}/${pdf.numPages}…`,`OCR halaman ${p}/${pdf.numPages}…`));
+  cmHolCleanTableImage(cv);
+  let data;try{await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});({data}=await worker.recognize(cv));}finally{try{await worker.setParameters({tessedit_pageseg_mode:'3',preserve_interword_spaces:'0'});}catch(e){}}
+  String(data.text||'').split('\n').forEach(t=>{t=t.replace(/\s+/g,' ').trim();if(t)ocrLines.push(t);});}
+ return {lines:ocrLines,ocr:true};
+}
+/* Baca gambar (screenshot daftar libur / foto lampiran SKB) dengan OCR */
+async function cmHolImageLines(file,onProgress){
+ onProgress&&onProgress(.1,uiText('Preparing image…','Menyiapkan gambar…'));
+ const url=URL.createObjectURL(file);let img;try{img=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error(uiText('Image cannot be opened.','Gambar tidak bisa dibuka.')));im.src=url;});}finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+ const sc=Math.max(1,Math.min(3,2000/Math.max(1,img.naturalWidth))),cv=document.createElement('canvas');cv.width=Math.round(img.naturalWidth*sc);cv.height=Math.round(img.naturalHeight*sc);
+ const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,0,cv.width,cv.height);
+ // mode gelap → balik warna
+ const sample=ctx.getImageData(0,0,cv.width,cv.height).data;let sum=0,n=0;for(let i=0;i<sample.length;i+=40){sum+=.299*sample[i]+.587*sample[i+1]+.114*sample[i+2];n++;}
+ if(sum/n<110){const id=ctx.getImageData(0,0,cv.width,cv.height),d=id.data;for(let i=0;i<d.length;i+=4){d[i]=255-d[i];d[i+1]=255-d[i+1];d[i+2]=255-d[i+2];}ctx.putImageData(id,0,0);}
+ cmHolCleanTableImage(cv);
+ onProgress&&onProgress(.35,uiText('Reading text (OCR)…','Membaca teks (OCR)…'));
+ const worker=await sqGetOcrWorker();let data;
+ try{await worker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});({data}=await worker.recognize(cv));}finally{try{await worker.setParameters({tessedit_pageseg_mode:'3',preserve_interword_spaces:'0'});}catch(e){}}
+ onProgress&&onProgress(1,uiText('Done','Selesai'));
+ return {lines:String(data.text||'').split('\n').map(t=>t.replace(/\s+/g,' ').trim()).filter(Boolean),ocr:true};
+}
+/* Hapus garis tabel (horizontal & vertikal) + binarisasi agar OCR membaca baris tabel dengan rapi */
+function cmHolCleanTableImage(cv){
+ const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,img=ctx.getImageData(0,0,W,H),d=img.data,dark=new Uint8Array(W*H),kill=new Uint8Array(W*H);
+ for(let i=0;i<W*H;i++)dark[i]=(.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2])<150?1:0;
+ for(let y=0;y<H;y++){let run=0;for(let x=0;x<=W;x++){if(x<W&&dark[y*W+x])run++;else{if(run>W*.12)for(let k=x-run;k<x;k++)kill[y*W+k]=1;run=0;}}}
+ for(let x=0;x<W;x++){let run=0;for(let y=0;y<=H;y++){if(y<H&&dark[y*W+x])run++;else{if(run>H*.03)for(let k=y-run;k<y;k++)kill[k*W+x]=1;run=0;}}}
+ for(let i=0;i<W*H;i++){const v=dark[i]&&!kill[i]?0:255;d[i*4]=d[i*4+1]=d[i*4+2]=v;d[i*4+3]=255;}
+ ctx.putImageData(img,0,0);
+}
+/* Tebak tahun SKB: angka tahun yang paling sering muncul setelah kata "TAHUN" (atau di tanggal) */
+function cmHolGuessYear(lines){const c={};lines.join(' ').replace(/tahun\s+(20\d\d)/gi,(m,y)=>{c[y]=(c[y]||0)+3;}).replace(new RegExp(CM_HOL_MONTH_RE+'\\s+(20\\d\\d)','gi'),(m,mo,y)=>{c[y]=(c[y]||0)+1;});const best=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];return best?Number(best[0]):dayjs().year()+1;}
+/* Parse tabel SKB → [{date,type,name}] */
+function cmHolFixOcr(t){return String(t||'').replace(/\b([0-9OIlo]{1,2})(?=\s*[-–]?\s*(?:\d{1,2}\s+)?(januari|februari|pebruari|maret|april|mei|juni|juli|agustus|september|oktober|november|nopember|desember)\b)/gi,m=>m.replace(/[Oo]/g,'0').replace(/[Il]/g,'1')).replace(/\bJanuar[il1]\b/gi,'Januari').replace(/\bFebruar[il1]\b/gi,'Februari').replace(/\bJun[il1]\b/gi,'Juni').replace(/\bJul[il1]\b/gi,'Juli');}
+function cmHolParseSkb(lines,year){
+ lines=lines.map(cmHolFixOcr);
+ const out=[],monthRe=new RegExp(CM_HOL_MONTH_RE,'i');let mode='national',last=null;
+ const dateRe=new RegExp(`((?:\\d{1,2}\\s*(?:,|-|–|—|s\\.?\\s*d\\.?|sampai(?:\\s+dengan)?|dan|&)\\s*)*\\d{1,2})\\s+${CM_HOL_MONTH_RE}(?:\\s+(20\\d\\d))?`,'gi');
+ lines.forEach(raw=>{
+  const line=String(raw||'').replace(/\s+/g,' ').trim().replace(/^[•\-–*]?\s*\d{1,3}\s*[a-z]{0,2}\s*[.)]\s+(?=\D)/i,'').replace(/[,;:.]+$/,'');if(!line)return;
+  const low=line.toLowerCase();
+  const isHead=!/\d{1,2}\s+(januari|februari|pebruari|maret|april|mei|juni|juli|agustus|september|oktober|november|nopember|desember)/i.test(line);
+  if(isHead){
+   if(/cuti\s+bersama/i.test(line)&&!/libur\s+nasional/i.test(line))mode='collective';
+   else if(/libur\s+nasional/i.test(line)&&!/cuti\s+bersama/i.test(line))mode='national';
+   // baris lanjutan keterangan (teks panjang terpotong ke baris berikut)
+   if(last&&!/^(no\.?|nomor|tanggal|hari|keterangan|lampiran|menteri|ttd|ditetapkan|salinan)\b/i.test(low)&&line.length<90&&!/libur\s+nasional|cuti\s+bersama\s+tahun/i.test(line)&&/^[a-z(]/i.test(line)&&!/^\d/.test(line))last.forEach(it=>{if(it.name.length<140)it.name=(it.name+' '+line).trim();});
+   return;}
+  let m,found=[];dateRe.lastIndex=0;
+  while((m=dateRe.exec(line))){const mo=CM_HOL_MONTHS[m[2].toLowerCase()],y=Number(m[3]||year);const days=(m[1].match(/\d{1,2}/g)||[]).map(Number);
+   // rentang "16 - 18" atau "16 s.d. 18" → isi semua hari di antaranya
+   let list=days;if(days.length===2&&/-|–|—|s\.?\s*d|sampai/i.test(m[1])&&days[1]>days[0])list=Array.from({length:days[1]-days[0]+1},(_,i)=>days[0]+i);
+   list.forEach(d=>{if(d>=1&&d<=31)found.push(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`);});}
+  if(!found.length)return;
+  let name=line.replace(dateRe,' ').replace(CM_HOL_DAY_RE,' ').replace(/^\s*\d{1,2}\s*[.)]?\s+/,' ').replace(/\b(s\.?\s*d\.?|sampai dengan|dan)\b/gi,' ').replace(/\s*[-–—,;:|]\s*(?=[-–—,;:|]|$)/g,' ').replace(/\s+/g,' ').replace(/^[\s\-–—,.;:|]+|[\s\-–—,;:|]+$/g,'').trim();
+  const type=/cuti\s+bersama/i.test(name)?'collective':mode;
+  const dows=(line.match(CM_HOL_DAY_RE)||[]).map(w=>w.toLowerCase().replace("'",'').replace('ahad','minggu'));
+  last=found.filter(d=>dayjs(d).isValid()&&dayjs(d).format('YYYY-MM-DD')===d).map((date,i)=>({date,type,name,dow:found.length===1?dows[0]||'':(dows.length===found.length?dows[i]:'')}));
+  out.push(...last);
+ });
+ // Gabungkan duplikat (tanggal + jenis)
+ const seen=new Map();out.forEach(it=>{const k=it.date+'|'+it.type,cur=seen.get(k);if(!cur)seen.set(k,it);else{if(it.name&&cur.name!==it.name)cur.name=cur.name?cur.name+' / '+it.name:it.name;if(it.dow&&cur.dow&&it.dow!==cur.dow)cur.dow=cur.dow+'/'+it.dow;}});
+ return [...seen.values()].sort((a,b)=>a.date.localeCompare(b.date));
+}
+/* Simpan sebagai data resmi (lokal + dibagikan ke semua pengguna) */
+async function cmHolSaveOfficial(year,rows,label,mergeWith){
+ const items={};if(mergeWith)Object.entries(mergeWith).forEach(([d,v])=>{items[d]={...v};});rows.forEach(r=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(r.date)||!r.name)return;if(r.date.slice(0,4)!==String(year))return;items[r.date]={type:r.type==='collective'?'collective':'national',id:r.name,en:r.name,source:'official-pdf'};});
+ const entry={year:Number(year),items,source:'official-pdf',merged:!!mergeWith,sourceUrl:label,sourceLabel:label,official:true,estimated:false,fetchedAt:Date.now(),available:true};
+ cmHolidayWriteCache(entry);
+ let shared=false;try{shared=await firestoreSet(CM_HOL_SHARED_PREFIX+year,JSON.stringify(entry));}catch(e){}
+ return {entry,shared,count:Object.keys(items).length};
+}
+const CM_HOL_SHARED_LOADED={};
+async function cmHolLoadShared(year){
+ if(CM_HOL_SHARED_LOADED[year]||!isLoggedIn()||!window.fbDb)return;CM_HOL_SHARED_LOADED[year]=true;
+ try{const v=await firestoreGet(CM_HOL_SHARED_PREFIX+year);if(!v)return;const e=JSON.parse(v);if(!e||Number(e.year)!==Number(year)||!e.items)return;
+  const cur=cmHolidayGetYearEntry(year);if(cur&&cur.source==='official-pdf'&&Number(cur.fetchedAt)>=Number(e.fetchedAt))return;if(cur&&cur.official&&!e.official)return;
+  cmHolidayWriteCache(e);if(cmHolidayYear()===Number(year)&&state.activeTab==='calendar')renderCalendar();}catch(err){console.info('Holiday shared load:',err);}
+}
+function cmHolOpenPdfImport(){
+ if(!cmCanMutate())return cmDenyMutation();
+ let modal=document.getElementById('cmHolPdfModal');if(!modal){modal=document.createElement('div');modal.id='cmHolPdfModal';modal.className='modal-overlay hidden';document.body.appendChild(modal);}
+ let rows=[],year=cmHolidayYear(),label='',merge=null;
+ const close=()=>modal.classList.add('hidden');
+ const render=()=>{const cur=cmHolidayGetYearEntry(year),curTxt=cur?(cur.official?uiText('official','resmi'):cur.estimated?uiText('estimate','perkiraan'):''):uiText('none','belum ada');
+  const nN=rows.filter(r=>r.on&&r.type==='national').length,nC=rows.filter(r=>r.on&&r.type==='collective').length;
+  const canMerge=!!(cur&&cur.official&&cur.items&&Object.keys(cur.items).length),keepC=canMerge?Object.values(cur.items).filter(v=>v.type==='collective').length:0;
+  if(merge===null)merge=canMerge&&nC===0&&keepC>0;
+  modal.innerHTML=`<div class="modal-box hol-pdf-modal"><div class="modal-head"><div><h2>${uiText('Import official holidays (PDF / image)','Import hari libur resmi (PDF / gambar)')}</h2><p class="hol-pdf-sub">${uiText('Reads national holidays & collective leave from the SKB PDF or a screenshot/photo of the list. Check before saving.','Membaca hari libur nasional & cuti bersama dari PDF SKB atau screenshot/foto daftarnya. Periksa dulu sebelum disimpan.')}</p></div><button class="modal-close" data-x>&times;</button></div>
+  <div class="modal-body">
+   <label class="hol-pdf-drop" id="holPdfDrop"><input type="file" accept="application/pdf,.pdf,image/*" hidden id="holPdfFile"><span class="hol-pdf-ic">📄</span><span><b>${label?escapeHtml(label):uiText('Choose, drop, or paste (Ctrl+V) a PDF or image','Pilih, tarik, atau tempel (Ctrl+V) PDF atau gambar')}</b><small>${uiText('Text PDFs are read directly; scanned PDFs and images (screenshot/photo) are read with OCR — read locally in the browser.','PDF teks dibaca langsung; PDF scan dan gambar (screenshot/foto) dibaca dengan OCR — diproses lokal di browser.')}</small><span class="sq-progress hidden" id="holPdfProg"><span class="sq-progress-bar"><i id="holPdfBar"></i></span><em id="holPdfTxt"></em></span></span></label>
+   ${rows.length?`<div class="hol-pdf-meta"><label>${uiText('Year','Tahun')}<input type="number" id="holPdfYear" min="2020" max="2100" value="${year}"></label><label class="grow">${uiText('Source / decree','Sumber / nomor SKB')}<input id="holPdfLabel" value="${escapeHtml(label)}"></label></div>
+   ${(()=>{const n=rows.filter(r=>r.dow&&r.date&&dayjs(r.date).isValid()&&r.dow!==['minggu','senin','selasa','rabu','kamis','jumat','sabtu'][dayjs(r.date).day()]).length;return n?`<div class="cmpi-note warn" style="margin-bottom:8px">⚠ ${n} ${uiText('row(s) where the weekday in the document does not match the date (highlighted) — likely misread, please check.','baris dengan nama hari di dokumen tidak cocok dengan tanggalnya (ditandai) — kemungkinan salah baca, mohon dicek.')}</div>`:'';})()}
+   <div class="hol-pdf-sum">${uiText('Detected','Terdeteksi')}: <b>${nN}</b> ${uiText('national holidays','libur nasional')} · <b>${nC}</b> ${uiText('collective leave','cuti bersama')} · ${uiText('current data for','data saat ini untuk')} ${year}: <b>${escapeHtml(curTxt)}</b> → ${merge&&canMerge?uiText('merged','digabung'):uiText('will be replaced','akan diganti')}</div>
+   ${canMerge?`<label class="hol-pdf-merge"><input type="checkbox" id="holPdfMerge" ${merge?'checked':''}> <span>${uiText(`Merge with the existing official data for ${year} — dates not in this document are kept (e.g. ${keepC} collective leave days).`,`Gabungkan dengan data resmi ${year} yang sudah ada — tanggal yang tidak ada di dokumen ini tetap dipertahankan (mis. ${keepC} hari cuti bersama).`)}</span></label>`:''}
+   <div class="hol-pdf-tblwrap"><table class="hol-pdf-tbl"><thead><tr><th></th><th>${uiText('Date','Tanggal')}</th><th>${uiText('Day','Hari')}</th><th>${uiText('Type','Jenis')}</th><th>${uiText('Description','Keterangan')}</th><th></th></tr></thead><tbody>${rows.map((r,i)=>{const real=r.date&&dayjs(r.date).isValid()?['minggu','senin','selasa','rabu','kamis','jumat','sabtu'][dayjs(r.date).day()]:'',bad=!!(r.dow&&real&&r.dow!==real);return `<tr class="${r.on?'':'off'} ${r.type} ${bad?'dow-bad':''}" ${bad?`title="${uiText('Day in the PDF','Hari di PDF')}: ${escapeHtml(r.dow)} — ${uiText('check the date','cek tanggalnya')}"`:''}><td><input type="checkbox" data-i="${i}" data-f="on" ${r.on?'checked':''}></td><td><input type="date" data-i="${i}" data-f="date" value="${escapeHtml(r.date)}"></td><td class="hol-day">${r.date&&dayjs(r.date).isValid()?dayjs(r.date).locale('id').format('dddd'):''}${bad?`<small>PDF: ${escapeHtml(r.dow)}</small>`:''}</td><td><select data-i="${i}" data-f="type"><option value="national" ${r.type==='national'?'selected':''}>${uiText('National holiday','Libur nasional')}</option><option value="collective" ${r.type==='collective'?'selected':''}>${uiText('Collective leave','Cuti bersama')}</option></select></td><td><input data-i="${i}" data-f="name" value="${escapeHtml(r.name)}"></td><td><button type="button" class="hol-del" data-del="${i}" title="${uiText('Remove','Hapus')}">×</button></td></tr>`;}).join('')}</tbody></table></div>
+   <button type="button" class="btn btn-outline btn-sm" id="holPdfAdd">+ ${uiText('Add row','Tambah baris')}</button>`:''}
+   <div class="cmpi-note hidden" id="holPdfNote"></div>
+  </div>
+  <div class="modal-foot"><button class="btn btn-outline btn-sm" data-x>${uiText('Cancel','Batal')}</button><button class="btn btn-gold btn-sm" id="holPdfSave" ${rows.some(r=>r.on)?'':'disabled'}>${uiText('Save as official','Simpan sebagai data resmi')}</button></div></div>`;
+  modal.classList.remove('hidden');
+  modal.querySelectorAll('[data-x]').forEach(b=>b.onclick=close);
+  const fileIn=modal.querySelector('#holPdfFile'),drop=modal.querySelector('#holPdfDrop');
+  fileIn.onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)handle(f);};
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};drop.ondragleave=()=>drop.classList.remove('drag');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)handle(f);};
+  modal.querySelectorAll('[data-f]').forEach(el=>el.addEventListener('change',()=>{const r=rows[Number(el.dataset.i)];const f=el.dataset.f;r[f]=f==='on'?el.checked:el.value;if(f==='date')r.dow='';render();}));
+  modal.querySelectorAll('input[data-f=name]').forEach(el=>el.oninput=()=>{rows[Number(el.dataset.i)].name=el.value;});
+  modal.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{rows.splice(Number(b.dataset.del),1);render();});
+  modal.querySelector('#holPdfAdd')?.addEventListener('click',()=>{rows.push({date:`${year}-01-01`,type:'national',name:'',on:true});render();});
+  modal.querySelector('#holPdfYear')?.addEventListener('change',e=>{year=Number(e.target.value)||year;render();});
+  modal.querySelector('#holPdfLabel')?.addEventListener('input',e=>{label=e.target.value;});
+  modal.querySelector('#holPdfMerge')?.addEventListener('change',e=>{merge=e.target.checked;render();});
+  modal.onpaste=e=>{const it=[...(e.clipboardData?.items||[])].find(x=>x.kind==='file'&&/^image\/|pdf/.test(x.type));if(it){e.preventDefault();handle(it.getAsFile());}};
+  modal.querySelector('#holPdfSave').onclick=async()=>{const sel=rows.filter(r=>r.on&&r.date&&String(r.name||'').trim());const wrong=sel.filter(r=>r.date.slice(0,4)!==String(year));
+   if(wrong.length&&!confirm(uiText(`${wrong.length} row(s) are not in ${year} and will be skipped. Continue?`,`${wrong.length} baris bukan tahun ${year} dan akan dilewati. Lanjutkan?`)))return;
+   const curE=cmHolidayGetYearEntry(year),mergeWith=merge&&curE&&curE.official?curE.items:null;
+   const res=await cmHolSaveOfficial(year,sel,label||uiText(`Official holidays ${year}`,`Hari libur resmi ${year}`),mergeWith);close();
+   if(cmHolidayYear()!==year)state.calMonth=`${year}-${dayjs().format('MM')}`;if(state.activeTab==='calendar')renderCalendar();
+   toast(uiText(`${res.count} holidays for ${year} saved as official${res.shared?' and shared with all users':' (this browser only — sign in to share)'}.`,`${res.count} hari libur ${year} disimpan sebagai data resmi${res.shared?' dan dibagikan ke semua pengguna':' (hanya di browser ini — masuk untuk membagikan)'}.`),'success');};
+ };
+ const handle=async file=>{
+  const isPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name||''),isImg=/^image\//i.test(file.type)||/\.(png|jpe?g|webp|bmp|gif)$/i.test(file.name||'');
+  if(!isPdf&&!isImg){toast(uiText('Please choose a PDF or image file.','Pilih file PDF atau gambar.'),'error');return;}
+  const prog=(p,t)=>{const el=modal.querySelector('#holPdfProg');if(!el)return;el.classList.remove('hidden');modal.querySelector('#holPdfBar').style.width=Math.round(p*100)+'%';modal.querySelector('#holPdfTxt').textContent=t||'';};
+  try{prog(.02,uiText('Opening PDF…','Membuka PDF…'));
+   const {lines,ocr}=isPdf?await cmHolPdfLines(file,prog):await cmHolImageLines(file,prog);year=cmHolGuessYear(lines);merge=null;
+   const parsed=cmHolParseSkb(lines,year);rows=parsed.map(r=>({...r,on:r.date.slice(0,4)===String(year)}));
+   const no=(lines.join(' ').match(/nomor\s*[:.]?\s*([0-9a-z./\- ]{3,40}?)(?=\s+(tahun|tentang|nomor)\b)/i)||[])[1];
+   const fname=file.name&&file.name!=='image.png'?file.name:uiText('pasted image','gambar ditempel');
+   label=isPdf?`SKB ${year}${no?' — Nomor '+no.trim():''} · ${fname}`:`${uiText('Official holiday list','Daftar libur resmi')} ${year} · ${fname}`;
+   render();const note=modal.querySelector('#holPdfNote');note.classList.remove('hidden');note.classList.toggle('warn',!rows.length||ocr);
+   note.innerHTML=rows.length?`${uiText('Read','Terbaca')} <b>${rows.length}</b> ${uiText('dates','tanggal')}${ocr?` ${uiText('via OCR — please double-check every row','lewat OCR — mohon cek ulang setiap baris')}`:''}. ${uiText('Untick or edit rows that are wrong, then save.','Hapus centang atau edit baris yang keliru, lalu simpan.')}`:uiText('No holiday dates were found. Make sure the file contains the holiday list, or add rows manually.','Tidak ada tanggal libur yang ditemukan. Pastikan file memuat daftar hari libur, atau tambahkan baris manual.');
+  }catch(err){console.error(err);const note=modal.querySelector('#holPdfNote');if(note){note.classList.remove('hidden');note.classList.add('warn');note.textContent=uiText('Failed to read file: ','Gagal membaca file: ')+(err.message||err);}}
+ };
+ render();
+}
+
+/* ---------- Kelola hari libur: dokumen resmi · sinkron otomatis · prediksi ---------- */
+async function cmHolApplyPrediction(fromYear,count){
+ const done=[],skipped=[];
+ for(let y=Number(fromYear);y<Number(fromYear)+Number(count);y++){
+  const cur=cmHolidayGetYearEntry(y);if(cur&&cur.official){skipped.push(y);continue;}
+  const est=cmHolidayEstimateEntry(y,Date.now());if(!est)continue;
+  const entry={...est,source:'computed-applied',computedV:1,fetchedAt:Date.now(),appliedBy:(typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'')||'',sourceLabel:'Prediksi diterapkan — hitungan astronomis & kalender Hijriah (tanpa cuti bersama)'};
+  cmHolidayWriteCache(entry);CM_HOL_SHARED_LOADED[y]=true;
+  try{await firestoreSet(CM_HOL_SHARED_PREFIX+y,JSON.stringify(entry));}catch(e){}
+  done.push(y);
+ }
+ return {done,skipped};
+}
+async function cmHolResetYear(year){
+ const cur=cmHolidayGetYearEntry(year);
+ try{localStorage.removeItem(cmHolidayCacheKey(year));}catch(e){}
+ delete CM_HOLIDAY_RUNTIME[year];
+ if(cur&&cur.source!=='embedded-official'){try{if(typeof firestoreDeleteKey==='function')await firestoreDeleteKey(CM_HOL_SHARED_PREFIX+year);}catch(e){}}
+ if(CM_HOLIDAY_EMBEDDED_OFFICIAL[year]){const em=CM_HOLIDAY_EMBEDDED_OFFICIAL[year];CM_HOLIDAY_RUNTIME[year]={year:Number(year),items:{...em.items},source:'embedded-official',sourceUrl:em.label,official:true,estimated:false,fetchedAt:Date.now(),available:true};}
+}
+function cmHolSourceKind(e){
+ if(!e)return {k:'none',t:uiText('no data','belum ada')};
+ if(e.source==='embedded-official')return {k:'off',t:uiText('official · built-in','resmi · bawaan')};
+ if(e.source==='official-pdf')return {k:'off',t:uiText('official · import','resmi · import')};
+ if(e.official)return {k:'off',t:uiText('official · sync','resmi · sinkron')};
+ if(e.source==='computed-applied')return {k:'pred',t:uiText('prediction applied','prediksi diterapkan')};
+ if(e.computed)return {k:'auto',t:uiText('auto estimate','perkiraan otomatis')};
+ return {k:'fb',t:uiText('unofficial sync','sinkron tidak resmi')};
+}
+function cmHolOpenManager(){
+ if(!cmCanMutate())return cmDenyMutation();
+ let modal=document.getElementById('cmHolMgrModal');if(!modal){modal=document.createElement('div');modal.id='cmHolMgrModal';modal.className='modal-overlay hidden';document.body.appendChild(modal);}
+ const nowY=dayjs().year(),years=CM_CALENDAR_YEARS.filter(y=>y>=nowY-1);
+ const firstOpen=years.find(y=>{const e=cmHolidayGetYearEntry(y);return !(e&&e.official);})||nowY+1;
+ let predYear=firstOpen,multi=false,busy=false;
+ const close=()=>modal.classList.add('hidden');
+ const workerHost=(()=>{try{return new URL(cmHolidayWorkerUrl(nowY)).host;}catch(e){return '-';}})(),apiHost=(()=>{try{return new URL(CM_HOLIDAY_PUBLIC_API).host;}catch(e){return '-';}})();
+ const render=()=>{
+  const calY=cmHolidayYear(),cur=cmHolidayGetYearEntry(calY),kind=cmHolSourceKind(cur),to=predYear+16;
+  const predOpts=Array.from({length:31},(_,i)=>nowY-1+i).map(y=>`<option value="${y}" ${y===predYear?'selected':''}>${y}</option>`).join('');
+  const chips=years.map(y=>{const e=cmHolidayGetYearEntry(y),k=cmHolSourceKind(e);const canReset=e&&(e.source==='computed-applied'||e.source==='official-pdf');return `<span class="hol-yr ${k.k}" title="${escapeHtml(k.t)}"><b>${y}</b><em>${escapeHtml(k.t)}</em>${canReset?`<button type="button" data-reset="${y}" title="${uiText('Undo — back to automatic','Batalkan — kembali otomatis')}">×</button>`:''}</span>`;}).join('');
+  modal.innerHTML=`<div class="modal-box hol-mgr"><div class="modal-head"><div><h2>${uiText('Manage holidays','Kelola hari libur')}</h2><p>${uiText('Calendar','Kalender')} ${calY}: <b>${escapeHtml(kind.t)}</b>${cur?.sourceLabel||cur?.sourceUrl?` · ${escapeHtml(cur.sourceLabel||cur.sourceUrl)}`:''}</p></div><button class="modal-close" data-x>&times;</button></div>
+  <div class="modal-body hol-mgr-body">
+   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">1</span><div><h3>${uiText('Official document','Dokumen resmi')}</h3><p>${uiText('SKB PDF, or a screenshot/photo of the official list. Highest priority — never overwritten by sync or prediction.','PDF SKB, atau screenshot/foto daftar resminya. Prioritas tertinggi — tidak tertimpa sinkron maupun prediksi.')}</p></div></div>
+    <button type="button" class="btn btn-gold btn-sm" id="holMgrImport">${uiText('Import PDF / image','Import PDF / gambar')}</button></section>
+   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">2</span><div><h3>${uiText('Automatic sync','Sinkron otomatis')}</h3><p>${uiText('The sync button checks these sources in order:','Tombol sinkron mengecek sumber berikut secara berurutan:')}</p></div></div>
+    <ol class="hol-src"><li><b>${uiText('Team sync server','Server sinkron tim')}</b> <code>${escapeHtml(workerHost)}</code><small>${uiText('Cloudflare Worker that fetches the official Setneg/JDIH data. If it answers, the result is marked official.','Cloudflare Worker yang mengambil data resmi Setneg/JDIH. Kalau menjawab, hasilnya ditandai resmi.')}</small></li>
+    <li><b>${uiText('Public API “Tanggal Merah”','API publik “Tanggal Merah”')}</b> <code>${escapeHtml(apiHost)}</code><small>${uiText('Community data, not official — only used as a backup and never replaces official data or an applied prediction.','Data komunitas, tidak resmi — hanya cadangan, tidak pernah menimpa data resmi maupun prediksi yang diterapkan.')}</small></li>
+    <li><b>${uiText('Built-in data / prediction','Data bawaan / prediksi')}</b><small>${uiText('Official 2026–2027 built into the app; other years use the automatic prediction.','Resmi 2026–2027 tersimpan di aplikasi; tahun lain memakai prediksi otomatis.')}</small></li></ol>
+    <button type="button" class="btn btn-outline btn-sm" id="holMgrSync" ${CM_HOLIDAY_FETCHING[calY]?'disabled':''}>⟳ ${uiText('Sync','Sinkronkan')} ${calY}</button></section>
+   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">3</span><div><h3>${uiText('Use prediction','Pakai prediksi')}</h3><p>${uiText('Locks in the calculated holidays (astronomical & Hijri calendar, MABIMS criteria) and shares them with all users. Collective leave is not included. Years that already have official data are skipped.','Mengunci hari libur hasil hitungan (astronomis & kalender Hijriah, kriteria MABIMS) dan membagikannya ke semua pengguna. Cuti bersama tidak termasuk. Tahun yang sudah punya data resmi dilewati.')}</p></div></div>
+    <div class="hol-pred-row"><label>${uiText('Apply for year','Terapkan untuk tahun')}<select id="holPredYear">${predOpts}</select></label>
+     <label class="hol-chk"><input type="checkbox" id="holPred17" ${multi?'checked':''}> ${uiText(`Apply for 17 years (${predYear}–${to})`,`Terapkan untuk 17 tahun (${predYear}–${to})`)}</label>
+     <button type="button" class="btn btn-gold btn-sm" id="holPredApply" ${busy?'disabled':''}>${busy?uiText('Applying…','Menerapkan…'):uiText('Use prediction','Pakai prediksi')}</button></div></section>
+   <div class="hol-yrs-h">${uiText('Status per year','Status per tahun')}</div><div class="hol-yrs">${chips}</div>
+  </div></div>`;
+  modal.classList.remove('hidden');
+  modal.querySelectorAll('[data-x]').forEach(b=>b.onclick=close);
+  modal.querySelector('#holMgrImport').onclick=()=>{close();cmHolOpenPdfImport();};
+  modal.querySelector('#holMgrSync').onclick=async()=>{const y=cmHolidayYear();const p=cmHolidaySyncYear(y,{force:true,notify:true});render();await p;render();};
+  modal.querySelector('#holPredYear').onchange=e=>{predYear=Number(e.target.value);render();};
+  modal.querySelector('#holPred17').onchange=e=>{multi=e.target.checked;render();};
+  modal.querySelectorAll('[data-reset]').forEach(b=>b.onclick=async()=>{const y=Number(b.dataset.reset),e=cmHolidayGetYearEntry(y);
+   if(!confirm(e?.source==='official-pdf'?uiText(`Remove the imported official data for ${y}?`,`Hapus data resmi hasil import untuk ${y}?`):uiText(`Remove the applied prediction for ${y}? The calendar returns to automatic.`,`Hapus prediksi yang diterapkan untuk ${y}? Kalender kembali ke mode otomatis.`)))return;
+   await cmHolResetYear(y);render();if(state.activeTab==='calendar')renderCalendar();toast(uiText(`${y} is back to automatic.`,`${y} kembali ke mode otomatis.`),'success');});
+  modal.querySelector('#holPredApply').onclick=async()=>{const n=multi?17:1;
+   if(!confirm(uiText(`Apply the prediction for ${n===1?predYear:`${predYear}–${predYear+16}`}? Years with official data are skipped.`,`Terapkan prediksi untuk ${n===1?predYear:`${predYear}–${predYear+16}`}? Tahun yang sudah resmi akan dilewati.`)))return;
+   busy=true;render();let res;try{res=await cmHolApplyPrediction(predYear,n);}finally{busy=false;}
+   render();if(state.activeTab==='calendar')renderCalendar();
+   toast(uiText(`Prediction applied for ${res.done.length} year(s)${res.skipped.length?`; skipped (official): ${res.skipped.join(', ')}`:''}.`,`Prediksi diterapkan untuk ${res.done.length} tahun${res.skipped.length?`; dilewati (sudah resmi): ${res.skipped.join(', ')}`:''}.`),'success');};
+ };
+ render();
+}
+
+function cmCalTime12(m){
+  if(!(m>=0&&m<24*60))return '';
+  const h=Math.floor(m/60),mi=m%60,h12=h%12||12;
+  return `${h12}${mi?':'+String(mi).padStart(2,'0'):''}${h<12?'AM':'PM'}`;
+}
+function cmCalStartMinutes(a,dateStr){
+  const w=String(a?.waktu||'');let src=/\d{1,2}\s*[:.]\s*\d{2}/.test(w)?w:(String(a?.jamMulai||'')||w);
+  // "Rabu 19:00 - 21:00 Kamis 08:00 - 19:00" → ambil jam milik hari pada sel tersebut
+  if(dateStr){const hari=['minggu','senin','selasa','rabu','kamis','jumat','sabtu'][dayjs(dateStr).day()];const hm=src.replace(/jum'at/ig,'jumat').match(new RegExp(hari+'\\W+(\\d{1,2}\\s*[:.]\\s*\\d{2})','i'));if(hm)src=hm[1];}
+  const m=src.match(/(\d{1,2})\s*[:.]\s*(\d{2})/)||src.match(/\b(\d{1,2})\s*(?:wib|wita|wit)\b/i);
+  if(!m)return 24*60+1;
+  const h=Number(m[1]),mi=Number(m[2]||0);return (h>=0&&h<24&&mi<60)?h*60+mi:24*60+1;
+}
 function renderCalendar() {
   const container = document.getElementById('tab-calendar');
   const filtered = getFiltered();
@@ -8338,6 +8805,8 @@ function renderCalendar() {
     let cursor=start.isBefore(monthStart,'day')?monthStart:start; const visibleEnd=end.isAfter(monthEnd,'day')?monthEnd:end;
     while(!cursor.isAfter(visibleEnd,'day')){const day=cursor.date();(eventsByDay[day]||(eventsByDay[day]=[])).push(a);cursor=cursor.add(1,'day');}
   });
+  // Urutkan agenda tiap hari berdasarkan jam mulai (paling pagi di atas; tanpa jam di bawah)
+  Object.entries(eventsByDay).forEach(([d,list])=>{const ds=monthStart.date(Number(d)).format('YYYY-MM-DD');list.sort((x,y)=>cmCalStartMinutes(x,ds)-cmCalStartMinutes(y,ds)||String(x.namaKegiatan||'').localeCompare(String(y.namaKegiatan||'')));});
   const days=currentLang==='id'?['Sen','Sel','Rab','Kam','Jum','Sab','Min']:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const monthOptions=Array.from({length:12},(_,i)=>{const value=String(i+1).padStart(2,'0'),label=dayjs(`2000-${value}-01`).locale(currentLang).format('MMMM');return `<option value="${value}" ${i===monthStart.month()?'selected':''}>${label}</option>`;}).join('');
   const yearOptions=CM_CALENDAR_YEARS.map(y=>`<option value="${y}" ${y===holidayYear?'selected':''}>${y}</option>`).join('');
@@ -8351,11 +8820,13 @@ function renderCalendar() {
     <div class="cal-holiday-legend" aria-label="${uiText('Indonesia holiday legend','Legenda kalender Indonesia')}">
       <span class="cal-holiday-legend-item"><span class="cal-holiday-swatch national"></span>${uiText('National Holiday','Hari Libur Nasional')}</span>
       <span class="cal-holiday-legend-item"><span class="cal-holiday-swatch collective"></span>${uiText('Collective Leave','Cuti Bersama')}</span>
+      <span class="cal-holiday-legend-item"><span class="cal-clash-dot"></span>${uiText('Parallel agenda (same start time)','Agenda paralel (jam mulai sama)')}</span>
       <span class="cal-holiday-sync-wrap">
         <span class="cal-holiday-sync-status" id="calHolidaySyncStatus" title="${escapeHtml(cmHolidayStatusTitle(holidayYear))}">${escapeHtml(cmHolidayStatusText(holidayYear))}</span>
         <button type="button" class="cal-holiday-sync-btn ${CM_HOLIDAY_FETCHING[holidayYear]?'syncing':''}" id="calHolidaySync" ${CM_HOLIDAY_FETCHING[holidayYear]?'disabled':''} title="${uiText('Sync holiday calendar','Sinkronkan kalender hari libur')}" aria-label="${uiText('Sync holiday calendar','Sinkronkan kalender hari libur')}">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.4 9A7 7 0 0 0 6.1 6.1L4 8M5.6 15A7 7 0 0 0 17.9 17.9L20 16"/></svg>
         </button>
+        ${cmCanMutate()?`<button type="button" class="cal-holiday-pdf-btn" id="calHolidayMgr" title="${uiText('Import official document, automatic sync, prediction','Import dokumen resmi, sinkron otomatis, prediksi')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 15h3"/></svg>${uiText('Manage holidays','Kelola libur')}</button>`:''}
       </span>
     </div><div class="cal-grid">`;
   days.forEach((d,i)=>html+=`<div class="cal-dow ${(i===5||i===6)?'weekend':''}">${d}</div>`);
@@ -8364,11 +8835,16 @@ function renderCalendar() {
     const dateStr=state.calMonth+'-'+String(d).padStart(2,'0'),isToday=dateStr===todayStr,dow=(firstDow+d-1)%7,isWeekend=dow===5||dow===6,evs=eventsByDay[d]||[],holiday=cmIndonesiaHolidayForDate(dateStr),holidayLabel=cmIndonesiaHolidayLabel(holiday);
     const holidayClass=holiday?`holiday-${holiday.type}`:'';
     const cellTitle=holidayLabel?` title="${escapeHtml(holidayLabel)}"`:'';
+    // Jadwal bentrok: >1 agenda aktif dengan jam mulai yang sama pada hari ini
+    const startCount={},clashIds=new Set();
+    evs.forEach(ev=>{if(['Cancelled','Postponed'].includes(ev.statusNorm))return;const m=cmCalStartMinutes(ev,dateStr);if(m>24*60)return;(startCount[m]||(startCount[m]=[])).push(ev);});
+    Object.entries(startCount).forEach(([m,list])=>{if(list.length>1)list.forEach(ev=>clashIds.add(ev.id));});
     html+=`<div class="cal-cell ${isToday?'today':''} ${isWeekend&&!isToday?'weekend':''} ${holidayClass}" data-date="${dateStr}"${cellTitle}><div class="cal-daynum">${d}</div>`;
     if(holiday) html+=`<div class="cal-holiday-label ${holiday.type}" title="${escapeHtml(holidayLabel)}">${escapeHtml(holidayLabel)}</div>`;
     html+='<div class="cal-events-scroll">';
-    evs.slice(0,4).forEach(ev=>{const cs=getCategoryStyle(ev.kategori);html+=`<div class="cal-event" data-id="${ev.id}" title="${escapeHtml(ev.namaKegiatan)}" style="background:${cs.bg};color:${cs.fg}">${escapeHtml(ev.namaKegiatan)}</div>`;});
-    if(evs.length>4) html+=`<div class="cal-more" data-day="${d}">+${evs.length-4} ${uiText('more','lainnya')}</div>`;
+    evs.slice(0,4).forEach(ev=>{const cs=getCategoryStyle(ev.kategori),clash=clashIds.has(ev.id),sm=cmCalStartMinutes(ev,dateStr),t12=cmCalTime12(sm),tip=`${t12?t12+' · ':''}${ev.namaKegiatan}${clash?` (${uiText('parallel agenda','agenda paralel')})`:''}`;html+=`<div class="cal-event" data-id="${ev.id}" title="${escapeHtml(tip)}" style="background:${cs.bg};color:${cs.fg}">${clash?`<span class="cal-clash-dot" aria-label="${uiText('parallel agenda','agenda paralel')}"></span>`:''}${t12?`<span class="cal-time">${t12}</span>`:''}${escapeHtml(ev.namaKegiatan)}</div>`;});
+    const hiddenClash=evs.slice(4).some(ev=>clashIds.has(ev.id));
+    if(evs.length>4) html+=`<div class="cal-more" data-day="${d}">${hiddenClash?'<span class="cal-clash-dot"></span>':''}+${evs.length-4} ${uiText('more','lainnya')}</div>`;
     html+='</div></div>';
   }
   container.innerHTML=html+'</div>';
@@ -8380,6 +8856,7 @@ function renderCalendar() {
   document.getElementById('calExportWord')?.addEventListener('click',()=>cmXExportCalendarWord());
   document.getElementById('calExportExcel')?.addEventListener('click',()=>cmXExportCalendarExcel());
   document.getElementById('calHolidaySync')?.addEventListener('click',()=>cmHolidaySyncYear(holidayYear,{force:true,notify:true}));
+  document.getElementById('calHolidayMgr')?.addEventListener('click',()=>cmHolOpenManager());
   cmHolidayEnsureYear(holidayYear);
   container.querySelectorAll('.cal-event').forEach(el=>el.onclick=()=>openDetail(el.dataset.id));
   container.querySelectorAll('.cal-more').forEach(el=>el.onclick=()=>toast((eventsByDay[el.dataset.day]||[]).map(x=>x.namaKegiatan).join(' · '),'info'));
@@ -9711,9 +10188,10 @@ function reviewOpenPicEditor(){if(!cmCanMutate())return cmDenyMutation();const g
   const o=reviewPicOverride(group)||{},curNip=reviewPicNip(group,m),curJab=String(o.jabatan||'').trim()||String(m?.peran||'').trim(),curPhone=reviewPicPhone(rows[0]);
   const mine=new Set(rows.map(r=>r.id)),haveUnits=new Set(reviewRows.map(r=>String(r.unit).toUpperCase()));
   // Units that have no review row yet (BaTii and other internal units) can be assigned too; a row is created on save.
-  const extraUnits=[...new Set(['BATII',...((state.unitList||[]).filter(u=>{try{return getUnitType(u.name)==='internal';}catch(e){return false;}}).map(u=>String(u.name||'').trim()).filter(n=>n&&n.length<=10))])].filter(u=>!haveUnits.has(u.toUpperCase()));
-  const allRows=[...reviewRows,...extraUnits.map(u=>({id:'NEW:'+u,unit:u,pic:'',_new:true}))].sort((a,b)=>String(a.unit).localeCompare(String(b.unit)));
-  const unitChecks=allRows.map(r=>{const owner=r._new?uiText('New unit','Unit baru'):reviewPicName(r),own=mine.has(r.id);return `<label class="rv-unit-pick${own?' on':''}${r._new?' new':''}"><input type="checkbox" name="units" value="${escapeHtml(r.id)}" ${own?'checked':''}><b>${escapeHtml(r.unit)}</b>${own?'':`<small>${escapeHtml(owner)}</small>`}</label>`;}).join('');
+  // Hanya 13 Unit Eselon I + LNSW. Unit di luar daftar yang sudah dipegang PIC ini tetap ditampilkan agar tidak terlepas saat disimpan.
+  const refCodes=cmUnitRefCodes(),canon=new Set(refCodes.map(u=>u.toUpperCase())),extraUnits=refCodes.filter(u=>!haveUnits.has(u.toUpperCase()));
+  const allRows=[...reviewRows.filter(r=>canon.has(String(r.unit).toUpperCase())||mine.has(r.id)).map(r=>canon.has(String(r.unit).toUpperCase())?r:{...r,_out:true}),...extraUnits.map(u=>({id:'NEW:'+u,unit:u,pic:'',_new:true}))].sort((a,b)=>(a._out?1:0)-(b._out?1:0)||String(a.unit).localeCompare(String(b.unit)));
+  const unitChecks=allRows.map(r=>{const owner=r._new?uiText('New unit','Unit baru'):reviewPicName(r),own=mine.has(r.id);return `<label class="rv-unit-pick${own?' on':''}${r._new?' new':''}${r._out?' out':''}"><input type="checkbox" name="units" value="${escapeHtml(r.id)}" ${own?'checked':''}><b>${escapeHtml(r.unit)}</b>${r._out?`<small>${uiText('outside the list','di luar daftar')}</small>`:own?'':`<small>${escapeHtml(owner)}</small>`}</label>`;}).join('');
   modal.innerHTML=`<div class="modal-box rv-pic-modal"><div class="modal-head"><h2>${uiText('Edit review PIC','Edit PIC review')}</h2><button type="button" class="modal-close" id="reviewPicClose">&times;</button></div><form class="modal-body review-form" id="reviewPicForm"><div class="wide" id="rvPicImport"></div>
    <label class="wide">${uiText('PIC name','Nama PIC')} *<input name="pic" required list="reviewMemberNames" value="${escapeHtml(isPlaceholder?'':group)}" placeholder="${uiText('Select or enter full name','Pilih atau isi nama lengkap')}"><datalist id="reviewMemberNames">${members.map(n=>`<option value="${escapeHtml(n)}"></option>`).join('')}</datalist></label>
    <label>${uiText('Position / role','Jabatan / peran')}<input name="jabatan" list="reviewJabatanList" value="${escapeHtml(curJab)}" placeholder="${uiText('e.g. Team Lead','mis. Ketua Tim')}"><datalist id="reviewJabatanList"><option value="Ketua Tim"></option><option value="Supervisor"></option><option value="Anggota Tim"></option></datalist></label>
@@ -9740,7 +10218,8 @@ function reviewOpenPicEditor(){if(!cmCanMutate())return cmDenyMutation();const g
     reviewUi.selected=name;close();await reviewPersist();toast(uiText('PIC updated.','PIC berhasil diperbarui.'),'success');};}
 const REVIEW_ADD_ROLES=[{key:'pmo',label:'PMO'},{key:'cmo',label:'CMO'},{key:'dual',label:'PMO & CMO'},{key:'probis',label:'Pemilik Proses Bisnis',en:'Business Process Owner'}];
 function reviewRoleLabel(x){return x.en?uiText(x.en,x.label):x.label;}
-function reviewUnitCodes(){return [...new Set([...(UNIT_SEED||[]).map(u=>u.name),...((state.unitList||[]).filter(u=>{try{return getUnitType(u.name)==='internal';}catch(e){return false;}}).map(u=>String(u.name||'').trim())),...(reviewRows||[]).map(x=>String(x.unit||'').trim())].filter(Boolean))].sort((a,b)=>a.localeCompare(b));}
+// Unit kontak review = 13 Unit Eselon I + LNSW (non eselon). Unit lain tetap bisa lewat opsi "Unit lain…".
+function reviewUnitCodes(){return [...cmUnitRefCodes()].sort((a,b)=>a.localeCompare(b));}
 function reviewUnitSelectHtml(cur){cur=String(cur||'').trim();const codes=reviewUnitCodes();return `<select name="unit" required><option value="">${uiText('— Select unit —','— Pilih unit —')}</option>${codes.map(u=>`<option value="${escapeHtml(u)}" ${u===cur?'selected':''}>${escapeHtml(u)}</option>`).join('')}<option value="__other">+ ${uiText('Other unit…','Unit lain…')}</option></select><input name="unitOther" class="hidden rv-unit-other" maxlength="40" placeholder="${uiText('Type the unit name','Ketik nama unit')}">`;}
 function reviewUnitSelectBind(modal,cur){const uSel=modal.querySelector('[name=unit]'),uOther=modal.querySelector('[name=unitOther]');uSel.addEventListener('change',()=>{const o=uSel.value==='__other';uOther.classList.toggle('hidden',!o);uOther.required=o;if(o)uOther.focus();});cur=String(cur||'').trim();if(uSel.value===''&&cur){uSel.value='__other';uOther.value=cur;uOther.classList.remove('hidden');}}
 function reviewUnitValue(fd){return fd.get('unit')==='__other'?String(fd.get('unitOther')||'').trim().toUpperCase():String(fd.get('unit')||'').trim();}
@@ -10204,7 +10683,7 @@ async function cmpiReadImage(file,onProgress){
  const src=await sqFileToDataUrl(file),img=await sqLoadImage(src);
  sqOcrProgressCb=onProgress;
  try{const lines=await sqRunOcr(img),p=sqParseProfile(lines),photo=sqCropAvatar(img,p),pk=cmpiSplitPangkat(p.pangkat);
-  const abbrMap={Setjen:'SETJEN',Itjen:'ITJEN',BaTii:'BATII'};let unitAbbr='';if(p.unitKerja){for(const [re,ab] of SQ_ESELON1){if(re.test(p.unitKerja)){unitAbbr=abbrMap[ab]||ab;break;}}}
+  let unitAbbr='';if(p.unitKerja){for(const [re,ab] of SQ_ESELON1){if(re.test(p.unitKerja)){unitAbbr=cmUnitRefCodeOf(ab);break;}}}
   return {src,photo,profile:{unitAbbr,nama:p.nama,nip:p.nip,email:p.email,hp:p.hp,jabatan:p.jabatan,unitKerja:p.unitKerja,unitSuggest:p.unitKerja?sqSuggestUnitEselonI(p.unitKerja):'',pangkat:p.pangkat,pangkatNama:pk.nama,golongan:pk.gol}};}
  finally{sqOcrProgressCb=null;}
 }
@@ -11704,6 +12183,13 @@ function cmUndApplyToForm(v,file,opt={}){
 }
 window.cmUndOpenImport=cmUndOpenImport;
 
+/* Tambah Activity dari Kalender (Superadmin / Tim CM) — langsung tersimpan, tanpa proses approval. */
+function cmCalAddActivity(date){
+  if(!cmCanMutate())return cmDenyMutation();
+  openForm(null);
+  if(!date)return;
+  setTimeout(()=>{const f=document.getElementById('agendaForm');if(!f)return;['tglMulai','tglSelesai'].forEach(n=>{const el=f.elements[n];if(!el)return;el.value=date;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));});f.elements.namaKegiatan?.focus?.();},30);
+}
 function openForm(id) {
   if(!cmCanMutate())return cmDenyMutation();
   state.editingId = id || null;
@@ -15864,6 +16350,38 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 #taskDetailDialog{box-sizing:border-box;overflow-x:hidden}#taskDetailDialog .task-dialog-head{padding:18px 20px}#taskDetailDialog .task-dialog-body{padding:16px 20px;min-width:0}#taskDetailDialog .task-dialog-foot{padding:12px 20px}.task-documents-summary{margin-bottom:12px}.task-documents-summary b{font-size:14px}.task-documents-summary p{font-size:11px;margin-top:4px}.task-documents-summary>.task-document-icon{display:none}.task-document-list{gap:8px;min-width:0;width:100%;box-sizing:border-box}.task-document-item{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;padding:12px 14px;border-radius:10px;background:#fff;min-width:0;width:100%;box-sizing:border-box}.task-file-emblem{width:36px;min-width:0;height:42px;border-radius:8px;gap:2px}.task-file-emblem svg{width:18px;height:18px}.task-file-emblem span{font-size:7px}.task-file-info{min-width:0;max-width:100%;overflow:hidden}.task-file-info h3{font-size:12px;line-height:1.45;margin:0;overflow-wrap:anywhere}.task-file-info p{font-size:10px;margin-top:3px}.task-file-url{width:100%;max-width:100%;min-width:0;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;margin-top:3px}.task-file-actions{gap:5px;width:auto;flex-wrap:nowrap}.task-file-button,.task-file-delete{padding:7px 9px;font-size:10px;border-radius:7px}.task-file-button svg,.task-file-delete svg{width:13px;height:13px}.task-file-delete{padding:7px}.task-document-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.task-document-panel{min-width:0;box-sizing:border-box}.task-documents-empty{padding:24px}@media(max-width:650px){.task-document-grid{grid-template-columns:minmax(0,1fr)}.task-document-item{grid-template-columns:30px minmax(0,1fr);gap:8px;padding:10px 12px}.task-file-emblem{width:30px;height:36px}.task-file-actions{grid-column:2;justify-content:flex-start;width:auto}.task-file-info{flex-basis:auto}#taskDetailDialog .task-dialog-body{padding:14px}.task-file-button{padding:7px 9px}}
 
 
+/* ===== KALENDER: tambah activity (staf) ===== */
+.cal-cell.cm-cal-add{cursor:pointer;position:relative}
+.cal-cell.cm-cal-add:hover{background:#F4F7FD}
+.cal-cell.cm-cal-add:hover:after{content:'＋ ' attr(data-add-label);position:absolute;right:6px;bottom:5px;font-size:10.5px;font-weight:800;color:var(--navy-700);background:#fff;border:1px solid #D6DEEE;border-radius:999px;padding:1px 8px;pointer-events:none}
+.cm-cal-addbtn{background:var(--navy-800,#12275A)!important;color:#fff!important;border-color:var(--navy-800,#12275A)!important}
+@media(max-width:640px){.cal-cell.cm-cal-add:hover:after{display:none}}
+/* ===== REFERENSI UNIT ESELON I ===== */
+.ur-box{border:1px solid var(--border);border-radius:12px;background:#F7F9FD;padding:10px 12px;margin-bottom:16px}
+.ur-box summary{cursor:pointer;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;list-style:none}
+.ur-box summary::-webkit-details-marker{display:none}
+.ur-box summary:before{content:'▸';color:var(--navy-700);font-size:12px}.ur-box[open] summary:before{content:'▾'}
+.ur-box summary b{font:700 13.5px 'Sora',sans-serif;color:var(--navy-800)}.ur-box summary span{font-size:11.5px;color:var(--ink-500)}
+.ur-help{margin:8px 0 10px;font-size:11.5px;line-height:1.5;color:var(--ink-500)}
+.ur-head,.ur-row{display:grid;grid-template-columns:86px 92px minmax(0,1fr) 54px 28px;gap:6px;align-items:center}
+.ur-head{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-400);padding:0 2px 4px}
+.ur-list{display:flex;flex-direction:column;gap:5px;max-height:340px;overflow:auto;padding-right:2px}
+.ur-row input{width:100%;min-width:0;border:1px solid var(--border);border-radius:7px;padding:6px 8px;font-size:12px;font-family:'Inter',sans-serif;background:#fff}
+.ur-row .ur-code{font-weight:800;color:var(--navy-800);text-transform:uppercase}
+.ur-use{font-size:11px;color:var(--ink-500);text-align:center;font-variant-numeric:tabular-nums}
+.ur-del{width:28px;height:28px;border:1px solid var(--border);border-radius:7px;background:#fff;color:var(--red);font-size:16px;line-height:1;cursor:pointer}
+.ur-actions{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+@media(max-width:640px){.ur-head{display:none}.ur-row{grid-template-columns:78px minmax(0,1fr) 28px;grid-template-areas:"c s d" "n n n"}.ur-row .ur-code{grid-area:c}.ur-row input[data-f=short]{grid-area:s}.ur-row input[data-f=name]{grid-area:n}.ur-row .ur-use{display:none}.ur-row .ur-del{grid-area:d}.ur-row{padding-bottom:6px;border-bottom:1px dashed var(--border)}}
+.ur-dlg{max-width:560px}
+.ur-dlg-sec{margin:4px 0 8px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#B09128}
+.ur-dlg-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px}
+.ur-dlg-tbl th{text-align:left;font-size:10.5px;color:var(--ink-400);text-transform:uppercase;letter-spacing:.04em;padding:4px 6px;border-bottom:1px solid var(--border)}
+.ur-dlg-tbl td{padding:6px;border-bottom:1px solid #F0F2F6;color:var(--ink-700)}.ur-dlg-tbl td b{color:var(--navy-800)}
+.ur-opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border:1px solid var(--border);border-radius:10px;margin-bottom:7px;cursor:pointer;font-size:12.5px;color:var(--ink-700)}
+.ur-opt input{margin-top:2px;width:auto}.ur-opt small{display:block;font-size:11px;color:var(--ink-500);margin-top:2px}
+.ur-opt:has(input:disabled){opacity:.5;cursor:default}
+.ur-opt:has(input:checked){border-color:var(--navy-700);background:#F4F7FD}
+.ur-dlg-note{margin:0 0 6px;font-size:12px;line-height:1.5;color:var(--ink-700);background:#FFF8EA;border-radius:9px;padding:8px 11px}
 /* ===== KONTAK PMO/CMO per individu ===== */
 .rv-add-modal{max-width:640px}
 .review-form .rv-sec{margin:6px 0 -2px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--rc,#B09128);display:flex;align-items:center;gap:8px}
@@ -15885,6 +16403,7 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 .rv-pl-role{font-size:10.5px;font-weight:800;color:#fff;background:var(--rc);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .rv-pl-item b{font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rv-pl-item small{font-size:11px;color:var(--ink-500);white-space:nowrap}
 .rv-pl-add{align-self:flex-start}
+.rv-unit-pick.out{border-style:dashed;opacity:.85}.rv-unit-pick.out small{color:#A2591A}
 .rv-preview-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-400)}
 .rv-preview-head em{font-style:normal;text-transform:none;letter-spacing:0;font-size:10.5px;color:#15805F;background:#E5F5EE;border-radius:999px;padding:2px 8px}
 .rv-preview{display:block!important;grid-template-columns:none!important;pointer-events:none}
@@ -15914,6 +16433,45 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 .cmpi-targets input:focus-visible+span{outline:2px solid var(--gold-400)}
 .cmpi-note{padding:7px 10px;border-radius:8px;font-size:11.5px;line-height:1.5;background:var(--blue-bg,#EAF1FD);color:var(--ink-700);text-transform:none;letter-spacing:0;font-weight:400}
 .cmpi-note.warn{background:var(--amber-bg,#FFF6E0)}
+.cal-holiday-pdf-btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--navy-800,#12275A);font:700 11.5px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.cal-holiday-pdf-btn svg{width:14px;height:14px}.cal-holiday-pdf-btn:hover{border-color:var(--gold-400,#C9A84C);background:#FBF6E8}
+.hol-mgr{max-width:680px}.hol-mgr-body{display:flex;flex-direction:column;gap:12px}
+.hol-card{border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.hol-card-h{display:flex;gap:10px;align-items:flex-start}.hol-card h3{margin:0;font:700 14px Sora,sans-serif;color:var(--ink-900)}.hol-card p{margin:3px 0 0;font-size:12px;line-height:1.5;color:var(--ink-500)}
+.hol-num{flex:0 0 24px;height:24px;border-radius:50%;background:var(--navy-800,#12275A);color:#fff;display:grid;place-items:center;font:800 12px Inter,sans-serif}
+.hol-src{margin:0;padding-left:20px;font-size:12.5px;color:var(--ink-700);display:flex;flex-direction:column;gap:6px}.hol-src small{display:block;color:var(--ink-500);font-size:11.5px;line-height:1.45}
+.hol-src code{font-size:11px;background:var(--bg);padding:1px 6px;border-radius:5px;overflow-wrap:anywhere}
+.hol-pred-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;width:100%}.hol-pred-row label{display:flex;flex-direction:column;gap:4px}
+.hol-pred-row select{height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font:600 13px Inter,sans-serif;min-width:110px}
+.hol-pred-row label.hol-chk{flex-direction:row;align-items:center;gap:7px;height:36px;font-weight:600!important;font-size:12.5px!important}
+.hol-yrs-h{font:800 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-500);margin-top:2px}
+.hol-yrs{display:flex;flex-wrap:wrap;gap:6px}
+.hol-yr{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);font-size:11.5px;background:#fff}
+.hol-yr em{font-style:normal;color:var(--ink-500)}.hol-yr.off{background:#E8F6EF;border-color:#BFE3D0}.hol-yr.pred{background:#EEF2FF;border-color:#C9D3F5}.hol-yr.auto{background:#FFF7E6;border-color:#F0DDB0}.hol-yr.fb{background:#FDF0F0;border-color:#F0C9C9}
+.hol-yr button{border:none;background:transparent;color:#C0392B;cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+.hol-pdf-modal{max-width:860px}.hol-pdf-sub{margin:4px 0 0}
+.hol-pdf-drop{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1.5px dashed var(--border);border-radius:12px;background:var(--bg);cursor:pointer}
+.hol-pdf-drop.drag{border-color:var(--gold-400,#C9A84C);background:#FBF6E8}.hol-pdf-ic{font-size:26px}
+.hol-pdf-drop b{display:block;font-size:13px;color:var(--ink-900)}.hol-pdf-drop small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-500)}
+.hol-pdf-drop>span:last-child{flex:1;min-width:0}
+.hol-pdf-meta{display:flex;gap:10px;margin:14px 0 8px;flex-wrap:wrap}.hol-pdf-meta label{display:flex;flex-direction:column;gap:4px;width:110px}.hol-pdf-meta label.grow{flex:1;min-width:200px;width:auto}
+.hol-pdf-meta input{height:36px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font:600 13px Inter,sans-serif}
+.hol-pdf-sum{font-size:12px;color:var(--ink-700);margin:4px 0 8px;line-height:1.5}
+.hol-pdf-tblwrap{overflow:auto;max-height:46vh;border:1px solid var(--border);border-radius:10px}
+.hol-pdf-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.hol-pdf-tbl th{position:sticky;top:0;background:#F3F5FA;text-align:left;padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-500);z-index:1}
+.hol-pdf-tbl td{padding:4px 6px;border-top:1px solid #EEF1F6;vertical-align:middle}
+.hol-pdf-tbl tr.national td:first-child{box-shadow:inset 3px 0 #D64545}.hol-pdf-tbl tr.collective td:first-child{box-shadow:inset 3px 0 #E39A2D}
+.hol-pdf-tbl tr.off{opacity:.45}
+.hol-pdf-merge{display:flex;gap:8px;align-items:flex-start;margin:0 0 10px;padding:8px 10px;border-radius:9px;background:#EEF4FF;font:500 12px/1.5 Inter,sans-serif!important;color:var(--ink-700)!important;cursor:pointer}.hol-pdf-merge input{margin-top:3px}
+.hol-pdf-tbl tr.dow-bad td{background:#FFF4DE}.hol-pdf-tbl tr.dow-bad td.hol-day{color:#B4690E;font-weight:700}.hol-pdf-tbl td.hol-day small{display:block;font-size:10.5px;color:#B4690E}
+.hol-pdf-tbl input:not([type=checkbox]),.hol-pdf-tbl select{height:32px;border:1px solid var(--border);border-radius:7px;padding:0 7px;font:500 12.5px Inter,sans-serif;background:#fff;width:100%}
+.hol-pdf-tbl td:nth-child(2){width:140px}.hol-pdf-tbl td:nth-child(4){width:140px}.hol-pdf-tbl td.hol-day{width:70px;color:var(--ink-500);font-size:12px}
+.hol-pdf-tbl td:nth-child(5){min-width:220px}
+.hol-del{width:28px;height:28px;border:none;border-radius:7px;background:#FDECEC;color:#C0392B;font-size:16px;cursor:pointer}
+#holPdfAdd{margin-top:8px}#holPdfNote{margin-top:10px}
+@media(max-width:640px){.hol-pdf-tbl select{min-width:122px}.hol-pdf-tbl input[type=date]{min-width:132px}.hol-pdf-tbl td:nth-child(5){min-width:200px}.hol-pdf-tbl td.hol-day{display:none}.hol-pdf-tbl th:nth-child(3){display:none}}
+
 /* ===== PRIORITAS PROYEK (SMART) ===== */
 .prio-form-guide{margin:-2px 0 8px;font-size:11.5px;color:var(--ink-500);line-height:1.5}
 .prio-crit-pick{margin-left:auto;font-size:10.5px;font-weight:800;padding:1px 8px;border-radius:999px;background:var(--navy-800,#12275A);color:#fff;white-space:nowrap}
