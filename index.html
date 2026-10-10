@@ -35,7 +35,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot,
-    collection, addDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp
+    collection, addDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -58,6 +58,7 @@
   window.fbAuth = auth;
   window.fbDb = db;
   window.fbDoc = doc;
+  window.fbWriteBatch = writeBatch;
   window.fbSetDoc = setDoc;
   window.fbGetDoc = getDoc;
   window.fbDeleteDoc = deleteDoc;
@@ -4399,7 +4400,10 @@ async function cmSRDecide(id,patch){
   await window.fbUpdateDoc(ref,p);
   const r=cmSR.items.find(x=>x.id===id);if(r)Object.assign(r,p);if(cmSR.known&&r)cmSR.known.add(cmSRSeenToken(r));
 }
-async function cmSRApprove(id,opt,btn){
+const cmInFlight=new Set();
+async function cmOnce(key,fn){if(cmInFlight.has(key)){toast(uiText('Still saving — please wait.','Masih menyimpan — mohon tunggu.'),'info');return;}cmInFlight.add(key);try{return await fn();}finally{cmInFlight.delete(key);}}
+async function cmSRApprove(id,opt,btn){return cmOnce('sr:'+id,()=>cmSRApproveRun(id,opt,btn));}
+async function cmSRApproveRun(id,opt,btn){
   const r=cmSR.items.find(x=>x.id===id);if(!r)return;
   if(!cmSRIsStaff())return cmDenyMutation();
   const date=opt.date||r.date,start=opt.start||r.start,end=opt.end||r.end;
@@ -5350,6 +5354,108 @@ function detachAgendaLiveSync() {
   if (agendaUnsub) { agendaUnsub(); agendaUnsub = null; }
 }
 
+/* ============================================================
+   ACTIVITY STORE — satu dokumen per activity (koleksi cmActivities)
+   Mode 'legacy' = seluruh activity dalam satu dokumen dashboard/pusmantap-agenda-cm-v1.
+   Mode 'docs'   = setiap activity satu dokumen; hanya yang berubah yang dikirim.
+   Migrasi berjalan sekali, otomatis, oleh akun Tim CM pertama yang membuka dashboard
+   setelah aturan Firebase untuk cmActivities dipasang. Dokumen lama tidak dihapus (cadangan).
+============================================================ */
+const CM_ACT_COLL='cmActivities';
+const CM_ACT_MIG_KEY='cm_activities_migration_v1';
+const CM_ACT_BACKUP_KEY='pusmantap-agenda-cm-v1__backup_pra_migrasi';
+const CM_ACT_CATCHUP_DAYS=14;
+let cmActMode='legacy',cmActMig=null,cmActUnsub=null,cmActRT=null,cmActMigrating=false,cmActWarned=false;
+const cmActSynced=new Map();
+function cmActDocId(id){return String(id||'').replace(/\//g,'_').slice(0,700)||uid('AGD');}
+function cmActKey(a){return JSON.stringify(a);}
+function cmActIsStaff(){const u=window.fbAuth&&window.fbAuth.currentUser;return !!u&&!u.isAnonymous;}
+function cmActStatusText(){return cmActMode==='docs'?uiText('Per-activity storage','Penyimpanan per activity'):uiText('Single-document storage','Penyimpanan satu dokumen');}
+async function cmActReadMig(){try{const raw=await firestoreGet(CM_ACT_MIG_KEY);if(!raw)return null;const m=JSON.parse(raw);return m&&m.done?m:null;}catch(e){return null;}}
+/* Mendengarkan koleksi; promise selesai pada snapshot pertama dengan seluruh baris. */
+function cmActListen(){
+ if(cmActUnsub){cmActUnsub();cmActUnsub=null;}
+ return new Promise((resolve,reject)=>{let first=true;
+  cmActUnsub=window.fbOnSnapshot(window.fbCollection(window.fbDb,CM_ACT_COLL),snap=>{
+   if(first){first=false;const rows=[];cmActSynced.clear();snap.forEach(d=>{const x=d.data();if(!x||!x.v)return;try{const pre=preprocess([JSON.parse(x.v)])[0];rows.push(pre);cmActSynced.set(d.id,cmActKey(pre));}catch(e){}});resolve(rows);return;}
+   let changed=false;
+   snap.docChanges().forEach(ch=>{const id=ch.doc.id;
+    if(ch.type==='removed'){if(cmActSynced.has(id)){cmActSynced.delete(id);const i=state.agendas.findIndex(a=>cmActDocId(a.id)===id);if(i>-1){state.agendas.splice(i,1);changed=true;}}return;}
+    const x=ch.doc.data();if(!x||!x.v)return;let pre;try{pre=preprocess([JSON.parse(x.v)])[0];}catch(e){return;}
+    const k=cmActKey(pre);if(cmActSynced.get(id)===k)return;cmActSynced.set(id,k);
+    const i=state.agendas.findIndex(a=>cmActDocId(a.id)===id);if(i>-1)state.agendas[i]=pre;else state.agendas.push(pre);changed=true;});
+   if(changed){clearTimeout(cmActRT);cmActRT=setTimeout(()=>{try{refreshAll();}catch(e){}cmActivityNotulaHydrateSearchIndex().catch(()=>{});},150);}
+  },err=>{if(first){first=false;reject(err);}else console.warn('Activity live sync error',err);});
+ });
+}
+function cmActDetach(){if(cmActUnsub){cmActUnsub();cmActUnsub=null;}}
+/* Muat data activity dari Firebase. Mengembalikan baris (mode docs) atau null (pakai jalur lama). */
+async function cmActLoadRemote(){
+ if(!isLoggedIn()||!window.fbDb)return null;
+ cmActMig=await cmActReadMig();
+ if(!cmActMig){cmActMode='legacy';return null;}
+ try{const rows=await cmActListen();cmActMode='docs';detachAgendaLiveSync();return rows;}
+ catch(e){console.warn('Per-activity storage unavailable, falling back',e);cmActMode='legacy';cmActNotifyRules(e);return null;}
+}
+async function cmActCommit(ops){
+ for(let i=0;i<ops.length;i+=400){const b=window.fbWriteBatch(window.fbDb),now=new Date().toISOString(),by=(typeof getCurrentUserEmail==='function'&&getCurrentUserEmail())||'';
+  ops.slice(i,i+400).forEach(o=>{const ref=window.fbDoc(window.fbDb,CM_ACT_COLL,o.id);if(o.del)b.delete(ref);else b.set(ref,{v:o.k,updatedAt:now,updatedBy:by});});
+  await b.commit();}
+}
+/* Simpan hanya activity yang berubah, bertambah, atau terhapus. */
+async function cmActPersistDocs(){
+ const cur=new Map();state.agendas.forEach(a=>cur.set(cmActDocId(a.id),a));
+ const ops=[];cur.forEach((a,id)=>{const k=cmActKey(a);if(cmActSynced.get(id)!==k)ops.push({id,k});});
+ cmActSynced.forEach((k,id)=>{if(!cur.has(id))ops.push({id,del:true});});
+ if(!ops.length)return true;
+ await cmActCommit(ops);
+ ops.forEach(o=>{if(o.del)cmActSynced.delete(o.id);else cmActSynced.set(o.id,o.k);});
+ return true;
+}
+function cmActNotifyRules(e){
+ if(cmActWarned||!cmActIsStaff())return;const denied=/permission|insufficient/i.test(String(e&&(e.code||e.message)||''));if(!denied)return;cmActWarned=true;
+ toast(uiText('Faster saving is not active yet: the Firebase rule for “cmActivities” has not been added. Data is still saved the old way.','Penyimpanan cepat belum aktif: aturan Firebase untuk “cmActivities” belum ditambahkan. Data tetap tersimpan dengan cara lama.'),'info');
+}
+/* Migrasi sekali jalan dari dokumen tunggal ke dokumen per activity. */
+async function cmActMaybeMigrate(){
+ if(cmActMode!=='legacy'||cmActMigrating||!cmActIsStaff()||!window.fbWriteBatch||!Array.isArray(state.agendas)||!state.agendas.length)return;
+ cmActMigrating=true;
+ try{
+  if(await cmActReadMig()){cmActMig=await cmActReadMig();const rows=await cmActListen();state.agendas=rows;cmActMode='docs';detachAgendaLiveSync();refreshAll();return;}
+  // id ganda diberi id baru agar tidak saling menimpa
+  const seen=new Set();let fixed=0;state.agendas.forEach(a=>{let id=cmActDocId(a.id);if(seen.has(id)){a.id=uid('AGD');id=cmActDocId(a.id);fixed++;}seen.add(id);});
+  await window.fbGetDoc(window.fbDoc(window.fbDb,CM_ACT_COLL,'__cek_izin'));
+  toast(uiText('Moving activity data to the faster storage format (one time)…','Memindahkan data activity ke format penyimpanan yang lebih cepat (sekali saja)…'),'info');
+  const ops=state.agendas.map(a=>({id:cmActDocId(a.id),k:cmActKey(a)}));
+  await cmActCommit(ops);
+  const now=new Date().toISOString(),by=(typeof getCurrentUserEmail==='function'&&getCurrentUserEmail())||'';
+  await window.fbSetDoc(window.fbDoc(window.fbDb,'dashboard',CM_ACT_BACKUP_KEY),{value:JSON.stringify(state.agendas),updatedAt:now,note:'Cadangan data activity sebelum migrasi ke koleksi cmActivities'});
+  cmActMig={done:true,at:now,by,count:ops.length,dupFixed:fixed,legacyKey:STORAGE_KEY,backupKey:CM_ACT_BACKUP_KEY};
+  await window.fbSetDoc(window.fbDoc(window.fbDb,'dashboard',CM_ACT_MIG_KEY),{value:JSON.stringify(cmActMig),updatedAt:now});
+  cmActSynced.clear();ops.forEach(o=>cmActSynced.set(o.id,o.k));
+  detachAgendaLiveSync();cmActMode='docs';await cmActListen();
+  if(fixed)persist();
+  toast(uiText(`Done: ${ops.length} activities now use per-activity storage. Saving will be faster.`,`Selesai: ${ops.length} activity kini memakai penyimpanan per activity. Penyimpanan akan lebih cepat.`),'success');
+  cmActUpdateBadge();
+ }catch(e){console.warn('Activity migration skipped',e);cmActNotifyRules(e);}
+ finally{cmActMigrating=false;}
+}
+/* Masa transisi: tarik perubahan yang masih ditulis perangkat dengan versi lama ke dokumen lama. */
+async function cmActCatchUpLegacy(){
+ if(cmActMode!=='docs'||!cmActMig||!cmActIsStaff())return;
+ if(dayjs().diff(dayjs(cmActMig.at),'day')>CM_ACT_CATCHUP_DAYS)return;
+ try{
+  const snap=await window.fbGetDoc(window.fbDoc(window.fbDb,'dashboard',STORAGE_KEY));if(!snap.exists())return;
+  const d=snap.data(),stamp=String(d.updatedAt||'');let last='';try{last=localStorage.getItem('cm_act_catchup_v1')||'';}catch(e){}
+  if(!stamp||stamp<=cmActMig.at||stamp<=last)return;
+  let rows=[];try{rows=JSON.parse(d.value||'[]');}catch(e){return;}
+  let n=0;rows.forEach(r=>{if(!r||!r.id)return;const i=state.agendas.findIndex(a=>a.id===r.id);if(i<0){state.agendas.push(preprocess([r])[0]);n++;}else if(String(r.updatedAt||'')>String(state.agendas[i].updatedAt||'')){state.agendas[i]=preprocess([r])[0];n++;}});
+  if(n){await cmActPersistDocs();refreshAll();toast(uiText(`${n} activity change(s) from devices still using the old version were merged.`,`${n} perubahan activity dari perangkat yang masih memakai versi lama telah digabungkan.`),'info');}
+  try{localStorage.setItem('cm_act_catchup_v1',stamp);}catch(e){}
+ }catch(e){console.warn('Legacy catch-up skipped',e);}
+}
+function cmActUpdateBadge(){const el=document.getElementById('storageText');if(el&&el.title!==undefined)el.title=cmActStatusText();}
+
 async function persist() {
   if(!cmCanMutate())return cmDenyMutation();
   const dot = document.getElementById('storageDot');
@@ -5361,9 +5467,9 @@ async function persist() {
     } else {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state.agendas));
     }
-    const synced = await firestoreSet(STORAGE_KEY, JSON.stringify(state.agendas));
+    const synced = cmActMode==='docs' ? await cmActPersistDocs().catch(e=>{console.error('Activity save error',e);return false;}) : await firestoreSet(STORAGE_KEY, JSON.stringify(state.agendas));
     dot.classList.remove('saving'); txt.textContent = synced ? t('storageSynced') : t('storageSaved');
-    await recordLastUpdate();
+    recordLastUpdate().catch(e=>console.warn('Last update stamp skipped',e));
   } catch (e) {
     dot.classList.remove('saving'); txt.textContent = t('storageSyncFailed');
     console.error('Storage error:', e);
@@ -5372,11 +5478,13 @@ async function persist() {
 
 async function loadInitial() {
   await waitForFirebaseAuthReady();
-  await cmLoadDashboardTitle();
   let loaded = null;
   try {
-    const remote = await firestoreGet(STORAGE_KEY);
-    if (remote) {
+    const [,docsRows] = await Promise.all([cmLoadDashboardTitle().catch(e=>console.warn('Title load skipped',e)),cmActLoadRemote().catch(()=>null)]);
+    const remote = docsRows ? null : await firestoreGet(STORAGE_KEY);
+    if (docsRows) {
+      loaded = docsRows;
+    } else if (remote) {
       loaded = JSON.parse(remote);
     } else if (hasClaudeStorage()) {
       const res = await window.storage.get(STORAGE_KEY, false);
@@ -5400,7 +5508,7 @@ async function loadInitial() {
   } else {
     state.agendas = preprocess(seed);
   }
-  attachAgendaLiveSync();
+  if (cmActMode !== 'docs') attachAgendaLiveSync();
 }
 
 /* ============================================================
@@ -9756,7 +9864,7 @@ async function persistKnowledge() {
     }
     const synced = await firestoreSet(KNOWLEDGE_STORAGE_KEY, JSON.stringify(state.knowledge));
     dot.classList.remove('saving'); txt.textContent = synced ? t('storageSynced') : t('storageSaved');
-    await recordLastUpdate();
+    recordLastUpdate().catch(e=>console.warn('Last update stamp skipped',e));
   } catch (e) {
     dot.classList.remove('saving'); txt.textContent = t('storageSyncFailed');
     console.error('Storage error:', e);
@@ -10146,7 +10254,7 @@ async function persistContacts() {
     }
     const synced = await firestoreSet(CONTACT_STORAGE_KEY, JSON.stringify(state.contacts));
     dot.classList.remove('saving'); txt.textContent = synced ? t('storageSynced') : t('storageSaved');
-    await recordLastUpdate();
+    recordLastUpdate().catch(e=>console.warn('Last update stamp skipped',e));
   } catch (e) {
     dot.classList.remove('saving'); txt.textContent = t('storageSyncFailed');
     console.error('Storage error:', e);
@@ -12952,7 +13060,7 @@ async function submitForm(options={}) {
   if(!cmCanMutate())return cmDenyMutation();
   cmAgendaSaveBusy=true;
   const saveButtons=['submitForm','submitAndCloseForm'].map(id=>document.getElementById(id)).filter(Boolean);
-  saveButtons.forEach(b=>{b.disabled=true;b.setAttribute('aria-busy','true');});
+  saveButtons.forEach(b=>{b.disabled=true;b.setAttribute('aria-busy','true');b.dataset.label=b.innerHTML;b.innerHTML=`<span class="cm-btn-spin"></span>${uiText('Saving…','Menyimpan…')}`;});
   try {
   const closeAfterSave=!!options.closeAfterSave;
   const form = document.getElementById('agendaForm');
@@ -13004,6 +13112,11 @@ async function submitForm(options={}) {
   obj.updatedBy = stampEmail || null;
   obj.updatedAt = new Date().toISOString();
 
+  if(!state.editingId){
+    const norm=v=>{const t=String(v||'').trim().toLowerCase().replace(/\s+/g,' ');return t==='-'?'':t;};
+    const dup=state.agendas.find(x=>norm(x.namaKegiatan)===norm(obj.namaKegiatan)&&x.tglMulai===obj.tglMulai&&String(x.jamMulai||'')===String(obj.jamMulai||'')&&norm(x.unitPemohon)===norm(obj.unitPemohon));
+    if(dup&&!confirm(uiText(`An activity with the same name, date, start time and requesting unit already exists ("${dup.namaKegiatan}"). Save as a NEW record anyway?\n\nOK = save as new · Cancel = update the existing record`,`Activity dengan nama, tanggal, jam mulai, dan unit pemohon yang sama sudah ada ("${dup.namaKegiatan}"). Tetap simpan sebagai record BARU?\n\nOK = simpan sebagai baru · Batal = perbarui record yang sudah ada`))){state.editingId=dup.id;}
+  }
   let saved=null,previous=null,isNew=!state.editingId;
   if (state.editingId) {
     const idx = state.agendas.findIndex(x => x.id === state.editingId);
@@ -13055,7 +13168,7 @@ async function submitForm(options={}) {
     toast(uiText('Saving encountered a problem. Please retry; the same record will be updated.','Penyimpanan mengalami kendala. Coba lagi; record yang sama akan diperbarui.'),'error');
   }finally{
     cmAgendaSaveBusy=false;
-    saveButtons.forEach(b=>{b.disabled=false;b.removeAttribute('aria-busy');});
+    saveButtons.forEach(b=>{b.disabled=false;b.removeAttribute('aria-busy');if(b.dataset.label){b.innerHTML=b.dataset.label;delete b.dataset.label;}});
   }
 }
 
@@ -16598,8 +16711,10 @@ async function cmResetActionDecision(s,a){
   });
   delete cmSurveyState.actionCache[s.id];cmRenderActionContent(s.id);toast(`Action ${a.id} kembali menunggu keputusan`,'info');
 }
-async function cmSendActionToActivity(s,a){
+async function cmSendActionToActivity(s,a){if(!a)return;return cmOnce('cra:'+s.id+':'+a.id,()=>cmSendActionToActivityRun(s,a));}
+async function cmSendActionToActivityRun(s,a){
   if(!a)return;
+  {const already=state.agendas.find(g=>(g.catatan||'').includes(`CRA Action Plan ${a.id}`)&&(g.catatan||'').includes(`Survey: ${s.title}`));if(already&&!a.activityId){a.activityId=already.id;}}
   const narrative=cmActionNarrative(a),pic=String(a.pic||'').trim(),due=String(a.dueDate||'').trim();
   if(!narrative){toast(uiText('Follow-up narrative is required.','Narasi tindak lanjut wajib diisi.'),'error');return;}
   if(!pic){toast(uiText('Fill PIC before following up this action.','Isi PIC sebelum action ditindaklanjuti.'),'error');return;}
@@ -16914,54 +17029,29 @@ function wireEvents() {
    masing-masing loadInitial()/loadKnowledgeInitial()/loadContactsInitial()).
 ============================================================ */
 window.onDashboardLogin = async function () {
-  await cmLoadDashboardTitle();
   showLoading('Connecting to Firestore...');
   try {
-    // Activity
-    const remoteAgenda = await firestoreGet(STORAGE_KEY);
-    if (remoteAgenda) {
-      try { state.agendas = preprocess(JSON.parse(remoteAgenda)); } catch (e) {}
-    } else {
-      await firestoreSet(STORAGE_KEY, JSON.stringify(state.agendas));
+    // Seluruh data dibaca bersamaan (paralel) agar login tidak menunggu satu per satu.
+    const [,docsRows,remoteKnowledge,remoteContacts,remoteCategoryList,remoteUnitList]=await Promise.all([
+      cmLoadDashboardTitle().catch(e=>console.warn('Title load skipped',e)),
+      cmActLoadRemote().catch(()=>null),firestoreGet(KNOWLEDGE_STORAGE_KEY),firestoreGet(CONTACT_STORAGE_KEY),firestoreGet(CATEGORY_LIST_KEY),firestoreGet(UNIT_LIST_KEY)]);
+    const seedWrites=[];
+    if (docsRows) { state.agendas = docsRows; }
+    else {
+      const remoteAgenda = await firestoreGet(STORAGE_KEY);
+      if (remoteAgenda) { try { state.agendas = preprocess(JSON.parse(remoteAgenda)); } catch (e) {} } else seedWrites.push(firestoreSet(STORAGE_KEY, JSON.stringify(state.agendas)));
+      attachAgendaLiveSync();
     }
-    attachAgendaLiveSync();
-
-    // Knowledge
-    const remoteKnowledge = await firestoreGet(KNOWLEDGE_STORAGE_KEY);
-    if (remoteKnowledge) {
-      try { state.knowledge = JSON.parse(remoteKnowledge); } catch (e) {}
-    } else {
-      await firestoreSet(KNOWLEDGE_STORAGE_KEY, JSON.stringify(state.knowledge));
-    }
+    if (remoteKnowledge) { try { state.knowledge = JSON.parse(remoteKnowledge); } catch (e) {} } else seedWrites.push(firestoreSet(KNOWLEDGE_STORAGE_KEY, JSON.stringify(state.knowledge)));
     attachKnowledgeLiveSync();
-    await cmRefLoadIndex(true);
-
-    // Squad Team
-    const remoteContacts = await firestoreGet(CONTACT_STORAGE_KEY);
-    if (remoteContacts) {
-      try { state.contacts = normalizeContactList(JSON.parse(remoteContacts)); } catch (e) {}
-    } else {
-      await firestoreSet(CONTACT_STORAGE_KEY, JSON.stringify(state.contacts));
-    }
+    const refLoad=cmRefLoadIndex(true).catch(e=>console.warn('Reference index load skipped',e));
+    if (remoteContacts) { try { state.contacts = normalizeContactList(JSON.parse(remoteContacts)); } catch (e) {} } else seedWrites.push(firestoreSet(CONTACT_STORAGE_KEY, JSON.stringify(state.contacts)));
     attachContactsLiveSync();
-
-    // Category list (referensi T-House + custom)
-    const remoteCategoryList = await firestoreGet(CATEGORY_LIST_KEY);
-    if (remoteCategoryList) {
-      try { state.categoryList = JSON.parse(remoteCategoryList); } catch (e) {}
-    } else {
-      await firestoreSet(CATEGORY_LIST_KEY, JSON.stringify(state.categoryList));
-    }
+    if (remoteCategoryList) { try { state.categoryList = JSON.parse(remoteCategoryList); } catch (e) {} } else seedWrites.push(firestoreSet(CATEGORY_LIST_KEY, JSON.stringify(state.categoryList)));
     attachCategoryListLiveSync();
-
-    // Unit list (referensi Requesting Unit + Speaker's Home Unit)
-    const remoteUnitList = await firestoreGet(UNIT_LIST_KEY);
-    if (remoteUnitList) {
-      try { state.unitList = JSON.parse(remoteUnitList); } catch (e) {}
-    } else {
-      await firestoreSet(UNIT_LIST_KEY, JSON.stringify(state.unitList));
-    }
+    if (remoteUnitList) { try { state.unitList = JSON.parse(remoteUnitList); } catch (e) {} } else seedWrites.push(firestoreSet(UNIT_LIST_KEY, JSON.stringify(state.unitList)));
     attachUnitListLiveSync();
+    await Promise.all(seedWrites.concat([refLoad]));
 
     refreshAll();
     renderKnowledge();
@@ -16970,6 +17060,7 @@ window.onDashboardLogin = async function () {
     cmEnsureSurveyListener();
     if (window.cmEnforceMenuAccess) window.cmEnforceMenuAccess();
     toast(t('toastConnected'), 'success');
+    setTimeout(()=>{cmActMaybeMigrate().then(cmActCatchUpLegacy).catch(e=>console.warn(e));},800);
   } catch (e) {
     console.error('Sync on login error:', e);
     toast(t('toastSyncFailed'), 'error');
@@ -16981,6 +17072,7 @@ window.onDashboardLogin = async function () {
 window.onDashboardLogout = function () {
   if(cmDashboardTitleUnsub){cmDashboardTitleUnsub();cmDashboardTitleUnsub=null;}
   detachAgendaLiveSync();
+  cmActDetach();cmActMode='legacy';cmActSynced.clear();
   detachKnowledgeLiveSync();
   cmRefDetachLiveSync();
   detachContactsLiveSync();
@@ -17842,17 +17934,15 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
   await loadInitial();
   // Hydrate notula text without rendering early; the normal refresh below paints the fully initialized dashboard.
   cmActivityNotulaHydrateSearchIndex(null,false,false).catch(e=>console.warn('Notula search hydration skipped',e));
-  await loadLastImportDisplay();
-  await loadLastUpdateDisplayInitial();
-  await loadKnowledgeInitial();
-  await loadContactsInitial();
   resourceLoad();
-  await loadCategoryListInitial();
-  await loadUnitListInitial();
-  // Start CRA live sync on first load so its badge does not wait for the CRA tab to be opened.
-  await cmEnsureSurveyListener();
+  // Data pendukung dimuat paralel; kegagalan satu sumber tidak menahan yang lain.
+  const cmSafe=(f,n)=>Promise.resolve().then(f).catch(e=>console.warn(n+' load skipped',e));
+  await Promise.all([cmSafe(loadLastImportDisplay,'Last import'),cmSafe(loadLastUpdateDisplayInitial,'Last update'),cmSafe(loadKnowledgeInitial,'Knowledge'),cmSafe(loadContactsInitial,'Contacts'),cmSafe(loadCategoryListInitial,'Category list'),cmSafe(loadUnitListInitial,'Unit list'),
+    // Start CRA live sync on first load so its badge does not wait for the CRA tab to be opened.
+    cmSafe(cmEnsureSurveyListener,'CRA listener')]);
   populateFilterDropdowns();
   refreshAll();
+  setTimeout(()=>{cmActMaybeMigrate().then(cmActCatchUpLegacy).catch(e=>console.warn(e));},1500);
   setInterval(refreshAutomaticActivityStatuses,30000);
   cmMaybeShowHelpSelfTest();
   switchTab('analytics'); // landing page = tab Analytics
@@ -18269,6 +18359,7 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 .ben-cal td{white-space:normal}.ben-cal td.cal-up{color:#A93226;font-weight:700}.ben-cal td.cal-eq{color:#15805F;font-weight:700}
 .ben-note{display:block;margin-top:8px;color:var(--ink-500);font-size:11.5px}.ben-empty{padding:18px;text-align:center;color:var(--ink-500);font-size:12.5px;background:#F7F9FC;border-radius:10px}
 @media(max-width:900px){.ben-head{display:none}.ben-row{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'j d' 'n n' 's a' 'b t' 'm m' 'o o' 'r r'}.ben-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ben-port{grid-template-columns:1fr}.ben-split{grid-template-columns:1fr}}
+.cm-btn-spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;margin-right:6px;vertical-align:-2px;animation:cmSpin .7s linear infinite}@keyframes cmSpin{to{transform:rotate(360deg)}}
 /* Prioritas v5: risiko, indikator, monev, kapasitas, kuadran, snapshot */
 .prio-risk{border:1px solid #D9DEE8;border-radius:9px;background:#fff;padding:8px 10px;margin-top:2px}
 .prio-crit:not(.is-auto) .prio-risk{display:none}
@@ -18685,7 +18776,7 @@ function cmTaskShare(id){const t=cmTasks.find(x=>x.id===id);if(!t)return;const t
 function cmTaskExport(){const blob=new Blob([JSON.stringify({kind:'cm-tasks',version:1,tasks:cmTasks},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='CM_Tasks_'+dayjs().format('YYYY-MM-DD')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function cmTaskImport(){if(!cmCanMutate())return;const input=document.createElement('input');input.type='file';input.accept='.json';input.onchange=async()=>{try{const data=JSON.parse(await input.files[0].text()),rows=data.tasks;if(!Array.isArray(rows)||rows.some(x=>!x.id||!x.title||!Array.isArray(x.docs)||x.docs.some(d=>!d.refId&&!/^https?:\/\//i.test(d.url||''))))throw Error('Invalid file');if(!confirm(uiText('Merge tasks from this file? Matching IDs will be replaced.','Gabungkan task dari file ini? ID yang sama akan diperbarui.')))return;const map=new Map(cmTasks.map(x=>[x.id,x]));cmTaskNormalize(rows).forEach(x=>map.set(x.id,x));cmTasks=cmTaskNormalize([...map.values()]);await cmTaskSave();}catch(e){toast(uiText('Invalid task file.','File task tidak valid.'),'error');}};input.click();}
 CM_USER_MANUAL_ARTICLES.push({id:'cm-team-tasks',category:{en:'Assignments',id:'Penugasan'},title:{en:'Managing CM Team Assignments',id:'Mengelola Penugasan Tim CM'},summary:{en:'Create tasks and subtasks with individual owners, deadlines, status, and progress.',id:'Buat task dan subtask dengan PIC, tenggat, status, dan progres masing-masing.'},steps:{en:['Open Assignments next to Agenda.','Click + Task and select a CM Team member, dates, priority, and status.','Use + Subtask under a parent task. Parent progress is calculated from its subtasks.','Click a task to open its detail popup. Use the Documents action to upload files or add links, and the Comments action to reply inline below each task or subtask.','Use WhatsApp, history, edit, and delete actions. There is no EO action.','Export or import JSON task data. Assignments are included in Backup All.'],id:['Buka Penugasan di sebelah Agenda.','Klik + Task, pilih anggota Tim CM, tanggal, prioritas, dan status.','Klik + Subtask di bawah task induk. Progres induk dihitung dari subtask.','Klik task untuk membuka popup detail. Ikon Dokumen digunakan untuk unggah file atau menambah link. Ikon Komentar membuka diskusi langsung di bawah setiap task atau subtask.','Gunakan aksi WhatsApp, riwayat, edit, dan hapus. Penugasan tidak memiliki aksi EO.','Impor atau ekspor data task dalam JSON. Penugasan ikut dalam Backup All.']},note:{en:'Admin and Superadmin can edit. Signed-in guests have read-only access. Documents support file uploads and http/https links.',id:'Admin dan Superadmin dapat mengedit. Guest Login hanya membaca. Dokumen mendukung unggah file dan link http/https.'}});
-const cmTaskLoginOriginal=window.onDashboardLogin;window.onDashboardLogin=async function(){await cmTaskLoginOriginal?.();await cmTaskLoad();};
+const cmTaskLoginOriginal=window.onDashboardLogin;window.onDashboardLogin=async function(){await Promise.all([cmTaskLoginOriginal?.(),cmTaskLoad().catch(e=>console.warn('Task load skipped',e))]);};
 const cmTaskLogoutOriginal=window.onDashboardLogout;window.onDashboardLogout=function(){if(cmTasksUnsub){cmTasksUnsub();cmTasksUnsub=null;}document.getElementById('taskEditDialog').close();document.getElementById('taskDetailDialog').close();cmTaskLogoutOriginal?.();};
 waitForFirebaseAuthReady().then(cmTaskLoad);
 </script>
