@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="Atitya Pritasari">
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
-<meta name="cm-build" content="CM-DASHBOARD-V20.8-FORM-TAB-20261013">
+<meta name="cm-build" content="CM-DASHBOARD-V20.9-TIM-SYNC-20261014">
 <title>Dashboard Master Agenda Change Management Pusat</title>
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2092,7 +2092,11 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .cm-af .af-row{display:grid;gap:10px 12px}.cm-af .af-g2{grid-template-columns:repeat(2,minmax(0,1fr))}.cm-af .af-g3{grid-template-columns:repeat(3,minmax(0,1fr))}.cm-af .af-g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .cm-af .af-row>.hidden{display:none}
 .cm-af .af-sec .form-field textarea{min-height:84px}
-.cm-af .af-sec-grow{flex:1;min-height:320px}
+.cm-af .af-sec-grow{flex:1 0 auto;min-height:320px}
+/* Form panels grow to fill the modal but never shrink below their content, so sections and the minutes editor no longer spill past their frames. */
+.cm-af #agendaForm,.cm-af .af-panels,.cm-af .af-panel{flex:1 0 auto}
+.cm-af .af-panel>*{flex-shrink:0}
+.cm-af .af-panel>.af-sec-grow{flex:1 0 auto}
 .cm-af .af-sec-grow .af-sec-body,.cm-af .af-notula{flex:1;min-height:0;display:flex;flex-direction:column}
 .cm-af .meeting-mode-row{grid-template-columns:minmax(220px,.6fr) minmax(0,1.4fr);gap:12px}
 .cm-af .af-import.und-import-card{margin:0;padding:10px 14px}
@@ -2174,7 +2178,9 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 /* notula */
 .cm-af .af-notula-files{margin-bottom:8px}
 .cm-af .af-hint-box{font-size:12px;color:var(--ink-500);background:#F7F9FC;border:1px dashed var(--border);border-radius:10px;padding:9px 12px}
-.cm-af .af-rte{flex:1;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;background:#fff;min-height:260px;overflow:hidden}
+.cm-af .af-rte{flex:1;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:12px;background:#fff;min-height:300px;overflow:hidden}
+.cm-af .af-rte-tb,.cm-af .af-rte-ft{flex-shrink:0}
+.cm-af .af-rte-ft span:first-child{white-space:nowrap}
 .cm-af .af-rte-tb{display:flex;align-items:center;gap:3px;flex-wrap:wrap;padding:6px 8px;border-bottom:1px solid var(--border-soft);background:#F8FAFD}
 .cm-af .af-rte-tb button{min-width:30px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--navy-800);cursor:pointer;font:600 12.5px 'Inter',sans-serif;padding:0 7px}
 .cm-af .af-rte-tb button:hover{background:#E9EEF8}
@@ -2771,6 +2777,19 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media(max-width:640px){.cm-sr-grid,.cm-sr-edit{grid-template-columns:1fr}.cm-sr-grid .w,.cm-sr-edit .cm-sr-editconf{grid-column:auto}.cm-sr-card{grid-template-columns:1fr}.cm-sr-card-side{flex-direction:row;flex-wrap:wrap}}
 /* Today's Agenda: Total today naik ke bawah judul (desktop/tablet) */
 @media(min-width:761px){.today-summary{grid-template-rows:auto auto 1fr}.today-summary-total{align-self:start;margin-top:16px}}
+
+/* Unified CM logo (same mark as the login page) — keeps each spot's original footprint */
+.brand-mark,.cm-login-logo span.cm-logo-ic,.cm-public-brand span.cm-logo-ic{background:none!important;box-shadow:none!important;border-radius:0!important;padding:0}
+.brand-mark svg,.cm-logo-ic svg{width:100%;height:100%;display:block}
+
+/* Service-type tooltip + description */
+.cm-svcp-chips label{position:relative}
+.cm-svcp-chips label[data-tip]:hover::after,.cm-svcp-chips label[data-tip]:focus-within::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 8px);z-index:30;width:max-content;max-width:300px;white-space:normal;background:#12275A;color:#fff;font-size:12px;font-weight:500;line-height:1.5;padding:9px 12px;border-radius:10px;box-shadow:0 12px 28px rgba(5,14,34,.28);pointer-events:none}
+.cm-svcp-chips label[data-tip]:hover::before,.cm-svcp-chips label[data-tip]:focus-within::before{content:"";position:absolute;left:18px;top:calc(100% + 3px);border:5px solid transparent;border-bottom-color:#12275A;z-index:31}
+.cm-svcp-supdesc{margin-top:8px;font-size:12px;line-height:1.5;color:#5B6680;background:#F5F7FB;border-left:3px solid #C8A84B;border-radius:6px;padding:7px 10px}
+.cm-svcp-chips label[data-tip]:nth-last-child(-n+2):hover::after,.cm-svcp-chips label[data-tip]:nth-last-child(-n+2):focus-within::after{left:auto;right:0}
+.cm-svcp-chips label[data-tip]:nth-last-child(-n+2):hover::before,.cm-svcp-chips label[data-tip]:nth-last-child(-n+2):focus-within::before{left:auto;right:18px}
+@media (hover:none){.cm-svcp-chips label[data-tip]::after,.cm-svcp-chips label[data-tip]::before{display:none!important}}
 </style>
 
 </head>
@@ -2779,7 +2798,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <div id="cmLoginGate" class="cm-login-gate">
   <div class="cm-login-shell">
     <section class="cm-login-visual">
-      <div class="cm-login-logo"><span>CM</span> Pusmantap Change Management</div>
+      <div class="cm-login-logo"><span class="cm-logo-ic"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><defs><linearGradient id="cmlgLgnn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#BFD0F5"/></linearGradient><linearGradient id="cmlgLgng" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#E2B44A"/><stop offset="1" stop-color="#F7D97A"/></linearGradient></defs><path d="M89.5 30.5 A42 42 0 1 0 89.5 89.5" fill="none" stroke="url(#cmlgLgnn)" stroke-width="13" stroke-linecap="round"/><polyline points="34,80 50,64 63,72 92,43" fill="none" stroke="url(#cmlgLgng)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M78 37 L103 32 L98 57 Z" fill="#F2CF6A" stroke="#F2CF6A" stroke-width="3" stroke-linejoin="round"/><circle cx="34" cy="80" r="6.5" fill="#0F2557" stroke="url(#cmlgLgng)" stroke-width="4"/></svg></span> Pusmantap Change Management</div>
       <div class="cm-change-path" aria-hidden="true">
         <div class="cm-path-item"><div class="cm-path-num">1</div><div><b>Listen</b><small>Capture stakeholder voice</small></div></div>
         <div class="cm-path-item"><div class="cm-path-num">2</div><div><b>Understand</b><small>Read ADKAR & readiness signals</small></div></div>
@@ -2809,7 +2828,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 
 <header class="topbar" id="appHeader">
   <div class="brand">
-    <div class="brand-mark">CM</div>
+    <div class="brand-mark" role="img" aria-label="Change Management"><svg width="46" height="46" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><defs><linearGradient id="cmlgHdrn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#BFD0F5"/></linearGradient><linearGradient id="cmlgHdrg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#E2B44A"/><stop offset="1" stop-color="#F7D97A"/></linearGradient></defs><path d="M89.5 30.5 A42 42 0 1 0 89.5 89.5" fill="none" stroke="url(#cmlgHdrn)" stroke-width="13" stroke-linecap="round"/><polyline points="34,80 50,64 63,72 92,43" fill="none" stroke="url(#cmlgHdrg)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M78 37 L103 32 L98 57 Z" fill="#F2CF6A" stroke="#F2CF6A" stroke-width="3" stroke-linejoin="round"/><circle cx="34" cy="80" r="6.5" fill="#0F2557" stroke="url(#cmlgHdrg)" stroke-width="4"/></svg></div>
     <div class="brand-text">
       <div class="cm-title-row"><h1 id="cmDashboardTitle">Dashboard Master Agenda Change Management Pusat</h1><button id="cmEditDashboardTitle" type="button" class="cm-title-edit hidden" title="Edit judul dashboard" aria-label="Edit judul dashboard">✎</button></div>
       <p>Pusat Manajemen Transformasi dan Perubahan (Pusmantap) — BaTii</p>
@@ -2986,7 +3005,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 
 </main>
 
-<footer class="app-footer" title="Build CM-DASHBOARD-V20.8-FORM-TAB-20261013">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V20.8-FORM-TAB-20261013</span></footer>
+<footer class="app-footer" title="Build CM-DASHBOARD-V20.9-TIM-SYNC-20261014">© 2026 Atitya Pritasari. All rights reserved.<br><span id="appBuildMarker" style="font-size:9px;opacity:.55;">Build CM-DASHBOARD-V20.9-TIM-SYNC-20261014</span></footer>
 
 <div id="reviewModal" class="modal-overlay hidden review-modal"></div>
 <div id="detailModal" class="modal-overlay hidden"></div>
@@ -4351,7 +4370,23 @@ function cmOpenAccessManagerLegacy(){
 document.addEventListener('click',e=>{if(e.target?.closest?.('#btnAccessAdmin')){e.preventDefault();cmOpenAccessManager();}});
 /* ===== Ajukan Jadwal (unit) → Setujui Jadwal (Tim CM) ===== */
 const CM_SR_COL='cmScheduleRequests';
-const CM_SR_SUPPORT=[['Narasumber','Narasumber','Speaker'],['Pendampingan','Pendampingan','Facilitation'],['FGD / Konsultasi','FGD / Konsultasi','FGD / Consultation'],['Lainnya','Lainnya','Other']];
+const CM_SR_SUPPORT=[['Narasumber','Narasumber','Speaker'],['Advisory','Advisory','Advisory'],['Fasilitasi FGD / Workshop','Fasilitasi FGD / Workshop','FGD / Workshop Facilitation'],['Lainnya','Lainnya','Other']];
+/* Penjelasan tiap layanan CMO Pusat — tampil saat hover (desktop) dan di bawah pilihan (semua perangkat). Peran Pusmantap selalu advisory: keputusan & pelaksanaan tetap pada unit pemohon. */
+const CM_SR_SUPPORT_DESC={
+ 'Narasumber':['The CM Team speaks at socialisations, webinars, classes or sharing sessions on Change Management — concepts, the ADKAR model, and good practice across the Ministry of Finance.','Tim CM menjadi pembicara pada sosialisasi, webinar, kelas, atau sharing session tentang Change Management — konsep, model ADKAR, dan praktik baik di lingkungan Kemenkeu.'],
+ 'Advisory':['Advice on filling in the Change Management Working Paper (Kertas Kerja CM) and recommendations for the CM strategy — stakeholders, communication, training and reinforcement. Decisions and implementation remain with the requesting unit.','Pendampingan pengisian Kertas Kerja CM dan rekomendasi strategi CM — pemetaan stakeholder, komunikasi, pelatihan, dan penguatan. Keputusan dan pelaksanaan tetap pada unit pemohon.'],
+ 'Fasilitasi FGD / Workshop':['The CM Team facilitates a structured discussion with your unit — change impact analysis (POSTER), stakeholder mapping, and identifying resistance risks and mitigations.','Tim CM memfasilitasi diskusi terstruktur bersama unit Anda — analisis dampak perubahan (POSTER), pemetaan stakeholder, serta identifikasi risiko resistensi dan mitigasinya.'],
+ 'Lainnya':['Other Change Management support not listed above — describe your need in the purpose / notes field.','Kebutuhan dukungan Change Management lain di luar daftar — jelaskan kebutuhan Anda di kolom tujuan / catatan.']
+};
+/* Daftar jenis layanan efektif: dari pengaturan server (cmPublicConfig/gate.svcList) bila ada, jika tidak pakai default. "Lainnya" selalu di urutan terakhir. */
+function cmSrSupportList(){
+  const cfg=(typeof cmGateCfg!=='undefined'&&cmGateCfg&&Array.isArray(cmGateCfg.svcList))?cmGateCfg.svcList:null;
+  let list=cfg?cfg.map(x=>[String(x&&x.id||'').trim(),String(x&&x.id||'').trim(),String(x&&x.en||x&&x.id||'').trim()]).filter(x=>x[0]&&x[0].toLowerCase()!=='lainnya'):CM_SR_SUPPORT.filter(x=>x[0]!=='Lainnya');
+  if(!list.length)list=CM_SR_SUPPORT.filter(x=>x[0]!=='Lainnya');
+  return [...list,['Lainnya','Lainnya','Other']];
+}
+function cmSrSupportDescDefault(v,lang){const d=CM_SR_SUPPORT_DESC[v];return d?(lang==='en'?d[0]:d[1]):'';}
+function cmSrSupportDesc(v){const o=(typeof cmGateCfg!=='undefined'&&cmGateCfg&&cmGateCfg.svcDesc&&cmGateCfg.svcDesc[v])||null,lang=currentLang==='en'?'en':'id';const t=o&&String(o[lang]||'').trim();return t||cmSrSupportDescDefault(v,lang);}
 const cmSR={items:[],loaded:false,unsub:null,known:null,tab:'pending',openAfterEntry:false,lastErr:'',timer:null};
 function cmSRIsStaff(){return typeof cmCanMutate==='function'&&cmCanMutate();}
 function cmSRUid(){return window.fbAuth?.currentUser?.uid||'';}
@@ -4360,7 +4395,7 @@ function cmSRConsumeParam(){window.__cmSRParamUsed=true;try{const u=new URL(loca
 function cmSRStatusLabel(s){return s==='approved'?uiText('Approved','Disetujui'):s==='rejected'?uiText('Rejected','Ditolak'):s==='cancelled'?uiText('Cancelled','Dibatalkan'):uiText('Waiting','Menunggu');}
 function cmSRFmtDate(d){return d?dayjs(d).locale(currentLang).format('ddd, DD MMM YYYY'):'—';}
 function cmSRAgo(iso){if(!iso)return '';const m=Math.max(0,dayjs().diff(dayjs(iso),'minute'));if(m<1)return uiText('just now','baru saja');if(m<60)return uiText(`${m} min ago`,`${m} menit lalu`);const h=Math.floor(m/60);if(h<24)return uiText(`${h} h ago`,`${h} jam lalu`);const d=Math.floor(h/24);return d===1?uiText('yesterday','kemarin'):uiText(`${d} days ago`,`${d} hari lalu`);}
-function cmSRUnitText(r){const q=r.requester||{};return q.unit==='EKSTERNAL'?`${uiText('External','Eksternal')}${q.instansi?` (${q.instansi})`:''}`:(q.unit||'-');}
+function cmSRUnitText(r){const q=r.requester||{};return q.unit==='EKSTERNAL'?`${uiText('External','Eksternal')}${q.instansi?` (${q.instansi})`:''}`:((q.unit||'-')+(q.unit2?` — ${q.unit2}`:(/ — /.test(q.unitName||'')?` — ${String(q.unitName).split(' — ').slice(1).join(' — ')}`:'')));}
 function cmSRSeenKey(){return 'cm_sr_seen_'+(cmSRIsStaff()?'staff_'+(getCurrentUserEmail()||''):'guest_'+cmSRUid());}
 function cmSRSeen(){try{return new Set(JSON.parse(localStorage.getItem(cmSRSeenKey())||'[]'));}catch(e){return new Set();}}
 function cmSRMarkSeen(ids){try{const s=cmSRSeen();ids.forEach(i=>s.add(i));localStorage.setItem(cmSRSeenKey(),JSON.stringify([...s].slice(-400)));}catch(e){}}
@@ -4554,7 +4589,7 @@ function cmSROpenForm(preset){
   if(!cmSRUid())return toast(uiText('Requests need an active connection to the server. Reload the page and try again.','Pengajuan butuh koneksi ke server. Muat ulang halaman lalu coba lagi.'),'warning');
   document.getElementById('cmSRForm')?.remove();
   const ov=document.createElement('div');ov.id='cmSRForm';ov.className='modal-overlay cm-sr-overlay';
-  const sup=CM_SR_SUPPORT.map(([v,i,e])=>`<option value="${v}">${uiText(e,i)}</option>`).join('');
+  const sup=cmSrSupportList().map(([v,i,e])=>`<option value="${escapeHtml(v)}" title="${escapeHtml(cmSrSupportDesc(v))}">${uiText(e,i)}</option>`).join('');
   const who=`${escapeHtml(id.name)} · ${escapeHtml(id.unit==='EKSTERNAL'?(id.instansi||uiText('External','Eksternal')):id.unit)}`;
   ov.innerHTML=`<div class="modal-box cm-sr-box" role="dialog" aria-modal="true" aria-labelledby="cmSRFormTitle">
    <div class="cm-sr-head"><span class="cm-sr-ic" aria-hidden="true">📅</span><div><h2 id="cmSRFormTitle">${uiText('Schedule Request Form','Form Pengajuan Jadwal')}</h2><p>${uiText('Your request is reviewed by the CM Team, and the decision is sent to your WhatsApp.','Usulan Anda ditinjau Tim CM, dan keputusannya dikirim ke WhatsApp Anda.')}</p></div><button class="modal-close" type="button" data-sr-close aria-label="${uiText('Close','Tutup')}">×</button></div>
@@ -4565,7 +4600,7 @@ function cmSROpenForm(preset){
      <div class="cm-sr-time"><label>${uiText('Start','Jam mulai')} *<input type="time" name="start"></label><label>${uiText('End','Jam selesai')} *<input type="time" name="end"></label></div>
      <div class="w" id="cmSRConf"></div>
      <label>${uiText('Format','Format')}<select name="mode"><option value="offline">Offline</option><option value="online">Online</option><option value="hybrid">Hybrid</option></select></label>
-     <label>${uiText('Support needed from Pusmantap','Dukungan yang dibutuhkan dari Pusmantap')}<select name="support">${sup}</select></label>
+     <label>${uiText('Support needed from Pusmantap','Dukungan yang dibutuhkan dari Pusmantap')}<select name="support" onchange="const d=this.parentElement.querySelector('.cm-svcp-supdesc');if(d)d.textContent=cmSrSupportDesc(this.value);">${sup}</select><span class="cm-svcp-supdesc" style="display:block;font-weight:400">${escapeHtml(cmSrSupportDesc(cmSrSupportList()[0][0]))}</span></label>
      <label data-sr-loc>${uiText('Location','Lokasi')}<input name="location" maxlength="200" placeholder="${uiText('Room / building','Ruang / gedung')}"></label>
      <label data-sr-link class="hidden">${uiText('Meeting link','Tautan rapat')}<input name="link" maxlength="400" placeholder="https://"></label>
      <label>${uiText('Estimated participants','Perkiraan peserta')}<input type="number" name="participants" min="1" max="100000" placeholder="${uiText('e.g. 60','Contoh: 60')}"></label>
@@ -5059,8 +5094,8 @@ function cmEntryGateHtml(){
         <div class="cm-g2-acc lay" data-g2-acc="svc">
           <button type="button" class="cm-g2-tog" aria-expanded="false" aria-controls="cmG2Svc">${CM_G2_CAL}${U('Change Management Services','Layanan Manajemen Perubahan')}${CM_G2_CHEV}</button>
           <div class="cm-g2-body" id="cmG2Svc">
-            <p>${U('Need a speaker, facilitation, or a Change Management FGD for your unit? Pick a date on the Pusmantap CM Team calendar, then complete your request.','Butuh narasumber, pendampingan, atau FGD Change Management untuk unit Anda? Pilih tanggal di kalender Tim CM Pusmantap, lalu lengkapi detail permintaan.')}</p>
-            <div class="cm-g2-tags"><span>${U('Speaker','Narasumber')}</span><span>${U('Facilitation','Pendampingan')}</span><span>${U('FGD / Consultation','FGD / Konsultasi')}</span></div>
+            <p>${U('Need a speaker, advisory, or FGD / workshop facilitation for your unit? Pick a date on the Pusmantap CM Team calendar, then complete your request.','Butuh narasumber, advisory, atau fasilitasi FGD / workshop untuk unit Anda? Pilih tanggal di kalender Tim CM Pusmantap, lalu lengkapi detail permintaan.')}</p>
+            <div class="cm-g2-tags">${cmSrSupportList().filter(x=>x[0]!=='Lainnya').map(([v,i,e])=>`<span title="${escapeHtml(cmSrSupportDesc(v))}">${U(e,i)}</span>`).join('')}</div>
             <button type="button" class="cm-g2-ajukan" id="cmEntryAjukan">${CM_G2_CAL}${U('Submit a Request','Ajukan Permintaan')} →</button>
           </div>
         </div>
@@ -5199,25 +5234,29 @@ function cmSvcCalHtml(){
     const lab=sel?uiText('Selected','Dipilih'):inf.lab;
     cells+=`<button type="button" class="cm-svcp-d ${sel?'sel':inf.cls} ${d===today?'today':''}" data-svc-date="${d}" ${inf.pick?'':'disabled'} title="${escapeHtml(inf.title||(inf.pick?uiText('Click to request this date','Klik untuk mengajukan tanggal ini'):''))}">${i}${lab?`<small>${escapeHtml(lab)}</small>`:''}</button>`;
   }
-  const from=cmSvc.month===minM?today:m.format('YYYY-MM-DD'),to=m.endOf('month').format('YYYY-MM-DD');
+  const selDay=cmSvc.date&&String(cmSvc.date).slice(0,7)===cmSvc.month?cmSvc.date:'';const from=selDay||(cmSvc.month===minM?today:m.format('YYYY-MM-DD')),to=selDay||m.endOf('month').format('YYYY-MM-DD');const lim=selDay?99:5;
   const rows=((typeof state!=='undefined'&&Array.isArray(state.agendas))?state.agendas:[]).filter(a=>a&&a.tglMulai&&!['Cancelled','Postponed'].includes(a.statusNorm)&&(a.tglSelesai||a.tglMulai)>=from&&a.tglMulai<=to).sort((a,b)=>String(a.tglMulai).localeCompare(String(b.tglMulai))||String(a.jamMulai||'').localeCompare(String(b.jamMulai||'')));
-  const ev=rows.slice(0,5).map(a=>{const d=dayjs(a.tglMulai);return `<div class="cm-svcp-ev"><div class="dt">${d.format('DD')}<small>${d.locale(currentLang).format('MMM').toUpperCase()}</small></div><div><b>${escapeHtml(a.namaKegiatan||'-')}</b><span>${a.jamMulai&&a.jamSelesai?escapeHtml(a.jamMulai+'–'+a.jamSelesai):uiText('all day','sepanjang hari')}${a.tglSelesai&&a.tglSelesai!==a.tglMulai?' · s.d. '+escapeHtml(dayjs(a.tglSelesai).locale(currentLang).format('DD MMM')):''}</span></div></div>`;}).join('');
+  const ev=rows.slice(0,lim).map(a=>{const d=dayjs(a.tglMulai);return `<div class="cm-svcp-ev"><div class="dt">${d.format('DD')}<small>${d.locale(currentLang).format('MMM').toUpperCase()}</small></div><div><b>${escapeHtml(a.namaKegiatan||'-')}</b><span>${a.jamMulai&&a.jamSelesai?escapeHtml(a.jamMulai+'–'+a.jamSelesai):uiText('all day','sepanjang hari')}${a.tglSelesai&&a.tglSelesai!==a.tglMulai?' · s.d. '+escapeHtml(dayjs(a.tglSelesai).locale(currentLang).format('DD MMM')):''}</span></div></div>`;}).join('');
   return `<h3>${uiText('CM Team Service Calendar','Kalender Layanan Tim CM')}</h3>
    <div class="cm-svcp-cs">${uiText('Click a green or yellow date to submit a request.','Klik tanggal hijau atau kuning untuk mengajukan permintaan.')}</div>
    <div class="cm-svcp-calh"><b>${escapeHtml(m.locale(currentLang).format('MMMM YYYY'))}</b><div class="cm-svcp-nav"><button type="button" data-svc-mon="-1" ${cmSvc.month<=minM?'disabled':''} aria-label="${uiText('Previous month','Bulan sebelumnya')}">‹</button><button type="button" data-svc-mon="1" ${cmSvc.month>=maxM?'disabled':''} aria-label="${uiText('Next month','Bulan berikutnya')}">›</button></div></div>
    <div class="cm-svcp-cal">${dh}${cells}</div>
    <div class="cm-svcp-leg"><span><i style="background:#EAF7F0;border:1.5px solid #BFE6D1"></i>${uiText('Available','Tersedia')}</span><span><i style="background:#FFF6DD;border:1.5px solid #F0DCA0"></i>${uiText('Partly booked','Sebagian terisi')}</span><span><i style="background:#FDECEC;border:1.5px solid #F6C9C9"></i>${uiText('Busy','Padat')}</span><span><i style="background:#12275A"></i>${uiText('Your choice','Pilihan Anda')}</span></div>
-   <div class="cm-svcp-up"><h4>${uiText('Scheduled CM Team activities','Agenda Tim CM terjadwal')}</h4>${ev||`<div class="cm-svcp-cs">${uiText('No activities scheduled for the rest of this month.','Belum ada agenda pada sisa bulan ini.')}</div>`}${rows.length>5?`<div class="cm-svcp-cs" style="margin-top:6px">+${rows.length-5} ${uiText('more','lainnya')}</div>`:''}</div>`;
+   <div class="cm-svcp-up"><h4>${selDay?uiText('CM Team activities on ','Agenda Tim CM pada ')+escapeHtml(dayjs(selDay).locale(currentLang).format('dddd, D MMMM YYYY')):uiText('Scheduled CM Team activities','Agenda Tim CM terjadwal')}</h4>${ev||`<div class="cm-svcp-cs">${selDay?uiText('No CM Team activities on this date — the team is free.','Tidak ada agenda Tim CM pada tanggal ini — tim masih kosong.'):uiText('No activities scheduled for the rest of this month.','Belum ada agenda pada sisa bulan ini.')}</div>`}${rows.length>lim?`<div class="cm-svcp-cs" style="margin-top:6px">+${rows.length-lim} ${uiText('more','lainnya')}</div>`:''}</div>`;
 }
 function cmSvcEmptyHtml(){
   return `<div class="cm-svcp-card cm-svcp-empty"><div class="ic">${cmLogoIcon(44,false)}</div><h3>${uiText('Pick a date first','Pilih tanggal terlebih dahulu')}</h3>
    <p>${uiText('Click a <b style="color:#1F8A5B">green</b> (available) or <b style="color:#8A6A12">yellow</b> (still has room) date on the calendar. The request form will open here.','Klik tanggal berwarna <b style="color:#1F8A5B">hijau</b> (tersedia) atau <b style="color:#8A6A12">kuning</b> (masih ada ruang) di kalender. Form detail permintaan akan terbuka di sini.')}</p>
-   <div class="cm-svcp-ok"><div><i>✓</i>${uiText('Speaker, facilitation, FGD, or consultation','Narasumber, pendampingan, FGD, atau konsultasi')}</div><div><i>✓</i>${uiText('No need to sign in to the dashboard','Tanpa login ke dashboard')}</div><div><i>✓</i>${uiText('The decision is sent to your WhatsApp','Keputusan dikirim ke WhatsApp Anda')}</div></div></div>`;
+   <div class="cm-svcp-ok"><div><i>✓</i>${uiText('Speaker, advisory, or FGD / workshop facilitation','Narasumber, advisory, atau fasilitasi FGD / workshop')}</div><div><i>✓</i>${uiText('No need to sign in to the dashboard','Tanpa login ke dashboard')}</div><div><i>✓</i>${uiText('The decision is sent to your WhatsApp','Keputusan dikirim ke WhatsApp Anda')}</div></div></div>`;
 }
+function cmSvcUe2List(code){const r=(typeof CM_UNIT_REFERENCE!=='undefined'&&CM_UNIT_REFERENCE)||{};const u=r[code]||r[String(code||'').toUpperCase()];return Array.isArray(u&&u.eselon2)?u.eselon2:[];}
+function cmSvcUe2Options(code,selected){const U=uiText,arr=cmSvcUe2List(code);if(!code||code==='EKSTERNAL')return `<option value="">${U('Select Echelon I first','Pilih Eselon I dahulu')}</option>`;
+  const other=U('Other / not listed','Lainnya / tidak tercantum');
+  return `<option value="">${U('Select Echelon II unit','Pilih unit Eselon II')}</option>`+arr.map(x=>`<option value="${escapeHtml(x)}" ${x===selected?'selected':''}>${escapeHtml(x)}</option>`).join('')+`<option value="__other" ${selected&&!arr.includes(selected)?'selected':''}>${other}</option>`;}
 function cmSvcFormHtml(){
   const id=cmGuestIdentity()||{},U=uiText,min=cmSvcToday();
   const opts=CM_ESELON1_UNITS.map(u=>`<option value="${u.code}" ${id.unit===u.code?'selected':''}>${escapeHtml(u.code==='EKSTERNAL'?U('External (outside the Ministry of Finance)','Eksternal (di luar Kemenkeu)'):u.name)}</option>`).join('');
-  const sup=CM_SR_SUPPORT.map(([v,i,e],k)=>`<label><input type="radio" name="support" value="${escapeHtml(v)}" ${k===0?'checked':''}>${U(e,i)}</label>`).join('');
+  const sup=cmSrSupportList().map(([v,i,e],k)=>`<label data-tip="${escapeHtml(cmSrSupportDesc(v))}"><input type="radio" name="support" value="${escapeHtml(v)}" ${k===0?'checked':''}>${U(e,i)}</label>`).join('');
   return `<div class="cm-svcp-card"><form class="cm-svcp-f" id="cmSvcForm" novalidate>
    <div class="cm-svcp-fh"><div><small>${U('REQUEST DETAILS','DETAIL PERMINTAAN')}</small><b data-svc-dlabel>${escapeHtml(cmSRFmtDate(cmSvc.date))}</b></div><button type="button" data-svc-change>${U('Change date','Ganti tanggal')}</button></div>
    <div class="cm-svcp-cs" style="margin-top:10px">${U('Fields marked <b style="color:#C0392B">*</b> are required.','Kolom bertanda <b style="color:#C0392B">*</b> wajib diisi.')}</div>
@@ -5229,10 +5268,11 @@ function cmSvcFormHtml(){
    </div>
    <div class="cm-svcp-g">
     <div><label>${U('Unit (Echelon I)','Unit (Eselon I)')} <em>*</em></label><select name="unit"><option value="">${U('Select your unit','Pilih unit Anda')}</option>${opts}</select></div>
+    <div data-svc-ue2 class="${id.unit&&id.unit!=='EKSTERNAL'?'':'hidden'}"><label>${U('Unit (Echelon II)','Unit (Eselon II)')} <em>*</em></label><select name="unit2">${cmSvcUe2Options(id.unit,id.unit2)}</select></div>
     <div data-svc-ext class="${id.unit==='EKSTERNAL'?'':'hidden'}"><label>${U('Institution / organisation','Nama instansi/organisasi')} <em>*</em></label><input name="instansi" maxlength="120" value="${escapeHtml(id.instansi||'')}"></div>
    </div>
    <div class="cm-svcp-sec">${U('Service needed','Kebutuhan layanan')}</div>
-   <label>${U('Type of service','Jenis layanan')} <em>*</em></label><div class="cm-svcp-chips">${sup}</div>
+   <label>${U('Type of service','Jenis layanan')} <em>*</em></label><div class="cm-svcp-chips" onchange="const v=this.querySelector('input:checked')?.value;const d=this.nextElementSibling;if(d)d.textContent=cmSrSupportDesc(v);">${sup}</div><div class="cm-svcp-supdesc" aria-live="polite">${escapeHtml(cmSrSupportDesc(cmSrSupportList()[0][0]))}</div>
    <label>${U('Activity name / topic','Nama kegiatan / topik')} <em>*</em></label><input name="title" maxlength="160" placeholder="${U('e.g. Change Management Socialisation','Contoh: Sosialisasi Change Management')}">
    <div class="cm-svcp-sec">${U('Time & place','Waktu & tempat')}</div>
    <div class="cm-svcp-g g3">
@@ -5293,7 +5333,8 @@ function cmSvcPick(d){
 }
 function cmSvcBindForm(f){
   const val=n=>String(f.elements[n]?.value||'').trim(),ov=f;
-  const syncUnit=()=>{const ext=val('unit')==='EKSTERNAL';f.querySelector('[data-svc-ext]').classList.toggle('hidden',!ext);f.elements.email.placeholder=ext?'nama@instansi.go.id':'nama@kemenkeu.go.id';};
+  const syncUnit=(rebuild)=>{const u=val('unit'),ext=u==='EKSTERNAL';f.querySelector('[data-svc-ext]').classList.toggle('hidden',!ext);f.querySelector('[data-svc-ue2]')?.classList.toggle('hidden',!u||ext);if(rebuild!==false&&f.elements.unit2){const keep=f.elements.unit2.value;f.elements.unit2.innerHTML=cmSvcUe2Options(u,keep&&keep!=='__other'?keep:'');}f.elements.email.placeholder=ext?'nama@instansi.go.id':'nama@kemenkeu.go.id';};
+  if(typeof cmLoadUnitReferenceOverride==='function')cmLoadUnitReferenceOverride().then(ch=>{if(ch&&f.isConnected&&f.elements.unit2){const keep=f.elements.unit2.value||(cmGuestIdentity()||{}).unit2||'';f.elements.unit2.innerHTML=cmSvcUe2Options(val('unit'),keep);}}).catch(()=>{});
   const syncMode=()=>{const m=val('mode');f.querySelector('[data-svc-loc]').classList.toggle('hidden',m==='online');f.querySelector('[data-svc-link]').classList.toggle('hidden',m==='offline');};
   const syncConf=()=>{f.querySelector('#cmSvcConf').innerHTML=cmSvc.date?cmSRConflictHtml(cmSRConflicts(cmSvc.date,val('start'),val('end'))):'';};
   const syncAlt=()=>{const has=!!val('altDate'),same=f.elements.altSame.checked;['altStart','altEnd'].forEach(n=>{const el=f.elements[n];if(same)el.value=val(n==='altStart'?'start':'end');el.disabled=same||!has;});f.elements.altSame.disabled=!has;};
@@ -5325,8 +5366,10 @@ async function cmSvcSubmit(f){
   if(!cmSRPhoneOk(phone))return err(uiText('Enter an active WhatsApp number, e.g. 081234567890.','Isi nomor WhatsApp aktif, contoh 081234567890.'),'phone');
   if(!unit)return err(uiText('Please select your unit.','Pilih unit Anda.'),'unit');
   if(unit!=='EKSTERNAL'&&!/@kemenkeu\.go\.id$/.test(email))return err(uiText('For Ministry of Finance units, use your @kemenkeu.go.id email. If you are from outside the Ministry, choose "External".','Untuk unit Kemenkeu, gunakan email @kemenkeu.go.id. Jika Anda dari luar Kemenkeu, pilih unit "Eksternal".'),'email');
+  let unit2=unit==='EKSTERNAL'?'':val('unit2');if(unit2==='__other')unit2='';
+  if(unit!=='EKSTERNAL'&&!unit2&&cmSvcUe2List(unit).length&&val('unit2')!=='__other')return err(uiText('Please select your Echelon II unit.','Pilih unit Eselon II Anda.'),'unit2');
   if(unit==='EKSTERNAL'&&instansi.length<2)return err(uiText('Please enter your institution or organisation.','Isi nama instansi/organisasi Anda.'),'instansi');
-  const r={title:val('title'),date:cmSvc.date,start:val('start'),end:val('end'),mode:val('mode')||'offline',support:(f.querySelector('input[name="support"]:checked')?.value)||CM_SR_SUPPORT[0][0],location:val('location'),link:val('link'),participants:Number(val('participants'))||0,altDate:val('altDate'),altStart:'',altEnd:'',altSame:false,purpose:val('purpose')};
+  const r={title:val('title'),date:cmSvc.date,start:val('start'),end:val('end'),mode:val('mode')||'offline',support:(f.querySelector('input[name="support"]:checked')?.value)||cmSrSupportList()[0][0],location:val('location'),link:val('link'),participants:Number(val('participants'))||0,altDate:val('altDate'),altStart:'',altEnd:'',altSame:false,purpose:val('purpose')};
   if(r.altDate){r.altSame=!!f.elements.altSame.checked;r.altStart=r.altSame?r.start:String(f.elements.altStart.value||'').trim();r.altEnd=r.altSame?r.end:String(f.elements.altEnd.value||'').trim();}
   if(r.title.length<4)return err(uiText('Activity name is required.','Nama kegiatan wajib diisi.'),'title');
   if(!r.date||r.date<cmSvcToday())return err(uiText('Choose a date on the calendar.','Pilih tanggal di kalender.'));
@@ -5346,14 +5389,16 @@ async function cmSvcSubmit(f){
       if(dataUrl.length>950000)throw new Error(uiText('The attachment is too large (max ± 700 KB).','Lampiran terlalu besar (maks. ± 700 KB).'));
       attachment={name:file.name.slice(0,120),mime:file.type||'application/octet-stream',dataUrl};}
     const u=cmUnitByCode(unit),prev=cmGuestIdentity();
-    cmSaveGuestIdentity({name,email,unit,unitName:u?.name||unit,instansi:unit==='EKSTERNAL'?instansi:'',phone,auto:!!(prev&&prev.auto!==false&&window.fbAuth?.currentUser),savedAt:new Date().toISOString()});
+    cmSaveGuestIdentity({name,email,unit,unitName:u?.name||unit,unit2,instansi:unit==='EKSTERNAL'?instansi:'',phone,auto:!!(prev&&prev.auto!==false&&window.fbAuth?.currentUser),savedAt:new Date().toISOString()});
     let authed=false;try{authed=await cmSvcEnsureAuth();}catch(e){authed=false;}
     if(!authed||!cmSRUid())throw new Error(uiText('Requests need an active connection to the server. Reload the page and try again.','Pengajuan butuh koneksi ke server. Muat ulang halaman lalu coba lagi.'));
-    const payload={...r,attachment,uid:cmSRUid(),status:'pending',requester:{name,email,unit,unitName:u?.name||unit,instansi:unit==='EKSTERNAL'?instansi:'',phone},createdAt:new Date().toISOString()};
+    const payload={...r,attachment,uid:cmSRUid(),status:'pending',requester:{name,email,unit,unitName:u?.name||unit,instansi:unit==='EKSTERNAL'?instansi:'',phone,...(unit2?{unit2}:{})},createdAt:new Date().toISOString()};
     let ref;
     try{ref=await window.fbAddDoc(window.fbCollection(window.fbDb,CM_SR_COL),payload);}
     catch(e1){
-      if(!/permission|insufficient/i.test(String(e1&&(e1.code||e1.message)||''))||!('altStart' in payload))throw e1;
+      if(!/permission|insufficient/i.test(String(e1&&(e1.code||e1.message)||''))||!(('altStart' in payload)||payload.requester?.unit2))throw e1;
+      /* Aturan Firebase lama belum mengenal field unit2 → simpan di nama unit agar tetap tercatat. */
+      if(payload.requester?.unit2){const q={...payload.requester};q.unitName=`${q.unitName} — ${q.unit2}`;delete q.unit2;payload.requester=q;}
       const altNote=payload.altDate?`\n[${uiText('Alternative schedule','Jadwal alternatif')}: ${cmSRAltText(payload)}${payload.altSame?' · '+uiText('same time','jam sama'):''}]`:'';
       ['altStart','altEnd','altSame'].forEach(k=>delete payload[k]);payload.purpose=String(payload.purpose||'')+altNote;
       ref=await window.fbAddDoc(window.fbCollection(window.fbDb,CM_SR_COL),payload);
@@ -5605,6 +5650,7 @@ function cmOpenAccessManager(tab){
       <button type="button" data-ap-tab="log" role="tab">Riwayat Akses</button>
       <button type="button" data-ap-tab="stats" role="tab">📊 Statistik Kunjungan Tamu</button>
       <button type="button" data-ap-tab="gate" role="tab">🎨 Tampilan Gerbang</button>
+      <button type="button" data-ap-tab="svcdesc" role="tab">💬 Jenis Layanan</button>
       <button type="button" data-ap-tab="menus" role="tab">🧭 Pengaturan Menu</button>
       <button type="button" data-ap-tab="refs" role="tab">📚 Referensi</button>
       <button type="button" data-ap-tab="docnum" role="tab">🔢 Standar Penomoran</button>
@@ -5636,6 +5682,43 @@ function cmRenderApMenus(body){
   body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
   body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[]});
 }
+function cmRenderApSvcDesc(body,draft){
+  const cur=(cmGateCfg&&cmGateCfg.svcDesc)||{};
+  const dsc=(v,l)=>{const t=cur[v]&&String(cur[v][l]||'').trim();return t||cmSrSupportDescDefault(v,l);};
+  let items=draft||cmSrSupportList().map(([v,i,e])=>({v,id:i,en:e,dId:dsc(v,'id'),dEn:dsc(v,'en')}));
+  const custom=!!(cmGateCfg&&(Array.isArray(cmGateCfg.svcList)||Object.keys(cur).length));
+  const ta='width:100%;min-height:64px;border:1px solid #D6DCE8;border-radius:10px;padding:8px 10px;font:13px/1.5 Inter,sans-serif;resize:vertical';
+  const inp='width:100%;border:1px solid #D6DCE8;border-radius:10px;padding:8px 10px;font:600 13px Inter,sans-serif';
+  const lab='display:block;font-size:12px;font-weight:700;color:#24304F;margin:8px 0 4px';
+  const last=items.length-1;
+  body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>Jenis layanan manajemen perubahan</b><span>Atur daftar jenis layanan CMO Pusat beserta penjelasannya (tooltip saat kursor diarahkan &amp; keterangan di bawah pilihan) di halaman Layanan dan Form Pengajuan Jadwal. "Lainnya" selalu ada di urutan terakhir. Disimpan di server dan berlaku untuk semua pengunjung.</span>
+  <div style="display:grid;gap:12px;margin-top:12px">${items.map((x,k)=>{const oth=k===last;return `<div style="border:1px solid #E3E7EF;border-radius:12px;padding:12px 14px;background:#fff" data-svci="${k}">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#12275A">${oth?'Lainnya (tetap)':'Layanan '+(k+1)}</b>${oth?'':`<span style="display:flex;gap:4px"><button type="button" class="btn btn-outline btn-sm" data-svci-up ${k===0?'disabled':''} title="Naikkan">↑</button><button type="button" class="btn btn-outline btn-sm" data-svci-down ${k>=last-1?'disabled':''} title="Turunkan">↓</button><button type="button" class="btn btn-outline btn-sm" data-svci-del style="color:#9E1811" title="Hapus layanan">🗑 Hapus</button></span>`}</div>
+    ${oth?'':`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 12px"><div><label style="${lab}">Nama layanan (Indonesia) *</label><input data-f="id" maxlength="60" style="${inp}" value="${escapeHtml(x.id)}"></div><div><label style="${lab}">Nama layanan (English)</label><input data-f="en" maxlength="60" style="${inp}" value="${escapeHtml(x.en)}"></div></div>`}
+    <label style="${lab}">Penjelasan (Indonesia)</label><textarea data-f="dId" maxlength="400" style="${ta}">${escapeHtml(x.dId)}</textarea>
+    <label style="${lab}">Penjelasan (English)</label><textarea data-f="dEn" maxlength="400" style="${ta}">${escapeHtml(x.dEn)}</textarea></div>`;}).join('')}</div>
+  <div style="display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap"><button type="button" class="btn btn-outline btn-sm" id="cmSvcAdd">＋ Tambah layanan</button><button type="button" class="btn btn-gold btn-sm" id="cmSvcDescSave">💾 Simpan</button>${custom?'<button type="button" class="btn btn-outline btn-sm" id="cmSvcReset">↺ Kembalikan ke default</button>':''}<span id="cmSvcDescMsg" style="font-size:12.5px"></span></div></div>`;
+  const msg=t=>{const m=body.querySelector('#cmSvcDescMsg');if(m)m.innerHTML=t;};
+  const read=()=>{body.querySelectorAll('[data-svci]').forEach(box=>{const it=items[Number(box.dataset.svci)];box.querySelectorAll('[data-f]').forEach(el=>{it[el.dataset.f]=el.value;});});};
+  body.querySelectorAll('[data-svci-up],[data-svci-down],[data-svci-del]').forEach(b=>b.onclick=()=>{read();const k=Number(b.closest('[data-svci]').dataset.svci);
+    if(b.hasAttribute('data-svci-del')){if(!confirm(`Hapus layanan "${items[k].id||'(tanpa nama)'}"? Pengajuan lama yang memakai nama ini tetap tersimpan.`))return;items.splice(k,1);}
+    else{const j=b.hasAttribute('data-svci-up')?k-1:k+1;[items[k],items[j]]=[items[j],items[k]];}
+    cmRenderApSvcDesc(body,items);msg('<span style="color:#5D6785">Belum disimpan — klik Simpan untuk menerapkan.</span>');});
+  body.querySelector('#cmSvcAdd').onclick=()=>{read();if(items.length>=9)return msg('<span style="color:#9E1811">Maksimal 8 layanan + Lainnya.</span>');items.splice(items.length-1,0,{v:'',id:'',en:'',dId:'',dEn:''});cmRenderApSvcDesc(body,items);body.querySelector(`[data-svci="${items.length-2}"] [data-f=id]`)?.focus();msg('<span style="color:#5D6785">Isi nama layanan baru, lalu klik Simpan.</span>');};
+  const fail=e=>msg('<span style="color:#9E1811">'+(/permission/i.test(e?.code||e?.message||'')?'Ditolak oleh Firebase. Pastikan aturan <code>cmPublicConfig</code> sudah terpasang.':escapeHtml(e?.message||'Gagal menyimpan.'))+'</span>');
+  const rs=body.querySelector('#cmSvcReset');if(rs)rs.onclick=async()=>{if(!confirm('Kembalikan daftar & penjelasan layanan ke default?'))return;try{await cmGateSaveCfg({svcList:null,svcDesc:{}});cmRenderApSvcDesc(body);body.querySelector('#cmSvcDescMsg').innerHTML='<span style="color:#15784F">✓ Dikembalikan ke default.</span>';}catch(e){fail(e);}};
+  body.querySelector('#cmSvcDescSave').onclick=async()=>{
+    read();const main=items.slice(0,-1).map(x=>({...x,id:String(x.id||'').trim().replace(/\s+/g,' '),en:String(x.en||'').trim().replace(/\s+/g,' ')}));
+    if(!main.length)return msg('<span style="color:#9E1811">Minimal harus ada 1 layanan selain Lainnya.</span>');
+    if(main.some(x=>!x.id))return msg('<span style="color:#9E1811">Nama layanan (Indonesia) wajib diisi.</span>');
+    const names=main.map(x=>x.id.toLowerCase());if(names.includes('lainnya'))return msg('<span style="color:#9E1811">"Lainnya" sudah tersedia otomatis.</span>');
+    if(new Set(names).size!==names.length)return msg('<span style="color:#9E1811">Ada nama layanan yang sama.</span>');
+    const svcList=main.map(x=>({id:x.id,en:x.en||x.id})),svcDesc={};
+    [...main,{...items[items.length-1],id:'Lainnya'}].forEach(x=>{const o={},di=String(x.dId||'').trim(),de=String(x.dEn||'').trim();if(di&&di!==cmSrSupportDescDefault(x.id,'id'))o.id=di;if(de&&de!==cmSrSupportDescDefault(x.id,'en'))o.en=de;if(o.id||o.en)svcDesc[x.id]=o;});
+    msg('<span style="color:#5D6785">Menyimpan…</span>');
+    try{await cmGateSaveCfg({svcList,svcDesc});cmRenderApSvcDesc(body);body.querySelector('#cmSvcDescMsg').innerHTML='<span style="color:#15784F">✓ Jenis layanan tersimpan dan langsung berlaku.</span>';}catch(e){fail(e);}
+  };
+}
 function cmRenderApGate(body){
   const cur=cmGateTheme(),hasImg=!!cmGateCfg.image;
   body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>Tampilan kartu masuk (gerbang)</b><span>Pilih gaya panel kiri. Pilihan disimpan di server dan berlaku untuk semua pengunjung.</span>
@@ -5666,6 +5749,7 @@ async function cmRenderAccessPanel(){
   const body=host.querySelector('#cmApBody');
   cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
   if(cmAL.tab==='gate')return cmRenderApGate(body);
+  if(cmAL.tab==='svcdesc')return cmRenderApSvcDesc(body);
   if(cmAL.tab==='menus')return cmRenderApMenus(body);
   if(cmAL.tab==='refs')return cmRenderApRefs(body);
   if(cmAL.tab==='docnum')return cmRenderApDocNum(body);
@@ -18056,9 +18140,9 @@ async function cmSurveyInitPublic(){
   }catch(e){console.error(e);root.innerHTML=`<div class="cm-public-card"><h2>${uiText('Failed to load survey','Survei gagal dimuat')}</h2><p>${escapeHtml(e.message||String(e))}</p></div>`;}
 }
 function cmRenderPublicSurvey(root,s){
-  if(s.status!=='active'){root.innerHTML=`<div class="cm-public-head"><div class="cm-public-brand-row"><div class="cm-public-brand"><span>CM</span> Pusmantap Survey</div><div class="cm-public-lang"><button type="button" class="${currentLang==='en'?'active':''}" onclick="setLanguage('en')">EN</button><button type="button" class="${currentLang==='id'?'active':''}" onclick="setLanguage('id')">ID</button></div></div><h1>${escapeHtml(s.title)}</h1></div><div class="cm-public-card" style="text-align:center;padding:38px"><h2 style="font:800 18px 'Sora';color:var(--navy-900)">${uiText('Survey is closed','Survei sudah ditutup')}</h2><p style="color:var(--ink-500)">${uiText('Thank you for your participation.','Terima kasih atas partisipasi Anda.')}</p></div>`;return;}
+  if(s.status!=='active'){root.innerHTML=`<div class="cm-public-head"><div class="cm-public-brand-row"><div class="cm-public-brand"><span class="cm-logo-ic">${cmLogoIcon(30,true)}</span> Pusmantap Survey</div><div class="cm-public-lang"><button type="button" class="${currentLang==='en'?'active':''}" onclick="setLanguage('en')">EN</button><button type="button" class="${currentLang==='id'?'active':''}" onclick="setLanguage('id')">ID</button></div></div><h1>${escapeHtml(s.title)}</h1></div><div class="cm-public-card" style="text-align:center;padding:38px"><h2 style="font:800 18px 'Sora';color:var(--navy-900)">${uiText('Survey is closed','Survei sudah ditutup')}</h2><p style="color:var(--ink-500)">${uiText('Thank you for your participation.','Terima kasih atas partisipasi Anda.')}</p></div>`;return;}
   const wizard={roles:[],respondent:{name:'',nip:'',ue1:'',ue2:''},step:'role',startedAt:Date.now()};
-  const header=(stepLabel,progressPct)=>`<div class="cm-public-head"><div class="cm-public-brand-row"><div class="cm-public-brand"><span>CM</span> Change Readiness Survey</div><div class="cm-public-lang"><button type="button" class="${currentLang==='en'?'active':''}" onclick="setLanguage('en')">EN</button><button type="button" class="${currentLang==='id'?'active':''}" onclick="setLanguage('id')">ID</button></div></div><h1>${escapeHtml(s.title)}</h1><p>${escapeHtml(s.description||uiText('Please rate the actual readiness conditions for the roles you perform.','Mohon berikan penilaian sesuai kondisi aktual pada role yang Anda jalankan.'))} ${s.systemName?'<br><b>'+escapeHtml(s.systemName)+'</b>':''}</p><div class="cm-wizard-steps"><span class="${stepLabel==='role'?'active':stepLabel==='profile'||stepLabel==='questions'?'done':''}">1. Role</span>${s.anonymous?'':`<span class="${stepLabel==='profile'?'active':stepLabel==='questions'?'done':''}">2. ${uiText('Identity','Identitas')}</span>`}<span class="${stepLabel==='questions'?'active':''}">${s.anonymous?'2':'3'}. Readiness</span></div><div class="cm-public-progress"><div style="width:${progressPct}%"></div></div></div>`;
+  const header=(stepLabel,progressPct)=>`<div class="cm-public-head"><div class="cm-public-brand-row"><div class="cm-public-brand"><span class="cm-logo-ic">${cmLogoIcon(30,true)}</span> Change Readiness Survey</div><div class="cm-public-lang"><button type="button" class="${currentLang==='en'?'active':''}" onclick="setLanguage('en')">EN</button><button type="button" class="${currentLang==='id'?'active':''}" onclick="setLanguage('id')">ID</button></div></div><h1>${escapeHtml(s.title)}</h1><p>${escapeHtml(s.description||uiText('Please rate the actual readiness conditions for the roles you perform.','Mohon berikan penilaian sesuai kondisi aktual pada role yang Anda jalankan.'))} ${s.systemName?'<br><b>'+escapeHtml(s.systemName)+'</b>':''}</p><div class="cm-wizard-steps"><span class="${stepLabel==='role'?'active':stepLabel==='profile'||stepLabel==='questions'?'done':''}">1. Role</span>${s.anonymous?'':`<span class="${stepLabel==='profile'?'active':stepLabel==='questions'?'done':''}">2. ${uiText('Identity','Identitas')}</span>`}<span class="${stepLabel==='questions'?'active':''}">${s.anonymous?'2':'3'}. Readiness</span></div><div class="cm-public-progress"><div style="width:${progressPct}%"></div></div></div>`;
 
   function renderRole(){
     wizard.step='role';
@@ -18144,7 +18228,7 @@ async function cmSubmitPublicSurvey(s,wizard,qs){
       selectedRoleCount:roles.length,answers,anonymous:!!s.anonymous,
       submittedAt:new Date().toISOString(),durationSec,qualityFlags,userAgent:navigator.userAgent.slice(0,180)
     });
-    document.getElementById('cmPublicSurveyContent').innerHTML=`<div class="cm-public-head"><div class="cm-public-brand"><span>CM</span> Pusmantap Survey</div><h1>${uiText('Thank you','Terima kasih')}</h1><p>${uiText('Responses for the selected roles','Jawaban untuk role terpilih')} <b>${escapeHtml(cmRolesLabel(roles))}</b> ${uiText('have been saved.','sudah tersimpan.')}</p></div><div class="cm-public-card" style="text-align:center;padding:42px"><div style="font-size:42px">✓</div><h2 style="font:800 18px 'Sora';color:var(--navy-900)">${uiText('Response submitted successfully','Respons berhasil dikirim')}</h2><p style="color:var(--ink-500);font-size:12.5px">${uiText('General questions were recorded once; role-specific answers will be analyzed for every role you selected.','Pertanyaan general tercatat satu kali; jawaban khusus role akan dianalisis untuk setiap role yang Anda pilih.')}</p></div>`;
+    document.getElementById('cmPublicSurveyContent').innerHTML=`<div class="cm-public-head"><div class="cm-public-brand"><span class="cm-logo-ic">${cmLogoIcon(30,true)}</span> Pusmantap Survey</div><h1>${uiText('Thank you','Terima kasih')}</h1><p>${uiText('Responses for the selected roles','Jawaban untuk role terpilih')} <b>${escapeHtml(cmRolesLabel(roles))}</b> ${uiText('have been saved.','sudah tersimpan.')}</p></div><div class="cm-public-card" style="text-align:center;padding:42px"><div style="font-size:42px">✓</div><h2 style="font:800 18px 'Sora';color:var(--navy-900)">${uiText('Response submitted successfully','Respons berhasil dikirim')}</h2><p style="color:var(--ink-500);font-size:12.5px">${uiText('General questions were recorded once; role-specific answers will be analyzed for every role you selected.','Pertanyaan general tercatat satu kali; jawaban khusus role akan dianalisis untuk setiap role yang Anda pilih.')}</p></div>`;
   }catch(e){
     console.error(e);err.textContent=uiText('Failed to save response. ','Gagal menyimpan respons. ')+(e.message||'');
     btn.disabled=false;btn.textContent=uiText('Submit Responses','Kirim Jawaban');
