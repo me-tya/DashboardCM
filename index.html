@@ -10813,7 +10813,27 @@ function normalizeContactList(raw) {
   }));
 }
 let contactsUnsub = null;
+let resourcesUnsub = null, resourceRemoteReady = false;
+function attachResourcesLiveSync() {
+  if (!isLoggedIn() || !window.fbDb || resourcesUnsub) return;
+  resourcesUnsub = window.fbOnSnapshot(window.fbDoc(window.fbDb, 'dashboard', RESOURCE_STORAGE_KEY), (snap) => {
+    resourceRemoteReady = true;
+    if (!snap.exists()) return;
+    let remote;
+    try { remote = JSON.parse(snap.data().value || '[]'); } catch (e) { return; }
+    if (!Array.isArray(remote) || !remote.length) return;
+    const normalized = remote.map(resourceNormalize);
+    if (JSON.stringify(normalized) === JSON.stringify(state.resources)) return;
+    state.resources = normalized;
+    try { localStorage.setItem(RESOURCE_STORAGE_KEY, JSON.stringify(normalized)); } catch (e) {}
+    const c = document.getElementById('cntResource'); if (c) c.textContent = resourceActiveCount();
+    if (state.activeTab === 'resource' && typeof renderResource === 'function') renderResource();
+    if (state.activeTab === 'contact' && document.getElementById('reviewDirectory')) renderReviewDirectory();
+    setTimeout(() => window.cmRefreshAccessRole?.(), 0);
+  }, () => { resourceRemoteReady = false; });
+}
 function attachContactsLiveSync() {
+  attachResourcesLiveSync();
   if (!isLoggedIn() || !window.fbDb || contactsUnsub) return;
   contactsUnsub = window.fbOnSnapshot(window.fbDoc(window.fbDb, 'dashboard', CONTACT_STORAGE_KEY), (snap) => {
     if (!snap.exists()) return;
@@ -10830,6 +10850,7 @@ function attachContactsLiveSync() {
   });
 }
 function detachContactsLiveSync() {
+  if (resourcesUnsub) { resourcesUnsub(); resourcesUnsub = null; resourceRemoteReady = false; }
   if (contactsUnsub) { contactsUnsub(); contactsUnsub = null; }
 }
 
@@ -15024,10 +15045,11 @@ function iconCalendarLeaveSmall(){return `<svg width="15" height="15" viewBox="0
 function resourceDayNames(){return currentLang==='id'?['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu']:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];}
 function resourceWfhScheduleLabel(r){const names=resourceDayNames(),days=(r.wfhDays||[]).map(v=>names[Number(v)]).filter(Boolean);return days.length?days.join(' & '):uiText('No schedule','Tidak ada jadwal');}
 function resourceManualStatusActive(r,today){if(r.status==='WFO')return false;if(r.statusMulai&&today<r.statusMulai)return false;if(r.statusSelesai&&today>r.statusSelesai)return false;return true;}
-function resourceIsInactive(r,today){today=today||dayjs().format('YYYY-MM-DD');return !!r&&r.status==='Nonaktif'&&(!r.statusMulai||today>=r.statusMulai);}
+function resourceAssignmentEnded(r,today){today=today||dayjs().format('YYYY-MM-DD');return !!r&&!!String(r.penugasan||'').trim()&&/^\d{4}-\d{2}-\d{2}$/.test(String(r.penugasanSelesai||''))&&today>r.penugasanSelesai;}
+function resourceIsInactive(r,today){today=today||dayjs().format('YYYY-MM-DD');return !!r&&((r.status==='Nonaktif'&&(!r.statusMulai||today>=r.statusMulai))||resourceAssignmentEnded(r,today));}
 function resourceActiveCount(){return (state.resources||[]).filter(r=>!resourceIsInactive(r)).length;}
 function resourceEffectiveStatus(r){const today=dayjs().format('YYYY-MM-DD');if(resourceIsInactive(r,today))return 'Nonaktif';if(resourceManualStatusActive(r,today)&&r.status==='Cuti')return 'Cuti';if(resourceActiveLeavePlan(r,today))return 'Cuti';if(cmIndonesiaHolidayForDate(today))return 'WFO';if(resourceManualStatusActive(r,today)&&r.status==='WFH')return 'WFH';return (r.wfhDays||[]).includes(dayjs().day())?'WFH':'WFO';}
-function resourcePeriod(r){if(r.status!=='Nonaktif'&&!resourceManualLeaveActive(r)){const lp=resourceActiveLeavePlan(r);if(lp)return resourceLeaveRangeLabel(lp);}if(r.status==='Nonaktif'){const d=r.statusMulai?dayjs(r.statusMulai).locale(currentLang).format('D MMM YYYY'):'';if(resourceIsInactive(r))return d?uiText(`Since ${d}`,`Sejak ${d}`):'';return d?uiText(`Inactive from ${d}`,`Nonaktif mulai ${d}`):'';}if(resourceEffectiveStatus(r)==='WFO'||(!r.statusMulai&&!r.statusSelesai))return '';const a=r.statusMulai?dayjs(r.statusMulai).format('D MMM YYYY'):'sekarang',b=r.statusSelesai?dayjs(r.statusSelesai).format('D MMM YYYY'):'selanjutnya';return `${a} – ${b}`;}
+function resourcePeriod(r){if(r&&r.status!=='Nonaktif'&&resourceAssignmentEnded(r)){const d=dayjs(r.penugasanSelesai).add(1,'day').locale(currentLang).format('D MMM YYYY');return uiText(`Assignment ended · since ${d}`,`Masa penugasan berakhir · sejak ${d}`);}if(r.status!=='Nonaktif'&&!resourceManualLeaveActive(r)){const lp=resourceActiveLeavePlan(r);if(lp)return resourceLeaveRangeLabel(lp);}if(r.status==='Nonaktif'){const d=r.statusMulai?dayjs(r.statusMulai).locale(currentLang).format('D MMM YYYY'):'';if(resourceIsInactive(r))return d?uiText(`Since ${d}`,`Sejak ${d}`):'';return d?uiText(`Inactive from ${d}`,`Nonaktif mulai ${d}`):'';}if(resourceEffectiveStatus(r)==='WFO'||(!r.statusMulai&&!r.statusSelesai))return '';const a=r.statusMulai?dayjs(r.statusMulai).format('D MMM YYYY'):'sekarang',b=r.statusSelesai?dayjs(r.statusSelesai).format('D MMM YYYY'):'selanjutnya';return `${a} – ${b}`;}
 function resourceAssignmentStatus(r){if(!String(r.penugasan||'').trim())return '';const today=dayjs().format('YYYY-MM-DD');if(r.penugasanMulai&&today<r.penugasanMulai)return 'upcoming';if(r.penugasanSelesai&&today>r.penugasanSelesai)return 'inactive';return 'active';}
 function resourceAssignmentStatusLabel(status){return status==='upcoming'?uiText('Not Active Yet','Belum Aktif'):status==='inactive'?uiText('Inactive','Nonaktif'):uiText('Active','Aktif');}
 function resourceAssignmentPeriod(r){const a=r.penugasanMulai?dayjs(r.penugasanMulai).locale(currentLang).format('D MMM YYYY'):uiText('No start date','Mulai belum diisi'),b=r.penugasanSelesai?dayjs(r.penugasanSelesai).locale(currentLang).format('D MMM YYYY'):uiText('No end date','Tanpa batas akhir');return `${a} – ${b}`;}
@@ -15039,7 +15061,7 @@ function resourceMemberTypeRank(r){const type=resourceMemberType(r);return type=
 function resourceGradeRank(golongan){const raw=String(golongan||'').toUpperCase().replace(/[^IVABCD0-9]/g,'');const match=raw.match(/^(IV|III|II|I)([A-D])$/);if(!match)return -1;const roman={I:1,II:2,III:3,IV:4}[match[1]]||0;return roman*10+({A:1,B:2,C:3,D:4}[match[2]]||0);}
 function resourceBaseSort(a,b){return resourceMemberTypeRank(a)-resourceMemberTypeRank(b)||resourceGradeRank(b.golongan)-resourceGradeRank(a.golongan)||resourceRoleRank(a.peran)-resourceRoleRank(b.peran)||a.nama.localeCompare(b.nama);}
 function resourceLoad(){try{const raw=localStorage.getItem(RESOURCE_STORAGE_KEY);const arr=raw&&JSON.parse(raw);state.resources=Array.isArray(arr)&&arr.length?arr.map(resourceNormalize):resourceCloneSeed();}catch(e){state.resources=resourceCloneSeed();}document.getElementById('cntResource').textContent=resourceActiveCount();setTimeout(()=>window.cmRefreshAccessRole?.(),0);if(state.activeTab==='contact'&&document.getElementById('reviewDirectory'))setTimeout(()=>renderReviewDirectory(),0);}
-async function resourcePersist(){if(!cmCanMutate())return cmDenyMutation();state.resources=state.resources.map(resourceNormalize);try{localStorage.setItem(RESOURCE_STORAGE_KEY,JSON.stringify(state.resources));}catch(e){}try{if(isLoggedIn())await firestoreSet(RESOURCE_STORAGE_KEY,JSON.stringify(state.resources));}catch(e){console.warn('Resource sync failed',e)}document.getElementById('cntResource').textContent=resourceActiveCount();if(state.activeTab==='contact')renderReviewDirectory();await recordLastUpdate();setTimeout(()=>window.cmRefreshAccessRole?.(),0);}
+async function resourcePersist(opts){if(!cmCanMutate())return cmDenyMutation();if(isLoggedIn()&&window.fbDb&&!resourceRemoteReady&&!(opts&&opts.force)){attachResourcesLiveSync();toast(uiText('Team data is still syncing with the server. Please wait a moment and save again.','Data Tim CM masih disinkronkan dengan server. Tunggu sebentar lalu simpan lagi.'),'error');throw new Error('resources-not-synced');}state.resources=state.resources.map(resourceNormalize);try{localStorage.setItem(RESOURCE_STORAGE_KEY,JSON.stringify(state.resources));}catch(e){}try{if(isLoggedIn())await firestoreSet(RESOURCE_STORAGE_KEY,JSON.stringify(state.resources));}catch(e){console.warn('Resource sync failed',e)}document.getElementById('cntResource').textContent=resourceActiveCount();if(state.activeTab==='contact')renderReviewDirectory();await recordLastUpdate();setTimeout(()=>window.cmRefreshAccessRole?.(),0);}
 function resourceShortName(name){return String(name||'-').trim().split(/\s+/)[0]||'-';}
 function resourceKpiNames(rows,showLeaveType=false){return rows.length?`<div class="res-kpi-names">${rows.map(r=>{const leaveLabel=showLeaveType?String(r.jenisCuti||''):'',display=leaveLabel?`${resourceShortName(r.nama)} · ${leaveLabel}`:resourceShortName(r.nama),full=leaveLabel?`${r.nama} — ${leaveLabel}`:r.nama;return `<span class="res-kpi-name" title="${escapeHtml(full)}">${escapeHtml(display)}</span>`;}).join('')}</div>`:'<div class="res-kpi-empty">Tidak ada</div>';}
 function renderResource(){const el=document.getElementById('tab-resource');if(!el)return;const rows=state.resources||[],effective=rows.map(r=>{const st=resourceEffectiveStatus(r);return {...r,_status:st,jenisCuti:st==='Cuti'?resourceCurrentLeaveType(r):r.jenisCuti};});const q=resourceUi.search.toLowerCase(),shown=effective.filter(r=>(resourceUi.status==='ALL'||r._status===resourceUi.status)&&(!q||[r.nama,r.nip,r.jabatan,r.pangkat,r.golongan,r.unit,r.peran,r.rangkap,r.penugasan,...r.keahlian].join(' ').toLowerCase().includes(q)));const activeEff=effective.filter(r=>r._status!=='Nonaktif'),inactiveCount=effective.length-activeEff.length;const statusGroups={WFO:[],WFH:[],Cuti:[]};effective.forEach(r=>statusGroups[r._status]?.push(r));const counts={WFO:statusGroups.WFO.length,WFH:statusGroups.WFH.length,Cuti:statusGroups.Cuti.length};const keepSpecialLast=(sortFn)=>(a,b)=>resourceMemberTypeRank(a)-resourceMemberTypeRank(b)||sortFn(a,b);const sortFns={golongan:resourceBaseSort,peran:keepSpecialLast((a,b)=>resourceRoleRank(a.peran)-resourceRoleRank(b.peran)||resourceGradeRank(b.golongan)-resourceGradeRank(a.golongan)||a.nama.localeCompare(b.nama)),nama:keepSpecialLast((a,b)=>a.nama.localeCompare(b.nama)),unit:keepSpecialLast((a,b)=>(a.unit||'').localeCompare(b.unit||'')||a.nama.localeCompare(b.nama)),status:keepSpecialLast((a,b)=>a._status.localeCompare(b._status)||a.nama.localeCompare(b.nama))};const baseSortFn=sortFns[resourceUi.sort]||sortFns.golongan;shown.sort((a,b)=>(a._status==='Nonaktif')-(b._status==='Nonaktif')||baseSortFn(a,b));const shownActive=shown.filter(r=>r._status!=='Nonaktif'),shownInactive=shown.filter(r=>r._status==='Nonaktif');el.innerHTML=`<div class="res-page">
@@ -17003,7 +17025,7 @@ async function applyFullRestore(parsed) {
   await persist();
   await persistKnowledge();
   await persistContacts();
-  if (Array.isArray(parsed.resources)) await resourcePersist();
+  if (Array.isArray(parsed.resources)) await resourcePersist({force:true});
   if (Array.isArray(parsed.activityLogs)) await cmActivityLogRestore(parsed.activityLogs);
   // Restore may reintroduce Activity notula metadata. Rehydrate extracted text so
   // Activity Search / Knowledge / Ask T-Agent become consistent immediately.
