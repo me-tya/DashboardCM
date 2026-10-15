@@ -17,17 +17,27 @@
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<!-- Performa: library berat tidak lagi menahan tampilan awal. XLSX dimuat "defer"; library impor/ekspor dokumen dimuat saat browser senggang (lihat cmLoadDeferredLibs). -->
+<script defer src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/locale/id.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+/* Library impor/ekspor dokumen (QR, PDF, Word, ZIP) dimuat setelah halaman tampil, saat browser senggang. */
+(function(){const L=['https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js','https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js','https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js'];
+ let started=false;const go=()=>{if(started)return;started=true;L.forEach(u=>{const s=document.createElement('script');s.src=u;s.async=false;document.head.appendChild(s);});};
+ window.cmLoadDeferredLibs=go;
+ const idle=()=>('requestIdleCallback' in window)?requestIdleCallback(go,{timeout:2500}):setTimeout(go,800);
+ if(document.readyState==='complete')idle();else window.addEventListener('load',idle,{once:true});
+ // Bila pengguna langsung membuka fitur impor/ekspor sebelum senggang, muat seketika.
+ ['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>setTimeout(go,300),{once:true,capture:true}));
+})();
+</script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
@@ -3300,12 +3310,14 @@ function translateExactUi(root=document){
   const nodes=[];
   if(root && root.nodeType===1 && root.matches?.(allowed)) nodes.push(root);
   if(root?.querySelectorAll) root.querySelectorAll(allowed).forEach(x=>nodes.push(x));
+  // Performa: pencarian pasangan teks memakai Map (O(1)), bukan loop seluruh daftar untuk setiap elemen.
+  if(!translateExactUi._map||translateExactUi._src!==pairs){const m=new Map();for(const pr of pairs){if(!m.has(pr[0]))m.set(pr[0],pr);if(!m.has(pr[1]))m.set(pr[1],pr);}translateExactUi._map=m;translateExactUi._src=pairs;}
+  const map=translateExactUi._map;
   nodes.forEach(el=>{
     if(el.children.length) return;
     const raw=(el.textContent||'').trim(); if(!raw) return;
-    for(const [en,id] of pairs){
-      if(raw===en || raw===id){ const target=uiText(en,id); if(raw!==target) el.textContent=target; break; }
-    }
+    const pr=map.get(raw); if(!pr) return;
+    const target=uiText(pr[0],pr[1]); if(raw!==target) el.textContent=target;
   });
 }
 window.translateExactUi=translateExactUi;
@@ -3487,7 +3499,7 @@ function cmRefreshAutoStatuses(){
     if(typeof renderTodayAgenda==='function')try{renderTodayAgenda();}catch(e){}
   }catch(e){console.warn('Auto status refresh failed',e);}
 }
-if(!window.cmAutoStatusTimer)window.cmAutoStatusTimer=setInterval(cmRefreshAutoStatuses,60000);
+if(!window.cmAutoStatusTimer)window.cmAutoStatusTimer=setInterval(()=>{if(document.visibilityState==='visible')cmRefreshAutoStatuses();},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)cmRefreshAutoStatuses();});
 function activityStatusLabel(status) {
   const labels={
@@ -19267,7 +19279,8 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
   populateFilterDropdowns();
   refreshAll();
   setTimeout(()=>{cmActMaybeMigrate().then(cmActCatchUpLegacy).catch(e=>console.warn(e));},1500);
-  setInterval(refreshAutomaticActivityStatuses,30000);
+  setInterval(()=>{if(document.visibilityState==='visible')refreshAutomaticActivityStatuses();},30000);
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){try{refreshAutomaticActivityStatuses();}catch(e){}}});
   cmMaybeShowHelpSelfTest();
   switchTab('analytics'); // landing page = tab Analytics
 })();
