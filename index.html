@@ -2119,6 +2119,11 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .cm-af .af-slot-ic.suratTugas{background:var(--purple-bg);color:var(--purple)}.cm-af .af-slot-ic svg{width:16px;height:16px}
 .cm-af .af-slot-tx{flex:1;min-width:0}.cm-af .af-slot-tx b{font-size:12.5px;color:var(--navy-900)}
 .cm-af .af-slot-tx small{display:block;font-size:11.5px;color:var(--ink-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.cm-af .af-slot-tx small.af-sum-ed{cursor:text;border-radius:5px;padding:1px 4px;margin-left:-4px}
+.cm-af .af-slot-tx small.af-sum-ed:hover{background:var(--ink-50,#F1F4F9);color:var(--ink-700,#334155)}
+.cm-af .af-slot-tx small.af-sum-ed:not(.editing):hover::after{content:' ✎';opacity:.7}
+.cm-af .af-slot-tx small.af-sum-ed.editing{overflow:visible;padding:0;margin-left:0}
+.cm-af .af-sum-inp{width:100%;max-width:420px;font-size:12px;padding:3px 6px;border:1px solid var(--brand,#2563EB);border-radius:6px;outline:none;font-family:inherit}
 .cm-af .af-cnt{font-size:10.5px;font-weight:700;color:var(--ink-500);background:#EEF1F7;border-radius:999px;padding:1px 7px;margin-left:4px}.cm-af .af-cnt:empty{display:none}
 .cm-af .af-slot-acts{display:flex;gap:5px;flex:none}
 .cm-af .af-na{gap:5px;color:#5D6785}.cm-af .af-na input{margin:0;width:13px;height:13px;accent-color:#5D6785}.cm-af .af-na.on{background:#EEF0F4;border-color:#8A94A6;color:#374151}.cm-af .vtag.na{background:#EEF0F4;color:#5D6785}
@@ -13461,6 +13466,27 @@ function cmAfLetterSlot(field,key,title){
   const headEl=cmAfEl(`<div class="af-slot-head"><span class="af-slot-ic ${key}">${CM_AF_ICONS.doc}</span><div class="af-slot-tx"><b>${title} <span class="af-cnt" data-af-cnt></span></b><small data-af-sum>${U('None yet','Belum ada')}</small></div><div class="af-slot-acts"><label class="af-ib af-na" title="${U('Mark as not available / not required — counts as complete','Tandai tidak ada / tidak diperlukan — dihitung lengkap')}"><input type="checkbox" data-af-na> ${U('None','Tidak ada')}</label><button type="button" class="af-ib" data-af-act="link">🔗 Link</button><button type="button" class="af-ib" data-af-act="file">⤒ File</button><button type="button" class="af-ib" data-af-act="toggle">▾ ${U('History','Riwayat')}</button></div></div>`);
   const bodyEl=cmAfEl(`<div class="af-slot-body hidden"><div class="af-slot-rows" data-af-rows></div><div class="af-addbar"><div><label>${U('Letter number (latest)','Nomor surat (terbaru)')}</label><div data-af-nomor></div></div><div><label>${U('Note / version','Keterangan / versi')}</label><input type="text" data-af-ket maxlength="120" placeholder="${U('e.g. Revision 1 – time change','Mis. Revisi 1 – perubahan jam')}"></div><div class="af-addlink"><label>${U('Add link','Tambah link')}</label><div class="af-inl"><input type="url" data-af-url placeholder="https://…"><button type="button" class="btn btn-outline btn-sm" data-af-addlink>＋ Link</button></div></div><div><label>&nbsp;</label><button type="button" class="btn btn-outline btn-sm" data-af-addfile>⤒ ${U('Upload file','Unggah file')}</button></div></div></div>`);
   field.insertBefore(headEl,field.firstChild);headEl.after(bodyEl);
+  // Ringkasan (nomor surat / keterangan) dapat diedit langsung dengan klik, tanpa membuka Riwayat.
+  const sumEl=headEl.querySelector('[data-af-sum]');
+  if(sumEl&&nomor){
+    sumEl.classList.add('af-sum-ed');sumEl.title=U('Click to edit letter number / note','Klik untuk mengedit nomor surat / keterangan');
+    sumEl.addEventListener('click',e=>{
+      if(sumEl.classList.contains('editing')||nomor.disabled||nomor.readOnly)return;
+      if(host&&typeof host.cmRowCount==='function'&&host.cmRowCount()>0){open(true);setTimeout(()=>nomor.focus(),30);return;}
+      e.stopPropagation();
+      const cur=String(nomor.value||'').trim(),inp=document.createElement('input');
+      inp.type='text';inp.className='af-sum-inp';inp.maxLength=200;inp.value=/^[-–—]$/.test(cur)?'':cur;
+      inp.placeholder=U('Letter number or note, e.g. Prepared by Dina (IR VII)','Nomor surat atau keterangan, mis. Disiapkan Dina (IR VII)');
+      sumEl.classList.add('editing');sumEl.innerHTML='';sumEl.appendChild(inp);inp.focus();inp.select();
+      let done=false;
+      const finish=save=>{if(done)return;done=true;sumEl.classList.remove('editing');
+        if(save&&inp.value.trim()!==cur){nomor.value=inp.value.trim();nomor.dispatchEvent(new Event('input',{bubbles:true}));nomor.dispatchEvent(new Event('change',{bubbles:true}));}
+        if(host&&typeof host.cmRedraw==='function')host.cmRedraw();else sumEl.textContent=nomor.value||U('None yet','Belum ada');};
+      inp.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();finish(true);}else if(ev.key==='Escape'){ev.preventDefault();ev.stopPropagation();finish(false);}});
+      inp.addEventListener('blur',()=>finish(true));
+      inp.addEventListener('click',ev=>ev.stopPropagation());
+    });
+  }
   if(nomor){nomor.placeholder=U('e.g. ND-142/PB.6/2026','Contoh: ND-142/PB.6/2026');bodyEl.querySelector('[data-af-nomor]').appendChild(nomor);}
   if(host)bodyEl.querySelector('[data-af-rows]').appendChild(host);
   const open=on=>{bodyEl.classList.toggle('hidden',!on);field.classList.toggle('open',on);headEl.querySelector('[data-af-act="toggle"]').innerHTML=(on?'▴ ':'▾ ')+U('History','Riwayat');};
