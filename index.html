@@ -2121,6 +2121,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 .cm-af .af-slot-tx small{display:block;font-size:11.5px;color:var(--ink-500);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
 .cm-af .af-cnt{font-size:10.5px;font-weight:700;color:var(--ink-500);background:#EEF1F7;border-radius:999px;padding:1px 7px;margin-left:4px}.cm-af .af-cnt:empty{display:none}
 .cm-af .af-slot-acts{display:flex;gap:5px;flex:none}
+.cm-af .af-na{gap:5px;color:#5D6785}.cm-af .af-na input{margin:0;width:13px;height:13px;accent-color:#5D6785}.cm-af .af-na.on{background:#EEF0F4;border-color:#8A94A6;color:#374151}.cm-af .vtag.na{background:#EEF0F4;color:#5D6785}
 .cm-af .af-ib{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:30px;height:30px;padding:0 9px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--navy-800);font:600 11.5px 'Inter',sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
 .cm-af .af-ib:hover{background:var(--gold-100)}.cm-af .af-ib.danger{color:var(--red)}.cm-af .af-ib.danger:hover{background:var(--red-bg)}
 .cm-af .af-slot-body{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px}
@@ -7278,10 +7279,12 @@ function cmReportFilterSummary(items,lang='id'){
   return parts;
 }
 function cmRptHas(v){const s=String(v??'').trim();return !!s&&!/^[-–—]$/.test(s);}
+/* Surat ditandai "-" (tidak ada / tidak diperlukan) dan tanpa file/link → N/A, dihitung lengkap. */
+function cmRptDocNa(a,k){return /^[-–—]$/.test(String(a?.[k]??'').trim())&&!cmRptHas(a?.[k+'Url'])&&!parseActivityFiles(a?.[k+'Files']).length;}
 function cmRptDocFlags(a){
   return {
-    undangan:cmRptHas(a.undangan)||cmRptHas(a.undanganUrl)||parseActivityFiles(a.undanganFiles).length>0,
-    suratTugas:cmRptHas(a.suratTugas)||cmRptHas(a.suratTugasUrl)||parseActivityFiles(a.suratTugasFiles).length>0,
+    undangan:cmRptHas(a.undangan)||cmRptHas(a.undanganUrl)||parseActivityFiles(a.undanganFiles).length>0||cmRptDocNa(a,'undangan'),
+    suratTugas:cmRptHas(a.suratTugas)||cmRptHas(a.suratTugasUrl)||parseActivityFiles(a.suratTugasFiles).length>0||cmRptDocNa(a,'suratTugas'),
     materi:cmRptHas(a.materi)||parseActivityFiles(a.materiFiles).length>0,
     notula:parseActivityNotula(a.notula).length>0||cmRptHas(String(a.notulaTeks||'').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').trim()),
     dokumentasi:parseDokumentasi(a.dokumentasi).length>0
@@ -7957,11 +7960,11 @@ async function cmRptBuildSingleModel(a,opts){cmRptAiFailed='';
   // documents
   blocks.push({t:'h1',text:L('Dokumen dan Notula','Documents and Minutes')});
   const fileNames=raw=>parseActivityFiles(raw).map(x=>x.name||(typeof fileNameFromUrl==='function'?fileNameFromUrl(x.url||''):'')||'file').join(', ');
-  const docRow=(label,ok,detail)=>[label,{text:ok?L('Tersedia','Available'):L('Belum ada','Missing'),color:'FFFFFF',fill:ok?'16A37F':'E25563',bold:true,align:'center'},detail||'-'];
+  const docRow=(label,ok,detail,na)=>[label,{text:na?L('Tidak ada / N/A','Not applicable'):ok?L('Tersedia','Available'):L('Belum ada','Missing'),color:'FFFFFF',fill:na?'8A94A6':ok?'16A37F':'E25563',bold:true,align:'center'},detail||'-'];
   const notes=parseActivityNotula(a.notula);
   blocks.push({t:'table',head:[L('Dokumen','Document'),'Status',L('Keterangan','Details')],widths:[24,16,60],rows:[
-    docRow(cmRptDocLabel('undangan',lang),flags.undangan,[cmRptHas(a.undangan)?a.undangan:'',fileNames(a.undanganFiles)].filter(Boolean).join(' · ')),
-    docRow(cmRptDocLabel('suratTugas',lang),flags.suratTugas,[cmRptHas(a.suratTugas)?a.suratTugas:'',fileNames(a.suratTugasFiles)].filter(Boolean).join(' · ')),
+    docRow(cmRptDocLabel('undangan',lang),flags.undangan,[cmRptHas(a.undangan)?a.undangan:'',fileNames(a.undanganFiles)].filter(Boolean).join(' · '),cmRptDocNa(a,'undangan')),
+    docRow(cmRptDocLabel('suratTugas',lang),flags.suratTugas,[cmRptHas(a.suratTugas)?a.suratTugas:'',fileNames(a.suratTugasFiles)].filter(Boolean).join(' · '),cmRptDocNa(a,'suratTugas')),
     docRow(cmRptDocLabel('materi',lang),flags.materi,[cmRptHas(a.materi)?(isUrlLike(a.materi)?fileNameFromUrl(a.materi):a.materi):'',fileNames(a.materiFiles)].filter(Boolean).join(' · ')),
     docRow(cmRptDocLabel('notula',lang),flags.notula,notes.map(n=>n.fileName).filter(Boolean).join(', ')),
     docRow(cmRptDocLabel('dokumentasi',lang),flags.dokumentasi,`${parseDokumentasi(a.dokumentasi).length} ${L('foto','photo(s)')}`)]});
@@ -11177,9 +11180,10 @@ function reviewTidyContacts(r){
 function reviewIsDualLabel(v){return /^pmo\s*(&|dan|and|\/|\+)\s*cmo$/i.test(String(v||'').trim());}
 function reviewFixDualRole(r){
  const pm=String(r.pmo||'').trim(),cm=String(r.cmo||'').trim(),dr=String(r.dualRole||'').trim();
- if(!(pm&&cm&&pm.toLowerCase()===cm.toLowerCase())||!dr||reviewIsDualLabel(dr))return r;
- if(/^pmo$/i.test(dr)){r.pmoPhone=r.pmoPhone||r.cmoPhone||'';r.pmoNote=r.pmoNote||r.cmoNote||'';r.cmo='';r.cmoPhone='';r.cmoNote='';delete r.cmoRole;delete r.dualRole;}
- else if(/^cmo$/i.test(dr)){r.cmoPhone=r.cmoPhone||r.pmoPhone||'';r.cmoNote=r.cmoNote||r.pmoNote||'';r.pmo='';r.pmoPhone='';r.pmoNote='';delete r.pmoRole;delete r.dualRole;}
+ if(!(pm&&cm&&pm.toLowerCase()===cm.toLowerCase())||!dr||reviewIsDualLabel(dr)||reviewLabelHasBoth(dr))return r;
+ const dk=reviewRoleKeysFromLabel(dr);
+ if(dk.includes('pmo')){r.pmoPhone=r.pmoPhone||r.cmoPhone||'';r.pmoNote=r.pmoNote||r.cmoNote||'';r.cmo='';r.cmoPhone='';r.cmoNote='';delete r.cmoRole;delete r.dualRole;if(/^pmo$/i.test(dr))delete r.pmoRole;else r.pmoRole=dr;}
+ else if(dk.includes('cmo')){r.cmoPhone=r.cmoPhone||r.pmoPhone||'';r.cmoNote=r.cmoNote||r.pmoNote||'';r.pmo='';r.pmoPhone='';r.pmoNote='';delete r.pmoRole;delete r.dualRole;if(/^cmo$/i.test(dr))delete r.cmoRole;else r.cmoRole=dr;}
  return r;
 }
 function reviewNormalizeRows(rows){return rows.map(row=>{const r={...row};if(r.unit==='BPPK'&&!r.bppkUpdateV){if(['Ridwan','Anggi Ridwan Pratama','Nova Mardianti'].includes(r.pmo)){r.pmo='Nova Mardianti';r.pmoPhone='0857******92';}r.cmoExtra=[...(r.cmoExtra||[])];if(r.cmo!=='Nurul Ibnu Hidayat'&&!r.cmoExtra.some(x=>x.nama==='Nurul Ibnu Hidayat'))r.cmoExtra.push({nama:'Nurul Ibnu Hidayat',phone:'0856******08'});r.bppkUpdateV=1;}for(const field of ['pmo','cmo'])r[field]=REVIEW_NAME_UPDATES[field]?.[r.unit]?.[r[field]]||r[field];if(r.unit==='DJBC'&&r.note==='PMO alternatif: Ali, 081247627842')r.note='PMO alternatif: Muhammad Ali Ridlo, 081247627842';if(!String(r.pmo||'').trim()&&String(r.cmo||'').trim()&&/^PMO belum dicatat$/i.test(String(r.note||'').trim())){r.pmo=r.cmo;r.pmoPhone=r.pmoPhone||r.cmoPhone;r.note='';}if(r.unit==='DJSPSK'&&/teddy/i.test(r.cmo||'')&&!String(r.cmoPhone||'').trim())r.cmoPhone='081219369449';if((Number(r.assignV)||0)<2){const u=String(r.unit||'').toUpperCase(),pc=String(r.pic||'').trim().toLowerCase();if(['SETJEN','ITJEN','BPPK'].includes(u)&&(pc==='aji intern'||pc==='aji'||!pc))r.pic='Muhammad Nailun Najih';if(u==='DJBC'&&(pc==='sarah khairina'||!pc))r.pic='Kurniawan Jabar Malik';if(u==='DJA'&&(pc==='ainurrisya zafirah'||!pc))r.pic='Kurniawan Jabar Malik';r.assignV=2;}if(!(Number(r.noteV)>=1)){const nt=String(r.note||'').trim();if(String(r.unit).toUpperCase()==='DJBC'&&/PMO alternatif:\s*(Muhammad\s+)?Ali/i.test(nt)){r.cmoExtra=[...(r.cmoExtra||[])];if(!r.cmoExtra.some(x=>/ali ridlo/i.test(x.nama||'')))r.cmoExtra.push({nama:'Muhammad Ali Ridlo',phone:'081247627842',role:'PMO'});r.note='';}else if(/^nomor\s+(cmo|pmo)\s+belum\s+diisi\.?$/i.test(nt))r.note='';r.noteV=1;}reviewFixDualRole(r);reviewTidyContacts(r);return r;});}
@@ -11229,15 +11233,15 @@ async function reviewRoleColorSave(role,color){if(!cmCanMutate())return cmDenyMu
 function reviewPersonCard(kind,name,phone,rowId){const roleRow=(reviewRows||[]).find(x=>x.id===rowId),roleOverride=kind.startsWith("cmoExtra")?roleRow?.cmoExtra?.[Number(kind.slice(8))]?.role:roleRow?.[kind+"Role"];const n=String(name||'').trim(),p=reviewProfile(n),label=roleOverride||(kind==='dual'?'PMO & CMO':(kind.startsWith('cmoExtra')?'CMO':kind.toUpperCase())),editBtn=cmCanMutate()&&rowId?`<span class="rv-person-acts"><button type="button" class="rv-person-edit" data-rv-edit-person="${escapeHtml(rowId)}|${kind}" title="${uiText('Edit profile','Edit profil')}">✎ ${uiText('Edit','Edit')}</button>${String(name||'').trim()?`<button type="button" class="rv-person-del" data-rv-del-person="${escapeHtml(rowId)}|${kind}" title="${uiText('Remove this person from the unit','Hapus orang ini dari unit')}" aria-label="${uiText('Remove','Hapus')}">🗑</button>`:''}</span>`:'';if(!n)return `<div class="rv-person rv-${kind} rv-empty rv-role-colored" style="${reviewRoleStyle(label)}">${editBtn}<span class="rv-tag">${escapeHtml(label)}</span><strong>${uiText('Not entered','Belum diisi')}</strong></div>`;return `<div class="rv-person rv-${kind.startsWith('cmoExtra')?'cmo':kind} rv-role-colored" style="${reviewRoleStyle(label)}">${editBtn}${reviewAvatar(p?p.nama:n,p?.foto,'')}<div class="rv-person-main"><span class="rv-tag">${escapeHtml(label)}</span><strong class="rv-name">${escapeHtml(p?p.nama:n)}</strong>${p?`<div class="rv-nip">NIP&nbsp;&nbsp;${escapeHtml(p.nip||'-')}</div><div class="rv-job">${escapeHtml([p.jabatan,p.pangkat].filter(Boolean).join(' · ')||'-')}</div>`:`<div class="rv-job">${uiText('Profile not available yet','Profil belum tersedia')}</div>`}${p?.email?`<a class="rv-mail" href="mailto:${escapeHtml(p.email)}">✉ ${escapeHtml(p.email)}</a>`:''}${reviewWa(phone)}</div></div>`;}
 function reviewPeopleHtml(r){const pmo=String(r.pmo||'').trim(),cmo=String(r.cmo||'').trim();const ex=(r.cmoExtra||[]).map((x,i)=>({x,i})),isPmo=e=>/^pmo/i.test(String(e.x.role||''));if(pmo&&cmo&&pmo.toLowerCase()===cmo.toLowerCase())return `<div class="review-people${ex.length?'':' rv-single'}">${reviewPersonCard('dual',cmo,r.cmoPhone||r.pmoPhone,r.id)}${ex.filter(isPmo).map(e=>reviewPersonCard('cmoExtra'+e.i,e.x.nama,e.x.phone,r.id)).join('')}${ex.filter(e=>!isPmo(e)).map(e=>reviewPersonCard('cmoExtra'+e.i,e.x.nama,e.x.phone,r.id)).join('')}</div>`;return `<div class="review-people">${reviewPersonCard('pmo',pmo,r.pmoPhone,r.id)}${ex.filter(isPmo).map(e=>reviewPersonCard('cmoExtra'+e.i,e.x.nama,e.x.phone,r.id)).join('')}${reviewPersonCard('cmo',cmo,r.cmoPhone,r.id)}${ex.filter(e=>!isPmo(e)).map(e=>reviewPersonCard('cmoExtra'+e.i,e.x.nama,e.x.phone,r.id)).join('')}</div>`;}
 function reviewOpenPersonEditor(rowId,kind){if(!cmCanMutate())return cmDenyMutation();const r=(reviewRows||[]).find(x=>x.id===rowId);if(!r)return;const extraIndex=kind.startsWith('cmoExtra')?Number(kind.slice(8)):-1,extra=extraIndex>=0?r.cmoExtra?.[extraIndex]:null;const field=kind==='pmo'?'pmo':'cmo',name=String(extra?extra.nama:r[field]||'').trim(),phone=extra?extra.phone:kind==='pmo'?r.pmoPhone:(r.cmoPhone||(kind==='dual'?r.pmoPhone:'')),p=reviewProfile(name)||{nama:name,nip:'',jabatan:'',pangkat:'',email:'',foto:''},label=(extra?extra.role:r[kind+'Role'])||(kind==='dual'?'PMO & CMO':(extra?'CMO':kind.toUpperCase())),modal=document.getElementById('reviewModal');let foto=p.foto||'';
-modal.innerHTML=`<div class="modal-box"><div class="modal-head"><h2>${uiText('Edit profile','Edit profil')} ${label} — ${escapeHtml(r.unit)}</h2><button type="button" class="modal-close" id="rvpClose">&times;</button></div><form class="modal-body review-form" id="rvpForm"><div class="wide" id="rvpImport"></div><div class="wide rv-photo-field"><div id="rvpPreview">${reviewAvatar(p.nama||name||'?',foto,'rv-edit-photo')}</div><div class="rv-photo-actions"><label class="rv-upload">${uiText('Upload photo','Unggah foto')}<input type="file" id="rvpFile" accept="image/*"></label><button type="button" class="btn btn-outline btn-sm" id="rvpRemove">${uiText('Remove photo','Hapus foto')}</button><small>${uiText('JPG/PNG, automatically compressed.','JPG/PNG, otomatis dikompres.')}</small></div></div><div class="wide rv-sec">${uiText('Role','Peran')}</div><div class="wide">${reviewRolePillsHtml('rolePick',(REVIEW_ADD_ROLES.find(x=>x.label.toLowerCase()===String(label).toLowerCase())||{}).key||'',REVIEW_ADD_ROLES)}</div><label class="wide">${uiText('Role label','Label peran')} *<input name="role" required list="rvRoleOptions" value="${escapeHtml(label)}" maxlength="80"><datalist id="rvRoleOptions"><option value="PMO"></option><option value="CMO"></option><option value="PMO &amp; CMO"></option><option value="Pemilik Proses Bisnis"></option></datalist></label><label class="wide">Warna role<input type="color" name="roleColor" value="${reviewRoleColor(label)}"><small>Perubahan warna berlaku untuk semua kontak dengan role yang sama.</small></label><label class="wide">${uiText('Full name','Nama lengkap')} *<input name="nama" required value="${escapeHtml(p.nama||name)}"></label><label>NIP<input name="nip" inputmode="numeric" value="${escapeHtml(p.nip||'')}"></label><label>${uiText('Rank / grade','Pangkat / Gol.')}<input name="pangkat" value="${escapeHtml(p.pangkat||'')}" placeholder="Penata Tingkat I - III/d"></label><label class="wide">${uiText('Position','Jabatan')}<input name="jabatan" value="${escapeHtml(p.jabatan||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label><label>${uiText('Phone / WhatsApp','Nomor HP / WA')}<input name="phone" type="tel" value="${escapeHtml(phone||'')}" placeholder="08..."></label>${kind==='dual'?`<p class="wide review-note">${uiText('This person serves as both PMO and CMO for this unit.','Pegawai ini merangkap PMO dan CMO untuk unit ini.')}</p>`:''}<label class="wide">${uiText('Internal note','Catatan internal')} <small class="rv-lbl-sub">${uiText('(shown in Feedback, not on the card)','(tampil di Feedback, tidak di kartu)')}</small><textarea name="note" rows="2">${escapeHtml(String((extra?extra.note:(kind==='cmo'?r.cmoNote:(r.pmoNote||(kind==='dual'?r.cmoNote:''))))||''))}</textarea></label><div class="review-form-actions"><button type="button" class="btn btn-outline" id="rvpCancel">${uiText('Cancel','Batal')}</button><button type="submit" class="btn btn-gold" id="rvpSave">${uiText('Save','Simpan')}</button></div></form></div>`;
+modal.innerHTML=`<div class="modal-box"><div class="modal-head"><h2>${uiText('Edit profile','Edit profil')} ${label} — ${escapeHtml(r.unit)}</h2><button type="button" class="modal-close" id="rvpClose">&times;</button></div><form class="modal-body review-form" id="rvpForm"><div class="wide" id="rvpImport"></div><div class="wide rv-photo-field"><div id="rvpPreview">${reviewAvatar(p.nama||name||'?',foto,'rv-edit-photo')}</div><div class="rv-photo-actions"><label class="rv-upload">${uiText('Upload photo','Unggah foto')}<input type="file" id="rvpFile" accept="image/*"></label><button type="button" class="btn btn-outline btn-sm" id="rvpRemove">${uiText('Remove photo','Hapus foto')}</button><small>${uiText('JPG/PNG, automatically compressed.','JPG/PNG, otomatis dikompres.')}</small></div></div><div class="wide rv-sec">${uiText('Role','Peran')}</div><div class="wide">${reviewRoleChecksHtml('rolePick',reviewRoleKeysFromLabel(label))}<small class="rv-hint">${uiText('You can tick more than one role.','Bisa centang lebih dari satu peran.')}</small></div><label class="wide">${uiText('Role label','Label peran')} *<input name="role" required list="rvRoleOptions" value="${escapeHtml(label)}" maxlength="80"><datalist id="rvRoleOptions"><option value="PMO"></option><option value="CMO"></option><option value="PMO &amp; CMO"></option><option value="Pemilik Proses Bisnis"></option><option value="PMO &amp; Pemilik Proses Bisnis"></option><option value="CMO &amp; Pemilik Proses Bisnis"></option><option value="PMO, CMO &amp; Pemilik Proses Bisnis"></option></datalist></label><label class="wide">Warna role<input type="color" name="roleColor" value="${reviewRoleColor(label)}"><small>Perubahan warna berlaku untuk semua kontak dengan role yang sama.</small></label><label class="wide">${uiText('Full name','Nama lengkap')} *<input name="nama" required value="${escapeHtml(p.nama||name)}"></label><label>NIP<input name="nip" inputmode="numeric" value="${escapeHtml(p.nip||'')}"></label><label>${uiText('Rank / grade','Pangkat / Gol.')}<input name="pangkat" value="${escapeHtml(p.pangkat||'')}" placeholder="Penata Tingkat I - III/d"></label><label class="wide">${uiText('Position','Jabatan')}<input name="jabatan" value="${escapeHtml(p.jabatan||'')}"></label><label>Email<input name="email" type="email" value="${escapeHtml(p.email||'')}"></label><label>${uiText('Phone / WhatsApp','Nomor HP / WA')}<input name="phone" type="tel" value="${escapeHtml(phone||'')}" placeholder="08..."></label>${kind==='dual'?`<p class="wide review-note">${uiText('This person serves as both PMO and CMO for this unit.','Pegawai ini merangkap PMO dan CMO untuk unit ini.')}</p>`:''}<label class="wide">${uiText('Internal note','Catatan internal')} <small class="rv-lbl-sub">${uiText('(shown in Feedback, not on the card)','(tampil di Feedback, tidak di kartu)')}</small><textarea name="note" rows="2">${escapeHtml(String((extra?extra.note:(kind==='cmo'?r.cmoNote:(r.pmoNote||(kind==='dual'?r.cmoNote:''))))||''))}</textarea></label><div class="review-form-actions"><button type="button" class="btn btn-outline" id="rvpCancel">${uiText('Cancel','Batal')}</button><button type="submit" class="btn btn-gold" id="rvpSave">${uiText('Save','Simpan')}</button></div></form></div>`;
 modal.classList.remove('hidden');const close=()=>modal.classList.add('hidden');modal.querySelector('#rvpClose').onclick=close;modal.querySelector('#rvpCancel').onclick=close;modal.onclick=e=>{/* Outside clicks keep this popup open. */};const preview=()=>{modal.querySelector('#rvpPreview').innerHTML=reviewAvatar(modal.querySelector('[name=nama]').value||name||'?',foto,'rv-edit-photo');};
-modal.querySelectorAll('input[name=rolePick]').forEach(i=>i.addEventListener('change',()=>{const x=REVIEW_ADD_ROLES.find(r=>r.key===i.value);const inp=modal.querySelector('[name=role]');inp.value=x.label;inp.dispatchEvent(new Event('input',{bubbles:true}));}));
-modal.querySelector('[name=role]').addEventListener('input',e=>{const k=(REVIEW_ADD_ROLES.find(x=>x.label.toLowerCase()===e.target.value.trim().toLowerCase())||{}).key;modal.querySelectorAll('input[name=rolePick]').forEach(i=>i.checked=i.value===k);});
+modal.querySelectorAll('input[name=rolePick]').forEach(i=>i.addEventListener('change',()=>{const keys=[...modal.querySelectorAll('input[name=rolePick]:checked')].map(x=>x.value);if(!keys.length){i.checked=true;toast(uiText('At least one role is required.','Minimal satu peran harus dipilih.'),'warning');return;}const inp=modal.querySelector('[name=role]');inp.value=reviewRoleLabelFromKeys(keys);inp.dispatchEvent(new Event('input',{bubbles:true}));}));
+modal.querySelector('[name=role]').addEventListener('input',e=>{const k=reviewRoleKeysFromLabel(e.target.value);modal.querySelectorAll('input[name=rolePick]').forEach(i=>i.checked=k.includes(i.value));});
 cmpiMount(modal.querySelector('#rvpImport'),{form:modal.querySelector('#rvpForm'),targets:[{key:'p',label:label,map:{nama:'nama',nip:'nip',jabatan:'jabatan',pangkat:'pangkat',email:'email',hp:'phone'},need:['phone'],photo:d=>{foto=d;preview();}}]});
 modal.querySelector('#rvpFile').onchange=async e=>{const f=e.target.files&&e.target.files[0];if(!f)return;try{const out=await resourceCompressPhoto(f,{maxBytes:45000,maxDimension:280});foto=out.dataUrl;preview();}catch(err){toast(err.message||uiText('Photo could not be processed','Foto tidak dapat diproses'),'error');}};
 modal.querySelector('[name=role]').oninput=e=>{modal.querySelector('[name=roleColor]').value=reviewRoleColor(e.target.value);};
 modal.querySelector('#rvpRemove').onclick=()=>{foto='';modal.querySelector('#rvpFile').value='';preview();};
-modal.querySelector('#rvpForm').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),pnote=String(fd.get('note')||'').trim(),nama=String(fd.get('nama')||'').trim().replace(/\s+/g,' ');if(!nama)return;const prof={nama,nip:String(fd.get('nip')||'').trim(),jabatan:String(fd.get('jabatan')||'').trim(),pangkat:String(fd.get('pangkat')||'').trim(),email:String(fd.get('email')||'').trim(),foto,updatedAt:new Date().toISOString()},newPhone=cmFormatPhone(String(fd.get('phone')||'').trim());reviewProfileLoad();reviewProfileStore={...(reviewProfileStore||{}),[reviewProfileKey(nama)]:prof};reviewRows=reviewRows.map(x=>{if(x.id!==rowId)return x;const y={...x},role=String(fd.get('role')||'').trim();if(extraIndex>=0){y.cmoExtra=(x.cmoExtra||[]).map((v,i)=>i===extraIndex?{...v,nama,phone:newPhone,role,note:pnote}:v);}else{y[kind+'Role']=role;}if(kind==='pmo'||kind==='dual'){y.pmo=nama;y.pmoPhone=newPhone;y.pmoNote=pnote;}if(kind==='cmo'||kind==='dual'){y.cmo=nama;y.cmoPhone=newPhone;y.cmoNote=pnote;}if((kind==='pmo'||kind==='cmo')&&reviewIsDualLabel(role)){const other=kind==='pmo'?'cmo':'pmo',cur=String(x[other]||'').trim();if(cur&&cur.toLowerCase()!==nama.toLowerCase())y.cmoExtra=[...(y.cmoExtra||[]),{nama:cur,phone:x[other+'Phone']||'',role:x[other+'Role']||other.toUpperCase(),note:x[other+'Note']||''}];y[other]=nama;y[other+'Phone']=newPhone;y[other+'Note']=pnote;delete y.pmoRole;delete y.cmoRole;y.dualRole=role;}return reviewFixDualRole(y);});await reviewRoleColorSave(String(fd.get('role')||'').trim(),String(fd.get('roleColor')||''));close();await reviewProfilePersist();await reviewPersist();toast(uiText('Profile saved','Profil tersimpan'),'success');};}
+modal.querySelector('#rvpForm').onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target),pnote=String(fd.get('note')||'').trim(),nama=String(fd.get('nama')||'').trim().replace(/\s+/g,' ');if(!nama)return;const prof={nama,nip:String(fd.get('nip')||'').trim(),jabatan:String(fd.get('jabatan')||'').trim(),pangkat:String(fd.get('pangkat')||'').trim(),email:String(fd.get('email')||'').trim(),foto,updatedAt:new Date().toISOString()},newPhone=cmFormatPhone(String(fd.get('phone')||'').trim());reviewProfileLoad();reviewProfileStore={...(reviewProfileStore||{}),[reviewProfileKey(nama)]:prof};reviewRows=reviewRows.map(x=>{if(x.id!==rowId)return x;const y={...x},role=String(fd.get('role')||'').trim();if(extraIndex>=0){y.cmoExtra=(x.cmoExtra||[]).map((v,i)=>i===extraIndex?{...v,nama,phone:newPhone,role,note:pnote}:v);}else{y[kind+'Role']=role;}if(kind==='pmo'||kind==='dual'){y.pmo=nama;y.pmoPhone=newPhone;y.pmoNote=pnote;}if(kind==='cmo'||kind==='dual'){y.cmo=nama;y.cmoPhone=newPhone;y.cmoNote=pnote;}if((kind==='pmo'||kind==='cmo')&&(reviewIsDualLabel(role)||reviewLabelHasBoth(role))){const other=kind==='pmo'?'cmo':'pmo',cur=String(x[other]||'').trim();if(cur&&cur.toLowerCase()!==nama.toLowerCase())y.cmoExtra=[...(y.cmoExtra||[]),{nama:cur,phone:x[other+'Phone']||'',role:x[other+'Role']||other.toUpperCase(),note:x[other+'Note']||''}];y[other]=nama;y[other+'Phone']=newPhone;y[other+'Note']=pnote;delete y.pmoRole;delete y.cmoRole;y.dualRole=role;}return reviewFixDualRole(y);});await reviewRoleColorSave(String(fd.get('role')||'').trim(),String(fd.get('roleColor')||''));close();await reviewProfilePersist();await reviewPersist();toast(uiText('Profile saved','Profil tersimpan'),'success');};}
 function reviewPicMember(name){const low=v=>String(v||'').trim().toLowerCase(),base=(state.resources||[]).find(x=>x.nama===name)||reviewFindMember(name);if(!base)return null;const remote=reviewRemoteResources.find(x=>(base.id&&x.id===base.id)||low(x.nama)===low(base.nama));const local=(state.resources||[]).find(x=>(base.id&&x.id===base.id)||low(x.nama)===low(base.nama));return reviewMergeMember(local||null,remote||null)||base;}
 function reviewPicCompare(a,b){const ma=reviewPicMember(a),mb=reviewPicMember(b);if(!!ma!==!!mb)return ma?-1:1;if(!ma)return String(a).localeCompare(String(b));const ia=typeof resourceIsInactive==='function'&&resourceIsInactive(ma)?1:0,ib=typeof resourceIsInactive==='function'&&resourceIsInactive(mb)?1:0;if(ia!==ib)return ia-ib;const ka=/ketua/i.test(ma.peran||'')?0:1,kb=/ketua/i.test(mb.peran||'')?0:1;if(ka!==kb)return ka-kb;const g=resourceGradeRank(mb.golongan)-resourceGradeRank(ma.golongan);if(g)return g;const da=/^\d{8}/.test(ma.nip||'')?ma.nip.slice(0,8):'99999999',db=/^\d{8}/.test(mb.nip||'')?mb.nip.slice(0,8):'99999999';return da.localeCompare(db)||a.localeCompare(b);}
 function reviewPicOverride(name){/* Data PIC kini sepenuhnya mengikuti menu CM Team (override lama diabaikan). */return null;}
@@ -11321,6 +11325,12 @@ function reviewOpenPicEditor(){if(!cmCanMutate())return cmDenyMutation();const g
 /* Daftar PIC = anggota aktif menu CM Team (Katim di atas, lalu anggota) */
 function reviewTeamMembers(){const low=v=>String(v||'').trim().toLowerCase(),seen=new Set();return reviewMemberPool().filter(r=>{const k=low(r.nama);if(!k||seen.has(k))return false;seen.add(k);return resourceIsPicUe(r);}).map(r=>r.nama).sort(reviewPicCompare);}
 const REVIEW_ADD_ROLES=[{key:'pmo',label:'PMO'},{key:'cmo',label:'CMO'},{key:'dual',label:'PMO & CMO'},{key:'probis',label:'Pemilik Proses Bisnis',en:'Business Process Owner'}];
+/* Peran multi: satu orang boleh memegang lebih dari satu peran (PMO, CMO, Pemilik Proses Bisnis). */
+const REVIEW_MULTI_ROLES=[{key:'pmo',label:'PMO'},{key:'cmo',label:'CMO'},{key:'probis',label:'Pemilik Proses Bisnis',en:'Business Process Owner'}];
+function reviewRoleKeysFromLabel(v){const t=String(v||'').toLowerCase(),k=[];if(/\bpmo\b/.test(t))k.push('pmo');if(/\bcmo\b/.test(t))k.push('cmo');if(/pemilik\s*proses\s*bisnis|\bprobis\b|business\s*process\s*owner/.test(t))k.push('probis');return k;}
+function reviewRoleLabelFromKeys(keys){const l=REVIEW_MULTI_ROLES.filter(x=>keys.includes(x.key)).map(x=>x.label);return l.length<=1?(l[0]||''):l.slice(0,-1).join(', ')+' & '+l[l.length-1];}
+function reviewLabelHasBoth(v){const k=reviewRoleKeysFromLabel(v);return k.includes('pmo')&&k.includes('cmo');}
+function reviewRoleChecksHtml(name,keys){return `<div class="rv-role-pills rv-role-multi" role="group">${REVIEW_MULTI_ROLES.map(x=>`<label style="--rc:${reviewRoleColor(x.label)}"><input type="checkbox" name="${name}" value="${escapeHtml(x.key)}" ${keys.includes(x.key)?'checked':''}><span>${escapeHtml(reviewRoleLabel(x))}</span></label>`).join('')}</div>`;}
 function reviewRoleLabel(x){return x.en?uiText(x.en,x.label):x.label;}
 // Unit kontak review = 13 Unit Eselon I + LNSW (non eselon). Unit lain tetap bisa lewat opsi "Unit lain…".
 function reviewUnitCodes(){return [...cmUnitRefCodes()].sort((a,b)=>a.localeCompare(b));}
@@ -11334,12 +11344,12 @@ function reviewOpenEditor(id,preset){if(!cmCanMutate())return cmDenyMutation();i
 
 /* ---------- Tambah kontak: satu form = satu orang ---------- */
 function reviewOpenContactAdd(preset){
- const modal=document.getElementById('reviewModal'),role0=preset.role||'pmo',unit0=preset.unit||'',row0=unit0?reviewRows.find(x=>String(x.unit).toUpperCase()===String(unit0).toUpperCase()):null;
+ const modal=document.getElementById('reviewModal'),role0=preset.role||'pmo',roles0=Array.isArray(preset.roles)?preset.roles:(role0==='dual'?['pmo','cmo']:[role0]),unit0=preset.unit||'',row0=unit0?reviewRows.find(x=>String(x.unit).toUpperCase()===String(unit0).toUpperCase()):null;
  modal.innerHTML=`<div class="modal-box rv-add-modal"><div class="modal-head"><h2>${uiText('Add PMO / CMO contact','Tambah kontak PMO / CMO')}</h2><button type="button" class="modal-close" id="reviewClose">&times;</button></div>
  <form id="reviewForm" class="modal-body review-form rv-add-form" autocomplete="off">
   <div class="wide" id="rvImport"></div>
   <div class="wide rv-sec">${uiText('Role','Peran')}</div>
-  <div class="wide">${reviewRolePillsHtml('role',role0,REVIEW_ADD_ROLES)}<small class="rv-hint">${uiText('Pick the role before or after importing — the person is placed in the selected role.','Pilih peran sebelum atau sesudah import — data orang otomatis masuk ke peran yang dipilih.')}</small></div>
+  <div class="wide">${reviewRoleChecksHtml('role',roles0)}<small class="rv-hint">${uiText('Tick one or more roles (e.g. PMO + Business Process Owner). A unit may have several PMOs, CMOs and Business Process Owners — a new person is added, not replaced.','Centang satu atau lebih peran (mis. PMO + Pemilik Proses Bisnis). Satu unit boleh punya beberapa PMO, CMO, dan Pemilik Proses Bisnis — orang baru ditambahkan, tidak menggantikan.')}</small></div>
   <div class="wide rv-sec">${uiText('Assignment','Penugasan')}</div>
   <label>${uiText('Unit','Unit')} *${reviewUnitSelectHtml(unit0)}</label>
   <label>${uiText('CMO Pusat PIC','PIC CMO Pusat')} *${reviewPicSelectHtml(row0?row0.pic:'')}</label>
@@ -11353,8 +11363,8 @@ function reviewOpenContactAdd(preset){
  modal.classList.remove('hidden');const form=modal.querySelector('#reviewForm'),close=()=>modal.classList.add('hidden');
  modal.querySelector('#reviewClose').onclick=close;modal.querySelector('#reviewCancel').onclick=close;modal.onclick=e=>{/* Outside clicks keep this popup open. */};
  reviewUnitSelectBind(modal,unit0);
- const roleKey=()=>form.querySelector('input[name=role]:checked')?.value||'pmo',roleObj=()=>REVIEW_ADD_ROLES.find(x=>x.key===roleKey());
- const syncRole=()=>{const r=roleObj();const sec=modal.querySelector('#rvPersonSec');sec.textContent=`${uiText('Data','Data')} ${reviewRoleLabel(r)}`;sec.style.setProperty('--rc',reviewRoleColor(r.label));modal.querySelector('#rvProfChip').style.setProperty('--rc',reviewRoleColor(r.label));};
+ const roleKeys=()=>[...form.querySelectorAll('input[name=role]:checked')].map(x=>x.value),roleObj=()=>{const k=roleKeys(),label=reviewRoleLabelFromKeys(k)||'PMO';return {key:k.includes('pmo')&&k.includes('cmo')?'dual':(k.includes('pmo')?'pmo':'cmo'),label};};
+ const syncRole=()=>{const r=roleObj();const sec=modal.querySelector('#rvPersonSec');sec.textContent=`${uiText('Data','Data')} ${r.label}`;sec.style.setProperty('--rc',reviewRoleColor(r.label));modal.querySelector('#rvProfChip').style.setProperty('--rc',reviewRoleColor(r.label));};
  form.querySelectorAll('input[name=role]').forEach(i=>i.addEventListener('change',syncRole));syncRole();
  // PIC terisi otomatis bila unit sudah punya PIC
  form.unit.addEventListener('change',()=>{const u=reviewUnitValue(new FormData(form));const row=reviewRows.find(x=>String(x.unit).toUpperCase()===u.toUpperCase());if(row&&row.pic&&!form.pic.value){const n=reviewPicName(row);if([...form.pic.options].some(o=>o.value===n))form.pic.value=n;}});
@@ -11371,7 +11381,8 @@ function reviewOpenContactAdd(preset){
    chip.innerHTML=`<div class="rv-preview-head"><span>${uiText('Card preview','Pratinjau kartu')}</span>${useImp?`<em>✓ ${uiText('profile will be saved','profil ikut disimpan')}</em>`:''}</div>${reviewPersonPreviewHtml(ro.key,ro.label,prof,cmFormatPhone(String(form.phone.value||'').trim()))}`;}
  ['nama','phone'].forEach(n=>form[n].addEventListener('input',renderPreview));form.querySelectorAll('input[name=role]').forEach(i=>i.addEventListener('change',renderPreview));
  form.onsubmit=async e=>{e.preventDefault();if(!form.checkValidity()){form.reportValidity();return;}
-  const fd=new FormData(form),unit=reviewUnitValue(fd),pic=String(fd.get('pic')||'').trim(),nama=String(fd.get('nama')||'').trim().replace(/\s+/g,' '),phone=cmFormatPhone(String(fd.get('phone')||'').trim()),note=String(fd.get('note')||'').trim(),rk=roleKey(),ro=roleObj();
+  const fd=new FormData(form),unit=reviewUnitValue(fd),pic=String(fd.get('pic')||'').trim(),nama=String(fd.get('nama')||'').trim().replace(/\s+/g,' '),phone=cmFormatPhone(String(fd.get('phone')||'').trim()),note=String(fd.get('note')||'').trim(),keys=roleKeys(),ro=roleObj();
+  if(!keys.length){toast(uiText('Tick at least one role.','Centang minimal satu peran.'),'error');return;}
   if(!unit){toast(uiText('Choose or type the unit.','Pilih atau ketik unit.'),'error');return;}
   if(!pic||!nama)return;
   let row=reviewRows.find(x=>String(x.unit).toUpperCase()===unit.toUpperCase());const isNew=!row;
@@ -11379,18 +11390,21 @@ function reviewOpenContactAdd(preset){
   row.pic=pic;
   const same=(a,b)=>String(a||'').trim().toLowerCase()===String(b||'').trim().toLowerCase();
   const extras=[...(row.cmoExtra||[])];
-  const addExtra=(roleLabel)=>{extras.push({nama,phone,role:roleLabel,note});};
-  const placeSlot=(slot,roleLabel)=>{const cur=String(row[slot]||'').trim();
-    if(cur&&!same(cur,nama)){const replace=confirm(uiText(`${unit} already has ${roleLabel}: ${cur}.\n\nOK = replace with ${nama}\nCancel = add ${nama} as an additional ${roleLabel}`,`${unit} sudah punya ${roleLabel}: ${cur}.\n\nOK = ganti dengan ${nama}\nBatal = tambahkan ${nama} sebagai ${roleLabel} tambahan`));if(!replace){addExtra(roleLabel);return;}}
-    row[slot]=nama;row[slot+'Phone']=phone;row[slot+'Note']=note;};
-  if(rk==='pmo')placeSlot('pmo','PMO');
-  else if(rk==='cmo')placeSlot('cmo','CMO');
-  else if(rk==='dual'){const busy=['pmo','cmo'].filter(s=>String(row[s]||'').trim()&&!same(row[s],nama));if(busy.length&&!confirm(uiText(`${unit} already has ${busy.map(s=>s.toUpperCase()+': '+row[s]).join(', ')}.\nReplace with ${nama} as PMO & CMO?`,`${unit} sudah punya ${busy.map(s=>s.toUpperCase()+': '+row[s]).join(', ')}.\nGanti dengan ${nama} sebagai PMO & CMO?`)))return;['pmo','cmo'].forEach(s=>{row[s]=nama;row[s+'Phone']=phone;row[s+'Note']=note;});}
-  else{const i=extras.findIndex(x=>/pemilik\s*proses\s*bisnis|probis/i.test(String(x.role||''))&&same(x.nama,nama));if(i>=0)extras[i]={...extras[i],nama,phone:phone||extras[i].phone,note:note||extras[i].note||''};else addExtra('Pemilik Proses Bisnis');}
+  const label=ro.label,free=sl=>!String(row[sl]||'').trim()||same(row[sl],nama);
+  // Orang yang sama sudah tercatat di unit ini → perbarui perannya, bukan dobel kartu.
+  const exI=extras.findIndex(x=>same(x.nama,nama));
+  const putExtra=()=>{if(exI>=0)extras[exI]={...extras[exI],nama,phone:phone||extras[exI].phone||'',role:label,note:note||extras[exI].note||''};else extras.push({nama,phone,role:label,note});};
+  const setSlot=sl=>{const keep=same(row[sl],nama);row[sl]=nama;row[sl+'Phone']=phone||(keep?row[sl+'Phone']:'')||'';row[sl+'Note']=note||(keep?row[sl+'Note']:'')||'';};
+  if(keys.includes('pmo')&&keys.includes('cmo')&&free('pmo')&&free('cmo')){setSlot('pmo');setSlot('cmo');delete row.pmoRole;delete row.cmoRole;if(reviewIsDualLabel(label))delete row.dualRole;else row.dualRole=label;if(exI>=0)extras.splice(exI,1);}
+  else if(keys.includes('pmo')&&!keys.includes('cmo')&&free('pmo')&&!same(row.cmo,nama)){setSlot('pmo');if(label==='PMO')delete row.pmoRole;else row.pmoRole=label;if(exI>=0)extras.splice(exI,1);}
+  else if(keys.includes('cmo')&&!keys.includes('pmo')&&free('cmo')&&!same(row.pmo,nama)){setSlot('cmo');if(label==='CMO')delete row.cmoRole;else row.cmoRole=label;if(exI>=0)extras.splice(exI,1);}
+  else if(same(row.pmo,nama)&&!same(row.cmo,nama)&&keys.includes('pmo')){setSlot('pmo');row.pmoRole=label;}
+  else if(same(row.cmo,nama)&&!same(row.pmo,nama)&&keys.includes('cmo')){setSlot('cmo');row.cmoRole=label;}
+  else putExtra();
   row.cmoExtra=extras;
   reviewRows=isNew?[...reviewRows,row]:reviewRows.map(x=>x.id===row.id?row:x);
   if(imported&&same(imported.nama,nama)){reviewProfileLoad();const key=reviewProfileKey(nama),old=(reviewProfileStore||{})[key]||{};reviewProfileStore={...(reviewProfileStore||{}),[key]:{...old,nama,nip:imported.nip||old.nip||'',jabatan:imported.jabatan||old.jabatan||'',pangkat:imported.pangkat||old.pangkat||'',email:imported.email||old.email||'',foto:imported.foto||old.foto||'',updatedAt:new Date().toISOString()}};try{await reviewProfilePersist();}catch(err){console.warn(err);}}
-  close();reviewUi.selected=reviewPicName(row);await reviewPersist();toast(uiText(`${nama} saved as ${reviewRoleLabel(ro)} of ${unit}.`,`${nama} tersimpan sebagai ${reviewRoleLabel(ro)} ${unit}.`),'success');};
+  close();reviewUi.selected=reviewPicName(row);await reviewPersist();toast(uiText(`${nama} saved as ${ro.label} of ${unit}.`,`${nama} tersimpan sebagai ${ro.label} ${unit}.`),'success');};
 }
 
 /* ---------- Edit kartu unit: unit, PIC, catatan unit, daftar orang ---------- */
@@ -11414,7 +11428,7 @@ function reviewOpenUnitEditor(id){
  modal.querySelector('#reviewClose').onclick=close;modal.querySelector('#reviewCancel').onclick=close;modal.onclick=e=>{/* Outside clicks keep this popup open. */};
  reviewUnitSelectBind(modal,r.unit);
  modal.querySelectorAll('[data-rv-pedit]').forEach(b=>b.onclick=()=>reviewOpenPersonEditor(r.id,b.dataset.rvPedit));
- modal.querySelector('#rvAddPerson').onclick=()=>reviewOpenContactAdd({unit:r.unit,role:!String(r.pmo||'').trim()?'pmo':!String(r.cmo||'').trim()?'cmo':'probis'});
+ modal.querySelector('#rvAddPerson').onclick=()=>reviewOpenContactAdd({unit:r.unit,roles:[!String(r.pmo||'').trim()?'pmo':!String(r.cmo||'').trim()?'cmo':'probis']});
  form.onsubmit=async e=>{e.preventDefault();if(!form.checkValidity()){form.reportValidity();return;}const fd=new FormData(form),unit=reviewUnitValue(fd);if(!unit){toast(uiText('Choose or type the unit.','Pilih atau ketik unit.'),'error');return;}
   const item={...r,unit,pic:String(fd.get('pic')||'').trim(),picPhone:String(fd.get('picPhone')||'').trim(),note:String(fd.get('note')||'').trim(),assignV:2};if(!item.pic)return;
   reviewRows=reviewRows.map(x=>x.id===id?item:x);close();reviewUi.selected=reviewPicName(item);await reviewPersist();toast(uiText('Unit contact saved.','Kontak unit tersimpan.'),'success');};
@@ -13086,6 +13100,11 @@ async function cmUndExtractText(file){
       lines.sort((a,b)=>b.y-a.y);
       pages.push(lines.map(l=>{l.items.sort((a,b)=>a.x-b.x);let out='',endX=null;l.items.forEach(it=>{if(endX!==null){const gap=it.x-endX;if(gap>12)out+='\t';else if(gap>1.5&&!/\s$/.test(out)&&!/^\s/.test(it.s))out+=' ';}out+=it.s;endX=it.x+it.w;});return out.replace(/[  ]+/g,' ').trim();}).filter(Boolean).join('\n'));
     }
+    // Nomor naskah e-Office sering ditempel sebagai anotasi/form field, bukan teks halaman.
+    const annTxt=[];
+    for(let i=1;i<=Math.min(pdf.numPages,2);i++){try{const pg=await pdf.getPage(i),an=await pg.getAnnotations();an.forEach(a=>{[a.fieldValue,a.contentsObj?.str,a.contents,a.richText?.str,Array.isArray(a.textContent)?a.textContent.join(' '):a.textContent].forEach(v=>{if(typeof v==='string'&&v.trim())annTxt.push(v.trim());});});}catch(e){}}
+    try{const md=await pdf.getMetadata();[md?.info?.Subject,md?.info?.Title,md?.info?.Keywords].forEach(v=>{if(typeof v==='string'&&v.trim())annTxt.push(v.trim());});}catch(e){}
+    if(annTxt.length)pages.push('\u2063'+annTxt.join('\n'));
     return pages.join('\n');
   }
   if(ext==='docx'){
@@ -13131,7 +13150,19 @@ function cmUndGuessUnit(lines,fromValue){
   return null;
 }
 
-function cmUndParse(text,map){
+/* Nomor naskah dinas Kemenkeu, mis. UND-352/SK.5/2026, ND-609/PB.7/2025, S-12/MK.1/2026 */
+const CM_UND_NO_RE=/\b[A-Z]{1,8}(?:-[A-Z]{1,6})?-\d{1,6}(?:\/[A-Za-z0-9.\-]{1,20}){1,5}\/(?:19|20)\d{2}\b/g;
+function cmUndIsPlaceholderNo(v){v=String(v||'').trim();return !v||v==='-'||/\[\s*@|\{\{|\$\{|«|»|^@\w+|^\[.*\]$|^[._\-\s\/]{3,}$|nomornd|nomor\s*nd|\bxxx+\b/i.test(v);}
+function cmUndFindNo(lines,lineIdx,fileName){
+  const all=t=>[...String(t||'').matchAll(CM_UND_NO_RE)].map(m=>m[0]);
+  if(lineIdx>=0){for(let k=lineIdx;k<=Math.min(lineIdx+1,lines.length-1);k++){const h=all(lines[k]);if(h.length)return {value:h[0],src:'Nomor'};}}
+  const ann=lines.findIndex(l=>l.startsWith('\u2063'));
+  if(ann>=0){const h=all(lines.slice(ann).join(' '));if(h.length)return {value:h[0],src:uiText('PDF stamp','Stempel/anotasi PDF')};}
+  const head=all(lines.slice(0,20).join(' '));if(head.length)return {value:head[0],src:uiText('letter header','kepala surat')};
+  const fn=all(String(fileName||'').replace(/_/g,'/'));if(fn.length)return {value:fn[0],src:uiText('file name','nama file')};
+  return null;
+}
+function cmUndParse(text,map,fileName){
   const raw=String(text||'').replace(/\r/g,'').replace(/ /g,' ');
   const lines=raw.split('\n').map(l=>l.replace(/[ \t]+$/,'').replace(/^\s+/,'')).filter((l,i,a)=>l||(a[i-1]||''));
   const allLabels=[...new Set([...map.flatMap(f=>f.labels),'Nomor','Sifat','Lampiran','Hal','Perihal','Yth','Dari','Tanggal','Tembusan','Kepada','Agenda','Acara','Narahubung','Contact person','Keterangan','Catatan'])];
@@ -13188,7 +13219,9 @@ function cmUndParse(text,map){
   const yth=find(F('pesertaTarget').labels,12);
   if(yth){const items=yth.value.map(x=>x.replace(/^(?:\d{1,2}[.)]|[-•])\s*/,'').replace(/^(?:yth\.?|kepada)\s*/i,'').trim()).filter(x=>x&&!/^(di\s*tempat|di-?\s*$|di\s*jakarta)$/i.test(x));if(items.length)res.pesertaTarget={value:items.join('; '),src:yth.src};}
   const no=find(F('undangan').labels,1);
-  if(no){const v=no.value[0].split('\t')[0].replace(/\s{2,}.*/,'').trim();if(v&&v!=='-')res.undangan={value:v,src:no.src};}
+  {let v=no?no.value[0].split('\t')[0].replace(/\s{2,}.*/,'').trim():'';
+   if(cmUndIsPlaceholderNo(v)||!new RegExp(CM_UND_NO_RE.source).test(v)){const hit=cmUndFindNo(lines,no?no.line:-1,fileName);if(hit)res.undangan=hit;else if(v&&!cmUndIsPlaceholderNo(v))res.undangan={value:v,src:no.src};}
+   else res.undangan={value:v.match(new RegExp(CM_UND_NO_RE.source))[0],src:no.src};}
   return res;
 }
 
@@ -13205,7 +13238,7 @@ function cmUndOpenImport(){
   inp.click();
 }
 function cmUndReview(file,text){
-  let map=cmUndMapping(),res=cmUndParse(text,map),showMap=false,showText=false;
+  let map=cmUndMapping(),res=cmUndParse(text,map,file?.name),showMap=false,showText=false;
   const ov=cmPicOverlay('cmUndReview');ov.classList.add('und-overlay');
   const units=Array.from(new Set((state.unitList||[]).map(u=>u.name).filter(Boolean)));
   const canAttach=file.size<=600*1024;
@@ -13246,8 +13279,8 @@ function cmUndReview(file,text){
     // editing a value of an unchecked row ticks it
     ov.querySelectorAll('.und-row [data-v]').forEach(el=>el.addEventListener('input',()=>{const c=el.closest('.und-row')?.querySelector('[data-use]');if(c&&!c.checked&&String(el.value).trim()){c.checked=true;c.closest('.und-row').classList.remove('off');cnt();}}));
     ov.querySelector('[data-mapbox]').ontoggle=e=>{showMap=e.target.open;};ov.querySelector('[data-textbox]').ontoggle=e=>{showText=e.target.open;};
-    ov.querySelector('[data-map-save]').onclick=async()=>{map=map.map(f=>{const v=ov.querySelector(`[data-map="${f.key}"]`).value.split(',').map(x=>x.trim()).filter(Boolean);return {...f,labels:v.length?v:f.labels};});await cmUndMappingSave(map);res=cmUndParse(text,map);showMap=true;render();toast(uiText('Mapping saved','Pemetaan disimpan'),'success');};
-    ov.querySelector('[data-map-reset]').onclick=async()=>{map=CM_UND_FIELDS.map(f=>({...f}));await cmUndMappingSave(map);res=cmUndParse(text,map);showMap=true;render();};
+    ov.querySelector('[data-map-save]').onclick=async()=>{map=map.map(f=>{const v=ov.querySelector(`[data-map="${f.key}"]`).value.split(',').map(x=>x.trim()).filter(Boolean);return {...f,labels:v.length?v:f.labels};});await cmUndMappingSave(map);res=cmUndParse(text,map,file?.name);showMap=true;render();toast(uiText('Mapping saved','Pemetaan disimpan'),'success');};
+    ov.querySelector('[data-map-reset]').onclick=async()=>{map=CM_UND_FIELDS.map(f=>({...f}));await cmUndMappingSave(map);res=cmUndParse(text,map,file?.name);showMap=true;render();};
     ov.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>ov.remove());
     const modeSel=ov.querySelector('[data-mode-select]');
     const syncMode=()=>{const m=modeSel.value;[['link',m==='offline'],['tempat',m==='online']].forEach(([k,off])=>{const row=ov.querySelector(`[data-row="${k}"]`);if(!row)return;row.classList.toggle('mode-off',off);const c=row.querySelector('[data-use]');if(off&&c.checked){c.checked=false;row.classList.add('off');}else if(!off&&!c.checked&&String(row.querySelector('[data-v]')?.value||'').trim()){c.checked=true;row.classList.remove('off');}});cnt();};
@@ -13425,7 +13458,7 @@ function cmAfLetterSlot(field,key,title){
   const nomor=field.querySelector(`[name="${key}"]`),urlInput=field.querySelector(`[name="${key}Url"]`),urlRow=urlInput?.parentElement,host=field.querySelector(`[data-file-editor="${key}Files"]`);
   if(urlRow&&urlRow!==field)urlRow.classList.add('af-legacy-url');
   if(host)host.dataset.versioned='1';
-  const headEl=cmAfEl(`<div class="af-slot-head"><span class="af-slot-ic ${key}">${CM_AF_ICONS.doc}</span><div class="af-slot-tx"><b>${title} <span class="af-cnt" data-af-cnt></span></b><small data-af-sum>${U('None yet','Belum ada')}</small></div><div class="af-slot-acts"><button type="button" class="af-ib" data-af-act="link">🔗 Link</button><button type="button" class="af-ib" data-af-act="file">⤒ File</button><button type="button" class="af-ib" data-af-act="toggle">▾ ${U('History','Riwayat')}</button></div></div>`);
+  const headEl=cmAfEl(`<div class="af-slot-head"><span class="af-slot-ic ${key}">${CM_AF_ICONS.doc}</span><div class="af-slot-tx"><b>${title} <span class="af-cnt" data-af-cnt></span></b><small data-af-sum>${U('None yet','Belum ada')}</small></div><div class="af-slot-acts"><label class="af-ib af-na" title="${U('Mark as not available / not required — counts as complete','Tandai tidak ada / tidak diperlukan — dihitung lengkap')}"><input type="checkbox" data-af-na> ${U('None','Tidak ada')}</label><button type="button" class="af-ib" data-af-act="link">🔗 Link</button><button type="button" class="af-ib" data-af-act="file">⤒ File</button><button type="button" class="af-ib" data-af-act="toggle">▾ ${U('History','Riwayat')}</button></div></div>`);
   const bodyEl=cmAfEl(`<div class="af-slot-body hidden"><div class="af-slot-rows" data-af-rows></div><div class="af-addbar"><div><label>${U('Letter number (latest)','Nomor surat (terbaru)')}</label><div data-af-nomor></div></div><div><label>${U('Note / version','Keterangan / versi')}</label><input type="text" data-af-ket maxlength="120" placeholder="${U('e.g. Revision 1 – time change','Mis. Revisi 1 – perubahan jam')}"></div><div class="af-addlink"><label>${U('Add link','Tambah link')}</label><div class="af-inl"><input type="url" data-af-url placeholder="https://…"><button type="button" class="btn btn-outline btn-sm" data-af-addlink>＋ Link</button></div></div><div><label>&nbsp;</label><button type="button" class="btn btn-outline btn-sm" data-af-addfile>⤒ ${U('Upload file','Unggah file')}</button></div></div></div>`);
   field.insertBefore(headEl,field.firstChild);headEl.after(bodyEl);
   if(nomor){nomor.placeholder=U('e.g. ND-142/PB.6/2026','Contoh: ND-142/PB.6/2026');bodyEl.querySelector('[data-af-nomor]').appendChild(nomor);}
@@ -13435,6 +13468,13 @@ function cmAfLetterSlot(field,key,title){
   headEl.querySelector('[data-af-act="toggle"]').onclick=()=>open(bodyEl.classList.contains('hidden'));
   headEl.querySelector('[data-af-act="link"]').onclick=()=>{open(true);setTimeout(()=>bodyEl.querySelector('[data-af-url]')?.focus(),30);};
   headEl.querySelector('[data-af-act="file"]').onclick=()=>{open(true);host?.querySelector('[data-file-input]')?.click();};
+  // "Tidak ada": surat tidak ada / tidak diperlukan → nomor diisi "-" sehingga kelengkapan bisa 100%.
+  const na=headEl.querySelector('[data-af-na]');let naPrev='';
+  const naSync=()=>{if(!na||!nomor)return;const on=/^[-–—]$/.test(String(nomor.value||'').trim());na.checked=on;na.parentElement.classList.toggle('on',on);};
+  if(na&&nomor){na.onchange=()=>{if(na.checked){const cur=String(nomor.value||'').trim();if(cur&&!/^[-–—]$/.test(cur))naPrev=cur;nomor.value='-';}else{nomor.value=naPrev||'';}
+    nomor.dispatchEvent(new Event('input',{bubbles:true}));nomor.dispatchEvent(new Event('change',{bubbles:true}));naSync();};
+   nomor.addEventListener('input',naSync);setTimeout(naSync,0);}
+  else if(na)na.parentElement.remove();
   return field;
 }
 function cmAfFileType(x){if(x.url&&!x.refId)return ['LINK','#2563EB'];const n=String(x.name||'').toLowerCase(),m=String(x.mime||'');if(/\.pdf$/.test(n)||m.includes('pdf'))return ['PDF','#C2410C'];if(/\.(docx?|odt)$/.test(n)||m.includes('word'))return ['DOC','#1E40AF'];if(/\.(xlsx?|csv)$/.test(n)||m.includes('sheet'))return ['XLS','#15803D'];if(/\.(pptx?)$/.test(n)||m.includes('presentation'))return ['PPT','#B45309'];if(m.startsWith('image/'))return ['IMG','#7C3AED'];return ['FILE','#5D6785'];}
@@ -13460,7 +13500,7 @@ function cmAfVersionedEditor(host,field,hidden,ownerId){
     host.querySelector('[data-file-input]').onchange=async e=>{for(const file of [...e.target.files]){try{const up=await uploadGenericActivityFile(file,ownerId);rows.push({...up,...meta()});sync();draw();hidden.dispatchEvent(new Event('change',{bubbles:true}));toast(U('File added.','File ditambahkan.'),'success');}catch(err){toast(err.message==='File too large'?U('File exceeds 600 KB. Use a SharePoint/Drive link for larger files.','File melebihi 600 KB. Gunakan link SharePoint/Drive untuk file yang lebih besar.'):U('File upload failed.','Upload file gagal.'),'error');}}const k=slot?.querySelector('[data-af-ket]');if(k)k.value='';};
     // ringkasan di header slot
     if(slot){const cnt=L.length,top=L[0]?.x;slot.querySelector('[data-af-cnt]').textContent=cnt?(cnt>1?`${cnt} ${U('versions','versi')}`:'1'):'';
-      slot.querySelector('[data-af-sum]').innerHTML=top?`<span class="vtag cur">${U('LATEST','TERBARU')}</span> ${escapeHtml([top.nomor||nomorInput?.value||'',top.ket].filter(Boolean).join(' · ')||top.name||'')} <span class="af-fchip">${cmAfFileType(top)[0]}</span>`:(nomorInput?.value?escapeHtml(nomorInput.value):U('None yet','Belum ada'));
+      slot.querySelector('[data-af-sum]').innerHTML=top?`<span class="vtag cur">${U('LATEST','TERBARU')}</span> ${escapeHtml([top.nomor||nomorInput?.value||'',top.ket].filter(Boolean).join(' · ')||top.name||'')} <span class="af-fchip">${cmAfFileType(top)[0]}</span>`:(/^[-–—]$/.test(String(nomorInput?.value||'').trim())?`<span class="vtag na">${U('NOT REQUIRED','TIDAK ADA')}</span> ${U('Marked as none / not required','Ditandai tidak ada / tidak diperlukan')}`:nomorInput?.value?escapeHtml(nomorInput.value):U('None yet','Belum ada'));
       slot.classList.toggle('empty',!cnt&&!nomorInput?.value);}
   };
   if(slot){
@@ -19301,6 +19341,7 @@ console.log('%cCM Team Agenda Dashboard%c\n© 2026 Atitya Pritasari. All rights 
 .rv-role-pills input{position:absolute;opacity:0;width:1px!important;height:1px!important;padding:0!important;border:0!important}
 .rv-role-pills span{padding:6px 14px;border-radius:999px;border:1.5px solid var(--rc);color:var(--rc);font-size:12.5px;font-weight:700;background:#fff;transition:background .12s,color .12s}
 .rv-role-pills input:checked+span{background:var(--rc);color:#fff}
+.rv-role-multi input:checked+span::before{content:'✓ ';font-weight:800}
 .rv-role-pills input:focus-visible+span{outline:2px solid var(--gold-400);outline-offset:2px}
 .rv-hint{display:block;margin-top:5px;font-size:11px;color:var(--ink-400);font-weight:400;text-transform:none;letter-spacing:0}
 .rv-lbl-sub{font-weight:400;color:var(--ink-400);text-transform:none;letter-spacing:0}
