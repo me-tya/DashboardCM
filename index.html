@@ -4295,21 +4295,31 @@ function cmDenyReference(){
   if(typeof toast==='function')toast(uiText('Only Superadmin can change reference/master data.','Hanya Superadmin yang dapat mengubah data referensi/master.'),'info');
   return false;
 }
+// Daftar CMO Pusat manual diambil dari Firestore SETELAH login. Penanda "sudah dimuat"
+// disimpan per email, sehingga pemanggilan sebelum login (saat halaman dibuka) tidak
+// mengunci daftar dalam keadaan kosong, dan ganti akun memicu pemuatan ulang.
+let cmRoleOverridesLoadedFor='';
 async function cmLoadRoleOverrides(){
-  if(cmRoleOverridesLoaded)return;
-  cmRoleOverridesLoaded=true;
-  let raw='';
-  try{raw=localStorage.getItem(CM_ROLE_ADMIN_OVERRIDES_KEY)||'';}catch(e){}
-  if(raw){try{const x=JSON.parse(raw);if(Array.isArray(x))cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);}catch(e){}}
-  if(isLoggedIn()){
-    try{
-      const remote=await firestoreGet(CM_ROLE_ADMIN_OVERRIDES_KEY);
-      if(remote){
-        const x=JSON.parse(remote);
-        if(Array.isArray(x)){cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}}
-      }
-    }catch(e){console.warn('Role registry load failed',e);}
+  if(!cmRoleOverridesLoaded){
+    cmRoleOverridesLoaded=true;
+    let raw='';
+    try{raw=localStorage.getItem(CM_ROLE_ADMIN_OVERRIDES_KEY)||'';}catch(e){}
+    if(raw){try{const x=JSON.parse(raw);if(Array.isArray(x))cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);}catch(e){}}
   }
+  if(!isLoggedIn())return;
+  const email=cmCurrentAuthEmail();
+  if(!email||cmRoleOverridesLoadedFor===email)return;
+  for(let i=0;i<40&&!window.fbDb;i++)await new Promise(r=>setTimeout(r,250));
+  try{
+    const ref=window.fbDoc(window.fbDb,'dashboard',CM_ROLE_ADMIN_OVERRIDES_KEY);
+    const snap=await window.fbGetDoc(ref);
+    const remote=(snap&&snap.exists())?snap.data().value:null;
+    if(remote){
+      const x=JSON.parse(remote);
+      if(Array.isArray(x)){cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}}
+    }
+    cmRoleOverridesLoadedFor=email; // tandai sukses hanya bila pembacaan berhasil, agar kegagalan sementara dicoba lagi
+  }catch(e){console.warn('Role registry load failed',e?.code||e);}
 }
 function cmApplyRoleUi(role){
   document.documentElement.dataset.role=role;
