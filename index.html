@@ -8008,7 +8008,7 @@ function cmRptSingleContext(a,flags,lang,sources){
 }
 
 /* ---------- HTML renderer (preview + print to PDF) ---------- */
-function cmRptInvNo(a,lang){const L=(i,e)=>lang==='en'?e:i,info=typeof cmInvitationInfo==='function'?cmInvitationInfo(a?.undangan):null;if(!info)return '';if(info.kind==='official')return info.text;if(info.kind==='informal')return L('Informal (tanpa undangan)','Informal (no invitation)');return L(`Belum terbit (${info.text})`,`Not issued yet (${info.text})`);}
+function cmRptInvNo(a,lang){const L=(i,e)=>lang==='en'?e:i,info=typeof cmInvitationInfo==='function'?cmInvitationInfo(typeof cmInvitationNo==='function'?cmInvitationNo(a):a?.undangan):null;if(!info)return '';if(info.kind==='official')return info.text;if(info.kind==='informal')return L('Informal (tanpa undangan)','Informal (no invitation)');return L(`Belum terbit (${info.text})`,`Not issued yet (${info.text})`);}
 function cmRptActCell(a,lang){const n=cmRptInvNo(a,lang);return cmReportSafe(a.namaKegiatan)+(n?`\n${lang==='en'?'Invitation':'Undangan'}: ${n}`:'');}
 function cmRptMd(s){return escapeHtml(String(s??'')).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');}
 function cmRptHtml(model){
@@ -8997,10 +8997,19 @@ function cmInvitationInfo(raw){
   if(m)return {kind:'official',text:`${m[1].toUpperCase()}/${m[2].toUpperCase()}/${m[3]}`,full:no};
   return {kind:'pending',text:no};
 }
-function cmInvitationSources(a){const out=[];const u=String(a?.undanganUrl??'').trim();if(/^https?:\/\//i.test(u))out.push({url:u,name:fileNameFromUrl(u)||'Undangan'});try{parseActivityFiles(a?.undanganFiles).forEach(f=>{if(f.url||f.refId)out.push(f);});}catch(e){}const t=String(a?.undangan??'').trim();if(!out.length&&/^https?:\/\//i.test(t))out.push({url:t,name:fileNameFromUrl(t)||'Undangan'});return out;}
+// Nomor undangan yang ditampilkan: kolom "Nomor surat (terbaru)"; bila kosong, ambil nomor
+// dari versi terbaru di riwayat yang memiliki nomor (versi tanpa nomor tidak menghapus nomor sebelumnya).
+function cmInvitationNo(a){
+  const main=String(a?.undangan??'').trim();if(main)return main;
+  let rows=[];try{rows=parseActivityFiles(a?.undanganFiles);}catch(e){}
+  for(let i=rows.length-1;i>=0;i--){const n=String(rows[i]?.nomor||'').trim();if(n)return n;}
+  return '';
+}
+function cmInvitationSources(a){const out=[];const u=String(a?.undanganUrl??'').trim();if(/^https?:\/\//i.test(u))out.push({url:u,name:fileNameFromUrl(u)||'Undangan'});try{parseActivityFiles(a?.undanganFiles).forEach(f=>{if(f.url||f.refId)out.push(f);});}catch(e){}const t=String(a?.undangan??'').trim();if(!out.length&&/^https?:\/\//i.test(t))out.push({url:t,name:fileNameFromUrl(t)||'Undangan'});return out.reverse();}
 function cmInvitationBadge(a){
-  const info=cmInvitationInfo(a?.undangan);if(!info)return '';
   const src=cmInvitationSources(a),has=src.length>0;
+  let info=cmInvitationInfo(cmInvitationNo(a));
+  if(!info){if(!has||/^[-–—]+$/.test(String(a?.undangan??'').trim()))return '';info={kind:'official',text:uiText('Invitation','Undangan')};}
   const icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
   const dl='<svg class="inv-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
   const cls=`inv-badge${info.kind==='official'?'':' '+info.kind}${has?' has-file':''}`;
