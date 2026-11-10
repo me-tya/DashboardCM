@@ -5670,6 +5670,7 @@ function cmOpenAccessManager(tab){
       <button type="button" data-ap-tab="menus" role="tab">🧭 Pengaturan Menu</button>
       <button type="button" data-ap-tab="refs" role="tab">📚 Referensi</button>
       <button type="button" data-ap-tab="docnum" role="tab">🔢 Standar Penomoran</button>
+      <button type="button" data-ap-tab="migration" role="tab">⇩ Migrasi Aktivitas</button>
     </div>
     <div class="cm-ap-body" id="cmApBody"></div>
   </div>`;
@@ -5769,6 +5770,7 @@ async function cmRenderAccessPanel(){
   if(cmAL.tab==='menus')return cmRenderApMenus(body);
   if(cmAL.tab==='refs')return cmRenderApRefs(body);
   if(cmAL.tab==='docnum')return cmRenderApDocNum(body);
+  if(cmAL.tab==='migration')return cmRenderApMigration(body);
   if(cmAL.tab==='users')return cmRenderApUsers(body,team);
   // log & stats perlu data
   const r=cmALRange(),prev=cmALPrevRange(r);
@@ -20327,3 +20329,5 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 </script>
 </body>
 </html>
+
+<script src="cm-mt-migration.js?v=20261110-01"></script>
