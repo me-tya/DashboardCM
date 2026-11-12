@@ -13273,7 +13273,9 @@ function cmUndParse(text,map,fileName){
   if(times?.start)res.waktu={value:times,src:timeSrc};
   const tp=find(F('tempat').labels,3);
   const links=cmUndLinks(raw),lk=find(F('link').labels,2);
-  let link='';if(lk){link=cmUndLinks(lk.value.join(' '))[0]||'';}if(!link)link=links.find(u=>/zoom|teams|meet\.google|webex/i.test(u))||links[0]||'';
+  /* Tautan rapat tanpa label hanya diambil bila berupa platform rapat (Zoom/Teams/Meet/Webex/shortlink). URL lain di surat
+     (mis. footer TTE/verifikasi satu.kemenkeu.go.id) bukan tautan rapat dan tidak boleh membuat metode jadi Hybrid/Online. */
+  let link='';if(lk){link=cmUndLinks(lk.value.join(' '))[0]||'';}if(!link)link=links.find(u=>/zoom\.us|zoom\.com|teams\.microsoft|teams\.live|meet\.google|webex|meet\.jit\.si|s\.id\/|bit\.ly\/|tinyurl/i.test(u)&&!/kemenkeu\.go\.id\/(?:verif|tte|ds|bsre)|satu\.kemenkeu\.go\.id/i.test(u))||'';
   let tpx=tp;if(!tpx){const mm=/\b(?:bertempat\s+di|tempat\s+di|di\s+ruang)\s+([^.\n]{3,120})/i.exec(raw.replace(/\n/g,' '));if(mm)tpx={value:[(/^di\s+ruang/i.test(mm[0])?'Ruang ':'')+mm[1].trim()],src:uiText('letter body','isi surat')};}
   const tp2=tpx;if(tp2){const tp=tp2;let loc=tp.value.join(' ').replace(/\s+/g,' ').trim();cmUndLinks(loc).forEach(u=>{loc=loc.replace(u,'').trim();});loc=loc.replace(/[(\[]\s*[)\]]/g,'').replace(/[,;:\-–]+\s*$/,'').trim();
     // Rule: "Tempat" in the letter always maps to Lokasi Rapat (only an embedded URL is moved to Link Rapat)
