@@ -406,6 +406,8 @@ select.filter-select:focus, input.filter-date:focus{outline:2px solid var(--navy
 html[data-role="viewer"] .cm-editor-only,html[data-role="viewer"] #btnAdd,html[data-role="viewer"] #btnImport,html[data-role="viewer"] #btnBackupAll,html[data-role="viewer"] #btnRestoreAll,html[data-role="viewer"] #btnReminderAdd,html[data-role="viewer"] #btnReminderCenter,html[data-role="viewer"] .cm-superadmin-only{display:none!important}
 .cm-role-badge.viewer{background:#E8F4FB!important;color:#0E5A7E!important;border-color:#B9DCEE!important}
 .cm-ap-role.v{background:#E8F4FB;color:#0E5A7E}
+.cm-ap-role.pmo{background:#EEE9FB;color:#5B3FB0}
+.cm-role-badge.admin.pmo{background:#EEE9FB!important;color:#5B3FB0!important;border-color:#D3C7F2!important}
 .cm-ap-add{flex-wrap:wrap}
 html[data-role="guest_login"] .cm-editor-only,
 html[data-role="public_guest"] .cm-editor-only{display:none!important}
@@ -4261,6 +4263,8 @@ const CM_ROLE_ADMIN_OVERRIDES_KEY='cm_role_admin_overrides_v1';
 // membaca notula & referensi, serta membuat laporan/ekspor — tetapi tidak dapat mengubah data.
 const CM_ROLE_VIEWER='viewer';
 const CM_ROLE_VIEWER_KEY='cm_role_viewer_v1';
+// PMO Pusat: hak akses identik dengan CMO Pusat (role internal = admin); yang berbeda hanya label.
+const CM_ROLE_PMO_KEY='cm_role_pmo_v1';
 const CM_SUPERADMIN_EMAILS=new Set([
   'atitya@kemenkeu.go.id',
   'atitya.pritasari@gmail.com'
@@ -4274,6 +4278,10 @@ function cmNormViewerList(x){
   return out;
 }
 function cmViewerEmails(){return cmRoleViewers.map(v=>v.email);}
+let cmRolePmo=[]; // [{email,note}]
+function cmPmoEmails(){return cmRolePmo.map(v=>v.email);}
+// Label PMO hanya bila email ada di daftar PMO dan bukan anggota Tim CM / CMO tambahan manual.
+function cmIsPmoUser(email){email=cmNormEmail(email||cmCurrentAuthEmail());return !!email&&cmPmoEmails().includes(email)&&!cmRoleAdminOverrides.map(cmNormEmail).includes(email)&&!cmTeamAdminEmails().has(email);}
 let cmRoleOverridesLoaded=false;
 
 function cmNormEmail(v){return String(v||'').trim().toLowerCase();}
@@ -4294,7 +4302,7 @@ function cmResolveAccessRole(){
   // Atitya is the protected bootstrap Superadmin. Two common official-address forms are accepted.
   // As a fallback, the exact display name is accepted only for a Kemenkeu account.
   if(CM_SUPERADMIN_EMAILS.has(email)||(name==='atitya pritasari'&&/@kemenkeu\.go\.id$/.test(email)))return CM_ROLE_SUPERADMIN;
-  if(cmRoleAdminOverrides.map(cmNormEmail).includes(email)||cmTeamAdminEmails().has(email))return CM_ROLE_ADMIN;
+  if(cmRoleAdminOverrides.map(cmNormEmail).includes(email)||cmTeamAdminEmails().has(email)||cmPmoEmails().includes(email))return CM_ROLE_ADMIN;
   if(cmViewerEmails().includes(email))return CM_ROLE_VIEWER;
   return CM_ROLE_GUEST_LOGIN;
 }
@@ -4304,7 +4312,7 @@ function cmCanManageReferences(){return cmGetAccessRole()===CM_ROLE_SUPERADMIN;}
 // Baca data internal (notula, referensi) + buat laporan/ekspor: Superadmin, CMO Pusat, Pembaca.
 function cmCanReport(){const r=cmGetAccessRole();return r===CM_ROLE_SUPERADMIN||r===CM_ROLE_ADMIN||r===CM_ROLE_VIEWER;}
 function cmRoleLabel(role){
-  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'CMO PUSAT':role===CM_ROLE_VIEWER?uiText('VIEWER · READ & REPORT','PEMBACA · LIHAT & LAPORAN'):uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
+  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?(cmIsPmoUser()?'PMO PUSAT':'CMO PUSAT'):role===CM_ROLE_VIEWER?uiText('VIEWER · READ & REPORT','PEMBACA · LIHAT & LAPORAN'):uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
 }
 const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','priority','contact','resource'];
 var cmMenuCfg=(()=>{try{return JSON.parse(localStorage.getItem('cm_menu_cfg_v1')||'{}')||{};}catch(e){return {};}})();
@@ -4345,6 +4353,8 @@ async function cmLoadRoleOverrides(){
     if(raw){try{const x=JSON.parse(raw);if(Array.isArray(x))cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);}catch(e){}}
     let rawV='';try{rawV=localStorage.getItem(CM_ROLE_VIEWER_KEY)||'';}catch(e){}
     if(rawV){try{cmRoleViewers=cmNormViewerList(JSON.parse(rawV));}catch(e){}}
+    let rawP='';try{rawP=localStorage.getItem(CM_ROLE_PMO_KEY)||'';}catch(e){}
+    if(rawP){try{cmRolePmo=cmNormViewerList(JSON.parse(rawP));}catch(e){}}
   }
   if(!isLoggedIn())return;
   const email=cmCurrentAuthEmail();
@@ -4364,6 +4374,12 @@ async function cmLoadRoleOverrides(){
       cmRoleViewers=rv?cmNormViewerList(JSON.parse(rv)):[];
       try{localStorage.setItem(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers));}catch(e){}
     }catch(e){console.warn('Viewer registry load failed',e?.code||e);}
+    try{
+      const snapP=await window.fbGetDoc(window.fbDoc(window.fbDb,'dashboard',CM_ROLE_PMO_KEY));
+      const rp=(snapP&&snapP.exists())?snapP.data().value:null;
+      cmRolePmo=rp?cmNormViewerList(JSON.parse(rp)):[];
+      try{localStorage.setItem(CM_ROLE_PMO_KEY,JSON.stringify(cmRolePmo));}catch(e){}
+    }catch(e){console.warn('PMO registry load failed',e?.code||e);}
     cmRoleOverridesLoadedFor=email; // tandai sukses hanya bila pembacaan berhasil, agar kegagalan sementara dicoba lagi
   }catch(e){console.warn('Role registry load failed',e?.code||e);}
 }
@@ -4372,7 +4388,7 @@ function cmApplyRoleUi(role){
   document.getElementById('cmEditDashboardTitle')?.classList.toggle('hidden',role!==CM_ROLE_SUPERADMIN);
   document.documentElement.dataset.access=role;
   const badge=document.getElementById('cmRoleBadge');
-  if(badge){badge.textContent=cmRoleLabel(role);badge.className=`cm-role-badge ${role}`;}
+  if(badge){badge.textContent=cmRoleLabel(role);badge.className=`cm-role-badge ${role}${role===CM_ROLE_ADMIN&&cmIsPmoUser()?' pmo':''}`;}
   const accessBtn=document.getElementById('btnAccessAdmin');
   if(accessBtn)accessBtn.classList.toggle('hidden',role!==CM_ROLE_SUPERADMIN);
   if(typeof cmSRRoleChanged==='function')setTimeout(cmSRRoleChanged,0);
@@ -5590,7 +5606,7 @@ function cmAccessSessionId(){
 }
 function cmAccessRoleKey(){
   const r=cmGetAccessRole();
-  return r===CM_ROLE_SUPERADMIN?'superadmin':r===CM_ROLE_ADMIN?'cmo':r===CM_ROLE_VIEWER?'pembaca':'tamu';
+  return r===CM_ROLE_SUPERADMIN?'superadmin':r===CM_ROLE_ADMIN?(cmIsPmoUser()?'pmo':'cmo'):r===CM_ROLE_VIEWER?'pembaca':'tamu';
 }
 async function cmAccessWrite(kind,menu){
   const u=window.fbAuth?.currentUser;
@@ -5603,6 +5619,7 @@ async function cmAccessWrite(kind,menu){
   try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),payload);return true;}
   catch(e){
     // Bila aturan Firestore lama hanya menerima tamu/cmo/superadmin, catat Pembaca sebagai tamu.
+    if(payload.role==='pmo'){try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),{...payload,role:'cmo'});return true;}catch(_){}}
     if(payload.role==='pembaca'){try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),{...payload,role:'tamu'});return true;}catch(_){}}
     if(!cmAccessWarned){cmAccessWarned=true;console.warn('Access log not written (check Firestore rules for cmAccessLog).',e?.code||e);}return false;}
 }
@@ -5667,7 +5684,7 @@ function cmALSessions(events){
 }
 function cmALInRange(s,r){const d=dayjs(s.start).format('YYYY-MM-DD');return d>=r.from&&d<=r.to;}
 function cmALUnitLabel(s,long){if(s.role!=='tamu'&&!s.unit)return 'Tim CMO Pusat';if(s.unit==='EKSTERNAL')return s.instansi?`Eksternal · ${s.instansi}`:'Eksternal';const u=cmUnitByCode(s.unit);return u?(long?u.name:u.short):(s.unitName||s.unit||'-');}
-function cmALRoleLabel(r){return r==='superadmin'?'Superadmin':r==='cmo'?'CMO Pusat':r==='pembaca'?'Pembaca':'Tamu';}
+function cmALRoleLabel(r){return r==='superadmin'?'Superadmin':r==='cmo'?'CMO Pusat':r==='pmo'?'PMO Pusat':r==='pembaca'?'Pembaca':'Tamu';}
 function cmALFiltered(sessions,r,guestOnly){
   return sessions.filter(s=>cmALInRange(s,r)&&(!guestOnly||s.role==='tamu')&&(!cmAL.unit||s.unit===cmAL.unit)&&(!cmAL.menu||s.menuCodes.includes(cmAL.menu)));
 }
@@ -5817,7 +5834,7 @@ function cmAdminRows(){
 async function cmRenderAccessPanel(){
   const host=document.getElementById('cmAccessPanel');if(!host)return;
   host.querySelectorAll('[data-ap-tab]').forEach(b=>{const on=b.dataset.apTab===cmAL.tab;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
-  const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRoleViewers.length);
+  const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRolePmo.length+cmRoleViewers.length);
   const body=host.querySelector('#cmApBody');
   cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
   if(cmAL.tab==='gate')return cmRenderApGate(body);
@@ -5854,6 +5871,10 @@ function cmRenderApUsers(body,team){
       <div class="cm-ap-add"><input type="email" id="cmApNewAdmin" placeholder="email@kemenkeu.go.id" aria-label="Email Admin tambahan"><button class="btn btn-gold btn-sm" id="cmApAddAdmin">＋ Tambah</button></div>
       <table class="cm-ap-table"><thead><tr><th>Email</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApExtraRows"></tbody></table>
     </div>
+    <div class="cm-ap-sec"><h3><span class="cm-ap-role pmo">PMO PUSAT</span> Akses sama persis dengan CMO Pusat — hanya label perannya PMO Pusat</h3>
+      <div class="cm-ap-add"><input type="email" id="cmApNewPmo" placeholder="email@kemenkeu.go.id" aria-label="Email PMO Pusat"><input type="text" id="cmApNewPmoNote" maxlength="80" placeholder="Nama / keterangan (opsional)" aria-label="Keterangan PMO"><button class="btn btn-gold btn-sm" id="cmApAddPmo">＋ Tambah</button></div>
+      <table class="cm-ap-table"><thead><tr><th>Email</th><th>Keterangan</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApPmoRows"></tbody></table>
+      <p class="cm-ap-note">Bila email juga tercantum di Tim CM atau CMO Pusat tambahan manual, label CMO Pusat yang dipakai.</p></div>
     <div class="cm-ap-sec"><h3><span class="cm-ap-role v">PEMBACA</span> Lihat semua menu seperti CMO Pusat, baca notula &amp; referensi, buat laporan/ekspor — tanpa mengubah data</h3>
       <div class="cm-ap-add"><input type="email" id="cmApNewViewer" placeholder="email@kemenkeu.go.id" aria-label="Email Pembaca"><input type="text" id="cmApNewViewerNote" maxlength="80" placeholder="Tim / unit (mis. Tim DCS)" aria-label="Keterangan tim atau unit"><button class="btn btn-gold btn-sm" id="cmApAddViewer">＋ Tambah</button></div>
       <table class="cm-ap-table"><thead><tr><th>Email</th><th>Tim / Unit</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApViewerRows"></tbody></table>
@@ -5862,9 +5883,14 @@ function cmRenderApUsers(body,team){
   </div>`;
   const drawV=()=>{const adminSet=new Set([...teamEmails,...cmRoleAdminOverrides]);body.querySelector('#cmApViewerRows').innerHTML=cmRoleViewers.length?cmRoleViewers.map(v=>`<tr><td>${escapeHtml(v.email)}${adminSet.has(v.email)?' <span class="cm-ap-mut">(juga CMO Pusat — peran CMO yang berlaku)</span>':''}</td><td>${escapeHtml(v.note||'—')}</td><td>${seen([v.email])}</td><td><button class="btn btn-danger btn-sm" data-ap-vdel="${escapeHtml(v.email)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="4" class="cm-ap-mut">Belum ada.</td></tr>';
     body.querySelectorAll('[data-ap-vdel]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses Pembaca untuk ${b.dataset.apVdel}?`))return;cmRoleViewers=cmRoleViewers.filter(x=>x.email!==b.dataset.apVdel);await saveV();drawV();});};
-  const saveV=async()=>{try{localStorage.setItem(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers));}catch(e){}const ok=await firestoreSet(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers),{allowRoleRegistry:true});toast(ok?'Daftar Pembaca diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal (cek aturan Firestore koleksi dashboard).',ok?'success':'warning');const c=document.getElementById('cmApUserCnt');if(c)c.textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRoleViewers.length);await window.cmRefreshAccessRole?.();};
+  const saveV=async()=>{try{localStorage.setItem(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers));}catch(e){}const ok=await firestoreSet(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers),{allowRoleRegistry:true});toast(ok?'Daftar Pembaca diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal (cek aturan Firestore koleksi dashboard).',ok?'success':'warning');const c=document.getElementById('cmApUserCnt');if(c)c.textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRolePmo.length+cmRoleViewers.length);await window.cmRefreshAccessRole?.();};
   body.querySelector('#cmApAddViewer').onclick=async()=>{const inp=body.querySelector('#cmApNewViewer'),noteEl=body.querySelector('#cmApNewViewerNote'),e=cmNormEmail(inp.value);if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)){toast('Format email belum benar.','warning');inp.focus();return;}if(CM_SUPERADMIN_EMAILS.has(e)){toast('Email ini Superadmin.','info');return;}if(cmViewerEmails().includes(e)){toast('Email sudah ada di daftar Pembaca.','info');return;}cmRoleViewers=[...cmRoleViewers,{email:e,note:String(noteEl.value||'').trim().slice(0,80)}];inp.value='';noteEl.value='';await saveV();drawV();};
   drawV();
+  const drawP=()=>{const cmoSet=new Set([...teamEmails,...cmRoleAdminOverrides]);body.querySelector('#cmApPmoRows').innerHTML=cmRolePmo.length?cmRolePmo.map(v=>`<tr><td>${escapeHtml(v.email)}${cmoSet.has(v.email)?' <span class="cm-ap-mut">(juga CMO Pusat — label CMO yang dipakai)</span>':''}</td><td>${escapeHtml(v.note||'—')}</td><td>${seen([v.email])}</td><td><button class="btn btn-danger btn-sm" data-ap-pdel="${escapeHtml(v.email)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="4" class="cm-ap-mut">Belum ada.</td></tr>';
+    body.querySelectorAll('[data-ap-pdel]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses PMO Pusat untuk ${b.dataset.apPdel}?`))return;cmRolePmo=cmRolePmo.filter(x=>x.email!==b.dataset.apPdel);await saveP();drawP();});};
+  const saveP=async()=>{try{localStorage.setItem(CM_ROLE_PMO_KEY,JSON.stringify(cmRolePmo));}catch(e){}const ok=await firestoreSet(CM_ROLE_PMO_KEY,JSON.stringify(cmRolePmo),{allowRoleRegistry:true});toast(ok?'Daftar PMO Pusat diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal (cek aturan Firestore koleksi dashboard).',ok?'success':'warning');const c=document.getElementById('cmApUserCnt');if(c)c.textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRolePmo.length+cmRoleViewers.length);await window.cmRefreshAccessRole?.();};
+  body.querySelector('#cmApAddPmo').onclick=async()=>{const inp=body.querySelector('#cmApNewPmo'),noteEl=body.querySelector('#cmApNewPmoNote'),e=cmNormEmail(inp.value);if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)){toast('Format email belum benar.','warning');inp.focus();return;}if(CM_SUPERADMIN_EMAILS.has(e)){toast('Email ini Superadmin.','info');return;}if(cmPmoEmails().includes(e)){toast('Email sudah ada di daftar PMO Pusat.','info');return;}cmRolePmo=[...cmRolePmo,{email:e,note:String(noteEl.value||'').trim().slice(0,80)}];inp.value='';noteEl.value='';await saveP();drawP();};
+  drawP();
   const draw=()=>{body.querySelector('#cmApExtraRows').innerHTML=cmRoleAdminOverrides.length?cmRoleAdminOverrides.map(e=>`<tr><td>${escapeHtml(e)}${teamEmails.has(e)?' <span class="cm-ap-mut">(juga ada di Tim CM)</span>':''}</td><td>${seen([e])}</td><td><button class="btn btn-danger btn-sm" data-ap-del="${escapeHtml(e)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="3" class="cm-ap-mut">Belum ada.</td></tr>';
     body.querySelectorAll('[data-ap-del]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses CMO Pusat untuk ${b.dataset.apDel}?`))return;cmRoleAdminOverrides=cmRoleAdminOverrides.filter(x=>x!==b.dataset.apDel);await save();draw();});};
   const save=async()=>{try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}const ok=await firestoreSet(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides),{allowRoleRegistry:true});toast(ok?'Daftar pengguna diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal.',ok?'success':'warning');await window.cmRefreshAccessRole?.();};
@@ -5880,7 +5906,7 @@ function cmApFilterBar(stats){
     <div class="cm-ap-chips">${chip('7','7 hari')}${chip('30','30 hari')}${chip('90','90 hari')}${chip('custom','Kustom')}</div>
     ${cmAL.period==='custom'?`<label class="cm-ap-sel"><small>Dari</small><input type="date" id="cmApFrom" value="${r.from}"></label><label class="cm-ap-sel"><small>Sampai</small><input type="date" id="cmApTo" value="${r.to}"></label>`:`<span class="cm-ap-range">${dayjs(r.from).format('DD MMM YYYY')} – ${dayjs(r.to).format('DD MMM YYYY')}</span>`}
     <label class="cm-ap-sel"><small>Unit</small><select id="cmApUnit">${units}</select></label>
-    ${stats?`<label class="cm-ap-sel"><small>Menu</small><select id="cmApMenu">${menus}</select></label>`:`<label class="cm-ap-sel"><small>Peran</small><select id="cmApRole"><option value="">Semua</option><option value="tamu" ${cmAL.role==='tamu'?'selected':''}>Tamu</option><option value="cmo" ${cmAL.role==='cmo'?'selected':''}>CMO Pusat</option><option value="pembaca" ${cmAL.role==='pembaca'?'selected':''}>Pembaca</option><option value="superadmin" ${cmAL.role==='superadmin'?'selected':''}>Superadmin</option></select></label><input type="search" id="cmApQ" class="cm-ap-q" placeholder="Cari nama / email" value="${escapeHtml(cmAL.q)}">`}
+    ${stats?`<label class="cm-ap-sel"><small>Menu</small><select id="cmApMenu">${menus}</select></label>`:`<label class="cm-ap-sel"><small>Peran</small><select id="cmApRole"><option value="">Semua</option><option value="tamu" ${cmAL.role==='tamu'?'selected':''}>Tamu</option><option value="cmo" ${cmAL.role==='cmo'?'selected':''}>CMO Pusat</option><option value="pmo" ${cmAL.role==='pmo'?'selected':''}>PMO Pusat</option><option value="pembaca" ${cmAL.role==='pembaca'?'selected':''}>Pembaca</option><option value="superadmin" ${cmAL.role==='superadmin'?'selected':''}>Superadmin</option></select></label><input type="search" id="cmApQ" class="cm-ap-q" placeholder="Cari nama / email" value="${escapeHtml(cmAL.q)}">`}
     <button type="button" class="btn btn-outline btn-sm cm-ap-refresh" id="cmApRefresh" title="Muat ulang data">↻</button>
     ${stats?`<div class="cm-ap-exp"><button type="button" class="cm-ap-expbtn" id="cmApExpBtn" aria-haspopup="true" aria-expanded="false">⤓ Ekspor ▾</button>
       <div class="cm-ap-expmenu hidden" id="cmApExpMenu" role="menu">
@@ -5905,7 +5931,7 @@ function cmBindApFilters(body){
     em.querySelectorAll('[data-ap-exp]').forEach(b=>b.onclick=()=>{em.classList.add('hidden');const k=b.dataset.apExp;if(k==='xlsx')cmALExportXlsx();else if(k==='csv')cmALExportCsv();else cmALOpenReport();});}
 }
 function cmApSessionRows(list){
-  return list.map(s=>`<tr><td class="nw">${dayjs(s.start).format('DD MMM YYYY')}<br><span class="cm-ap-mut">${dayjs(s.start).format('HH.mm')}</span></td><td><b>${escapeHtml(s.name||'-')}</b></td><td class="cm-ap-mut">${escapeHtml(s.email||'-')}</td><td>${escapeHtml(cmALUnitLabel(s))}</td><td><span class="cm-ap-role ${s.role==='tamu'?'g':s.role==='superadmin'?'sa':s.role==='pembaca'?'v':'cmo'}">${cmALRoleLabel(s.role).toUpperCase()}</span></td><td>${escapeHtml(s.menus.join(', ')||'-')}</td><td class="cm-ap-mut">${escapeHtml([s.device,s.browser].filter(Boolean).join(' · ')||'-')}</td><td class="nw">${s.mins?s.mins+' mnt':'&lt; 1 mnt'}</td></tr>`).join('');
+  return list.map(s=>`<tr><td class="nw">${dayjs(s.start).format('DD MMM YYYY')}<br><span class="cm-ap-mut">${dayjs(s.start).format('HH.mm')}</span></td><td><b>${escapeHtml(s.name||'-')}</b></td><td class="cm-ap-mut">${escapeHtml(s.email||'-')}</td><td>${escapeHtml(cmALUnitLabel(s))}</td><td><span class="cm-ap-role ${s.role==='tamu'?'g':s.role==='superadmin'?'sa':s.role==='pembaca'?'v':s.role==='pmo'?'pmo':'cmo'}">${cmALRoleLabel(s.role).toUpperCase()}</span></td><td>${escapeHtml(s.menus.join(', ')||'-')}</td><td class="cm-ap-mut">${escapeHtml([s.device,s.browser].filter(Boolean).join(' · ')||'-')}</td><td class="nw">${s.mins?s.mins+' mnt':'&lt; 1 mnt'}</td></tr>`).join('');
 }
 function cmApPager(total,per){const pages=Math.max(1,Math.ceil(total/per));if(cmAL.page>pages)cmAL.page=pages;return pages>1?`<div class="cm-ap-pager"><button class="btn btn-outline btn-sm" data-ap-page="-1" ${cmAL.page<=1?'disabled':''}>‹ Sebelumnya</button><span>Halaman ${cmAL.page} dari ${pages}</span><button class="btn btn-outline btn-sm" data-ap-page="1" ${cmAL.page>=pages?'disabled':''}>Berikutnya ›</button></div>`:'';}
 const CM_AP_TH='<thead><tr><th>Waktu</th><th>Nama</th><th>Email</th><th>Unit</th><th>Peran</th><th>Menu dibuka</th><th>Perangkat</th><th>Durasi</th></tr></thead>';
@@ -5914,7 +5940,7 @@ function cmRenderApLog(body,r){
   const list=cmALSessions(cmAL.events).filter(s=>cmALInRange(s,r)&&(!cmAL.role||s.role===cmAL.role)&&(!cmAL.unit||s.unit===cmAL.unit)&&(!q||(s.name+' '+s.email).toLowerCase().includes(q)));
   const per=25,pager=cmApPager(list.length,per),page=list.slice((cmAL.page-1)*per,cmAL.page*per);
   const by=k=>list.filter(s=>s.role===k).length;
-  body.innerHTML=cmApFilterBar(false)+`<div class="cm-ap-sum"><span><b>${list.length}</b> kunjungan</span><span><b>${new Set(list.map(s=>s.visitorKey)).size}</b> orang</span><span>Tamu <b>${by('tamu')}</b></span><span>CMO Pusat <b>${by('cmo')}</b></span><span>Pembaca <b>${by('pembaca')}</b></span><span>Superadmin <b>${by('superadmin')}</b></span></div>
+  body.innerHTML=cmApFilterBar(false)+`<div class="cm-ap-sum"><span><b>${list.length}</b> kunjungan</span><span><b>${new Set(list.map(s=>s.visitorKey)).size}</b> orang</span><span>Tamu <b>${by('tamu')}</b></span><span>CMO Pusat <b>${by('cmo')}</b></span><span>PMO Pusat <b>${by('pmo')}</b></span><span>Pembaca <b>${by('pembaca')}</b></span><span>Superadmin <b>${by('superadmin')}</b></span></div>
     <div class="cm-ap-tblwrap"><table class="cm-ap-table">${CM_AP_TH}<tbody>${page.length?cmApSessionRows(page):'<tr><td colspan="8" class="cm-ap-mut" style="text-align:center;padding:26px">Belum ada kunjungan yang sesuai filter.</td></tr>'}</tbody></table></div>${pager}
     <p class="cm-ap-note">Satu baris = satu kunjungan (sesi browser). Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi; identitas CMO Pusat berasal dari akun Google.</p>`;
   cmBindApFilters(body);
