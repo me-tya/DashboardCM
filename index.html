@@ -403,6 +403,10 @@ select.filter-select:focus, input.filter-date:focus{outline:2px solid var(--navy
   color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;padding:0
 }
 .cm-access-admin-btn:hover{background:rgba(255,255,255,.18)}
+html[data-role="viewer"] .cm-editor-only,html[data-role="viewer"] #btnAdd,html[data-role="viewer"] #btnImport,html[data-role="viewer"] #btnBackupAll,html[data-role="viewer"] #btnRestoreAll,html[data-role="viewer"] #btnReminderAdd,html[data-role="viewer"] #btnReminderCenter,html[data-role="viewer"] .cm-superadmin-only{display:none!important}
+.cm-role-badge.viewer{background:#E8F4FB!important;color:#0E5A7E!important;border-color:#B9DCEE!important}
+.cm-ap-role.v{background:#E8F4FB;color:#0E5A7E}
+.cm-ap-add{flex-wrap:wrap}
 html[data-role="guest_login"] .cm-editor-only,
 html[data-role="public_guest"] .cm-editor-only{display:none!important}
 html[data-role="guest_login"] #btnAdd,
@@ -2468,7 +2472,7 @@ html[data-viewonly="1"] .cm-user-av{background:#EEF3FC!important;color:#12275A!i
 @media(max-width:700px){.cm-viewonly-bar{flex-wrap:wrap}.cm-viewonly-bar button{margin-left:0}}
 /* Tamu: hanya lihat */
 html[data-viewonly="1"] #tab-table table.data-table col.col-actions{width:60px}
-html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[data-viewonly="1"] #btnCompileReport,html[data-viewonly="1"] .cm-report-btn,html[data-viewonly="1"] .cal-export-btn,html[data-viewonly="1"] .cal-export-sep,html[data-viewonly="1"] [data-cm-mutate],html[data-viewonly="1"] #taskExport,html[data-viewonly="1"] #btnContactExport,html[data-viewonly="1"] #taskImport,html[data-viewonly="1"] [data-review-login],html[data-viewonly="1"] #reviewSignIn,html[data-viewonly="1"] [data-edit-survey],html[data-viewonly="1"] [data-close-survey],html[data-viewonly="1"] [data-reopen-survey],html[data-viewonly="1"] [data-qr],html[data-viewonly="1"] [data-res-edit],html[data-viewonly="1"] [data-res-delete]{display:none!important}
+html[data-viewonly="1"] .whatsapp-share,html[data-viewonly="1"] .cm-fb-btn,html[data-viewonly="1"]:not([data-reader="1"]) #btnCompileReport,html[data-viewonly="1"]:not([data-reader="1"]) .cm-report-btn,html[data-viewonly="1"]:not([data-reader="1"]) .cal-export-btn,html[data-viewonly="1"]:not([data-reader="1"]) .cal-export-sep,html[data-viewonly="1"] [data-cm-mutate],html[data-viewonly="1"]:not([data-reader="1"]) #taskExport,html[data-viewonly="1"]:not([data-reader="1"]) #btnContactExport,html[data-viewonly="1"] #taskImport,html[data-viewonly="1"] [data-review-login],html[data-viewonly="1"] #reviewSignIn,html[data-viewonly="1"] [data-edit-survey],html[data-viewonly="1"] [data-close-survey],html[data-viewonly="1"] [data-reopen-survey],html[data-viewonly="1"] [data-qr],html[data-viewonly="1"] [data-res-edit],html[data-viewonly="1"] [data-res-delete]{display:none!important}
 /* Panel Kelola Pengguna & Akses */
 .cm-ap-overlay{z-index:100}
 /* Setting → Referensi */
@@ -4253,11 +4257,23 @@ const CM_ROLE_ADMIN='admin';
 const CM_ROLE_GUEST_LOGIN='guest_login';
 const CM_ROLE_PUBLIC_GUEST='public_guest';
 const CM_ROLE_ADMIN_OVERRIDES_KEY='cm_role_admin_overrides_v1';
+// Pembaca (viewer): akun Google yang ditambahkan Superadmin. Dapat membuka menu seperti CMO Pusat,
+// membaca notula & referensi, serta membuat laporan/ekspor — tetapi tidak dapat mengubah data.
+const CM_ROLE_VIEWER='viewer';
+const CM_ROLE_VIEWER_KEY='cm_role_viewer_v1';
 const CM_SUPERADMIN_EMAILS=new Set([
   'atitya@kemenkeu.go.id',
   'atitya.pritasari@gmail.com'
 ]);
 let cmRoleAdminOverrides=[];
+let cmRoleViewers=[]; // [{email,note}]
+function cmNormViewerList(x){
+  if(!Array.isArray(x))return [];
+  const seen=new Set(),out=[];
+  x.forEach(v=>{const email=cmNormEmail(typeof v==='string'?v:v?.email);if(!email||seen.has(email))return;seen.add(email);out.push({email,note:String((typeof v==='object'&&v?.note)||'').trim().slice(0,80)});});
+  return out;
+}
+function cmViewerEmails(){return cmRoleViewers.map(v=>v.email);}
 let cmRoleOverridesLoaded=false;
 
 function cmNormEmail(v){return String(v||'').trim().toLowerCase();}
@@ -4279,22 +4295,26 @@ function cmResolveAccessRole(){
   // As a fallback, the exact display name is accepted only for a Kemenkeu account.
   if(CM_SUPERADMIN_EMAILS.has(email)||(name==='atitya pritasari'&&/@kemenkeu\.go\.id$/.test(email)))return CM_ROLE_SUPERADMIN;
   if(cmRoleAdminOverrides.map(cmNormEmail).includes(email)||cmTeamAdminEmails().has(email))return CM_ROLE_ADMIN;
+  if(cmViewerEmails().includes(email))return CM_ROLE_VIEWER;
   return CM_ROLE_GUEST_LOGIN;
 }
 function cmGetAccessRole(){return document.documentElement.dataset.role||cmResolveAccessRole();}
 function cmCanMutate(){const r=cmGetAccessRole();return r===CM_ROLE_SUPERADMIN||r===CM_ROLE_ADMIN;}
 function cmCanManageReferences(){return cmGetAccessRole()===CM_ROLE_SUPERADMIN;}
+// Baca data internal (notula, referensi) + buat laporan/ekspor: Superadmin, CMO Pusat, Pembaca.
+function cmCanReport(){const r=cmGetAccessRole();return r===CM_ROLE_SUPERADMIN||r===CM_ROLE_ADMIN||r===CM_ROLE_VIEWER;}
 function cmRoleLabel(role){
-  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'CMO PUSAT':uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
+  return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?'CMO PUSAT':role===CM_ROLE_VIEWER?uiText('VIEWER · READ & REPORT','PEMBACA · LIHAT & LAPORAN'):uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
 }
 const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','priority','contact','resource'];
 var cmMenuCfg=(()=>{try{return JSON.parse(localStorage.getItem('cm_menu_cfg_v1')||'{}')||{};}catch(e){return {};}})();
-function cmMenuHidden(key){const h=cmMenuCfg?.hidden?.[key];return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
+function cmMenuHidden(key){let h=cmMenuCfg?.hidden?.[key];if(key==='viewer'&&!Array.isArray(h))h=cmMenuCfg?.hidden?.admin; // default Pembaca = seperti CMO Pusat
+  return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
 function cmAllowedTabsForRole(role){
   const all=new Set(CM_MENU_TABS);
   if(role===CM_ROLE_SUPERADMIN)return all;
   // Superadmin dapat menyembunyikan menu per peran (Tamu / CMO Pusat). Overview selalu tampil.
-  cmMenuHidden(role===CM_ROLE_ADMIN?'admin':'guest').forEach(t=>all.delete(t));
+  cmMenuHidden(role===CM_ROLE_ADMIN?'admin':role===CM_ROLE_VIEWER?'viewer':'guest').forEach(t=>all.delete(t));
   return all;
 }
 async function cmMenuLoadCfg(){
@@ -4323,6 +4343,8 @@ async function cmLoadRoleOverrides(){
     let raw='';
     try{raw=localStorage.getItem(CM_ROLE_ADMIN_OVERRIDES_KEY)||'';}catch(e){}
     if(raw){try{const x=JSON.parse(raw);if(Array.isArray(x))cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);}catch(e){}}
+    let rawV='';try{rawV=localStorage.getItem(CM_ROLE_VIEWER_KEY)||'';}catch(e){}
+    if(rawV){try{cmRoleViewers=cmNormViewerList(JSON.parse(rawV));}catch(e){}}
   }
   if(!isLoggedIn())return;
   const email=cmCurrentAuthEmail();
@@ -4336,6 +4358,12 @@ async function cmLoadRoleOverrides(){
       const x=JSON.parse(remote);
       if(Array.isArray(x)){cmRoleAdminOverrides=x.map(cmNormEmail).filter(Boolean);try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}}
     }
+    try{
+      const snapV=await window.fbGetDoc(window.fbDoc(window.fbDb,'dashboard',CM_ROLE_VIEWER_KEY));
+      const rv=(snapV&&snapV.exists())?snapV.data().value:null;
+      cmRoleViewers=rv?cmNormViewerList(JSON.parse(rv)):[];
+      try{localStorage.setItem(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers));}catch(e){}
+    }catch(e){console.warn('Viewer registry load failed',e?.code||e);}
     cmRoleOverridesLoadedFor=email; // tandai sukses hanya bila pembacaan berhasil, agar kegagalan sementara dicoba lagi
   }catch(e){console.warn('Role registry load failed',e?.code||e);}
 }
@@ -4350,16 +4378,17 @@ function cmApplyRoleUi(role){
   if(typeof cmSRRoleChanged==='function')setTimeout(cmSRRoleChanged,0);
   const allowed=cmAllowedTabsForRole(role);
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.toggle('hidden',!allowed.has(b.dataset.tab)));
-  {const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin');document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>{const t=b.dataset.tab,mark=role===CM_ROLE_SUPERADMIN&&(hg.has(t)||ha.has(t));b.classList.toggle('cm-tab-limited',mark);if(mark)b.title=uiText('Hidden for: ','Disembunyikan untuk: ')+[hg.has(t)?uiText('Guest','Tamu'):'',ha.has(t)?'CMO Pusat':''].filter(Boolean).join(', ');else if(b.title&&/Disembunyikan|Hidden for/.test(b.title))b.removeAttribute('title');});}
+  {const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin'),hv=cmMenuHidden('viewer');document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>{const t=b.dataset.tab,mark=role===CM_ROLE_SUPERADMIN&&(hg.has(t)||ha.has(t)||hv.has(t));b.classList.toggle('cm-tab-limited',mark);if(mark)b.title=uiText('Hidden for: ','Disembunyikan untuk: ')+[hg.has(t)?uiText('Guest','Tamu'):'',ha.has(t)?'CMO Pusat':'',hv.has(t)?uiText('Viewer','Pembaca'):''].filter(Boolean).join(', ');else if(b.title&&/Disembunyikan|Hidden for/.test(b.title))b.removeAttribute('title');});}
   const canEdit=role===CM_ROLE_SUPERADMIN||role===CM_ROLE_ADMIN;
   document.documentElement.dataset.viewonly=canEdit?'0':'1';
+  document.documentElement.dataset.reader=(canEdit||role===CM_ROLE_VIEWER)?'1':'0';
   if(typeof cmViewOnlyBanner==='function')cmViewOnlyBanner(!canEdit);
   if(typeof cmUpdateUserPill==='function')cmUpdateUserPill();
   document.getElementById('btnAdd')?.classList.toggle('hidden',state?.activeTab!=='table'||!canEdit);
   document.getElementById('btnImport')?.classList.toggle('hidden',!canEdit||state.activeTab==='tasks');
   document.getElementById('btnBackupAll')?.classList.toggle('hidden',!canEdit);
   document.getElementById('btnRestoreAll')?.classList.toggle('hidden',!canEdit);
-  document.getElementById('btnExport')?.classList.toggle('hidden',!canEdit||state.activeTab==='tasks');
+  document.getElementById('btnExport')?.classList.toggle('hidden',!(canEdit||role===CM_ROLE_VIEWER)||state.activeTab==='tasks');
   if(typeof state!=='undefined'&&state.activeTab&&!allowed.has(state.activeTab)&&typeof switchTab==='function')switchTab('analytics');
 }
 window.cmRefreshAccessRole=async function(){
@@ -5537,6 +5566,10 @@ function cmViewOnlyBanner(viewOnly){
   const main=document.getElementById('appMain');
   if(!bar&&main){bar=document.createElement('div');bar.id='cmViewOnlyBar';bar.className='cm-viewonly-bar hidden';main.prepend(bar);}
   if(!bar)return;
+  if(typeof cmGetAccessRole==='function'&&cmGetAccessRole()===CM_ROLE_VIEWER){
+    bar.innerHTML=`<span class="cm-vo-ic" aria-hidden="true">📖</span><span><b>${uiText('Viewer mode.','Mode Pembaca.')}</b> ${uiText('You can open the menus, read meeting notes and references, and generate reports or exports, but data cannot be changed.','Anda dapat membuka menu, membaca notula dan referensi, serta membuat laporan atau ekspor, tetapi data tidak dapat diubah.')}</span>`;
+    bar.classList.toggle('hidden',!viewOnly||document.documentElement.classList.contains('cm-entry-open'));return;
+  }
   bar.innerHTML=`<span class="cm-vo-ic" aria-hidden="true">👁</span><span><b>${uiText('View mode.','Mode lihat.')}</b> ${uiText('You can open every menu and each activity\'s history, but data cannot be changed.','Anda dapat membuka semua menu dan riwayat setiap kegiatan, tetapi data tidak dapat diubah.')}</span><button type="button" data-cm-cmo-login>🛡 ${uiText('Sign in as CMO Pusat','Masuk sebagai CMO Pusat')}</button>`;
   bar.classList.toggle('hidden',!viewOnly||document.documentElement.classList.contains('cm-entry-open'));
 }
@@ -5557,7 +5590,7 @@ function cmAccessSessionId(){
 }
 function cmAccessRoleKey(){
   const r=cmGetAccessRole();
-  return r===CM_ROLE_SUPERADMIN?'superadmin':r===CM_ROLE_ADMIN?'cmo':'tamu';
+  return r===CM_ROLE_SUPERADMIN?'superadmin':r===CM_ROLE_ADMIN?'cmo':r===CM_ROLE_VIEWER?'pembaca':'tamu';
 }
 async function cmAccessWrite(kind,menu){
   const u=window.fbAuth?.currentUser;
@@ -5568,7 +5601,10 @@ async function cmAccessWrite(kind,menu){
     menu:menu||'',menuLabel:menu?cmMenuLabel(menu):'',device:d.device,browser:d.browser,ts:new Date().toISOString()};
   if(window.fbServerTimestamp)payload.at=window.fbServerTimestamp();
   try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),payload);return true;}
-  catch(e){if(!cmAccessWarned){cmAccessWarned=true;console.warn('Access log not written (check Firestore rules for cmAccessLog).',e?.code||e);}return false;}
+  catch(e){
+    // Bila aturan Firestore lama hanya menerima tamu/cmo/superadmin, catat Pembaca sebagai tamu.
+    if(payload.role==='pembaca'){try{await window.fbAddDoc(window.fbCollection(window.fbDb,CM_ACCESS_COL),{...payload,role:'tamu'});return true;}catch(_){}}
+    if(!cmAccessWarned){cmAccessWarned=true;console.warn('Access log not written (check Firestore rules for cmAccessLog).',e?.code||e);}return false;}
 }
 let cmAccessWarned=false,cmAccessVisitTimer=null,cmAccessLastPing=0;
 function cmAccessFlag(k){try{return sessionStorage.getItem(k)==='1';}catch(e){return false;}}
@@ -5631,7 +5667,7 @@ function cmALSessions(events){
 }
 function cmALInRange(s,r){const d=dayjs(s.start).format('YYYY-MM-DD');return d>=r.from&&d<=r.to;}
 function cmALUnitLabel(s,long){if(s.role!=='tamu'&&!s.unit)return 'Tim CMO Pusat';if(s.unit==='EKSTERNAL')return s.instansi?`Eksternal · ${s.instansi}`:'Eksternal';const u=cmUnitByCode(s.unit);return u?(long?u.name:u.short):(s.unitName||s.unit||'-');}
-function cmALRoleLabel(r){return r==='superadmin'?'Superadmin':r==='cmo'?'CMO Pusat':'Tamu';}
+function cmALRoleLabel(r){return r==='superadmin'?'Superadmin':r==='cmo'?'CMO Pusat':r==='pembaca'?'Pembaca':'Tamu';}
 function cmALFiltered(sessions,r,guestOnly){
   return sessions.filter(s=>cmALInRange(s,r)&&(!guestOnly||s.role==='tamu')&&(!cmAL.unit||s.unit===cmAL.unit)&&(!cmAL.menu||s.menuCodes.includes(cmAL.menu)));
 }
@@ -5699,13 +5735,14 @@ function cmOpenAccessManager(tab){
 }
 function cmCloseAccessPanel(){cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];document.getElementById('cmAccessPanel')?.remove();}
 function cmRenderApMenus(body){
-  const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin');
+  const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin'),hv=cmMenuHidden('viewer');
   const row=t=>{const lock=t==='analytics';return `<tr><td><b>${escapeHtml(cmMenuLabel(t))}</b>${lock?` <small style="color:#8A94A6">(${uiText('always shown','selalu tampil')})</small>`:''}</td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="guest" value="${t}" ${!hg.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="admin" value="${t}" ${!ha.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
+    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="viewer" value="${t}" ${!hv.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" checked disabled><span></span></label></td></tr>`;};
   body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>${uiText('Menu visibility','Pengaturan menu')}</b><span>${uiText('Turn a menu off to hide it for that role. The Superadmin always sees every menu (hidden ones are marked with a small gold lock). Changes apply to all visitors.','Matikan menu untuk menyembunyikannya dari peran tersebut. Superadmin selalu melihat semua menu (menu yang disembunyikan diberi ikon gembok emas kecil). Perubahan berlaku untuk semua pengunjung.')}</span>
-   <table class="cm-mn-table"><thead><tr><th>${uiText('Menu','Menu')}</th><th>${uiText('Guest','Tamu')}</th><th>CMO Pusat</th><th>Superadmin</th></tr></thead><tbody>${CM_MENU_TABS.map(row).join('')}</tbody></table>
+   <table class="cm-mn-table"><thead><tr><th>${uiText('Menu','Menu')}</th><th>${uiText('Guest','Tamu')}</th><th>CMO Pusat</th><th>${uiText('Viewer','Pembaca')}</th><th>Superadmin</th></tr></thead><tbody>${CM_MENU_TABS.map(row).join('')}</tbody></table>
    <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px"><span id="cmMnMsg" style="font-size:12.5px;margin-right:auto"></span><button type="button" class="btn btn-outline btn-sm" id="cmMnReset">${uiText('Show all','Tampilkan semua')}</button><button type="button" class="btn btn-sm cm-sr-btn-navy" id="cmMnSave">${uiText('Save','Simpan')}</button></div></div>`;
   const msg=(t,ok)=>{const m=body.querySelector('#cmMnMsg');m.style.color=ok?'#15784F':'#9E1811';m.textContent=t;};
   const save=async(hidden)=>{
@@ -5714,8 +5751,8 @@ function cmRenderApMenus(body){
       if(window.cmEnforceMenuAccess)window.cmEnforceMenuAccess();cmRenderApMenus(body);body.querySelector('#cmMnMsg')&&(msg(uiText('Saved. Applies to all visitors.','Tersimpan. Berlaku untuk semua pengunjung.'),true));}
     catch(e){msg(/permission/i.test(e?.code||e?.message||'')?uiText('Rejected by Firebase. Check the cmPublicConfig rules.','Ditolak Firebase. Cek aturan cmPublicConfig.'):(e?.message||'Gagal menyimpan.'),false);}
   };
-  body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
-  body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[]});
+  body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[],viewer:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
+  body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[],viewer:[]});
 }
 function cmRenderApSvcDesc(body,draft){
   const cur=(cmGateCfg&&cmGateCfg.svcDesc)||{};
@@ -5780,7 +5817,7 @@ function cmAdminRows(){
 async function cmRenderAccessPanel(){
   const host=document.getElementById('cmAccessPanel');if(!host)return;
   host.querySelectorAll('[data-ap-tab]').forEach(b=>{const on=b.dataset.apTab===cmAL.tab;b.classList.toggle('on',on);b.setAttribute('aria-selected',on?'true':'false');});
-  const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length);
+  const team=cmAdminRows();host.querySelector('#cmApUserCnt').textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRoleViewers.length);
   const body=host.querySelector('#cmApBody');
   cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];
   if(cmAL.tab==='gate')return cmRenderApGate(body);
@@ -5816,8 +5853,18 @@ function cmRenderApUsers(body,team){
     <div class="cm-ap-sec"><h3><span class="cm-ap-role cmo">CMO PUSAT</span> Tambahan manual</h3>
       <div class="cm-ap-add"><input type="email" id="cmApNewAdmin" placeholder="email@kemenkeu.go.id" aria-label="Email Admin tambahan"><button class="btn btn-gold btn-sm" id="cmApAddAdmin">＋ Tambah</button></div>
       <table class="cm-ap-table"><thead><tr><th>Email</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApExtraRows"></tbody></table>
+    </div>
+    <div class="cm-ap-sec"><h3><span class="cm-ap-role v">PEMBACA</span> Lihat semua menu seperti CMO Pusat, baca notula &amp; referensi, buat laporan/ekspor — tanpa mengubah data</h3>
+      <div class="cm-ap-add"><input type="email" id="cmApNewViewer" placeholder="email@kemenkeu.go.id" aria-label="Email Pembaca"><input type="text" id="cmApNewViewerNote" maxlength="80" placeholder="Tim / unit (mis. Tim DCS)" aria-label="Keterangan tim atau unit"><button class="btn btn-gold btn-sm" id="cmApAddViewer">＋ Tambah</button></div>
+      <table class="cm-ap-table"><thead><tr><th>Email</th><th>Tim / Unit</th><th>Terakhir masuk</th><th style="width:90px"></th></tr></thead><tbody id="cmApViewerRows"></tbody></table>
+      <p class="cm-ap-note">Pembaca masuk lewat tombol login Google yang sama dengan CMO Pusat. Bila email juga tercantum sebagai CMO Pusat, peran CMO Pusat yang berlaku. Menu yang tampil untuk Pembaca diatur di tab Pengaturan Menu.</p>
       <p class="cm-ap-note">Akun Google lain yang tidak tercantum di sini otomatis masuk sebagai <b>Tamu (mode lihat)</b>.</p></div>
   </div>`;
+  const drawV=()=>{const adminSet=new Set([...teamEmails,...cmRoleAdminOverrides]);body.querySelector('#cmApViewerRows').innerHTML=cmRoleViewers.length?cmRoleViewers.map(v=>`<tr><td>${escapeHtml(v.email)}${adminSet.has(v.email)?' <span class="cm-ap-mut">(juga CMO Pusat — peran CMO yang berlaku)</span>':''}</td><td>${escapeHtml(v.note||'—')}</td><td>${seen([v.email])}</td><td><button class="btn btn-danger btn-sm" data-ap-vdel="${escapeHtml(v.email)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="4" class="cm-ap-mut">Belum ada.</td></tr>';
+    body.querySelectorAll('[data-ap-vdel]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses Pembaca untuk ${b.dataset.apVdel}?`))return;cmRoleViewers=cmRoleViewers.filter(x=>x.email!==b.dataset.apVdel);await saveV();drawV();});};
+  const saveV=async()=>{try{localStorage.setItem(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers));}catch(e){}const ok=await firestoreSet(CM_ROLE_VIEWER_KEY,JSON.stringify(cmRoleViewers),{allowRoleRegistry:true});toast(ok?'Daftar Pembaca diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal (cek aturan Firestore koleksi dashboard).',ok?'success':'warning');const c=document.getElementById('cmApUserCnt');if(c)c.textContent=String(1+team.length+cmRoleAdminOverrides.length+cmRoleViewers.length);await window.cmRefreshAccessRole?.();};
+  body.querySelector('#cmApAddViewer').onclick=async()=>{const inp=body.querySelector('#cmApNewViewer'),noteEl=body.querySelector('#cmApNewViewerNote'),e=cmNormEmail(inp.value);if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)){toast('Format email belum benar.','warning');inp.focus();return;}if(CM_SUPERADMIN_EMAILS.has(e)){toast('Email ini Superadmin.','info');return;}if(cmViewerEmails().includes(e)){toast('Email sudah ada di daftar Pembaca.','info');return;}cmRoleViewers=[...cmRoleViewers,{email:e,note:String(noteEl.value||'').trim().slice(0,80)}];inp.value='';noteEl.value='';await saveV();drawV();};
+  drawV();
   const draw=()=>{body.querySelector('#cmApExtraRows').innerHTML=cmRoleAdminOverrides.length?cmRoleAdminOverrides.map(e=>`<tr><td>${escapeHtml(e)}${teamEmails.has(e)?' <span class="cm-ap-mut">(juga ada di Tim CM)</span>':''}</td><td>${seen([e])}</td><td><button class="btn btn-danger btn-sm" data-ap-del="${escapeHtml(e)}">Hapus</button></td></tr>`).join(''):'<tr><td colspan="3" class="cm-ap-mut">Belum ada.</td></tr>';
     body.querySelectorAll('[data-ap-del]').forEach(b=>b.onclick=async()=>{if(!confirm(`Hapus akses CMO Pusat untuk ${b.dataset.apDel}?`))return;cmRoleAdminOverrides=cmRoleAdminOverrides.filter(x=>x!==b.dataset.apDel);await save();draw();});};
   const save=async()=>{try{localStorage.setItem(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides));}catch(e){}const ok=await firestoreSet(CM_ROLE_ADMIN_OVERRIDES_KEY,JSON.stringify(cmRoleAdminOverrides),{allowRoleRegistry:true});toast(ok?'Daftar pengguna diperbarui.':'Tersimpan di perangkat ini, tetapi sinkronisasi gagal.',ok?'success':'warning');await window.cmRefreshAccessRole?.();};
@@ -5833,7 +5880,7 @@ function cmApFilterBar(stats){
     <div class="cm-ap-chips">${chip('7','7 hari')}${chip('30','30 hari')}${chip('90','90 hari')}${chip('custom','Kustom')}</div>
     ${cmAL.period==='custom'?`<label class="cm-ap-sel"><small>Dari</small><input type="date" id="cmApFrom" value="${r.from}"></label><label class="cm-ap-sel"><small>Sampai</small><input type="date" id="cmApTo" value="${r.to}"></label>`:`<span class="cm-ap-range">${dayjs(r.from).format('DD MMM YYYY')} – ${dayjs(r.to).format('DD MMM YYYY')}</span>`}
     <label class="cm-ap-sel"><small>Unit</small><select id="cmApUnit">${units}</select></label>
-    ${stats?`<label class="cm-ap-sel"><small>Menu</small><select id="cmApMenu">${menus}</select></label>`:`<label class="cm-ap-sel"><small>Peran</small><select id="cmApRole"><option value="">Semua</option><option value="tamu" ${cmAL.role==='tamu'?'selected':''}>Tamu</option><option value="cmo" ${cmAL.role==='cmo'?'selected':''}>CMO Pusat</option><option value="superadmin" ${cmAL.role==='superadmin'?'selected':''}>Superadmin</option></select></label><input type="search" id="cmApQ" class="cm-ap-q" placeholder="Cari nama / email" value="${escapeHtml(cmAL.q)}">`}
+    ${stats?`<label class="cm-ap-sel"><small>Menu</small><select id="cmApMenu">${menus}</select></label>`:`<label class="cm-ap-sel"><small>Peran</small><select id="cmApRole"><option value="">Semua</option><option value="tamu" ${cmAL.role==='tamu'?'selected':''}>Tamu</option><option value="cmo" ${cmAL.role==='cmo'?'selected':''}>CMO Pusat</option><option value="pembaca" ${cmAL.role==='pembaca'?'selected':''}>Pembaca</option><option value="superadmin" ${cmAL.role==='superadmin'?'selected':''}>Superadmin</option></select></label><input type="search" id="cmApQ" class="cm-ap-q" placeholder="Cari nama / email" value="${escapeHtml(cmAL.q)}">`}
     <button type="button" class="btn btn-outline btn-sm cm-ap-refresh" id="cmApRefresh" title="Muat ulang data">↻</button>
     ${stats?`<div class="cm-ap-exp"><button type="button" class="cm-ap-expbtn" id="cmApExpBtn" aria-haspopup="true" aria-expanded="false">⤓ Ekspor ▾</button>
       <div class="cm-ap-expmenu hidden" id="cmApExpMenu" role="menu">
@@ -5858,7 +5905,7 @@ function cmBindApFilters(body){
     em.querySelectorAll('[data-ap-exp]').forEach(b=>b.onclick=()=>{em.classList.add('hidden');const k=b.dataset.apExp;if(k==='xlsx')cmALExportXlsx();else if(k==='csv')cmALExportCsv();else cmALOpenReport();});}
 }
 function cmApSessionRows(list){
-  return list.map(s=>`<tr><td class="nw">${dayjs(s.start).format('DD MMM YYYY')}<br><span class="cm-ap-mut">${dayjs(s.start).format('HH.mm')}</span></td><td><b>${escapeHtml(s.name||'-')}</b></td><td class="cm-ap-mut">${escapeHtml(s.email||'-')}</td><td>${escapeHtml(cmALUnitLabel(s))}</td><td><span class="cm-ap-role ${s.role==='tamu'?'g':s.role==='superadmin'?'sa':'cmo'}">${cmALRoleLabel(s.role).toUpperCase()}</span></td><td>${escapeHtml(s.menus.join(', ')||'-')}</td><td class="cm-ap-mut">${escapeHtml([s.device,s.browser].filter(Boolean).join(' · ')||'-')}</td><td class="nw">${s.mins?s.mins+' mnt':'&lt; 1 mnt'}</td></tr>`).join('');
+  return list.map(s=>`<tr><td class="nw">${dayjs(s.start).format('DD MMM YYYY')}<br><span class="cm-ap-mut">${dayjs(s.start).format('HH.mm')}</span></td><td><b>${escapeHtml(s.name||'-')}</b></td><td class="cm-ap-mut">${escapeHtml(s.email||'-')}</td><td>${escapeHtml(cmALUnitLabel(s))}</td><td><span class="cm-ap-role ${s.role==='tamu'?'g':s.role==='superadmin'?'sa':s.role==='pembaca'?'v':'cmo'}">${cmALRoleLabel(s.role).toUpperCase()}</span></td><td>${escapeHtml(s.menus.join(', ')||'-')}</td><td class="cm-ap-mut">${escapeHtml([s.device,s.browser].filter(Boolean).join(' · ')||'-')}</td><td class="nw">${s.mins?s.mins+' mnt':'&lt; 1 mnt'}</td></tr>`).join('');
 }
 function cmApPager(total,per){const pages=Math.max(1,Math.ceil(total/per));if(cmAL.page>pages)cmAL.page=pages;return pages>1?`<div class="cm-ap-pager"><button class="btn btn-outline btn-sm" data-ap-page="-1" ${cmAL.page<=1?'disabled':''}>‹ Sebelumnya</button><span>Halaman ${cmAL.page} dari ${pages}</span><button class="btn btn-outline btn-sm" data-ap-page="1" ${cmAL.page>=pages?'disabled':''}>Berikutnya ›</button></div>`:'';}
 const CM_AP_TH='<thead><tr><th>Waktu</th><th>Nama</th><th>Email</th><th>Unit</th><th>Peran</th><th>Menu dibuka</th><th>Perangkat</th><th>Durasi</th></tr></thead>';
@@ -5867,7 +5914,7 @@ function cmRenderApLog(body,r){
   const list=cmALSessions(cmAL.events).filter(s=>cmALInRange(s,r)&&(!cmAL.role||s.role===cmAL.role)&&(!cmAL.unit||s.unit===cmAL.unit)&&(!q||(s.name+' '+s.email).toLowerCase().includes(q)));
   const per=25,pager=cmApPager(list.length,per),page=list.slice((cmAL.page-1)*per,cmAL.page*per);
   const by=k=>list.filter(s=>s.role===k).length;
-  body.innerHTML=cmApFilterBar(false)+`<div class="cm-ap-sum"><span><b>${list.length}</b> kunjungan</span><span><b>${new Set(list.map(s=>s.visitorKey)).size}</b> orang</span><span>Tamu <b>${by('tamu')}</b></span><span>CMO Pusat <b>${by('cmo')}</b></span><span>Superadmin <b>${by('superadmin')}</b></span></div>
+  body.innerHTML=cmApFilterBar(false)+`<div class="cm-ap-sum"><span><b>${list.length}</b> kunjungan</span><span><b>${new Set(list.map(s=>s.visitorKey)).size}</b> orang</span><span>Tamu <b>${by('tamu')}</b></span><span>CMO Pusat <b>${by('cmo')}</b></span><span>Pembaca <b>${by('pembaca')}</b></span><span>Superadmin <b>${by('superadmin')}</b></span></div>
     <div class="cm-ap-tblwrap"><table class="cm-ap-table">${CM_AP_TH}<tbody>${page.length?cmApSessionRows(page):'<tr><td colspan="8" class="cm-ap-mut" style="text-align:center;padding:26px">Belum ada kunjungan yang sesuai filter.</td></tr>'}</tbody></table></div>${pager}
     <p class="cm-ap-note">Satu baris = satu kunjungan (sesi browser). Identitas Tamu diisi sendiri oleh pengunjung dan tidak diverifikasi; identitas CMO Pusat berasal dari akun Google.</p>`;
   cmBindApFilters(body);
@@ -8992,7 +9039,7 @@ function cmOpenWorkboardReport(){cmRptPreviewModal(uiText('Workboard Report Prev
 function cmOpenMatrixReport(){cmRptPreviewModal(uiText('Matrix Report Preview','Preview Laporan Matriks'),o=>cmXBuildMatrixModel(o),{lang:cmRptPrefs().lang||currentLang,ai:false,noAi:true,docType:'LMX'});}
 Object.assign(window,{cmOpenCompiledReportBuilder,cmOpenOverviewReport,cmOpenCalendarReport,cmOpenWorkboardReport,cmOpenMatrixReport,cmXExportCalendarExcel,cmXExportCalendarWord});
 function cmCtxReportButtons(tab){
-  if(!cmCanMutate())return '';
+  if(!cmCanReport())return '';
   const map={analytics:['cmOpenOverviewReport',uiText('Overview Report','Laporan Overview')],table:['cmOpenActivityReportBuilder',uiText('Report','Laporan')],calendar:['cmOpenCalendarReport',uiText('Calendar Report','Laporan Kalender')],kanban:['cmOpenWorkboardReport',uiText('Workboard Report','Laporan Workboard')],matrix:['cmOpenMatrixReport',uiText('Matrix Report','Laporan Matriks')]}[tab];
   if(!map)return '';
   const btn=(id,fn,label,cls,title,icon)=>`<button type="button" class="btn btn-sm ${cls}" id="${id}" onclick="event.preventDefault();event.stopPropagation();window.${fn}();return false;" title="${escapeHtml(title)}">${icon}${escapeHtml(label)}</button>`;
@@ -9114,7 +9161,7 @@ function renderTable() {
         <div class="row-actions">
           ${cmCanMutate()?`<button class="icon-btn whatsapp-share" data-action="whatsapp" data-id="${a.id}" title="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}" aria-label="${uiText('Share activity assignment to WhatsApp','Share penugasan activity ke WhatsApp')}">${iconWhatsApp()}</button>`:''}
           <button class="icon-btn" data-action="history" data-id="${a.id}" title="${uiText('Activity history / audit log','Riwayat / audit log Activity')}" aria-label="${uiText('Activity history / audit log','Riwayat / audit log Activity')}">${iconHistory()}</button>
-          ${cmCanMutate()?`<button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></button>`:''}
+          ${cmCanReport()?`<button type="button" class="icon-btn" data-action="report" data-id="${a.id}" data-rid="${encodeURIComponent(String(a.id))}" onclick="event.preventDefault();event.stopPropagation();window.cmGenerateSingleActivityReportById(decodeURIComponent(this.dataset.rid));return false;" title="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}" aria-label="${uiText('Generate activity report (Word)','Generate laporan activity (Word)')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></button>`:''}
           ${cmCanMutate()?`<button class="icon-btn" data-action="edit" data-id="${a.id}" title="${uiText('Edit','Edit')}">${iconEdit()}</button><button class="icon-btn" data-action="delete" data-id="${a.id}" title="${uiText('Delete','Hapus')}">${iconTrash()}</button>`:''}
           ${cmCanMutate()&&cmIsEoEnabled(a.eoEnabled)?`<button class="icon-btn eo-manage-btn" data-action="event" data-id="${a.id}" title="${uiText('Manage Event','Kelola Event')}" aria-label="${uiText('Manage Event','Kelola Event')}">${cmEoWorkspaceIcon()}</button>`:''}
         </div>
@@ -10363,7 +10410,7 @@ function switchTab(tab) {
   if (targetPanel) targetPanel.classList.remove('hidden');
   document.getElementById('btnAdd')?.classList.toggle('hidden', tab !== 'table' || !cmCanMutate());
   document.getElementById('btnImport')?.classList.toggle('hidden',tab==='tasks'||!cmCanMutate());
-  document.getElementById('btnExport')?.classList.toggle('hidden',tab==='tasks'||!cmCanMutate());
+  document.getElementById('btnExport')?.classList.toggle('hidden',tab==='tasks'||!cmCanReport());
   configureContextToolbar(tab);
   renderActiveTab();
   if(typeof cmAccessLogMenu==='function')cmAccessLogMenu(tab);
@@ -10708,9 +10755,9 @@ function cmRefEligibleDoc(d){if(!d||d.status!=='active'||d.aiEnabled===false)ret
 function cmRefMetaScore(d,question){return cmAiScoreText([d.title,d.description,d.category,cmRefTaxLabel(d.category),d.tags,(d.keywords||[]).join(' '),d.searchPreview,d.fileName].join(' '),question)+(cmRefNormalizeTitle(d.title).includes(cmRefNormalizeTitle(question))?3:0);}
 async function cmRefSearchRelevant(question){await cmRefLoadIndex();const eligible=cmRefState.docs.filter(cmRefEligibleDoc),ranked=eligible.map(d=>({d,score:cmRefMetaScore(d,question)})).sort((a,b)=>b.score-a.score),positive=ranked.filter(x=>x.score>0),candidates=positive.length?positive.slice(0,4):ranked.slice(0,2),hits=[];for(const x of candidates){const chunks=await cmRefLoadChunks(x.d);chunks.forEach(c=>{const score=cmAiScoreText([c.text,c.locator,c.section,(c.keywords||[]).join(' ')].join(' '),question)+(x.score*.25);if(score>0)hits.push({doc:x.d,chunk:c,score});});}return hits.sort((a,b)=>b.score-a.score).slice(0,5);}
 async function cmRefMigrateLegacy(){await cmRefLoadIndex();if(!cmCanManageReferences())return;if(cmRefState.docs.length)return;const g=ensureCmReferenceGroup(),legacy=(g.items||[]).filter(i=>i.aiText);if(!legacy.length)return;for(const old of legacy){const chunks=cmRefChunkSections([{locator:'Legacy import',section:'Legacy import',text:old.aiText}]),id=uid('REFD'),doc={id,title:old.title||'Legacy CM Reference',description:old.desc||'',sourceUrl:old.url||'',fileName:'',fileType:'legacy',sizeBytes:0,category:'other',tags:old.tags||'',keywords:cmRefKeywords(old.aiText||'',45),searchPreview:String(old.aiText||'').slice(0,2600),version:1,status:'active',aiEnabled:true,accessLevel:'internal',allowedEmails:'',createdAt:old.updatedAt||cmRefNow(),createdBy:old.updatedBy||getCurrentUserEmail()||'',updatedAt:cmRefNow(),updatedBy:getCurrentUserEmail()||'',chunkCount:chunks.length,charCount:String(old.aiText||'').length,wordCount:cmRefWordCount(old.aiText||''),partCount:1,legacyMigrated:true};await cmRefPersistPayload(doc,chunks);cmRefState.docs.push(cmRefIndexMeta(doc));}g.items=(g.items||[]).filter(i=>!i.aiText);await cmRefPersistIndex();await persistKnowledge();toast(uiText('Legacy AI references were migrated to CM Reference Library v2.','Referensi AI lama berhasil dimigrasikan ke CM Reference Library v2.'),'success');}
-function cmRefCategoryTileHtml(){if(!(cmGetAccessRole()===CM_ROLE_SUPERADMIN||cmGetAccessRole()===CM_ROLE_ADMIN))return'';const visible=cmRefState.docs.filter(cmRefEligibleDoc),active=visible.filter(d=>d.status==='active').length;return `<button type="button" class="kb-category-tile kb-ai-ref-tile" data-scroll="cm-reference-library"><div class="kb-category-icon">${knowledgeIcon('reference')}</div><span>CM Reference Library</span><small>${active}</small></button>`;}
+function cmRefCategoryTileHtml(){if(!cmCanReport())return'';const visible=cmRefState.docs.filter(cmRefEligibleDoc),active=visible.filter(d=>d.status==='active').length;return `<button type="button" class="kb-category-tile kb-ai-ref-tile" data-scroll="cm-reference-library"><div class="kb-category-icon">${knowledgeIcon('reference')}</div><span>CM Reference Library</span><small>${active}</small></button>`;}
 function cmRefStatusBadge(d){if(d.status==='archived')return `<span class="cm-ref-status archived">${uiText('Archived','Arsip')}</span>`;if(d.aiEnabled===false)return `<span class="cm-ref-status review">${uiText('Not AI Searchable','Tidak AI Searchable')}</span>`;return `<span class="cm-ref-status indexed">✓ AI Searchable</span>`;}
-function cmRefRenderSection(kf,q){if(!(cmGetAccessRole()===CM_ROLE_SUPERADMIN||cmGetAccessRole()===CM_ROLE_ADMIN))return'';if(kf.group!=='ALL'&&kf.group!=='cm-reference-library')return'';if(kf.type!=='ALL'&&kf.type!=='reference-v2')return'';const u=cmRefState.ui||{},collapsed=!!u.collapsed,search=normalizeActivitySearchText([q||'',u.search||''].join(' ')),visible=cmRefState.docs.filter(d=>d.accessLevel!=='restricted'||cmRefEligibleDoc({...d,status:'active'})),docs=visible.filter(d=>{if(u.status&&u.status!=='ALL'&&d.status!==u.status)return false;if(u.category&&u.category!=='ALL'&&d.category!==u.category)return false;const hay=normalizeActivitySearchText([d.title,d.description,d.fileName,d.tags,d.category,cmRefTaxLabel(d.category),(d.keywords||[]).join(' '),d.searchPreview].join(' '));return !search||hay.includes(search);}),active=visible.filter(d=>d.status==='active').length,chunks=visible.filter(d=>d.status==='active').reduce((n,d)=>n+(Number(d.chunkCount)||0),0),indexed=visible.filter(d=>d.status==='active'&&d.aiEnabled!==false).length;return `<section class="cm-ref-v2 ${collapsed?'collapsed':''}" id="kbgroup-cm-reference-library"><div class="cm-ref-head"><div><div class="cm-ref-eyebrow">AI KNOWLEDGE CORPUS</div><h3>CM Reference Library</h3><p>${uiText('Authoritative CM documents are extracted, chunked, and synced to Firestore for grounded AI answers. Original files may remain in SharePoint/Teams.','Dokumen CM otoritatif diekstrak, dipecah menjadi chunk, lalu disinkronkan ke Firestore untuk grounding jawaban AI. File asli dapat tetap berada di SharePoint/Teams.')}</p></div><div class="cm-ref-head-actions">${cmCanManageReferences()?`<button class="btn btn-gold btn-sm" id="cmRefUploadBtn">${iconUpload()} ${uiText('Upload Documents','Upload Dokumen')}</button>`:''}<button type="button" class="cm-ref-collapse" id="cmRefCollapseBtn" aria-expanded="${collapsed?'false':'true'}" title="${collapsed?uiText('Expand CM Reference Library','Buka CM Reference Library'):uiText('Collapse CM Reference Library','Tutup CM Reference Library')}" aria-label="${collapsed?uiText('Expand CM Reference Library','Buka CM Reference Library'):uiText('Collapse CM Reference Library','Tutup CM Reference Library')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></div></div><div class="cm-ref-body"><div class="cm-ref-stats"><div><b>${active}</b><span>${uiText('Active Documents','Dokumen Aktif')}</span></div><div><b>${chunks}</b><span>Knowledge Chunks</span></div><div><b>${indexed}</b><span>AI Searchable</span></div><div><b>${visible.filter(d=>d.status==='archived').length}</b><span>${uiText('Archived Versions','Versi Arsip')}</span></div></div><div class="cm-ref-toolbar"><input id="cmRefSearch" value="${escapeHtml(u.search||'')}" placeholder="${uiText('Search references...','Cari referensi...')}"><select id="cmRefCategory"><option value="ALL">${uiText('All CM categories','Semua kategori CM')}</option>${CM_REF_TAXONOMY.map(x=>`<option value="${x[0]}" ${u.category===x[0]?'selected':''}>${escapeHtml(currentLang==='id'?x[2]:x[1])}</option>`).join('')}</select><select id="cmRefStatus"><option value="active" ${u.status==='active'?'selected':''}>${uiText('Active only','Aktif saja')}</option><option value="archived" ${u.status==='archived'?'selected':''}>${uiText('Archived','Arsip')}</option><option value="ALL" ${u.status==='ALL'?'selected':''}>${uiText('All versions','Semua versi')}</option></select></div>${docs.length?`<div class="cm-ref-list">${docs.map(d=>`<article class="cm-ref-card"><div class="cm-ref-fileicon">${String(d.fileType||'REF').slice(0,4).toUpperCase()}</div><div class="cm-ref-main"><div class="cm-ref-titleline"><b>${escapeHtml(d.title)}</b><span class="cm-ref-version">v${Number(d.version)||1}</span>${cmRefStatusBadge(d)}</div><div class="cm-ref-meta"><span>${escapeHtml(cmRefTaxLabel(d.category))}</span><span>${escapeHtml(cmRefAccessLabel(d.accessLevel))}</span><span>${Number(d.chunkCount)||0} chunks</span><span>${Math.round((Number(d.charCount)||0)/1000)}k chars</span>${d.fileName?`<span>${escapeHtml(d.fileName)}</span>`:''}</div><p>${escapeHtml(d.description||d.searchPreview||'').slice(0,240)}</p>${d.tags?`<div class="cm-ref-tags">${String(d.tags).split(',').map(t=>t.trim()).filter(Boolean).slice(0,8).map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}<div class="cm-ref-source">${d.sourceUrl?`<a href="${escapeHtml(d.sourceUrl)}" target="_blank" rel="noopener">${uiText('Original source','Sumber asli')} ↗</a>`:`<span>${uiText('Original file not stored in Firebase','File asli tidak disimpan di Firebase')}</span>`} · ${uiText('Updated','Diperbarui')} ${d.updatedAt?dayjs(d.updatedAt).format('D MMM YYYY HH:mm'):'-'}</div></div><div class="cm-ref-actions"><button class="icon-btn" data-ref-preview="${d.id}" title="${uiText('Preview extracted chunks','Preview chunk hasil ekstraksi')}">👁</button>${cmCanManageReferences()?`<button class="icon-btn" data-ref-edit="${d.id}" title="${uiText('Edit metadata','Edit metadata')}">✎</button><button class="icon-btn" data-ref-version="${d.id}" title="${uiText('Upload new version','Upload versi baru')}">↻</button><button class="icon-btn" data-ref-delete="${d.id}" title="${uiText('Delete reference and chunks','Hapus referensi dan chunk')}">🗑</button>`:''}</div></article>`).join('')}</div>`:`<div class="cm-ref-empty"><b>${uiText('No reference document matched.','Tidak ada dokumen referensi yang cocok.')}</b><span>${isLoggedIn()?uiText('Upload CM material such as PDF, DOCX, PPTX, or XLSX.','Upload materi CM seperti PDF, DOCX, PPTX, atau XLSX.'):uiText('Sign in to manage the AI Reference Library.','Login untuk mengelola AI Reference Library.')}</span></div>`}</div></section>`;}
+function cmRefRenderSection(kf,q){if(!cmCanReport())return'';if(kf.group!=='ALL'&&kf.group!=='cm-reference-library')return'';if(kf.type!=='ALL'&&kf.type!=='reference-v2')return'';const u=cmRefState.ui||{},collapsed=!!u.collapsed,search=normalizeActivitySearchText([q||'',u.search||''].join(' ')),visible=cmRefState.docs.filter(d=>d.accessLevel!=='restricted'||cmRefEligibleDoc({...d,status:'active'})),docs=visible.filter(d=>{if(u.status&&u.status!=='ALL'&&d.status!==u.status)return false;if(u.category&&u.category!=='ALL'&&d.category!==u.category)return false;const hay=normalizeActivitySearchText([d.title,d.description,d.fileName,d.tags,d.category,cmRefTaxLabel(d.category),(d.keywords||[]).join(' '),d.searchPreview].join(' '));return !search||hay.includes(search);}),active=visible.filter(d=>d.status==='active').length,chunks=visible.filter(d=>d.status==='active').reduce((n,d)=>n+(Number(d.chunkCount)||0),0),indexed=visible.filter(d=>d.status==='active'&&d.aiEnabled!==false).length;return `<section class="cm-ref-v2 ${collapsed?'collapsed':''}" id="kbgroup-cm-reference-library"><div class="cm-ref-head"><div><div class="cm-ref-eyebrow">AI KNOWLEDGE CORPUS</div><h3>CM Reference Library</h3><p>${uiText('Authoritative CM documents are extracted, chunked, and synced to Firestore for grounded AI answers. Original files may remain in SharePoint/Teams.','Dokumen CM otoritatif diekstrak, dipecah menjadi chunk, lalu disinkronkan ke Firestore untuk grounding jawaban AI. File asli dapat tetap berada di SharePoint/Teams.')}</p></div><div class="cm-ref-head-actions">${cmCanManageReferences()?`<button class="btn btn-gold btn-sm" id="cmRefUploadBtn">${iconUpload()} ${uiText('Upload Documents','Upload Dokumen')}</button>`:''}<button type="button" class="cm-ref-collapse" id="cmRefCollapseBtn" aria-expanded="${collapsed?'false':'true'}" title="${collapsed?uiText('Expand CM Reference Library','Buka CM Reference Library'):uiText('Collapse CM Reference Library','Tutup CM Reference Library')}" aria-label="${collapsed?uiText('Expand CM Reference Library','Buka CM Reference Library'):uiText('Collapse CM Reference Library','Tutup CM Reference Library')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button></div></div><div class="cm-ref-body"><div class="cm-ref-stats"><div><b>${active}</b><span>${uiText('Active Documents','Dokumen Aktif')}</span></div><div><b>${chunks}</b><span>Knowledge Chunks</span></div><div><b>${indexed}</b><span>AI Searchable</span></div><div><b>${visible.filter(d=>d.status==='archived').length}</b><span>${uiText('Archived Versions','Versi Arsip')}</span></div></div><div class="cm-ref-toolbar"><input id="cmRefSearch" value="${escapeHtml(u.search||'')}" placeholder="${uiText('Search references...','Cari referensi...')}"><select id="cmRefCategory"><option value="ALL">${uiText('All CM categories','Semua kategori CM')}</option>${CM_REF_TAXONOMY.map(x=>`<option value="${x[0]}" ${u.category===x[0]?'selected':''}>${escapeHtml(currentLang==='id'?x[2]:x[1])}</option>`).join('')}</select><select id="cmRefStatus"><option value="active" ${u.status==='active'?'selected':''}>${uiText('Active only','Aktif saja')}</option><option value="archived" ${u.status==='archived'?'selected':''}>${uiText('Archived','Arsip')}</option><option value="ALL" ${u.status==='ALL'?'selected':''}>${uiText('All versions','Semua versi')}</option></select></div>${docs.length?`<div class="cm-ref-list">${docs.map(d=>`<article class="cm-ref-card"><div class="cm-ref-fileicon">${String(d.fileType||'REF').slice(0,4).toUpperCase()}</div><div class="cm-ref-main"><div class="cm-ref-titleline"><b>${escapeHtml(d.title)}</b><span class="cm-ref-version">v${Number(d.version)||1}</span>${cmRefStatusBadge(d)}</div><div class="cm-ref-meta"><span>${escapeHtml(cmRefTaxLabel(d.category))}</span><span>${escapeHtml(cmRefAccessLabel(d.accessLevel))}</span><span>${Number(d.chunkCount)||0} chunks</span><span>${Math.round((Number(d.charCount)||0)/1000)}k chars</span>${d.fileName?`<span>${escapeHtml(d.fileName)}</span>`:''}</div><p>${escapeHtml(d.description||d.searchPreview||'').slice(0,240)}</p>${d.tags?`<div class="cm-ref-tags">${String(d.tags).split(',').map(t=>t.trim()).filter(Boolean).slice(0,8).map(t=>`<span>${escapeHtml(t)}</span>`).join('')}</div>`:''}<div class="cm-ref-source">${d.sourceUrl?`<a href="${escapeHtml(d.sourceUrl)}" target="_blank" rel="noopener">${uiText('Original source','Sumber asli')} ↗</a>`:`<span>${uiText('Original file not stored in Firebase','File asli tidak disimpan di Firebase')}</span>`} · ${uiText('Updated','Diperbarui')} ${d.updatedAt?dayjs(d.updatedAt).format('D MMM YYYY HH:mm'):'-'}</div></div><div class="cm-ref-actions"><button class="icon-btn" data-ref-preview="${d.id}" title="${uiText('Preview extracted chunks','Preview chunk hasil ekstraksi')}">👁</button>${cmCanManageReferences()?`<button class="icon-btn" data-ref-edit="${d.id}" title="${uiText('Edit metadata','Edit metadata')}">✎</button><button class="icon-btn" data-ref-version="${d.id}" title="${uiText('Upload new version','Upload versi baru')}">↻</button><button class="icon-btn" data-ref-delete="${d.id}" title="${uiText('Delete reference and chunks','Hapus referensi dan chunk')}">🗑</button>`:''}</div></article>`).join('')}</div>`:`<div class="cm-ref-empty"><b>${uiText('No reference document matched.','Tidak ada dokumen referensi yang cocok.')}</b><span>${isLoggedIn()?uiText('Upload CM material such as PDF, DOCX, PPTX, or XLSX.','Upload materi CM seperti PDF, DOCX, PPTX, atau XLSX.'):uiText('Sign in to manage the AI Reference Library.','Login untuk mengelola AI Reference Library.')}</span></div>`}</div></section>`;}
 function cmRefWireSection(container){document.getElementById('cmRefUploadBtn')?.addEventListener('click',()=>cmRefOpenUploadModal());document.getElementById('cmRefCollapseBtn')?.addEventListener('click',()=>{cmRefState.ui.collapsed=!cmRefState.ui.collapsed;renderKnowledge();});document.getElementById('cmRefSearch')?.addEventListener('input',e=>{cmRefState.ui.search=e.target.value;clearTimeout(cmRefSearchTimer);const caret=e.target.selectionStart||e.target.value.length;cmRefSearchTimer=setTimeout(()=>{renderKnowledge();setTimeout(()=>{const x=document.getElementById('cmRefSearch');if(x){x.focus();try{x.setSelectionRange(caret,caret);}catch(_){}}},0);},220);});document.getElementById('cmRefCategory')?.addEventListener('change',e=>{cmRefState.ui.category=e.target.value;renderKnowledge();});document.getElementById('cmRefStatus')?.addEventListener('change',e=>{cmRefState.ui.status=e.target.value;renderKnowledge();});container.querySelectorAll('[data-ref-preview]').forEach(b=>b.onclick=()=>cmRefPreviewDocument(b.dataset.refPreview));container.querySelectorAll('[data-ref-edit]').forEach(b=>b.onclick=()=>cmRefEditMetadata(b.dataset.refEdit));container.querySelectorAll('[data-ref-version]').forEach(b=>b.onclick=()=>cmRefOpenUploadModal(b.dataset.refVersion));container.querySelectorAll('[data-ref-delete]').forEach(b=>b.onclick=()=>cmRefConfirmDelete(b.dataset.refDelete));}
 function cmRefUploadRowHtml(p,i){const old=p.baseDoc;return `<div class="cm-ref-upload-row" data-pending="${i}"><div class="cm-ref-upload-top"><div><b>${escapeHtml(p.file.name)}</b><span>${String(p.file.name).split('.').pop().toUpperCase()} · ${Math.round(p.file.size/1024)} KB</span></div><span class="cm-ref-status ${p.error?'failed':p.ready?'indexed':'review'}">${p.error?uiText('Extraction failed','Ekstraksi gagal'):p.ready?uiText('Ready to review','Siap direview'):uiText('Extracting...','Mengekstrak...')}</span></div>${p.error?`<div class="cm-ref-error">${escapeHtml(p.error)}</div>`:`<div class="form-grid cm-ref-upload-fields"><div class="form-field full"><label>${uiText('Document title','Judul dokumen')}</label><input data-ref-field="title" value="${escapeHtml(p.title||'')}"></div><div class="form-field"><label>${uiText('CM Category','Kategori CM')}</label><select data-ref-field="category">${CM_REF_TAXONOMY.map(x=>`<option value="${x[0]}" ${(p.category||old?.category)==x[0]?'selected':''}>${escapeHtml(currentLang==='id'?x[2]:x[1])}</option>`).join('')}</select></div><div class="form-field"><label>${uiText('Access','Akses')}</label><select data-ref-field="accessLevel">${CM_REF_ACCESS.map(x=>`<option value="${x[0]}" ${(p.accessLevel||old?.accessLevel||'internal')===x[0]?'selected':''}>${escapeHtml(currentLang==='id'?x[2]:x[1])}</option>`).join('')}</select></div><div class="form-field full"><label>${uiText('Description','Deskripsi')}</label><textarea data-ref-field="description">${escapeHtml(p.description||old?.description||'')}</textarea></div><div class="form-field full"><label>${uiText('Tags / keywords','Tag / kata kunci')}</label><input data-ref-field="tags" value="${escapeHtml(p.tags||old?.tags||'')}" placeholder="framework CM, stakeholder, readiness"></div><div class="form-field full"><label>${uiText('Original source URL (optional)','URL sumber asli (opsional)')}</label><input type="url" data-ref-field="sourceUrl" value="${escapeHtml(p.sourceUrl||old?.sourceUrl||'')}" placeholder="https://...sharepoint.com/..."></div><div class="form-field full cm-ref-restricted ${((p.accessLevel||old?.accessLevel)==='restricted')?'':'hidden'}"><label>${uiText('Allowed emails for Restricted','Email yang diizinkan untuk Terbatas')}</label><input data-ref-field="allowedEmails" value="${escapeHtml(p.allowedEmails||old?.allowedEmails||'')}"></div></div><div class="cm-ref-extract-preview"><div><b>${p.result?.summary?.sections||0}</b><span>${uiText('sections','bagian')}</span></div><div><b>${p.result?.summary?.chunks||0}</b><span>chunks</span></div><div><b>${p.result?.summary?.words||0}</b><span>words</span></div><div><b>${Math.round((p.result?.summary?.chars||0)/1000)}k</b><span>chars</span></div></div>${p.result?.truncated?`<div class="cm-ref-warning">${uiText('Very large document was capped. Split it by chapter/topic for better retrieval.','Dokumen sangat besar dibatasi. Pecah per bab/topik agar retrieval lebih baik.')}</div>`:''}<details class="cm-ref-snippet"><summary>${uiText('Preview extracted content','Preview hasil ekstraksi')}</summary><pre>${escapeHtml((p.result?.chunks||[]).slice(0,3).map(c=>`[${c.locator}]\n${c.text}`).join('\n\n').slice(0,5000))}</pre></details>`}</div>`;}
 async function cmRefExtractPending(p){try{p.result=await cmRefExtractFile(p.file);p.ready=true;if(!p.title)p.title=p.file.name.replace(/\.[^.]+$/,'');}catch(e){p.error=e.message||String(e);p.ready=false;}cmRefRenderUploadPending();}
