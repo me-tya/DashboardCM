@@ -1141,6 +1141,21 @@ table.matrix-table td.matrix-total{background:var(--gold-100);font-weight:800;co
   .eo-detail-status{grid-column:2;justify-self:start;}
 }
 
+/* Materi: grid thumbnail (gaya kartu Dokumentasi Modul Transformasi) */
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:9px;width:100%;margin:2px 0 6px}
+.mat-th{border:1px solid #DCE5F1;border-radius:10px;background:#fff;overflow:hidden;min-width:0}
+.mat-open{border:0;padding:0;display:block;width:100%;height:103px;background:#EEF3FB;cursor:pointer;overflow:hidden}
+.mat-open:hover{filter:brightness(.97)}
+.mat-img{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#EEF3FB center/cover no-repeat;color:#c0392b;font-weight:800}
+.mat-img .doc-thumb-spinner{width:18px;height:18px}
+.mat-ic{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;color:var(--mc,#5F7396)}
+.mat-ic svg{width:32px;height:32px}.mat-ic b{font-size:10.5px;letter-spacing:.4px;background:var(--mc,#5F7396);color:#fff;border-radius:5px;padding:1px 7px}
+.mat-link{--mc:#2B5CB8}
+.mat-cap{display:flex;align-items:center;gap:4px;padding:5px 7px;min-height:31px}
+.mat-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;font-size:11px;font-weight:700;color:#31415D}
+.mat-act{display:flex;gap:3px;align-items:center}
+.mat-act button{border:0;background:#EDF3FB;color:#26456D;display:grid;place-items:center;border-radius:5px;width:23px;height:23px;cursor:pointer;font-size:13px;padding:0;line-height:1}
+.mat-act button:hover{background:#D6E5F7}.mat-act .mat-rm:hover{background:#FBE3E1;color:#B42318}
 /* ===== DOCUMENTATION (image attachments) ===== */
 .doc-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:2px;}
 .doc-thumb{
@@ -12701,12 +12716,34 @@ async function hydrateGenericActivityFiles(container){
   const nodes=[...container.querySelectorAll('[data-generic-ref]')];
   await Promise.all(nodes.map(async n=>{const url=await fetchDocImageDataUrl(n.dataset.genericRef);if(!url){n.classList.add('disabled');return;}n.href=url;n.download=n.dataset.name||'attachment';}));
 }
+/* Materi: tampil sebagai thumbnail. Gambar → pratinjau (klik = lightbox); berkas lain → ikon jenis berkas (klik = unduh); tautan → ikon tautan (klik = buka tab baru). */
+function cmMatKind(x){const n=String(x.name||x.url||''),m=String(x.mime||'');if(m.startsWith('image/')||/\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(n))return 'img';if(!x.refId&&x.url&&!/\.[a-z0-9]{2,5}(\?|#|$)/i.test(n.split('/').pop()||''))return 'link';return 'file'}
+function cmMatExt(x){const n=String(x.name||fileNameFromUrl(x.url||'')||'');const e=(n.split('?')[0].split('.').pop()||'').toUpperCase();return e.length<=5&&e!==n.toUpperCase()?e:'FILE'}
+function cmMatThumbsHtml(rows){
+  const ic={PDF:'#C0392B',PPT:'#D35400',PPTX:'#D35400',DOC:'#2B5CB8',DOCX:'#2B5CB8',XLS:'#1E7D45',XLSX:'#1E7D45',CSV:'#1E7D45',ZIP:'#6B7284'};
+  return `<div class="mat-grid">${rows.map((x,i)=>{const k=cmMatKind(x),nm=x.name||fileNameFromUrl(x.url||'')||uiText('Attachment','Lampiran'),ext=cmMatExt(x);
+    const body=k==='img'?`<span class="mat-img" data-mat-img="${i}"${x.url&&!x.refId?` style="background-image:url('${escapeHtml(x.url)}')"`:''}><i class="doc-thumb-spinner"></i></span>`
+      :k==='link'?`<span class="mat-ic mat-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/></svg><b>LINK</b></span>`
+      :`<span class="mat-ic" style="--mc:${ic[ext]||'#425066'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><b>${escapeHtml(ext)}</b></span>`;
+    const dl=x.refId?`<button type="button" data-mat-dl="${i}" title="${uiText('Download','Unduh')}" aria-label="${uiText('Download','Unduh')}">↓</button>`:'';
+    return `<div class="mat-th" data-mat="${i}" data-kind="${k}"><button type="button" class="mat-open" data-mat-open="${i}" title="${escapeHtml(nm)}" aria-label="${escapeHtml(nm)}">${body}</button><div class="mat-cap"><span class="mat-nm" title="${escapeHtml(nm)}">${escapeHtml(nm)}</span><span class="mat-act">${dl}<button type="button" class="mat-rm" data-remove-file="${i}" title="${uiText('Remove','Hapus')}" aria-label="${uiText('Remove','Hapus')}">&times;</button></span></div></div>`}).join('')}</div>`}
+function cmMatThumbsBind(host){
+  const rows=parseActivityFiles(document.getElementById('materiFilesHidden')?.value);
+  host.querySelectorAll('[data-mat-img]').forEach(async el=>{const x=rows[+el.dataset.matImg];if(!x)return;let u=x.url&&!x.refId?x.url:null;if(x.refId)u=await fetchDocImageDataUrl(x.refId);if(u){el.style.backgroundImage=`url('${u.replace(/'/g,"%27")}')`;el.dataset.src=u}else el.classList.add('err');el.innerHTML=u?'':'!'});
+  host.querySelectorAll('[data-mat-dl]').forEach(b=>b.onclick=async()=>{const x=rows[+b.dataset.matDl];if(!x?.refId)return;const u=await fetchDocImageDataUrl(x.refId);if(!u){toast(uiText('File not found.','Berkas tidak ditemukan.'),'error');return}const a=document.createElement('a');a.href=u;a.download=x.name||'lampiran';document.body.appendChild(a);a.click();a.remove()});
+  host.querySelectorAll('[data-mat-open]').forEach(b=>b.onclick=async()=>{const i=+b.dataset.matOpen,x=rows[i],th=b.closest('.mat-th');if(!x)return;const nm=x.name||fileNameFromUrl(x.url||'')||'lampiran';
+    if(th.dataset.kind==='img'){const src=b.querySelector('[data-mat-img]')?.dataset.src||x.url;if(src)openImageLightbox(src,nm);return}
+    if(x.refId){const u=await fetchDocImageDataUrl(x.refId);if(!u){toast(uiText('File not found.','Berkas tidak ditemukan.'),'error');return}const a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();return}
+    if(x.url)window.open(/^www\./i.test(x.url)?'https://'+x.url:x.url,'_blank','noopener')});
+}
 function setupActivityFileEditors(ownerId){
   document.querySelectorAll('[data-file-editor]').forEach(host=>{
     const field=host.dataset.fileEditor,hidden=document.getElementById(field+'Hidden');let rows=parseActivityFiles(hidden?.value);
     if(host.dataset.versioned==='1'&&typeof cmAfVersionedEditor==='function'&&hidden){cmAfVersionedEditor(host,field,hidden,ownerId);return;}
     const sync=()=>{hidden.value=JSON.stringify(rows);};
-    const draw=()=>{host.innerHTML=`<div class="activity-file-list">${rows.map((x,i)=>`<div class="activity-file-row"><span title="${escapeHtml(x.name||x.url||'')}">${escapeHtml(x.name||fileNameFromUrl(x.url||'')||uiText('Attachment','Lampiran'))}</span><button type="button" class="icon-btn" data-remove-file="${i}" title="${uiText('Remove','Hapus')}">×</button></div>`).join('')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><input type="url" data-new-url placeholder="https://..." style="flex:1;min-width:220px"><button type="button" class="btn btn-outline btn-sm" data-add-url>+ ${uiText('Add link','Tambah link')}</button><button type="button" class="btn btn-outline btn-sm" data-add-file>+ ${uiText('Add file','Tambah file')}</button><input type="file" data-file-input multiple hidden></div><small style="color:var(--ink-500)">${uiText('Add multiple links/files. Local files max. 600 KB each.','Bisa tambah beberapa link/file. File lokal maks. 600 KB per file.')}</small>`;
+    const thumbs=field==='materiFiles';
+    const draw=()=>{host.innerHTML=`${thumbs?cmMatThumbsHtml(rows):''}<div class="activity-file-list"${thumbs?' hidden':''}>${rows.map((x,i)=>`<div class="activity-file-row"><span title="${escapeHtml(x.name||x.url||'')}">${escapeHtml(x.name||fileNameFromUrl(x.url||'')||uiText('Attachment','Lampiran'))}</span><button type="button" class="icon-btn" data-remove-file="${i}" title="${uiText('Remove','Hapus')}">×</button></div>`).join('')}</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px"><input type="url" data-new-url placeholder="https://..." style="flex:1;min-width:220px"><button type="button" class="btn btn-outline btn-sm" data-add-url>+ ${uiText('Add link','Tambah link')}</button><button type="button" class="btn btn-outline btn-sm" data-add-file>+ ${uiText('Add file','Tambah file')}</button><input type="file" data-file-input multiple hidden></div><small style="color:var(--ink-500)">${uiText('Add multiple links/files. Local files max. 600 KB each.','Bisa tambah beberapa link/file. File lokal maks. 600 KB per file.')}</small>`;
+      if(thumbs)cmMatThumbsBind(host);
       host.querySelectorAll('[data-remove-file]').forEach(b=>b.onclick=async()=>{const old=rows[Number(b.dataset.removeFile)];rows.splice(Number(b.dataset.removeFile),1);sync();draw();if(old?.refId)try{await deleteDocImage(old.refId)}catch(e){}});
       host.querySelector('[data-add-url]').onclick=()=>{const inp=host.querySelector('[data-new-url]'),url=inp.value.trim();if(!isUrlLike(url)){toast(uiText('Enter a valid URL.','Masukkan URL yang valid.'),'error');return;}const fixed=/^www\./i.test(url)?'https://'+url:url;rows.push({url:fixed,name:fileNameFromUrl(fixed)});sync();draw();};
       host.querySelector('[data-add-file]').onclick=()=>host.querySelector('[data-file-input]').click();
