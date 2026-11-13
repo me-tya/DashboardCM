@@ -1,0 +1,180 @@
+/*
+ * Dashboard CM 261114-DCM-25 — every internal Tim Pusmantap view
+ * shares the same soft blue, equal-width tab bar as Agenda, CRA, Priority.
+ * Removes the last repeated navy section header, without touching CRUD.
+ */
+body.cm-embedded .tp-live{
+  --dcm-tp-ink:#173A74;
+  --dcm-tp-sub-bg:#F1F5FC;
+  --dcm-tp-sub-active:#DCE9FB;
+  --dcm-tp-sub-border:#DEE7F4;
+  font-family:Inter,"Segoe UI",Arial,sans-serif!important;
+}
+body.cm-embedded .tp-live > .card > .head{
+  padding:7px 10px!important;
+  min-height:0!important;
+  background:#FFF!important;
+  border-bottom:1px solid #E8EDF5!important;
+}
+body.cm-embedded .tp-live .seg.tabs2{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-height:45px!important;
+  margin:0!important;
+  padding:4px!important;
+  gap:4px!important;
+  background:var(--dcm-tp-sub-bg)!important;
+  border:1px solid var(--dcm-tp-sub-border)!important;
+  border-radius:11px!important;
+  box-shadow:none!important;
+  overflow-x:auto!important;
+  scrollbar-width:thin;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view]{
+  display:flex!important;
+  flex:1 1 0!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  min-height:37px!important;
+  padding:7px 5px!important;
+  margin:0!important;
+  gap:6px!important;
+  border:0!important;
+  border-bottom:0!important;
+  border-radius:8px!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  font:650 12px/1.2 Inter,"Segoe UI",Arial,sans-serif!important;
+  color:#4C6080!important;
+  text-align:center!important;
+  overflow-wrap:anywhere!important;
+  white-space:normal!important;
+  cursor:pointer;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view].on,
+body.cm-embedded .tp-live .seg.tabs2 [data-view][aria-selected="true"]{
+  background:var(--dcm-tp-sub-active)!important;
+  color:var(--dcm-tp-ink)!important;
+  font-weight:750!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view].on svg,
+body.cm-embedded .tp-live .seg.tabs2 [data-view][aria-selected="true"] svg{
+  color:var(--dcm-tp-ink)!important;
+  stroke:currentColor!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view]:not(.on):hover{
+  background:#E7EFFA!important;
+  color:var(--dcm-tp-ink)!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view]:focus-visible{
+  outline:2px solid #3C70B7!important;
+  outline-offset:2px!important;
+}
+
+/* Remove the extra dark banner in Highlight, keeping live sync status & tools. */
+body.cm-embedded .tp-live .band{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 10px!important;
+  padding:8px 2px!important;
+  min-height:0!important;
+  background:transparent!important;
+  background-image:none!important;
+  color:var(--dcm-tp-ink)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+body.cm-embedded .tp-live .band::before,
+body.cm-embedded .tp-live .band::after{display:none!important}
+body.cm-embedded .tp-live .band h2{display:none!important}
+body.cm-embedded .tp-live .band .sub{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  color:#536A88!important;
+  opacity:1!important;
+  font-size:11.5px!important;
+  margin:0!important;
+}
+body.cm-embedded .tp-live .band .tools{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  margin-left:auto!important;
+}
+body.cm-embedded .tp-live .band .btn.on-dark{
+  background:#FFF!important;
+  border:1px solid #C8D6E9!important;
+  color:var(--dcm-tp-ink)!important;
+}
+body.cm-embedded .tp-live .band .btn.on-dark:hover{
+  background:#EDF4FE!important;
+  border-color:#A8BCD7!important;
+}
+
+/* No repeated full-width title inside each of the remaining subviews.
+   Action controls stay in exactly the same location and remain clickable. */
+body.cm-embedded .tp-live .tp-section-head{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+body.cm-embedded .tp-live .tp-section-head > div:first-child:has(>h2){
+  display:none!important;
+}
+body.cm-embedded .tp-live .tp-section-head .tp-actions{
+  display:flex!important;
+  justify-content:flex-end!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:7px!important;
+  margin-left:auto!important;
+}
+body.cm-embedded .tp-live .tp-section-head:not(:has(.tp-actions > *)){
+  display:none!important;
+}
+body.cm-embedded .tp-live .tp-panel-body{
+  padding:10px 14px 14px!important;
+  min-height:150px!important;
+}
+
+/* Desktop: equal fractional width. Small viewports: equal fixed widths + scroll. */
+@media(max-width:1180px){
+  body.cm-embedded .tp-live .seg.tabs2 [data-view]{
+    flex:0 0 148px!important;
+    min-width:148px!important;
+    max-width:148px!important;
+  }
+}
+@media(max-width:650px){
+  body.cm-embedded .tp-live > .card > .head{padding:5px 7px!important}
+  body.cm-embedded .tp-live .seg.tabs2 [data-view]{
+    flex:0 0 138px!important;
+    min-width:138px!important;
+    max-width:138px!important;
+    font-size:11.5px!important;
+  }
+  body.cm-embedded .tp-live .tp-panel-body{padding:9px 10px 12px!important}
+}
