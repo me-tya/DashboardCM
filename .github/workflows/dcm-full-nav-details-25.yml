@@ -1,0 +1,38 @@
+name: DCM full-menu component detail inventory 25
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-full-nav-details-25.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect menu-specific hero/header, tabs and selectors
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('index.html').read_text('utf8')
+          t=Path('tim-pusmantap.html').read_text('utf8')
+          funcs=['renderTable','renderAnalytics','renderTasks','renderKnowledge','renderContact','renderResource','renderSurveyHub','renderPriority','renderCalendar','renderKanban','renderMatrix','cmRenderTimPusmantap']
+          for f in funcs:
+            m=re.search(r'function\s+'+re.escape(f)+r'\s*\(',s)
+            print('\n=== FUNCTION',f,'line',s.count(chr(10),0,m.start())+1 if m else 0,'===')
+            if m:
+              begin=s[m.start():m.start()+4000]
+              print('PREFIX',begin[:1650].replace(chr(10),' '))
+              for q in ['hero','tabs','subtabs','tablist','-head','section-title','header','banner','toolbar']:
+                hits=[a.start() for a in re.finditer(re.escape(q),begin,re.I)]
+                print('PAT',q,'count',len(hits),'samples',[begin[max(0,i-115):i+160].replace(chr(10),' ')[:275] for i in hits[:4]])
+          print('\n=== CSS major navbar classes ===')
+          for key in ['.cm-survey-subtabs','.cm-survey-hero','.kb-hero','.res-hero','.prio-','.cm-contact','.ct-','.task-head','.cm-ap-tabs','.af-tabs','.cm-sr','.section-hero','.dashboard-banner','.contact-head']:
+            hits=list(re.finditer(re.escape(key),s))
+            print('KEY',key,'total',len(hits))
+            for m in hits[:4]:print('  ',s[max(0,m.start()-90):m.start()+360].replace(chr(10),' ')[:450])
+          print('\n=== HEADER ROW TOP CONTENT OF TIM PUSMANTAP ===')
+          for f in ['highlight','placement','profile','leave','render']:
+            m=re.search(r'function\s+'+f+r'\s*\(',t)
+            if m:print('TP',f,t[m.start():m.start()+1600].replace(chr(10),' ')[:1600])
+          PY
