@@ -225,7 +225,7 @@ function limitLeave(c){
  const staffAll=staff(),leaveList=leaves().filter(x=>!(c.id&&x.id===c.id&&norm(x.name)===norm(c.name))),s=dt(c.mulai),end=dt(c.selesai);
  if(!str(c.mulai)||!str(c.selesai)||!Number.isFinite(s.getTime())||!Number.isFinite(end.getTime())||end<s)return'Tanggal cuti tidak valid.';
  if(leaveList.some(x=>norm(x.name)===norm(c.name)&&x.mulai<=c.selesai&&x.selesai>=c.mulai))return'Jadwal cuti pegawai ini bertumpuk.';
- if(['Cuti Sakit','Cuti Melahirkan'].includes(c.jenis))return'';
+ if(['Cuti Sakit','Cuti Melahirkan'].includes(c.jenis))return c.mulai>today()?'Cuti Sakit atau Cuti Melahirkan dicatat setelah terjadi, bukan dijadwalkan di masa depan.':'';
  for(let d=new Date(s);d<=end;d.setDate(d.getDate()+1)){
   if([0,6].includes(d.getDay()))continue;
   const date=iso(d),all=staffAll.filter(p=>leaveList.some(x=>norm(x.name)===norm(p.name)&&x.mulai<=date&&x.selesai>=date));
