@@ -28,7 +28,7 @@ jobs:
           q=chr(96)
           dol=chr(36)
           key='  root.innerHTML='+q+'<div class="cm-survey-shell"><div class="cm-survey-hero"><div><h2>'
-          start=s.find(key,fn,stop)
+          start=s.find(key,s.index('  const tabs=',fn,stop),stop)
           assert start>=fn, 'Expected original logged-in CRA renderer'
           nav=s.find('<div class="cm-survey-subtabs">',start,stop)
           assert nav>start,'Missing existing CRA tabs'
@@ -41,6 +41,7 @@ jobs:
           assert s.count(old)==1, ('CRA subtab count target mismatch',s.count(old))
           s=s.replace(old,new,1)
           fn=s.index('function renderSurveyHub(){');stop=s.index('\nfunction renderSurveySubtab(){',fn)
+          assert 'if(!isLoggedIn())' in s[fn:stop] and 'cmEnsureSurveyListener()' in s[fn:stop], 'Login/auth and live survey listener must remain intact'
           assert 'cm-survey-hero-stat' not in s[fn:stop]
           assert 'cm-mini-stat' not in s[fn:stop]
           assert s.count('class="cm-cra-tab-count"')==1
