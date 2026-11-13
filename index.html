@@ -36,7 +36,7 @@
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot,
-    collection, addDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp, writeBatch
+    collection, addDoc, getDocs, updateDoc, query, where, orderBy, serverTimestamp, writeBatch, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -60,6 +60,7 @@
   window.fbDb = db;
   window.fbDoc = doc;
   window.fbWriteBatch = writeBatch;
+  window.fbRunTransaction = runTransaction;
   window.fbSetDoc = setDoc;
   window.fbGetDoc = getDoc;
   window.fbDeleteDoc = deleteDoc;
@@ -6351,8 +6352,127 @@ async function cmActCatchUpLegacy(){
 }
 function cmActUpdateBadge(){const el=document.getElementById('storageText');if(el&&el.title!==undefined)el.title=cmActStatusText();}
 
+
+/* Nomor publik activity: AKT-YYMMDD-NN, tanggal = rekaman pertama (WIB),
+   urutan = waktu pembuatan, bukan tanggal/jam kegiatan. ID AGD tetap kunci teknis.
+   Registry tunggal Firestore + transaksi mencegah duplikasi antarperangkat. */
+const CM_ACTIVITY_CODE_RE = /^AKT-\d{6}-\d{2,}$/;
+const CM_ACTIVITY_CODE_KEY = 'cm_activity_numbers_v1';
+const cmActivityCodeCache = new Map();
+function cmActivityCodeTime(a){
+  const id=String(a?.id||'');
+  const m=/^AGD-([a-z0-9]{8})([a-z0-9]{5})$/i.exec(id);
+  if(m){const ts=parseInt(m[1],36);if(Number.isFinite(ts)&&ts>1577836800000&&ts<4102444800000)return ts;}
+  for(const value of [a?.createdAt,a?.recordedAt,a?.created_at,a?.updatedAt]){
+    const ts=Date.parse(String(value||''));
+    if(Number.isFinite(ts)&&ts>1577836800000&&ts<4102444800000)return ts;
+  }
+  return Date.now();
+}
+function cmActivityCodeDay(a){
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Jakarta',year:'2-digit',month:'2-digit',day:'2-digit'}).formatToParts(new Date(cmActivityCodeTime(a)));
+  const f={};parts.forEach(p=>{f[p.type]=p.value;});
+  return f.year+f.month+f.day;
+}
+function cmActivityCodeSort(a,b){
+  return cmActivityCodeTime(a)-cmActivityCodeTime(b)||String(a.id||'').localeCompare(String(b.id||''));
+}
+function cmActivityPublicCode(a){
+  if(CM_ACTIVITY_CODE_RE.test(String(a?.activityCode||'')))return a.activityCode;
+  if(cmActivityCodeCache.has(a?.id))return cmActivityCodeCache.get(a.id);
+  const day=cmActivityCodeDay(a),rows=(state.agendas||[]).filter(x=>cmActivityCodeDay(x)===day).slice().sort(cmActivityCodeSort);
+  const used=new Set(rows.map(x=>CM_ACTIVITY_CODE_RE.test(String(x.activityCode||''))?x.activityCode:cmActivityCodeCache.get(x.id)).filter(Boolean));
+  let n=0;
+  for(const row of rows){
+    const saved=CM_ACTIVITY_CODE_RE.test(String(row.activityCode||''))?row.activityCode:cmActivityCodeCache.get(row.id);
+    if(saved){if(row.id===a?.id)return saved;continue;}
+    let code;do{code='AKT-'+day+'-'+String(++n).padStart(2,'0');}while(used.has(code));
+    used.add(code);
+    if(row.id===a?.id)return code;
+  }
+  return 'AKT-'+day+'-01';
+}
+function cmActivityReserveLocalCodes(rows){
+  let changed=false;
+  const sorted=rows.slice().sort(cmActivityCodeSort);
+  const used=new Set([...cmActivityCodeCache.values(),...sorted.map(a=>a.activityCode)].filter(x=>CM_ACTIVITY_CODE_RE.test(String(x||''))));
+  const next={};
+  for(const code of used){const m=/^AKT-(\d{6})-(\d{2,})$/.exec(code);if(m)next[m[1]]=Math.max(next[m[1]]||0,Number(m[2]));}
+  for(const a of sorted){
+    if(!a?.id)continue;
+    let code=cmActivityCodeCache.get(a.id)||a.activityCode;
+    if(!CM_ACTIVITY_CODE_RE.test(String(code||''))){
+      const day=cmActivityCodeDay(a);
+      do{code='AKT-'+day+'-'+String(next[day]=(next[day]||0)+1).padStart(2,'0');}while(used.has(code));
+      used.add(code);
+    }
+    cmActivityCodeCache.set(a.id,code);
+    if(a.activityCode!==code){a.activityCode=code;changed=true;}
+  }
+  return changed;
+}
+let cmActivityCodeJob=null;
+async function cmActivityReserveCodes(){
+  if(cmActivityCodeJob)return cmActivityCodeJob;
+  const rows=state.agendas||[];
+  if(!rows.some(a=>a?.id&&!CM_ACTIVITY_CODE_RE.test(String(a.activityCode||''))))return false;
+  cmActivityCodeJob=(async()=>{
+    if(!window.fbRunTransaction||!window.fbDb||!isLoggedIn()){
+      return cmActivityReserveLocalCodes(rows);
+    }
+    try{
+      const ref=window.fbDoc(window.fbDb,'dashboard',CM_ACTIVITY_CODE_KEY);
+      const ordered=rows.filter(a=>a?.id).slice().sort(cmActivityCodeSort);
+      const codes=await window.fbRunTransaction(window.fbDb,async tx=>{
+        const snap=await tx.get(ref);
+        let registry={};try{registry=JSON.parse(snap.exists()?String(snap.data()?.value||'{}'):'{}')||{};}catch(e){}
+        const map={...(registry.codes||{})},next={...(registry.next||{})};
+        const used=new Set();
+        const record=(code)=>{const m=/^AKT-(\d{6})-(\d{2,})$/.exec(code);if(!m)return;used.add(code);next[m[1]]=Math.max(Number(next[m[1]])||0,Number(m[2]));};
+        Object.values(map).forEach(code=>{if(CM_ACTIVITY_CODE_RE.test(String(code||'')))record(code);});
+        let dirty=!snap.exists();
+        // Respect existing immutable numbers and store them in the central registry.
+        for(const a of ordered){
+          if(CM_ACTIVITY_CODE_RE.test(String(map[a.id]||'')))continue;
+          const existing=String(a.activityCode||'');
+          if(CM_ACTIVITY_CODE_RE.test(existing)&&!used.has(existing)){
+            map[a.id]=existing;record(existing);dirty=true;
+          }
+        }
+        for(const a of ordered){
+          if(CM_ACTIVITY_CODE_RE.test(String(map[a.id]||'')))continue;
+          const day=cmActivityCodeDay(a);
+          let code;do{code='AKT-'+day+'-'+String(next[day]=(Number(next[day])||0)+1).padStart(2,'0');}while(used.has(code));
+          map[a.id]=code;record(code);dirty=true;
+        }
+        if(dirty)tx.set(ref,{value:JSON.stringify({codes:map,next}),updatedAt:new Date().toISOString()});
+        return map;
+      });
+      let changed=false;
+      for(const a of (state.agendas||[])){
+        const code=codes[a?.id];
+        if(!CM_ACTIVITY_CODE_RE.test(String(code||'')))continue;
+        cmActivityCodeCache.set(a.id,code);
+        if(a.activityCode!==code){a.activityCode=code;changed=true;}
+      }
+      return changed;
+    }catch(e){
+      console.warn('Could not reserve the activity numbers in Firestore; using local fallback.',e);
+      return cmActivityReserveLocalCodes(state.agendas||[]);
+    }
+  })();
+  try{return await cmActivityCodeJob;}finally{cmActivityCodeJob=null;}
+}
+function cmActivityCodesBackfill(){
+  if(!cmCanMutate()||!Array.isArray(state.agendas)||!state.agendas.length)return;
+  cmActivityReserveCodes().then(changed=>{
+    if(changed)return persist().then(()=>{try{refreshAll();}catch(e){}});
+  }).catch(e=>console.warn('Activity number backfill skipped',e));
+}
+
 async function persist() {
   if(!cmCanMutate())return cmDenyMutation();
+  await cmActivityReserveCodes();
   const dot = document.getElementById('storageDot');
   const txt = document.getElementById('storageText');
   try {
@@ -6404,6 +6524,7 @@ async function loadInitial() {
     state.agendas = preprocess(seed);
   }
   if (cmActMode !== 'docs') attachAgendaLiveSync();
+  cmActivityCodesBackfill();
 }
 
 /* ============================================================
@@ -18778,6 +18899,7 @@ window.onDashboardLogin = async function () {
       if (remoteAgenda) { try { state.agendas = preprocess(JSON.parse(remoteAgenda)); } catch (e) {} } else seedWrites.push(firestoreSet(STORAGE_KEY, JSON.stringify(state.agendas)));
       attachAgendaLiveSync();
     }
+    cmActivityCodesBackfill();
     if (remoteKnowledge) { try { state.knowledge = JSON.parse(remoteKnowledge); } catch (e) {} } else seedWrites.push(firestoreSet(KNOWLEDGE_STORAGE_KEY, JSON.stringify(state.knowledge)));
     attachKnowledgeLiveSync();
     const refLoad=cmRefLoadIndex(true).catch(e=>console.warn('Reference index load skipped',e));
@@ -20557,7 +20679,7 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
 <script src="dcm-guide-header.js?v=20261113-01"></script>
-<script src="dcm-detail-v2.js?v=261113-08"></script>
+<script src="dcm-detail-v2.js?v=261113-09"></script>
 </body>
 </html>
 
