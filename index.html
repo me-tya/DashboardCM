@@ -9696,6 +9696,32 @@ function cmHolMabimsStart(conjMs){const wib=cmHolLocalDate(conjMs,7);let d=wib;f
 /* Hari besar Islam tahun tertentu: [{iso,m,d,y}] — awal bulan MABIMS, nomor bulan dari kalender Hijriah browser. */
 function cmHolIslamicDays(year){const f=cmHolHijriFmt();if(!f)return [];const lab=iso=>{const p=f.formatToParts(new Date(iso+'T00:00:00Z')),g=k=>Number(String((p.find(x=>x.type===k)||{}).value||'').replace(/\D/g,''));return {m:g('month'),y:g('relatedYear')||g('year')};};
  const out=[],k0=Math.floor((year-2000)*12.3685)-2;for(let k=k0;k<k0+16;k++){const st=cmHolMabimsStart(cmHolMoonPhase(k,0)),h=lab(cmHolAddDays(st,14));[[7,27],[10,1],[10,2],[12,10],[1,1],[3,12]].forEach(([m,dd])=>{if(h.m!==m)return;const iso=cmHolAddDays(st,dd-1);if(iso.slice(0,4)===String(year))out.push({iso,m,d:dd,y:h.y});});}return out;}
+
+/* Proyeksi cuti bersama: pola SKB 2026–2027 dari Modul Transformasi.
+   Bukan ketetapan resmi; tidak menggantikan SKB atau data resmi lainnya. */
+function cmHolPredictCollective(year,nat){
+ const out={},dates=Object.keys(nat||{}).sort(),dow=d=>new Date(d+'T00:00:00Z').getUTCDay(),step=(d,n)=>cmHolAddDays(d,n);
+ const isOff=d=>dow(d)===0||dow(d)===6||!!nat[d];
+ const clean=s=>String(s||'').replace(/\s*\((?:perkiraan|estimate|proyeksi)\)/gi,'').replace(/\s*\(hari kedua\)/gi,'').trim();
+ const put=(d,n)=>{if(!d||d.slice(0,4)!==String(year)||isOff(d)||out[d])return;const name=clean(n);if(!name)return;out[d]={type:'collective',id:'Cuti Bersama '+name+' (proyeksi)',en:'Collective leave — '+name+' (estimate)',estimated:true,projected:true};};
+ const find=(re,exclude)=>dates.find(d=>re.test(nat[d].id||'')&&(!exclude||!exclude.test(nat[d].id||''))),name=d=>d&&nat[d]?nat[d].id:'';
+ const fitri=find(/\bidul\s*fitri\b/i,/hari kedua/i),fitri2=find(/\bidul\s*fitri\b.*hari kedua/i)||(fitri&&step(fitri,1));
+ if(fitri){put(step(fitri,-1),name(fitri));let d=fitri2,n=0,g=0;while(d&&n<2&&g++<10){d=step(d,1);if(!isOff(d)){put(d,name(fitri));n++;}}}
+ const adha=find(/idul\s*adha/i);
+ if(adha){const w=dow(adha);if(w>=1&&w<=4)put(step(adha,1),name(adha));else if(w===6)put(step(adha,-1),name(adha));}
+ const natal=find(/kelahiran yesus|christmas|natal/i);
+ if(natal)put(step(natal,dow(natal)===4?1:-1),name(natal));
+ [['imlek',/imlek/i],['nyepi',/nyepi/i],['kenaikan',/kenaikan yesus/i],['waisak',/waisak/i]].forEach(([key,re])=>{const d=find(re);if(!d)return;const w=dow(d);if(w===2)put(step(d,-1),name(d));else if(w===4)put(step(d,1),name(d));else if(w===6&&key==='imlek')put(step(d,-1),name(d));});
+ return out;
+}
+function cmHolEnrichEstimate(entry){
+ if(!entry||entry.official||!entry.items)return entry;
+ const col=cmHolPredictCollective(entry.year,entry.items),dates=Object.keys(col);
+ if(!dates.length)return entry;
+ const items={...entry.items};dates.forEach(d=>{if(!items[d])items[d]=col[d];});
+ return {...entry,items,collectiveProjected:true};
+}
+
 function cmHolidayComputeEstimate(year){
  year=Number(year);const items={},est=uiText(' (estimate)',' (perkiraan)');
  const add=(iso,id,en,approx)=>{if(!iso||iso.slice(0,4)!==String(year))return;if(items[iso])return;items[iso]={type:'national',id:id+(approx?est:''),en:en+(approx?' (estimate)':''),estimated:true};};
@@ -9723,8 +9749,9 @@ function cmHolidayComputeEstimate(year){
   if(h.m===1&&h.d===1)add(h.iso,`1 Muharam Tahun Baru Islam ${h.y} Hijriah`,`Islamic New Year ${h.y} H`,true);
   if(h.m===3&&h.d===12)add(h.iso,'Maulid Nabi Muhammad S.A.W.',"Prophet Muhammad's Birthday",true);
  });
+ Object.entries(cmHolPredictCollective(year,items)).forEach(([d,v])=>{if(!items[d])items[d]=v;});
  const sorted={};Object.keys(items).sort().forEach(k=>sorted[k]=items[k]);
- return {year,items:sorted,source:'computed-estimate',sourceUrl:'',sourceLabel:uiText('Automatic estimate (astronomical & Hijri calendar)','Perkiraan otomatis (astronomis & kalender Hijriah)'),official:false,estimated:true,computed:true,fetchedAt:Date.now(),available:true};
+ return {year,items:sorted,source:'computed-estimate',sourceUrl:'',sourceLabel:uiText('Automatic estimate (astronomical, Hijri & projected collective leave)','Perkiraan otomatis (astronomis, Hijriah & proyeksi cuti bersama)'),official:false,estimated:true,computed:true,fetchedAt:Date.now(),available:true};
 }
 
 const CM_HOL_COMPUTED={};
@@ -9772,12 +9799,12 @@ function cmHolidayGetYearEntry(year){
   const cached=cmHolidayReadCache(year);
   if(cached?.source==='official-pdf')return cached;
   if(runtime?.source==='embedded-official')return runtime;
-  if(cached)return cached;
-  if(runtime&&runtime.available!==false)return runtime;
+  if(cached)return cmHolEnrichEstimate(cached);
+  if(runtime&&runtime.available!==false)return cmHolEnrichEstimate(runtime);
   // Belum ada data resmi / sinkron → perkiraan otomatis (astronomis & kalender Hijriah)
   const est=cmHolidayEstimateEntry(year,0);
-  if(est){CM_HOLIDAY_RUNTIME[year]=est;return est;}
-  return runtime||null;
+  if(est){CM_HOLIDAY_RUNTIME[year]=est;return cmHolEnrichEstimate(est);}
+  return runtime?cmHolEnrichEstimate(runtime):null;
 }
 function cmHolidayWorkerUrl(year){
   let configured='';
@@ -9827,7 +9854,7 @@ function cmHolidayStatusTitle(year){
   if(!e)return uiText('Holiday data will be checked automatically.','Data hari libur akan dicek otomatis.');
   const when=e.fetchedAt?dayjs(Number(e.fetchedAt)).format('DD MMM YYYY HH:mm'):'';
   const src=e.sourceUrl||e.source||'';
-  const sourceKind=e.official?uiText('Official source','Sumber resmi'):e.computed?uiText('Automatic estimate (astronomical calculation & Hijri calendar) — not official; collective leave cannot be estimated. Import the SKB PDF once published.','Perkiraan otomatis (hitungan astronomis & kalender Hijriah) — belum resmi; cuti bersama tidak bisa diperkirakan. Import PDF SKB setelah terbit.'):(e.estimated?uiText('Internet estimate — not official','Estimasi internet — belum resmi'):uiText('Fallback source','Sumber cadangan'));
+  const sourceKind=e.official?uiText('Official source','Sumber resmi'):e.computed?uiText('Automatic estimate (astronomical calculation & Hijri calendar) — not official; collective leave is projected from 2026–2027 SKB patterns (not official). Import the SKB/SE once published.','Perkiraan otomatis (hitungan astronomis & kalender Hijriah) — belum resmi; cuti bersama diproyeksikan dari pola SKB 2026–2027 (belum resmi). Impor SKB/SE setelah terbit.'):(e.estimated?uiText('Internet estimate — not official','Estimasi internet — belum resmi'):uiText('Fallback source','Sumber cadangan'));
   return [sourceKind,e.sourceLabel||src,when?`${uiText('Updated','Diperbarui')} ${when}`:''].filter(Boolean).join(' · ');
 }
 function cmIndonesiaHolidayForDate(dateStr){
@@ -10077,7 +10104,7 @@ async function cmHolApplyPrediction(fromYear,count){
  for(let y=Number(fromYear);y<Number(fromYear)+Number(count);y++){
   const cur=cmHolidayGetYearEntry(y);if(cur&&cur.official){skipped.push(y);continue;}
   const est=cmHolidayEstimateEntry(y,Date.now());if(!est)continue;
-  const entry={...est,source:'computed-applied',computedV:1,fetchedAt:Date.now(),appliedBy:(typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'')||'',sourceLabel:'Prediksi diterapkan — hitungan astronomis & kalender Hijriah (tanpa cuti bersama)'};
+  const entry={...est,source:'computed-applied',computedV:1,fetchedAt:Date.now(),appliedBy:(typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'')||'',sourceLabel:'Prediksi diterapkan — hitungan astronomis, kalender Hijriah & proyeksi cuti bersama (belum resmi)'};
   cmHolidayWriteCache(entry);CM_HOL_SHARED_LOADED[y]=true;
   try{await firestoreSet(CM_HOL_SHARED_PREFIX+y,JSON.stringify(entry));}catch(e){}
   done.push(y);
@@ -10121,7 +10148,7 @@ function cmHolOpenManager(){
     <li><b>${uiText('Public API “Tanggal Merah”','API publik “Tanggal Merah”')}</b> <code>${escapeHtml(apiHost)}</code><small>${uiText('Community data, not official — only used as a backup and never replaces official data or an applied prediction.','Data komunitas, tidak resmi — hanya cadangan, tidak pernah menimpa data resmi maupun prediksi yang diterapkan.')}</small></li>
     <li><b>${uiText('Built-in data / prediction','Data bawaan / prediksi')}</b><small>${uiText('Official 2026–2027 built into the app; other years use the automatic prediction.','Resmi 2026–2027 tersimpan di aplikasi; tahun lain memakai prediksi otomatis.')}</small></li></ol>
     <button type="button" class="btn btn-outline btn-sm" id="holMgrSync" ${CM_HOLIDAY_FETCHING[calY]?'disabled':''}>⟳ ${uiText('Sync','Sinkronkan')} ${calY}</button></section>
-   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">3</span><div><h3>${uiText('Use prediction','Pakai prediksi')}</h3><p>${uiText('Locks in the calculated holidays (astronomical & Hijri calendar, MABIMS criteria) and shares them with all users. Collective leave is not included. Years that already have official data are skipped.','Mengunci hari libur hasil hitungan (astronomis & kalender Hijriah, kriteria MABIMS) dan membagikannya ke semua pengguna. Cuti bersama tidak termasuk. Tahun yang sudah punya data resmi dilewati.')}</p></div></div>
+   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">3</span><div><h3>${uiText('Use prediction','Pakai prediksi')}</h3><p>${uiText('Locks in the calculated holidays (astronomical & Hijri calendar, MABIMS criteria) and shares them with all users. Collective leave follows projected SKB patterns (not official). Years that already have official data are skipped.','Mengunci hari libur hasil hitungan (astronomis & kalender Hijriah, kriteria MABIMS) dan membagikannya ke semua pengguna. Cuti bersama diproyeksikan dari pola SKB terdahulu (belum resmi). Tahun yang sudah memiliki data resmi dilewati.')}</p></div></div>
     <div class="hol-pred-row"><label>${uiText('Apply for year','Terapkan untuk tahun')}<select id="holPredYear">${predOpts}</select></label>
      <label class="hol-chk"><input type="checkbox" id="holPred17" ${multi?'checked':''}> ${uiText(`Apply for 17 years (${predYear}–${to})`,`Terapkan untuk 17 tahun (${predYear}–${to})`)}</label>
      <button type="button" class="btn btn-gold btn-sm" id="holPredApply" ${busy?'disabled':''}>${busy?uiText('Applying…','Menerapkan…'):uiText('Use prediction','Pakai prediksi')}</button></div></section>
