@@ -1,0 +1,74 @@
+name: Release approved DCM navigation visual standard (261114-24)
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-ui-release-24.yml']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify complete untouched backup and ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-24:refs/remotes/origin/backup/261114-DCM-24
+          git archive --format=zip --output=/tmp/261114-DCM-24.zip origin/backup/261114-DCM-24
+          unzip -t /tmp/261114-DCM-24.zip | tail -1
+      - name: Verify CSS structure and approved design tokens
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          base=Path('dcm-approved-navigation.css').read_text(encoding='utf8')
+          sub=Path('dcm-approved-pusmantap-subtabs.css').read_text(encoding='utf8')
+          assert base.count('{')==base.count('}'), 'Main CSS braces mismatch'
+          assert sub.count('{')==sub.count('}'), 'Iframe CSS braces mismatch'
+          for token in ['#appHeader.topbar','#tabNav','.tab-btn.active','.dcm-activity-view-btn.active',
+                        '#tab-survey .cm-survey-subtabs','#tab-priority .cm-survey-subtabs',
+                        '#tab-resource .res-hero','#tab-knowledge .kb-hero']:
+            assert token in base, token
+          assert 'border-bottom:0!important' in base
+          assert 'var(--dcm-nav-gold)' in base
+          assert '#DCE9FB' in base
+          assert 'body.cm-embedded .tp-live .seg.tabs2' in sub
+          assert '.tp-live .seg.tabs2 button.on' in sub
+          print('Approved nav styling present for all standard main/submenu layers')
+          PY
+      - name: Verify old dashboard behavior unchanged
+        run: |
+          node --check dcm-guide-header.js
+          node --check dcm-pusmantap-bridge.js
+          node --check dcm-pusmantap-import.js
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+      - name: Attach visual styles only; preserve markup, JavaScript and forms
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          updates=[
+            (Path('index.html'),'<link rel="stylesheet" href="dcm-approved-navigation.css?v=261114-24">'),
+            (Path('tim-pusmantap.html'),'<link rel="stylesheet" href="dcm-approved-pusmantap-subtabs.css?v=261114-24">')
+          ]
+          for p,tag in updates:
+            original=p.read_text(encoding='utf8')
+            assert original.lower().count('</head>')==1,(p,'Missing exactly one closing head')
+            assert tag not in original,(p,'Style link already exists')
+            updated=original.replace('</head>',tag+'\n</head>',1)
+            assert updated.replace(tag+'\n','',1)==original,(p,'Unexpected markup change')
+            assert updated.count(tag)==1
+            p.write_text(updated,encoding='utf8')
+          assert '<iframe id="cmTpFrame"' in Path('index.html').read_text(encoding='utf8')
+          print('Only two stylesheet links inserted, no functional DOM/code changes.')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish minimal approved visual change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap.html
+          git commit -m "style(dcm): apply approved main menu navy-gold and soft equal-width subtabs across Dashboard CM"
+          git push origin HEAD:main
