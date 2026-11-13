@@ -1,0 +1,66 @@
+name: Release DCM structural and assignment dual leg
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-structural-release.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Confirm original full ZIP backup
+        run: |
+          git fetch origin backup/261114-DCM-22
+          git archive --format=zip --output=/tmp/261114-DCM-22.zip origin/backup/261114-DCM-22
+          unzip -t /tmp/261114-DCM-22.zip | tail -1
+      - name: Test original behavior and dual structural placement
+        run: |
+          node --check dcm-pusmantap-bridge.js
+          node --check dcm-pusmantap-import.js
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('tim-pusmantap.html').read_text(encoding='utf8')
+          bridge=Path('dcm-pusmantap-bridge.js').read_text(encoding='utf8')
+          imp=Path('dcm-pusmantap-import.js').read_text(encoding='utf8')
+          roles=[
+            'Kepala Pusat','Kepala Bidang Program dan Manajemen Pengetahuan',
+            'Kepala Subbidang Program dan Sistem Kerja',
+            'Kepala Subbagian Tata Usaha','Kepala Subbidang Manajemen Pengetahuan'
+          ]
+          assert all(role in s and role in bridge for role in roles)
+          assert 'detectStructuralRole' in imp
+          assert 'tp-struct-col' in s and 'tp-board-scroll' in s
+          assert '--navy:#0E2A5C' in s and '--gold:#C9A443' in s
+          assert s.count("btn('⇧ Impor Pegawai'")==2
+          PY
+      - name: Refresh only structural UI script cache keys
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html'); s=p.read_text(encoding='utf8')
+          for file in ['tim-pusmantap.html?embedded=1&amp;v=', 'dcm-pusmantap-bridge.js?v=']:
+            old=file+'20261113-21'; new=file+'20261114-22'
+            assert s.count(old)==1,(file,s.count(old))
+            s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf8')
+          p=Path('tim-pusmantap.html'); s=p.read_text(encoding='utf8')
+          for file in ['dcm-pusmantap-import.js?v=','dcm-pusmantap-import.css?v=']:
+            old=file+'20261113-21';new=file+'20261114-22'
+            assert s.count(old)==1,(file,s.count(old))
+            s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf8')
+          PY
+          git diff --check
+      - name: Commit and publish without changing other menus
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap.html
+          git commit -m "feat(dcm): publish structural and team dual placement with pusmantap JSON mapping"
+          git push origin HEAD:main
