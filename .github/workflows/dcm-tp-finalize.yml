@@ -23,7 +23,10 @@ jobs:
           s=p.read_text(encoding='utf-8')
           old='<div class="cm-tp-preview-note" role="status"><strong>Tim Pusmantap · Pratinjau</strong><span>Susunan menu mengikuti prototype terlampir. Data, penyimpanan, dan sinkronisasi dengan Tim CM, Squad Team, serta Aktivitas masih tahap integrasi. Menu lama tetap aktif untuk operasional.</span></div>'
           assert s.count(old)==1
-          s=s.replace(old,'',1)
+          p0=s.index(old)
+          line0=s.rfind('\n',0,p0)+1
+          assert s[line0:p0].strip()==''
+          s=s[:line0]+s[p0+len(old):]
           old_title='title="Tim Pusmantap — menu baru (tahap pratinjau)"'
           assert s.count(old_title)==1
           s=s.replace(old_title,'title="Tim Pusmantap — data langsung dari Aktivitas dan CM Team"',1)
