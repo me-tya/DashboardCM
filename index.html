@@ -2883,6 +2883,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 </style><link rel="stylesheet" href="dcm-approved-navigation.css?v=261114-24">
 <link rel="stylesheet" href="dcm-navigation-all-menus-25.css?v=261114-25">
 <link rel="stylesheet" href="dcm-header-mt-ghost-26.css?v=261114-26">
+<link rel="stylesheet" href="dcm-cra-compact-27.css?v=261114-27">
 </head>
 <body>
 
@@ -18246,7 +18247,7 @@ function renderSurveyHub(){
   const active=cmSurveyState.surveys.filter(s=>s.status==='active').length,closed=cmSurveyState.surveys.filter(s=>s.status==='closed').length,totalResp=Object.values(cmSurveyState.counts).reduce((a,b)=>a+(Number(b)||0),0);
   if(!cmCanMutate()&&cmSurveyState.subtab==='create')cmSurveyState.subtab='active';
   const tabs=(!cmCanMutate()?[]:[['create',uiText('＋ Add Survey','＋ Tambah Survei')]]).concat([['active',uiText('Active Surveys','Survei Aktif')],['analytics','Analytics'],['actions','Action Plan'],['compare',uiText('Compare Rounds','Bandingkan Round')],['history',uiText('History','Riwayat')]]);if(cmSurveyState.subtab==='reference')cmSurveyState.subtab='active';
-  root.innerHTML=`<div class="cm-survey-shell"><div class="cm-survey-hero"><div><h2>${uiText('Change Readiness Assessment (CRA)','Change Readiness Assessment (CRA)')}</h2><p>${uiText('Create, distribute, monitor, and analyze change readiness in one flow.','Buat, distribusikan, monitor, dan analisis kesiapan perubahan dalam satu alur.')}</p></div><div class="cm-survey-hero-stat"><div class="cm-mini-stat"><b>${active}</b><small>${uiText('Active Surveys','Survei Aktif')}</small></div><div class="cm-mini-stat"><b>${totalResp}</b><small>${uiText('Total Responses','Total Respons')}</small></div><div class="cm-mini-stat"><b>${closed}</b><small>${uiText('History','Riwayat')}</small></div></div></div><div class="cm-survey-subtabs">${tabs.map(([k,l])=>`<button class="cm-survey-subtab ${cmSurveyState.subtab===k?'active':''}" data-cm-subtab="${k}">${l}</button>`).join('')}<button type="button" class="cm-context-help" id="cmCraContextHelp" title="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}" aria-label="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}">?</button></div><div id="cmSurveySubContent"></div></div>`;
+  root.innerHTML=`<div class="cm-survey-shell"><div class="cm-survey-subtabs">${tabs.map(([k,l])=>`<button class="cm-survey-subtab ${cmSurveyState.subtab===k?'active':''}" data-cm-subtab="${k}">${l}${k==='active'?'<span class="cm-cra-tab-count">'+active+'</span>':''}</button>`).join('')}<button type="button" class="cm-context-help" id="cmCraContextHelp" title="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}" aria-label="${uiText('Open help for this CRA section','Buka bantuan untuk bagian CRA ini')}">?</button></div><div id="cmSurveySubContent"></div></div>`;
   root.querySelectorAll('[data-cm-subtab]').forEach(btn=>btn.onclick=()=>{const next=btn.dataset.cmSubtab;if(next==='create'){cmResetBuilder();cmSurveyState.selectedSurveyId='';}cmSurveyState.subtab=next;renderSurveyHub();});document.getElementById('cmCraContextHelp')?.addEventListener('click',()=>cmOpenUserManual(cmManualArticleForContext('survey')));renderSurveySubtab();
 }
 
