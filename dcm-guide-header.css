@@ -141,3 +141,125 @@
   font-style:normal;
   opacity:.82;
 }
+
+
+/* DCM HEADER COMPACT — 261113-DCM-12 */
+/* Hanya header: satu baris, brand di tengah vertikal, kontrol kanan di dasar header. */
+#appHeader.topbar {
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:minmax(70px,auto)!important;
+  align-items:center!important;
+  align-content:stretch!important;
+  column-gap:16px!important;
+  row-gap:0!important;
+  min-height:94px;
+  padding:11px 21px!important;
+}
+#appHeader .brand {min-width:0;display:flex;align-items:center;align-self:center;gap:14px}
+#appHeader .brand-mark {flex-shrink:0;transform:scale(1.10);transform-origin:center}
+#appHeader .brand-text {min-width:0}
+#appHeader .brand-text h1 {font-size:clamp(17px,1.30vw,23px)!important;line-height:1.22!important;white-space:nowrap}
+#appHeader .brand-text p {font-size:clamp(11px,.85vw,14px)!important;line-height:1.35!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#appHeader .topbar-actions {
+  display:flex!important;
+  width:max-content!important;
+  min-width:0!important;
+  max-width:100%!important;
+  justify-self:end!important;
+  align-self:end!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 4px!important;
+  padding:0!important;
+  overflow:visible!important;
+  flex-wrap:nowrap!important;
+}
+#appHeader .topbar-actions > .dcm-utility-start {margin-left:0!important}
+#appHeader .topbar-actions > .topbar-divider {display:none!important}
+#appHeader #storagePill {
+  width:27px!important; min-width:27px!important; height:36px!important;
+  padding:0!important; margin:0 3px 0 0!important;
+  display:inline-flex!important; align-items:center!important; justify-content:center!important;
+  border:0!important; background:transparent!important; box-shadow:none!important;
+  cursor:help; flex:none!important;
+}
+#appHeader #storagePill #storageText {
+  position:absolute!important; width:1px!important; height:1px!important;
+  overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important;
+}
+#appHeader #storagePill .dot {width:11px!important;height:11px!important;margin:0!important;flex:none}
+#appHeader #btnImport,
+#appHeader #btnExport,
+#appHeader #btnBackupAll,
+#appHeader #btnRestoreAll,
+#appHeader #lastUpdatePill,
+#appHeader #lastSyncPill {display:none!important}
+/* Warna normal gold; hover asli Dashboard CM tetap berkuasa. */
+#appHeader #btnReminderCenter:not(:hover):not(:focus-visible),
+#appHeader .cm-reminder-bell:not(:hover):not(:focus-visible){
+  color:#FFD253!important;
+}
+#appHeader #btnReminderCenter:not(:hover):not(:focus-visible) svg,
+#appHeader .cm-reminder-bell:not(:hover):not(:focus-visible) svg {
+  color:#FFD253!important;
+  stroke:#FFD253;
+}
+#appHeader .dcm-guide-toggle[aria-checked="true"] .dcm-guide-track {background:#18A878!important}
+#appHeader .dcm-guide-toggle[aria-checked="false"] .dcm-guide-track {background:#627690!important}
+#appHeader #authPill {margin-left:3px;flex:none}
+#appHeader #btnLangToggle {flex:none}
+@media(max-width:1250px){
+  #appHeader.topbar{column-gap:10px!important;padding:9px 14px!important}
+  #appHeader .brand{gap:9px}
+  #appHeader .brand-text h1{font-size:17px!important}
+  #appHeader .brand-text p{font-size:11px!important}
+  #appHeader .topbar-actions{gap:4px!important}
+}
+@media(max-width:900px){
+  #appHeader .brand-text h1{max-width:280px;overflow:hidden;text-overflow:ellipsis}
+  #appHeader .topbar-actions{max-width:58vw!important;overflow-x:auto!important;scrollbar-width:none}
+  #appHeader .topbar-actions::-webkit-scrollbar{display:none}
+}
+/* Kontrol utilitas ditempatkan di dalam modal Settings tanpa merombak tab/isinya. */
+.dcm-settings-utility-anchor{position:absolute;right:58px;top:17px;z-index:200;display:flex;justify-content:flex-end}
+.dcm-settings-utility-trigger{
+  border:1px solid #D5DFEF;border-radius:10px;background:#F4F7FD;color:#163568;
+  padding:8px 12px;display:flex;align-items:center;gap:6px;
+  font:700 12px/1.2 Inter,Arial,sans-serif;cursor:pointer;white-space:nowrap;
+}
+.dcm-settings-utility-trigger:hover,.dcm-settings-utility-trigger:focus-visible{
+  border-color:#D3AA44;background:#FFF8E2;color:#102B55;
+}
+.dcm-settings-utility-drop{
+  position:absolute;right:0;top:calc(100% + 7px);width:286px;
+  box-sizing:border-box;padding:12px;border-radius:12px;
+  border:1px solid #D6DFEE;background:#FFFFFF;
+  box-shadow:0 15px 40px rgba(5,21,54,.20);color:#142D58;z-index:10000;
+}
+.dcm-settings-utility-drop[hidden]{display:none!important}
+.dcm-settings-utility-drop h4{font:800 13px/1.3 Inter,Arial,sans-serif;margin:0 0 8px;color:#16386A}
+.dcm-settings-utility-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dcm-settings-utility-actions .dcm-header-icon,
+.dcm-settings-utility-actions .btn{
+  width:100%!important;height:38px!important;min-width:0!important;display:flex!important;
+  justify-content:flex-start!important;align-items:center!important;gap:7px!important;
+  border:1px solid #DEE5F1!important;border-radius:8px!important;
+  padding:7px 9px!important;background:#F5F8FD!important;color:#193966!important;
+  font:650 11px/1.2 Inter,Arial,sans-serif!important;white-space:nowrap;
+}
+.dcm-settings-utility-actions .dcm-header-icon:hover,
+.dcm-settings-utility-actions .btn:hover{
+  color:#153662!important;background:#FFF5D8!important;border-color:#F0C664!important;
+}
+.dcm-settings-utility-actions .dcm-header-icon span[data-i18n]{display:inline!important}
+.dcm-settings-utility-actions svg{flex:none;width:17px;height:17px}
+.dcm-settings-utility-meta{padding:9px 4px 1px;margin-top:10px;border-top:1px solid #E2E8F1;
+  font:500 11px/1.6 Inter,Arial,sans-serif;color:#526482}
+.dcm-settings-utility-meta .last-sync-pill{display:block!important;width:100%;margin:0;background:none;
+  border:0;padding:0;font-size:11px;color:#526482}
+@media(max-width:780px){
+  .dcm-settings-utility-anchor{right:50px;top:13px}
+  .dcm-settings-utility-trigger{padding:7px 8px}
+  .dcm-settings-utility-drop{width:min(270px,calc(100vw - 36px))}
+}
