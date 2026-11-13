@@ -15200,11 +15200,11 @@ function openImportModal() {
   // File path (secondary)
   const dropZone = document.getElementById('dropZone');
   document.getElementById('browseTrigger').addEventListener('click', () => {
-    document.getElementById('fileInputLabel').click();
+    document.getElementById('fileInput').click();
   });
   dropZone.addEventListener('click', (e) => {
     if (e.target.id === 'browseTrigger') return;
-    document.getElementById('fileInputLabel').click();
+    document.getElementById('fileInput').click();
   });
   ['dragenter', 'dragover'].forEach(evt => {
     dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); });
@@ -17488,7 +17488,7 @@ async function backupAllData() {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
   toast('Full backup downloaded successfully', 'success');
 }
 
@@ -17728,11 +17728,11 @@ function openRestoreOptionsModal() {
 
   const dropZone = document.getElementById('restoreDropZone');
   document.getElementById('restoreBrowseTrigger').addEventListener('click', () => {
-    document.getElementById('backupFileInputLabel').click();
+    document.getElementById('backupFileInput').click();
   });
   dropZone.addEventListener('click', (e) => {
     if (e.target.id === 'restoreBrowseTrigger') return;
-    document.getElementById('backupFileInputLabel').click();
+    document.getElementById('backupFileInput').click();
   });
   ['dragenter', 'dragover'].forEach(evt => {
     dropZone.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('drag-over'); });
@@ -20798,7 +20798,7 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 <script>
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
-<script src="dcm-guide-header.js?v=20261113-17"></script>
+<script src="dcm-guide-header.js?v=20261114-23"></script>
 <script src="dcm-detail-v2.js?v=261113-10"></script>
 <script src="dcm-pusmantap-bridge.js?v=20261114-22"></script>
 </body>
