@@ -93,3 +93,20 @@
 @media(prefers-reduced-motion:reduce){
   #appHeader .dcm-header-icon,#appHeader .dcm-guide-track,#appHeader .dcm-guide-track i{transition:none!important}
 }
+
+/* DCM 261113 — ritme jarak global antarbagian utama pada seluruh menu. */
+/* Header ke navigasi: 16px. Navigasi/filter/kartu ringkasan: 12px.
+   Tidak mengubah padding isi card, tinggi navigasi, ukuran tombol, atau tabel. */
+#appMain.content{
+  padding-top:16px!important;
+}
+#appMain > .tabs-row,
+#appMain > .filter-bar,
+#appMain > #contextFilterBar,
+#appMain > #kpiGrid{
+  margin-top:0!important;
+  margin-bottom:12px!important;
+}
+#appMain > .tabs-row .tabs{
+  margin-bottom:0!important;
+}
