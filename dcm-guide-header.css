@@ -110,3 +110,35 @@
 #appMain > .tabs-row .tabs{
   margin-bottom:0!important;
 }
+
+/* Dashboard CM — label kelengkapan pada kolom Kategori aktivitas */
+#tab-table table.data-table tbody tr td:nth-child(6){
+  min-width:132px;
+  vertical-align:top;
+}
+#tab-table .dcm-activity-doc-labels{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:flex-start;
+  gap:3px 4px;
+  margin-top:5px;
+  max-width:200px;
+  line-height:1.2;
+}
+#tab-table .dcm-activity-doc-labels .dcm-doc-label{
+  display:inline-flex!important;
+  align-items:center;
+  margin:0!important;
+  padding:2px 7px!important;
+  border:0!important;
+  border-radius:10px!important;
+  background:#E4F5EF!important;
+  color:#117557!important;
+  font:700 10.5px/1.25 Inter,Arial,sans-serif!important;
+  white-space:nowrap;
+  box-shadow:none!important;
+}
+#tab-table .dcm-activity-doc-labels .dcm-doc-label i{
+  font-style:normal;
+  opacity:.82;
+}
