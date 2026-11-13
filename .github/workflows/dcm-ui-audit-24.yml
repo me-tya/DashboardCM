@@ -30,25 +30,37 @@ jobs:
           lines=s.splitlines()
           print('INDEX TOTAL LINES',len(lines))
           terms=[
-            r'id="appHeader"',r'id="tabNav"',r'class="tabs-row"',r'id="appMain"',
-            r'class="page-header',r'class="hero',r'class="brand',
-            r'\\.tab-btn',r'\\.tabs-row',r'\\.tab-panel',r'\\.page-header',
-            r'\\.section-header',r'\\.hero',r'\\.topbar',r'\\.brand',
-            r'function refreshAll\\(',r'function switchTab\\(',r'function renderTab',
-            r'\\bactiveTab\\b',r'function cmRenderTimPusmantap',
-            r'dcm-guide-header.css',r'\\.content\\{',
+            'id="appHeader"','id="tabNav"','class="tabs-row"','id="appMain"',
+            'class="page-header','class="hero','class="brand',
+            '.tab-btn','.tabs-row','.tab-panel','.page-header',
+            '.section-header','.hero','.topbar','.brand',
+            'function refreshAll(', 'function switchTab(', 'function renderTab',
+            'activeTab', 'function cmRenderTimPusmantap',
+            'dcm-guide-header.css','.content{',
           ]
           for p in terms:
-           hits=[i for i,line in enumerate(lines) if re.search(p,line,re.I)]
-           print('\\n===',p,'count',len(hits),'first',hits[:25],'===')
-           for i in hits[:7]:
-            for j in range(max(0,i-2),min(len(lines),i+5)):print(f'{j+1}: {lines[j][:340]}')
-          print('\\n=== CSS_OVERRIDES_CURRENT ===')
+           hits=[i for i,line in enumerate(lines) if p.lower() in line.lower()]
+           print('\n===',p,'count',len(hits),'first',hits[:25],'===')
+           for i in hits[:6]:
+            for j in range(max(0,i-2),min(len(lines),i+5)):
+             print(str(j+1)+': '+lines[j][:550])
+          print('\n=== CSS_OVERRIDES_CURRENT ===')
           for i,line in enumerate(css.splitlines()):
-           if re.search(r'#tabNav|#dcm-activity-view-tabs|#appMain.*tab|#appHeader|contextFilterBar',line):
+           if any(x in line for x in ['#tabNav','#dcm-activity-view-tabs','#appMain','#appHeader','contextFilterBar']):
             print(i+1,line[:270])
-          print('\\n=== MAIN DOM TAGS ===')
-          for id in ['appHeader','appMain','tabNav','contextFilterBar']:
-           matches=list(re.finditer(r'<[^>]+\\bid=["\\']'+id+r'["\\'][^>]*>',s))
-           for m in matches[:4]:print(id, 'at line',s.count('\\n',0,m.start())+1, m.group(0)[:650])
+          print('\n=== MAIN DOM TAGS ===')
+          for ident in ['appHeader','appMain','tabNav','contextFilterBar']:
+           for m in list(re.finditer('id="'+ident+'"',s))[:5]:
+            p=s.rfind('<',0,m.start())
+            print(ident,'line',s.count('\n',0,m.start())+1,s[p:m.start()+150].split('>')[0][:650])
+          print('\n=== CSS HEADINGS IN INDEX ===')
+          for p in ['.tabs{','.tab-btn{','.tab-btn.active','.tabs-row','.topbar{','.brand{','.section-header{','.page-header{','.banner{','.hero{']:
+           matches=[m.start() for m in re.finditer(re.escape(p),s)]
+           print(p,'count',len(matches))
+           for i in matches[-3:]:print('  ',s[max(0,i-120):i+470].replace('\n',' ')[:600])
+          print('\n=== CONTENT MAIN SUB NAV ===')
+          for ident in ['tabNav','contextFilterBar']:
+           i=s.find('id="'+ident+'"')
+           print('ELEMENT',ident,s[max(0,i-450):i+2600][:3050] if i>=0 else 'NOT FOUND')
+
           PY
