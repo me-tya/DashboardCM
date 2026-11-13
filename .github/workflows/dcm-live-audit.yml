@@ -49,3 +49,20 @@ jobs:
              for j in range(max(0,i-2), min(len(ls),i+16)):print(j+1,ls[j][:440])
              break
           PY
+
+      - name: Inspect actual Activity, Resource and Firebase adapters
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          ls=Path('index.html').read_text(encoding='utf-8').splitlines()
+          for a,b in [(50,78),(3920,3980),(6200,6410),(6460,6560),(6740,6780)]:
+           print('==CONTEXT==',a,b)
+           for i in range(a-1,b):print(i+1,ls[i][:460])
+          for pat in [r'function resourceLoad',r'function resourceSave',r'function resourceSave',r'function resource',r'state.resources=',r'CM_PIC_ROSTER=',r'function cmCanMutate',r'function isLoggedIn',r'function refreshAll',r'function addActivity',r'function openActivity',r'function cmActPersistDocs',r'function persist\(',r'function cmActListen']:
+           a=[i for i,l in enumerate(ls) if re.search(pat,l)]
+           print('==FIND==',pat, 'count',len(a))
+           for i in a[:4]:
+            for j in range(max(0,i-2),min(len(ls),i+13)):print(j+1,ls[j][:500])
+          PY
