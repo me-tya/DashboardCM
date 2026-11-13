@@ -1,0 +1,120 @@
+/* Dashboard CM · 261114-DCM-27
+ * Approved compact header and CRA submenu standard.
+ * Scope is limited to header geometry and the CRA contextual navigation. */
+#appHeader.topbar{
+  min-height:84px!important;
+  grid-template-rows:minmax(61px,auto)!important;
+  padding:5px 22px 8px!important;
+  align-items:center!important;
+}
+#appHeader .brand{align-self:center!important}
+#appHeader .topbar-actions{align-self:end!important}
+
+/* CRA second-level navigation uses the EXACT height rhythm of Agenda. */
+#tab-survey .cm-survey-shell > .cm-survey-subtabs{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:45px!important;
+  min-height:45px!important;
+  padding:4px!important;
+  gap:4px!important;
+  margin:0 0 9px!important;
+  border:1px solid #DEE7F4!important;
+  border-radius:12px!important;
+  background:#F1F5FC!important;
+  box-shadow:none!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+}
+#tab-survey .cm-survey-shell > .cm-survey-subtabs .cm-survey-subtab{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  flex:1 1 0!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  min-width:0!important;
+  width:auto!important;
+  height:36px!important;
+  min-height:36px!important;
+  max-height:36px!important;
+  margin:0!important;
+  padding:6px 8px!important;
+  border:0!important;
+  border-radius:9px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#405779!important;
+  font:650 12px/1.2 Inter,Arial,sans-serif!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+  transition:background-color .15s ease,color .15s ease!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab.active{
+  background:#DCE9FB!important;
+  color:#173A74!important;
+  font-weight:750!important;
+  box-shadow:none!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab:not(.active):hover{
+  background:#E8EFFA!important;
+  color:#173A74!important;
+}
+/* The old three KPI cards are removed by the renderer; their container
+   is not preserved, so the tab bar sits directly after the CRA filter. */
+#tab-survey .cm-survey-subtabs .cm-cra-tab-count{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:18px!important;
+  height:18px!important;
+  margin:0!important;
+  padding:0 5px!important;
+  border-radius:5px!important;
+  background:#E0E7F1!important;
+  color:#29466E!important;
+  font:750 10.5px/1 Inter,Arial,sans-serif!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab.active .cm-cra-tab-count{
+  color:#173A74!important;
+  background:#C3D8F5!important;
+}
+#tab-survey .cm-survey-subtabs #cmCraContextHelp{
+  box-sizing:border-box!important;
+  flex:0 0 33px!important;
+  width:33px!important;
+  min-width:33px!important;
+  height:33px!important;
+  min-height:33px!important;
+  margin:0 1px 0 2px!important;
+  align-self:center!important;
+  border-radius:50%!important;
+}
+@media(max-width:1250px){
+  #appHeader.topbar{padding:5px 14px 8px!important}
+}
+@media(max-width:920px){
+  #tab-survey .cm-survey-shell > .cm-survey-subtabs .cm-survey-subtab{
+    flex:0 0 145px!important;
+    min-width:145px!important;
+    max-width:145px!important;
+  }
+}
+@media(max-width:650px){
+  #appHeader.topbar{padding:5px 12px 7px!important}
+  #tab-survey .cm-survey-shell > .cm-survey-subtabs .cm-survey-subtab{
+    flex:0 0 135px!important;
+    min-width:135px!important;
+    max-width:135px!important;
+    font-size:11.5px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-survey .cm-survey-subtabs .cm-survey-subtab{transition:none!important}
+}
