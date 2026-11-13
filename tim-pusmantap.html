@@ -457,32 +457,38 @@ function leave(){
  '<div class="tp-leave-list">'+(period.length?period.map(x=>'<div class="tp-leave-row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.jenis)+' · '+nice(x.mulai)+' – '+nice(x.selesai)+'</small></div>'+(edit()&&x.source!=='status'?'<div class="tp-actions"><button class="tp-link" data-leave-edit="'+esc(x.id)+'" data-leave-person="'+esc(x.name)+'">Ubah</button><button class="tp-link danger" data-leave-del="'+esc(x.id)+'" data-leave-person="'+esc(x.name)+'">Hapus</button></div>':'')+'</div>').join(''):'<div class="tp-empty">Belum ada rencana cuti untuk bulan ini.</div>')+'</div></section></div>';
 }
 function placement(){
- const list=staff(),un=list.filter(p=>!p.team),temp=list.filter(p=>/secondment|magang|re.entry|sementara|kontrak/i.test(p.jenis+' '+p.job));
+ const list=staff(),structural=list.filter(p=>STRUCT.includes(p.structuralRole)),un=list.filter(p=>!p.team),temp=list.filter(p=>/secondment|magang|re.entry|sementara|kontrak/i.test(p.jenis+' '+p.job));
  const colors={DCS:'#2F6FCE',DOA:'#0E8A8A',SPP:'#B5600F',SSB:'#1E8E4E',CM:'#6B4FC4'};
- const card=p=>{const st=status(p,today()),name=p.name,initials=name.split(/\s+/).slice(0,2).map(v=>v[0]).join('').toUpperCase();
-  return '<div class="p tp-place-card" draggable="'+edit()+'" data-drag-name="'+esc(name)+'">'+
-   '<span class="av" style="background:'+esc(colors[p.team]||'#7E889B')+'">'+esc(initials)+'</span>'+
+ const card=(p,isStructural=false)=>{
+  const st=status(p,today()),name=p.name,initials=name.split(/\s+/).slice(0,2).map(v=>v[0]).join('').toUpperCase();
+  return '<div class="p tp-place-card '+(isStructural?'tp-struct-card':'')+'" draggable="'+(edit()&&!isStructural)+'" data-drag-name="'+esc(name)+'">'+
+   '<span class="av" style="background:'+(isStructural?'#8C6B12':esc(colors[p.team]||'#7E889B'))+'">'+esc(initials)+'</span>'+
    '<div class="x"><div class="nm">'+esc(name)+'</div><div class="sb">'+
-   (p.team?'<span class="chip '+(p.team==='CM'?'cm':'pm')+'">'+esc(p.team==='CM'?'CMO':'PMO')+'</span>':'')+
-   (temp.some(t=>t.name===name)?'<span class="chip tmp">'+esc(p.jenis)+'</span>':'')+
-   '<span>'+esc(st.tag==='WFO'||st.tag==='WFH'?p.unit||p.job:st.tag)+'</span></div></div>'+
-   (edit()?'<button class="mn" type="button" data-team-edit="'+esc(name)+'" aria-label="Atur penempatan '+esc(name)+'" title="Atur penempatan">'+ic('more','s')+'</button>':'')+'</div>'};
+   (isStructural?'<span class="chip ke">'+esc(p.structuralRole)+'</span>':p.structuralRole?'<span class="chip ke" title="'+esc(p.structuralRole)+'">Struktural</span>':'')+
+   (p.team?'<span class="chip '+(p.team==='CM'?'cm':'pm')+'">'+esc(isStructural?'Tim '+p.team:p.team==='CM'?'CMO':'PMO')+'</span>':'')+
+   (!isStructural&&temp.some(t=>t.name===name)?'<span class="chip tmp">'+esc(p.jenis)+'</span>':'')+
+   '<span>'+esc(isStructural?p.unit||'':st.tag==='WFO'||st.tag==='WFH'?p.unit||p.job:st.tag)+'</span></div></div>'+
+   (edit()?'<button class="mn" type="button" data-team-edit="'+esc(name)+'" aria-label="Atur dua kaki '+esc(name)+'" title="Atur struktural dan tim">'+ic('more','s')+'</button>':'')+'</div>';
+ };
  const col=t=>{
   const current=t?list.filter(p=>p.team===t):un,col=t?colors[t]:'#E2C77E';
   return '<section class="col '+(t?'':'un')+'" data-drop-team="'+esc(t)+'"><div class="ch"><div class="t">'+(t?'Tim '+esc(t):'Belum ditempatkan')+' <em>'+current.length+'</em></div>'+
    '<div class="m">'+(t?(t==='CM'?'CMO':'PMO')+' · Anggota aktif':'Belum mendapatkan tim')+'</div><div class="bar" style="background:'+col+'"></div></div>'+
-   (current.length?current.map(card).join(''):'<div class="empty">'+(t?'Belum ada anggota':'Semua sudah mempunyai tim')+'</div>')+'</section>';
+   (current.length?current.map(p=>card(p)).join(''):'<div class="empty">'+(t?'Belum ada anggota':'Semua sudah mempunyai tim')+'</div>')+'</section>';
  };
+ const strCol='<section class="col tp-struct-col"><div class="ch"><div class="t">Struktural <em>'+structural.length+'</em></div><div class="m">Jabatan definitif · tetap dapat masuk tim</div><div class="bar" style="background:var(--gold)"></div></div>'+
+ (structural.length?structural.sort((a,b)=>STRUCT.indexOf(a.structuralRole)-STRUCT.indexOf(b.structuralRole)||a.name.localeCompare(b.name,'id')).map(p=>card(p,true)).join(''):'<div class="empty">Impor pusmantap.json atau atur jabatan struktural.</div>')+'</section>';
  const kpis=[
   ['users',list.length,'Pegawai aktif','var(--navy-l)','var(--navy)'],
+  ['users',structural.length,'Pejabat struktural','var(--gold-l)','var(--gold-d)'],
   ['alert',un.length,'Belum punya tim','#FFF3D6','#9A6A00'],
   ['hour',temp.length,'Pegawai sementara','var(--s-l)','var(--s)'],
   ['cal',(data.activities||[]).filter(a=>a.date<=today()&&a.end>=today()).length,'Agenda hari ini','var(--v-l)','var(--v)']
  ].map(x=>'<div class="kpi"><span class="ico" style="background:'+x[3]+';color:'+x[4]+'">'+ic(x[0])+'</span><div><b>'+x[1]+'</b><small>'+esc(x[2])+'</small></div></div>').join('');
- return titleBar('Penempatan Tim','Papan penempatan mengikuti ukuran dan warna mockup asli. Anggota diambil otomatis dari CM Team; pindahkan antar kolom atau klik ⋯ untuk pengelolaan.',edit()?btn('⇧ Impor Pegawai','import-members')+btn('＋ Tambah Pegawai','add-member',true):'')+
-  '<div class="tp-placement"><div class="kpis">'+kpis+'</div><div class="board">'+col('')+TEAM.map(col).join('')+'</div>'+
-  '<div class="foot"><div class="leg"><span><i style="background:var(--o)"></i>WFO</span><span><i style="background:var(--h)"></i>WFH</span><span><i style="background:var(--s)"></i>Dinas luar</span><span><i style="background:var(--c)"></i>Cuti</span></div>'+
-  '<span>Penempatan manual tersimpan pada Dashboard CM</span></div></div>';
+ return titleBar('Penempatan Tim','Dua kaki independen: jabatan struktural dan tim penugasan. Satu pegawai dapat tampil pada keduanya, tanpa terhitung dua kali.',edit()?btn('⇧ Impor Pegawai','import-members')+btn('＋ Tambah Pegawai','add-member',true):'')+
+  '<div class="tp-placement"><div class="kpis">'+kpis+'</div><div class="tp-legs-head"><div>KAKI 1 · STRUKTURAL</div><div>KAKI 2 · PENUGASAN TIM</div></div><div class="board">'+strCol+col('')+TEAM.map(col).join('')+'</div>'+
+  '<div class="foot"><div class="leg"><span><i style="background:var(--gold)"></i>Struktural</span><span><i style="background:var(--o)"></i>WFO</span><span><i style="background:var(--h)"></i>WFH</span><span><i style="background:var(--s)"></i>Dinas luar</span><span><i style="background:var(--c)"></i>Cuti</span></div>'+
+  '<span>Seret pada kaki tim tidak mengubah penempatan struktural</span></div></div>';
 }
 function profile(){
  const list=people(selectedTeam).filter(p=>(p.name+' '+p.job+' '+p.unit+' '+p.jenis).toLowerCase().includes(query.toLowerCase()));
