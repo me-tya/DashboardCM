@@ -1,0 +1,39 @@
+name: DCM Import Pegawai Regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dcm-pusmantap-import.js'
+      - 'dcm-pusmantap-import.css'
+      - 'dcm-pusmantap-bridge.js'
+      - 'tim-pusmantap.html'
+      - 'tests/dcm-import-pegawai-smoke.cjs'
+      - '.github/workflows/dcm-import-pegawai-test.yml'
+permissions:
+  contents: read
+jobs:
+  import-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate scripts
+        run: |
+          node --check dcm-pusmantap-import.js
+          node --check dcm-pusmantap-bridge.js
+      - name: Test JSON Excel CSV OCR parsing and Firestore imports
+        run: node tests/dcm-import-pegawai-smoke.cjs
+      - name: Check existing Tim Pusmantap live integration
+        run: node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Confirm original styling and import buttons
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('tim-pusmantap.html').read_text(encoding='utf8')
+          assert 'data-mockup-v4="restored"' in s
+          assert "--navy:#0E2A5C" in s and "--gold:#C9A443" in s
+          assert s.count("btn('⇧ Impor Pegawai'")==2
+          assert 'dcm-pusmantap-import.js?v=20261113-21' in s
+          assert 'dcm-pusmantap-import.css?v=20261113-21' in s
+          assert 'window.cmTpImport?.open' in s
+          print('PASS mockup palette and both import entry points')
+          PY
