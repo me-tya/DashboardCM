@@ -243,7 +243,7 @@ async function recognize(file){
   catch(e){setStatus('Bahasa Indonesia tidak tersedia, mencoba OCR bahasa Inggris…');worker=await T.createWorker('eng',1,{logger})}
   result=await worker.recognize(file);
  }finally{if(worker)await worker.terminate().catch(()=>{})}
- ocrText=safe(result?.data?.text||'').slice(0,25000);
+ ocrText=String(result?.data?.text||'').slice(0,25000);
  txt.value=ocrText;
  ocrQuality=Number.isFinite(result?.data?.confidence)?Math.round(result.data.confidence):'';
  root.querySelector('#tpImportOcrQuality').textContent=ocrQuality!==''?'Perkiraan kepercayaan OCR: '+ocrQuality+'% — selalu periksa hasilnya.':'Periksa nama dan kolom sebelum menyimpan.';
