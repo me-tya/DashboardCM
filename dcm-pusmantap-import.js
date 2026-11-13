@@ -14,7 +14,7 @@ const fold=s=>safe(s).normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]/gu,
 const label=s=>safe(s).normalize('NFKD').toLowerCase().replace(/[_\-.]+/g,' ').replace(/[^\p{L}\p{N} ]/gu,'').replace(/\s+/g,' ').trim();
 const aliases={
  name:['name','nama','nama lengkap','nama pegawai','nama karyawan','nama personil','pegawai','nama anggota','employee name','employee','full name','nama staff','nama staf','n'],
- nip:['nip','nip18','nip9','nomor induk pegawai','no induk pegawai','nomor pegawai','nip baru','employee id','id pegawai','nip nrp','nrp','nik'],
+ nip:['nip','nip18','nip9','nomor induk pegawai','no induk pegawai','nomor pegawai','nip baru','employee id','id pegawai','nip nrp','nrp'],
  job:['jabatan','jabatan pegawai','posisi','position','job','role','fungsi'],
  unit:['unit','unit kerja','unit organisasi','unit eselon','organisasi','satker','work unit','direktorat','bidang','bagian'],
  team:['tim','tim utama','team','penempatan tim','squad','squad team','kelompok tim','t'],
