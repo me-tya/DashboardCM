@@ -1,0 +1,74 @@
+name: Release DCM 27 compact CRA and aligned header
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-cra-release-27.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify exact complete backup before any app edits
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-27:refs/remotes/origin/backup/261114-DCM-27
+          git archive --format=zip --output=/tmp/261114-DCM-27.zip origin/backup/261114-DCM-27
+          unzip -t /tmp/261114-DCM-27.zip | tail -1
+      - name: Remove CRA KPI cards and put live active count in its tab
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          fn=s.index('function renderSurveyHub(){')
+          stop=s.index('\nfunction renderSurveySubtab(){',fn)
+          q=chr(96)
+          dol=chr(36)
+          key='  root.innerHTML='+q+'<div class="cm-survey-shell"><div class="cm-survey-hero"><div><h2>'
+          start=s.find(key,fn,stop)
+          assert start>=fn, 'Expected original logged-in CRA renderer'
+          nav=s.find('<div class="cm-survey-subtabs">',start,stop)
+          assert nav>start,'Missing existing CRA tabs'
+          hero=s[start:nav]
+          assert hero.count('class="cm-mini-stat"')==3, 'Expected exactly three removable KPI cards'
+          assert 'class="cm-survey-hero-stat"' in hero
+          s=s[:start]+'  root.innerHTML='+q+'<div class="cm-survey-shell">'+s[nav:]
+          old='data-cm-subtab="'+dol+'{k}">'+dol+'{l}</button>'+q+").join('')"
+          new='data-cm-subtab="'+dol+'{k}">'+dol+'{l}'+dol+"{k==='active'?'<span class=\"cm-cra-tab-count\">'+active+'</span>':''}</button>"+q+").join('')"
+          assert s.count(old)==1, ('CRA subtab count target mismatch',s.count(old))
+          s=s.replace(old,new,1)
+          fn=s.index('function renderSurveyHub(){');stop=s.index('\nfunction renderSurveySubtab(){',fn)
+          assert 'cm-survey-hero-stat' not in s[fn:stop]
+          assert 'cm-mini-stat' not in s[fn:stop]
+          assert s.count('class="cm-cra-tab-count"')==1
+          style='<link rel="stylesheet" href="dcm-cra-compact-27.css?v=261114-27">'
+          assert 'dcm-header-mt-ghost-26.css?v=261114-26' in s
+          assert style not in s
+          close=s.lower().find('</head>')
+          assert 0<close<s.lower().find('<body'), 'Document head location mismatch'
+          s=s[:close]+style+'\n'+s[close:]
+          assert s.count(style)==1
+          p.write_text(s,encoding='utf8')
+          print('PASS surgical CRA renderer cleanup, data-driven badge, stylesheet linked')
+          PY
+      - name: Verify CRA rendering and unchanged app features
+        run: |
+          node tests/dcm-cra-compact-27.test.cjs
+          node --check dcm-guide-header.js
+          node --check dcm-pusmantap-bridge.js
+          node --check dcm-pusmantap-import.js
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish only CRA markup and header styles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix(dcm): compact header top, CRA submenu to Agenda height, live count replacing summary cards"
+          git push origin HEAD:main
