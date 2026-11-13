@@ -1,5 +1,5 @@
 /* Dashboard CM — label kelengkapan dokumen pada daftar Agenda.
-   Merapikan label ke bawah Kategori seperti menu Aktivitas Modul Transformasi.
+   Menempatkan label tepat di bawah lokasi/tautan dalam kolom Aktivitas, sesuai Modul Transformasi.
    Baca saja dari state dan DOM; tidak mengubah data maupun listener baris. */
 (function(){
   'use strict';
@@ -71,7 +71,7 @@
       if(tr.dataset.dcmDocsReady==='1')return;
       const td=tr.querySelectorAll(':scope > td');
       if(td.length<7)return;
-      const activity=td[2],category=td[5];
+      const activity=td[2];
       const a=records.get(String(tr.dataset.id));
       const pills=Array.from(activity.querySelectorAll('span')).filter(el=>
         documentKind(el.textContent)&&!el.querySelector('span,a,button,input')
@@ -90,12 +90,14 @@
       // Seperti Modul Transformasi, Notula TTE menggantikan Konsep Notula.
       if(byKind.has('tte'))byKind.delete('konsep');
       if(!byKind.size){tr.dataset.dcmDocsReady='1';return;}
-      let group=category.querySelector('.dcm-activity-doc-labels');
+      let group=activity.querySelector('.dcm-activity-doc-labels');
       if(!group){
         group=document.createElement('div');
         group.className='dcm-activity-doc-labels';
         group.setAttribute('aria-label','Kelengkapan dokumen');
-        category.appendChild(group);
+        const locationRow=activity.querySelector('.table-meta');
+        if(locationRow)locationRow.insertAdjacentElement('afterend',group);
+        else activity.appendChild(group);
       }
       for(const spec of DOC_KIND){
         const pill=byKind.get(spec.key);
@@ -105,7 +107,7 @@
         pill.dataset.dcmDocKind=spec.key;
         if(!pill.title)pill.title=spec.label;
         group.appendChild(pill);
-        if(previousParent&&previousParent!==activity&&previousParent!==category&&
+        if(previousParent&&previousParent!==activity&&
            previousParent.childElementCount===0&&!previousParent.textContent.trim()){
           previousParent.remove();
         }
