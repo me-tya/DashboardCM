@@ -14,6 +14,7 @@
 <meta name="copyright" content="© 2026 Atitya Pritasari. All rights reserved.">
 <meta name="cm-build" content="CM-DASHBOARD-V20.9-TIM-SYNC-20261014">
 <title>Dashboard Master Agenda Change Management Pusat</title>
+<link rel="stylesheet" href="dcm-detail-v2.css?v=261113-08">
 <!-- Build v19.25: EO task controls are bottom-aligned consistently; Manage Event adds linked per-task and event-level reminders that open the existing Reminder form prefilled with EO context, while preserving task ordering and prior dashboard features -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12703,6 +12704,7 @@ async function cmQuickCompleteActivity(activityId){
 function openDetail(id) {
   const a = state.agendas.find(x => x.id === id);
   if (!a) return;
+  if(typeof window.cmDetailV2==='function')return window.cmDetailV2(a,id);
   const cs = getCategoryStyle(a.kategori);
   const ss = STATUS_STYLES[a.statusNorm] || STATUS_STYLES['Scheduled'];
   const modal = document.getElementById('detailModal');
@@ -20555,6 +20557,7 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
 <script src="dcm-guide-header.js?v=20261113-01"></script>
+<script src="dcm-detail-v2.js?v=261113-08"></script>
 </body>
 </html>
 
