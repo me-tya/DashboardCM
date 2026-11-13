@@ -111,10 +111,9 @@
   margin-bottom:0!important;
 }
 
-/* Dashboard CM — label kelengkapan pada kolom Kategori aktivitas */
-#tab-table table.data-table tbody tr td:nth-child(6){
-  min-width:132px;
-  vertical-align:top;
+/* Dashboard CM — label kelengkapan di bawah lokasi / tautan kolom Aktivitas */
+#tab-table table.data-table tbody tr td:nth-child(3) > .dcm-activity-doc-labels{
+  margin-top:5px;
 }
 #tab-table .dcm-activity-doc-labels{
   display:flex;
