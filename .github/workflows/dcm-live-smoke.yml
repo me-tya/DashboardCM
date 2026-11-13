@@ -1,0 +1,18 @@
+name: DCM live integration smoke test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/dcm-tim-pusmantap-smoke.cjs'
+      - '.github/workflows/dcm-live-smoke.yml'
+      - 'tim-pusmantap.html'
+      - 'dcm-pusmantap-bridge.js'
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check browser scripts
+        run: |
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-tim-pusmantap-smoke.cjs
