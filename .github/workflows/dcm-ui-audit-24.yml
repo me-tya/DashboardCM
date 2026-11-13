@@ -1,0 +1,54 @@
+name: DCM 261114-24 backup and visual system audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-ui-audit-24.yml']
+permissions:
+  contents: read
+jobs:
+  backup-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact original repository before modifying UI
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-24:refs/remotes/origin/backup/261114-DCM-24
+          git archive --format=zip --output=/tmp/261114-DCM-24.zip origin/backup/261114-DCM-24
+          unzip -t /tmp/261114-DCM-24.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-24
+          path: /tmp/261114-DCM-24.zip
+          retention-days: 30
+      - name: Inspect existing menu, submenu, banner selectors and DOM
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf8')
+          css=Path('dcm-guide-header.css').read_text(encoding='utf8')
+          lines=s.splitlines()
+          print('INDEX TOTAL LINES',len(lines))
+          terms=[
+            r'id="appHeader"',r'id="tabNav"',r'class="tabs-row"',r'id="appMain"',
+            r'class="page-header',r'class="hero',r'class="brand',
+            r'\\.tab-btn',r'\\.tabs-row',r'\\.tab-panel',r'\\.page-header',
+            r'\\.section-header',r'\\.hero',r'\\.topbar',r'\\.brand',
+            r'function refreshAll\\(',r'function switchTab\\(',r'function renderTab',
+            r'\\bactiveTab\\b',r'function cmRenderTimPusmantap',
+            r'dcm-guide-header.css',r'\\.content\\{',
+          ]
+          for p in terms:
+           hits=[i for i,line in enumerate(lines) if re.search(p,line,re.I)]
+           print('\\n===',p,'count',len(hits),'first',hits[:25],'===')
+           for i in hits[:7]:
+            for j in range(max(0,i-2),min(len(lines),i+5)):print(f'{j+1}: {lines[j][:340]}')
+          print('\\n=== CSS_OVERRIDES_CURRENT ===')
+          for i,line in enumerate(css.splitlines()):
+           if re.search(r'#tabNav|#dcm-activity-view-tabs|#appMain.*tab|#appHeader|contextFilterBar',line):
+            print(i+1,line[:270])
+          print('\\n=== MAIN DOM TAGS ===')
+          for id in ['appHeader','appMain','tabNav','contextFilterBar']:
+           matches=list(re.finditer(r'<[^>]+\\bid=["\\']'+id+r'["\\'][^>]*>',s))
+           for m in matches[:4]:print(id, 'at line',s.count('\\n',0,m.start())+1, m.group(0)[:650])
+          PY
