@@ -1,0 +1,72 @@
+name: Release DCM 26 sleek Modul Transformasi header controls
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-mt-ghost-release-26.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify original full backup before UI change
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-26:refs/remotes/origin/backup/261114-DCM-26
+          git archive --format=zip --output=/tmp/261114-DCM-26.zip origin/backup/261114-DCM-26
+          unzip -t /tmp/261114-DCM-26.zip | tail -1
+      - name: Test 9 menus, roles and every header action preserved
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          css=Path('dcm-header-mt-ghost-26.css').read_text('utf8')
+          html=Path('index.html').read_text('utf8')
+          assert css.count('{')==css.count('}'),'CSS braces'
+          assert 'html{display:none' not in css
+          for k in ['#appHeader #storagePill','#appHeader #btnLangToggle',
+                    '#appHeader #authPill','#appHeader #userPill','#appHeader #userAvatar',
+                    '#appHeader #btnGoogleLogin','#appHeader #btnReminderCenter',
+                    '#appHeader .topbar-actions .dcm-guide-toggle','#appHeader #btnLogout',
+                    '#appHeader #btnAccessAdmin']:
+            assert k in css,k
+          for k in ['btnGoogleLogin','userPill','storagePill','btnImport','btnExport','btnBackupAll',
+                    'btnRestoreAll','btnReminderCenter','btnLangToggle','btnAccessAdmin','btnLogout']:
+            assert 'id="'+k+'"' in html,k
+          assert 'dcm-guide-header.js' in html
+          for name in ['analytics','table','tasks','knowledge','survey','priority','contact','resource','pusmantap']:
+            assert 'id="tab-'+name+'"' in html,name
+          assert '#appHeader .topbar-actions' in css
+          assert ':hover' in css and ':focus-visible' in css
+          assert '#appHeader #userPill.hidden{display:none!important}' in css
+          assert '#appHeader #btnAccessAdmin.hidden{display:none!important}' in css
+          print('PASS header actions, permissions, navigation and 9 menus remain intact')
+          PY
+          node --check dcm-guide-header.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+      - name: Attach final header stylesheet without altering event bindings or markup
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html');s=p.read_text('utf8')
+          assert s.count('dcm-navigation-all-menus-25.css?v=261114-25')==1
+          add='<link rel="stylesheet" href="dcm-header-mt-ghost-26.css?v=261114-26">'
+          assert add not in s
+          i=s.lower().find('</head>');assert i>0
+          out=s[:i]+add+'\n'+s[i:]
+          assert out.replace(add+'\n','',1)==s
+          p.write_text(out,encoding='utf8')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish CSS-only header standard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): activate Modul Transformasi ghost-line header icons and compact avatar"
+          git push origin HEAD:main
