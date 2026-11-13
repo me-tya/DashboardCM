@@ -6370,6 +6370,11 @@ function cmActivityCodeTime(a){
   return Date.now();
 }
 function cmActivityCodeDay(a){
+  // Kode memakai tanggal kegiatan saat PERTAMA DISIMPAN; nomor diurut menurut waktu pencatatan.
+  const activityDate=String(a?.tglMulai||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(activityDate)&&!Number.isNaN(Date.parse(activityDate+'T00:00:00Z'))){
+    return activityDate.slice(2,4)+activityDate.slice(5,7)+activityDate.slice(8,10);
+  }
   const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Jakarta',year:'2-digit',month:'2-digit',day:'2-digit'}).formatToParts(new Date(cmActivityCodeTime(a)));
   const f={};parts.forEach(p=>{f[p.type]=p.value;});
   return f.year+f.month+f.day;
@@ -6407,11 +6412,12 @@ function cmActivityReserveLocalCodes(rows){
       used.add(code);
     }
     cmActivityCodeCache.set(a.id,code);
-    if(a.activityCode!==code){a.activityCode=code;changed=true;}
+    if(a.activityCode!==code){a.activityCode=code;a._search=normalizeActivitySearchText((a._search||'')+' '+code);changed=true;}
   }
   return changed;
 }
 let cmActivityCodeJob=null;
+let cmActivityCodeWarned=false;
 async function cmActivityReserveCodes(){
   if(cmActivityCodeJob)return cmActivityCodeJob;
   const rows=state.agendas||[];
@@ -6453,11 +6459,12 @@ async function cmActivityReserveCodes(){
         const code=codes[a?.id];
         if(!CM_ACTIVITY_CODE_RE.test(String(code||'')))continue;
         cmActivityCodeCache.set(a.id,code);
-        if(a.activityCode!==code){a.activityCode=code;changed=true;}
+        if(a.activityCode!==code){a.activityCode=code;a._search=normalizeActivitySearchText((a._search||'')+' '+code);changed=true;}
       }
       return changed;
     }catch(e){
       console.warn('Could not reserve the activity numbers in Firestore; using local fallback.',e);
+      if(!cmActivityCodeWarned){cmActivityCodeWarned=true;try{toast(uiText('Activity numbers are saved locally, but Firestore reservation failed. Check permissions to guarantee unique numbers across devices.','Nomor aktivitas disimpan lokal, tetapi reservasi Firebase gagal. Periksa izin agar nomornya unik di semua perangkat.'),'warning');}catch(x){}}
       return cmActivityReserveLocalCodes(state.agendas||[]);
     }
   })();
