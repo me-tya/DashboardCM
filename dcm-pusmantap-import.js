@@ -6,6 +6,7 @@
 'use strict';
 const MAX_ROWS=500,MAX_BYTES=15*1024*1024;
 const TEAMS=['','DCS','DOA','SPP','SSB','CM'];
+const STRUCT=['','Kepala Pusat','Kepala Bidang Program dan Manajemen Pengetahuan','Kepala Subbidang Program dan Sistem Kerja','Kepala Subbagian Tata Usaha','Kepala Subbidang Manajemen Pengetahuan'];
 const TYPES=['Pegawai','Secondment','Re-entry','Magang Kemnaker','Pegawai Sementara'];
 const safe=s=>String(s==null?'':s).trim().slice(0,500);
 const esc=s=>safe(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
@@ -13,11 +14,12 @@ const fold=s=>safe(s).normalize('NFKD').toLowerCase().replace(/[^\p{L}\p{N}]/gu,
 const label=s=>safe(s).normalize('NFKD').toLowerCase().replace(/[_\-.]+/g,' ').replace(/[^\p{L}\p{N} ]/gu,'').replace(/\s+/g,' ').trim();
 const aliases={
  name:['name','nama','nama lengkap','nama pegawai','nama karyawan','nama personil','pegawai','nama anggota','employee name','employee','full name','nama staff','nama staf','n'],
- nip:['nip','nomor induk pegawai','no induk pegawai','nomor pegawai','nip baru','employee id','id pegawai','nip nrp','nrp','nik'],
+ nip:['nip','nip18','nip9','nomor induk pegawai','no induk pegawai','nomor pegawai','nip baru','employee id','id pegawai','nip nrp','nrp','nik'],
  job:['jabatan','jabatan pegawai','posisi','position','job','role','fungsi'],
  unit:['unit','unit kerja','unit organisasi','unit eselon','organisasi','satker','work unit','direktorat','bidang','bagian'],
  team:['tim','tim utama','team','penempatan tim','squad','squad team','kelompok tim','t'],
- jenis:['jenis kepegawaian','jenis pegawai','status pegawai','tipe pegawai','jenis','status kepegawaian','employee type','penugasan','jen']
+ jenis:['jenis kepegawaian','jenis pegawai','status pegawai','tipe pegawai','jenis','status kepegawaian','employee type','penugasan','jen'],
+ structuralRole:['jabatan struktural','posisi struktural','structural role','structuralrole','struktur','struktural','kaki struktural']
 };
 const normalizedAliases=Object.fromEntries(Object.entries(aliases).map(([key,words])=>[key,new Set(words.map(label))]));
 function keyFor(k){
@@ -37,19 +39,38 @@ function normType(value){
  const x=safe(value),hit=TYPES.find(t=>fold(t)===fold(x));
  return hit||x||'Pegawai';
 }
+function detectStructuralRole(j){
+ if(!j||String(j.jenisJabatan||'').toLowerCase()!=='struktural')return '';
+ const role=safe(j.namaJabatan).toLowerCase(),esl3=safe(j.esl3).toLowerCase(),esl4=safe(j.esl4).toLowerCase();
+ if(role==='kepala pusat')return STRUCT[1];
+ if(role==='kepala bidang'&&esl3.includes('program dan manajemen pengetahuan'))return STRUCT[2];
+ if(role==='kepala subbidang'&&esl4.includes('program dan sistem kerja'))return STRUCT[3];
+ if(role==='kepala subbagian'&&esl4.includes('tata usaha'))return STRUCT[4];
+ if(role==='kepala subbidang'&&esl4.includes('manajemen pengetahuan'))return STRUCT[5];
+ return '';
+}
 function mapRow(v){
- if(typeof v==='string')return {name:safe(v),nip:'',job:'',unit:'',team:'',jenis:'Pegawai'};
+ if(typeof v==='string')return {name:safe(v),nip:'',job:'',unit:'',team:'',jenis:'Pegawai',structuralRole:''};
  if(!v||typeof v!=='object'||Array.isArray(v))return null;
- const out={name:'',nip:'',job:'',unit:'',team:'',jenis:'Pegawai'};
+ const out={name:'',nip:'',job:'',unit:'',team:'',jenis:'Pegawai',structuralRole:''};
+ if(Array.isArray(v.jabatan)){
+  const structural=v.jabatan.find(j=>j?.jenisJabatan==='Struktural'),jab=structural||v.jabatan[0]||{};
+  out.structuralRole=detectStructuralRole(structural);
+  out.job=out.structuralRole||safe(jab.namaJabatan);
+  out.unit=safe(jab.esl2)||safe(jab.organisasi);
+ }
+
  for(const [k,val] of Object.entries(v)){
   const key=keyFor(k);
   if(!key||!safe(val))continue;
   if(key==='team')out.team=normTeam(val);
   else if(key==='jenis')out.jenis=normType(val);
-  else out[key]=safe(val);
+  else if(key==='structuralRole'){const role=STRUCT.find(x=>fold(x)===fold(val));if(role)out.structuralRole=role;}
+  else if(typeof val!=='object')out[key]=safe(val);
  }
  if(!out.name)return null;
  out.name=out.name.replace(/^\s*\d{1,4}[.\)-]?\s+/,'').trim();
+ if(out.job==='[object Object]')out.job='';
  return out.name?out:null;
 }
 function selectJsonRows(obj){
@@ -87,9 +108,9 @@ function parseMatrix(rows){
   }else{
    let start=0;
    if(/^\d+$/.test(vals[0])&&vals.length>1)start=1;
-   ['name','nip','job','unit','team','jenis'].forEach((k,i)=>{object[k]=vals[start+i]||''});
+   ['name','nip','job','unit','team','jenis','structuralRole'].forEach((k,i)=>{object[k]=vals[start+i]||''});
    if(object.nip&&!/^\d{6,20}$/.test(object.nip)){
-    object={name:vals[start]||'',job:vals[start+1]||'',unit:vals[start+2]||'',team:vals[start+3]||'',jenis:vals[start+4]||''};
+    object={name:vals[start]||'',job:vals[start+1]||'',unit:vals[start+2]||'',team:vals[start+3]||'',jenis:vals[start+4]||'',structuralRole:vals[start+5]||''};
    }
   }
   const r=mapRow(object);if(r)out.push(r);
@@ -183,11 +204,12 @@ function preview(){
    '<td><input aria-label="Jabatan" data-import-field="job" data-row="'+i+'" value="'+esc(r.job)+'"></td>'+
    '<td><input aria-label="Unit" data-import-field="unit" data-row="'+i+'" value="'+esc(r.unit)+'"></td>'+
    '<td><select aria-label="Tim" data-import-field="team" data-row="'+i+'">'+TEAMS.map(t=>'<option value="'+t+'" '+(r.team===t?'selected':'')+'>'+esc(t||'Belum ada tim')+'</option>').join('')+'</select></td>'+
-   '<td><input aria-label="Jenis pegawai" data-import-field="jenis" data-row="'+i+'" value="'+esc(r.jenis)+'" placeholder="Jenis"></td>'+
+   '<td><input aria-label="Jenis pegawai" data-import-field="jenis" data-row="'+i+'" value="'+esc(r.jenis)+'" placeholder="Jenis"></td>'+ 
+   '<td><select aria-label="Jabatan struktural" data-import-field="structuralRole" data-row="'+i+'">'+STRUCT.map(x=>'<option value="'+esc(x)+'" '+(r.structuralRole===x?'selected':'')+'>'+esc(x||'—')+'</option>').join('')+'</select></td>'+
    '<td><span class="tp-imp-state '+esc(status.kind)+'">'+esc(status.label)+'</span></td>'+
    '<td><button type="button" class="tp-imp-icon" title="Hapus baris" data-remove="'+i+'" aria-label="Hapus baris">×</button></td></tr>';
  }).join('');
- box.innerHTML=rows.length?'<div class="tp-imp-tablewrap"><table class="tp-imp-table"><thead><tr><th>Pilih</th><th>Nama pegawai</th><th>NIP</th><th>Jabatan</th><th>Unit</th><th>Tim</th><th>Jenis</th><th>Status</th><th></th></tr></thead><tbody>'+all+'</tbody></table></div>':'<div class="tp-imp-emptystate">Pilih file JSON / Excel / screenshot untuk melihat pratinjau pegawai. Tidak ada data yang disimpan sebelum konfirmasi.</div>';
+ box.innerHTML=rows.length?'<div class="tp-imp-tablewrap"><table class="tp-imp-table"><thead><tr><th>Pilih</th><th>Nama pegawai</th><th>NIP</th><th>Jabatan</th><th>Unit</th><th>Tim</th><th>Jenis</th><th>Jabatan struktural</th><th>Status</th><th></th></tr></thead><tbody>'+all+'</tbody></table></div>':'<div class="tp-imp-emptystate">Pilih file JSON / Excel / screenshot untuk melihat pratinjau pegawai. Tidak ada data yang disimpan sebelum konfirmasi.</div>';
  box.querySelectorAll('[data-import-field]').forEach(el=>{
   const update=()=>{const r=rows[Number(el.dataset.row)];if(r)r[el.dataset.importField]=el.dataset.importField==='team'?normTeam(el.value):safe(el.value)};
   el.addEventListener('input',update);el.addEventListener('change',()=>{update();preview()});
@@ -256,7 +278,7 @@ function renderOcrText(){
  catch(e){setStatus(e.message||String(e))}
 }
 function downloadTemplate(){
- const csv='\ufeffNama,NIP,Jabatan,Unit,Tim,Jenis Kepegawaian\r\n';
+ const csv='\ufeffNama,NIP,Jabatan,Unit,Tim,Jenis Kepegawaian,Jabatan Struktural\r\n';
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download='template-impor-pegawai-pusmantap.csv';document.body.appendChild(a);a.click();a.remove();
@@ -264,7 +286,7 @@ function downloadTemplate(){
 }
 function addBlank(){
  if(rows.length>=MAX_ROWS)return setStatus('Maksimal '+MAX_ROWS+' baris.');
- rows.push({name:'',nip:'',job:'',unit:'',team:'',jenis:'Pegawai',_include:true});
+ rows.push({name:'',nip:'',job:'',unit:'',team:'',jenis:'Pegawai',structuralRole:'',_include:true});
  preview();
 }
 async function commit(){
@@ -273,16 +295,16 @@ async function commit(){
  const manualCount=chosenRows.filter(r=>stateOf(r,rows.indexOf(r)).kind==='manual').length;
  const cmCount=chosenRows.filter(r=>stateOf(r,rows.indexOf(r)).kind==='cm').length;
  let question='Simpan '+chosenRows.length+' baris pegawai ke Firebase Dashboard CM?';
- if(selectedMode==='merge'&&(manualCount||cmCount))question+=' Data manual yang sama diperbarui ('+manualCount+'); pegawai CM Team hanya diperbarui penempatan tim ('+cmCount+').';
+ if(selectedMode==='merge'&&(manualCount||cmCount))question+=' Data manual yang sama diperbarui ('+manualCount+'); pegawai CM Team hanya diperbarui penempatan tim dan jabatan struktural ('+cmCount+').';
  if(!confirm(question))return;
  importing=true;setStatus('Menyimpan ke Firebase…');
  try{
   const stats=await api.mutate('members-import',{
    mode:selectedMode,
-   entries:chosenRows.map(r=>({name:safe(r.name),nip:safe(r.nip),job:safe(r.job),unit:safe(r.unit),team:normTeam(r.team),jenis:normType(r.jenis)}))
+   entries:chosenRows.map(r=>({name:safe(r.name),nip:safe(r.nip),job:safe(r.job),unit:safe(r.unit),team:normTeam(r.team),jenis:normType(r.jenis),structuralRole:STRUCT.includes(r.structuralRole)?r.structuralRole:''}))
   });
   const s=stats||{};
-  const message='Impor berhasil. Baru: '+(s.added??0)+', data manual diperbarui: '+(s.updated??0)+', penempatan tim: '+(s.assigned??0)+', dilewati: '+(s.skipped??0)+'.';
+  const message='Impor berhasil. Baru: '+(s.added??0)+', data manual diperbarui: '+(s.updated??0)+', tim: '+(s.assigned??0)+', struktural: '+(s.structuralAssigned??0)+', dilewati: '+(s.skipped??0)+'.';
   api.toast?.(message);close(); 
  }catch(e){setStatus('Gagal menyimpan: '+(e.message||e));importing=false;updateInfo()}
 }
@@ -303,7 +325,7 @@ function open(options){
   '<div class="tp-imp-drop" id="tpImportDrop"><b>Tarik JSON, Excel, atau screenshot ke sini</b><small>File diproses di browser • maksimal 15 MB • hasil OCR wajib ditinjau</small></div>'+
   '<section class="tp-imp-ocr" id="tpImportOcr" hidden><div class="tp-imp-ocr-left"><img id="tpImportImage" alt="Pratinjau gambar yang diimpor"></div><div><b>Hasil pembacaan OCR — dapat diperbaiki</b><textarea id="tpImportOcrText" rows="5" spellcheck="false" placeholder="Teks hasil OCR akan tampil di sini"></textarea><div class="tp-imp-ocr-foot"><small id="tpImportOcrQuality">Akurasi bergantung kualitas screenshot.</small><button type="button" class="tp-imp-btn" id="tpImportOcrParse">Susun tabel dari teks</button></div></div></section>'+
   '<div class="tp-imp-tools"><strong>Pratinjau dan pemeriksaan duplikat</strong><label>Jika nama/NIP sudah ada: <select id="tpImportMode"><option value="skip">Lewati duplikat (aman)</option><option value="merge">Perbarui manual / penempatan tim</option></select></label><button type="button" class="tp-imp-btn" id="tpImportAdd">+ Tambah baris</button></div>'+
-  '<p class="tp-imp-help">Nama yang cocok dengan CM Team tetap menggunakan profil master; impor tidak menimpa profil CM Team. Mode perbarui hanya mengubah penempatan timnya. Semua kolom dapat dikoreksi sebelum menyimpan.</p>'+
+  '<p class="tp-imp-help">Nama yang cocok dengan CM Team tetap menggunakan profil master; impor tidak menimpa profil CM Team. Mode perbarui hanya mengubah penempatan tim dan peran struktural. File pusmantap.json dengan jabatan[] / esl3 / esl4 dikenali otomatis. Semua kolom dapat dikoreksi sebelum menyimpan.</p>'+
   '<div id="tpImportPreview"></div><div id="tpImportInfo" class="tp-imp-info" role="status"></div></div>'+
   '<footer class="tp-imp-footer"><span id="tpImportSummary">0 pegawai siap diimpor</span><div><button type="button" class="tp-imp-btn" data-imp-close>Batal</button><button type="button" class="tp-imp-btn primary" id="tpImportSave" disabled>✓ Simpan hasil impor</button></div></footer></section>';
  document.body.appendChild(root);
