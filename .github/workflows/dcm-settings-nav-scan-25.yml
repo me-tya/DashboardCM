@@ -1,0 +1,27 @@
+name: DCM Settings and nested tab inventory 25
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-settings-nav-scan-25.yml']
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          for term in ['Riwayat Akses','Statistik Kunjungan Tamu','Pengaturan Menu','Tampilan Gerbang','Jenis Layanan','Pengelolaan Data','accessAdminModal','role="tablist"','data-admin-tab','class="admin-tab','tab-access','settings-nav','settings-tab']:
+           matches=list(re.finditer(re.escape(term),s,re.I))
+           print('\nTERM',term,'count',len(matches))
+           for m in matches[:5]:
+            print('LINE',s.count(chr(10),0,m.start())+1,
+                  s[max(0,m.start()-750):m.start()+1250].replace(chr(10),' ')[:2000])
+          print('\nTP HEADER CSS')
+          t=Path('tim-pusmantap.html').read_text('utf8')
+          for term in ['.band{','.band .sub','.band .tools','.tp-live>.card>.head','.tp-section-head{','function titleBar(']:
+           i=t.find(term)
+           print(term,'index',i,'snippet',t[i:i+800].replace(chr(10),' ') if i>=0 else '')
+          PY
