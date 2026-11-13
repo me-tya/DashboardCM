@@ -1,0 +1,34 @@
+name: DCM 26 exact header markup and selectors
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-details-26.yml']
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          lines=s.splitlines()
+          print('HEADER MARKUP (visible)')
+          for i in range(2918,2989):print(i+1,lines[i][:1800])
+          print('HEADER ORIGINAL STYLE')
+          for i in range(240,345):print(i+1,lines[i][:700])
+          print('EXTRA CSS')
+          for c in ['.btn-google-pill','.user-pill','.storage-pill','.btn-lang-toggle','.cm-reminder-badge',
+                    '.cm-role-badge','.cm-title-row','.cm-reminder-bell.has-notifications',
+                    '#authPill','#btnAccessAdmin','.topbar-actions','header.topbar']:
+           print('CLASS',c)
+           for m in list(re.finditer(re.escape(c),s))[:12]:
+            if m.start()<len(s)//2:print(' ',s[max(0,m.start()-25):m.start()+550].replace(chr(10),' ')[:570])
+          js=Path('dcm-guide-header.js').read_text('utf8')
+          print('GUIDE DYNAMIC HEADER')
+          for t in ['function ensureHeader','function addHeader','function utilityButton','dcm-utility-start','dcm-guide-toggle',
+                    'btnReminderCenter','topbar-actions','headerActions','btnGlobalHelp']:
+           print('PAT',t)
+           for m in list(re.finditer(re.escape(t),js))[:5]:print(js[max(0,m.start()-330):m.start()+720].replace(chr(10),' ')[:1080])
+          PY
