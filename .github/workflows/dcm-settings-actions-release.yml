@@ -1,0 +1,70 @@
+name: Release DCM Settings data actions fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-settings-actions-release.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable full backup 261114-DCM-23
+        run: |
+          git fetch origin backup/261114-DCM-23
+          git archive --format=zip --output=/tmp/261114-DCM-23.zip origin/backup/261114-DCM-23
+          unzip -t /tmp/261114-DCM-23.zip | tail -1
+      - name: Verify four Settings handlers still work
+        run: |
+          node --check dcm-guide-header.js
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Repair native file chooser and delayed ZIP/JSON blob cleanup
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          change=[
+            ("document.getElementById('fileInputLabel').click();","document.getElementById('fileInput').click();",2),
+            ("document.getElementById('backupFileInputLabel').click();","document.getElementById('backupFileInput').click();",2),
+            ("  a.remove();\n  URL.revokeObjectURL(url);\n  toast('Full backup downloaded successfully', 'success');","  a.remove();\n  setTimeout(() => URL.revokeObjectURL(url), 4000);\n  toast('Full backup downloaded successfully', 'success');",1),
+            ('dcm-guide-header.js?v=20261113-17','dcm-guide-header.js?v=20261114-23',1)
+          ]
+          for old,new,n in change:
+            assert s.count(old)==n,(old,s.count(old),n)
+            s=s.replace(old,new)
+          assert s.count('id="btnImport"')==1
+          assert s.count('id="btnExport"')==1
+          assert s.count('id="btnBackupAll"')==1
+          assert s.count('id="btnRestoreAll"')==1
+          assert s.count('id="backupFileInput"')==1
+          assert s.count('id="fileInput"')==1
+          p.write_text(s,encoding='utf8')
+          print('PASS: original action IDs, native file choosers, cache key and delayed Blob URL revoke')
+          PY
+          git diff --check
+      - name: Validate index inline JavaScript parser
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          s=Path('index.html').read_text(encoding='utf8')
+          for i,src in enumerate(re.findall(r'<script(?![^>]*\\bsrc=)[^>]*>(.*?)</script\\s*>',s,re.I|re.S)):
+            if not src.strip() or not src.lstrip().startswith(('/*','//','const ','let ','var ','function ','async ','(','window.','document.')):continue
+            f=Path('/tmp/dcm-settings-script-'+str(i)+'.js')
+            f.write_text(src,encoding='utf8')
+            subprocess.run(['node','--check',str(f)],check=True)
+          PY
+      - name: Commit minimal index fix and trigger GitHub Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix(dcm): restore Settings import and backup file pickers and publish visible data action dialogs"
+          git push origin HEAD:main
