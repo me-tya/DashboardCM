@@ -10040,6 +10040,55 @@ async function cmHolLoadShared(year){
   const cur=cmHolidayGetYearEntry(year);if(cur&&cur.source==='official-pdf'&&Number(cur.fetchedAt)>=Number(e.fetchedAt))return;if(cur&&cur.official&&!e.official)return;
   cmHolidayWriteCache(e);if(cmHolidayYear()===Number(year)&&state.activeTab==='calendar')renderCalendar();}catch(err){console.info('Holiday shared load:',err);}
 }
+async function cmHolDocumentLines(file,progress){
+  const name=String(file.name||'').toLowerCase();
+  const prog=(fraction,msg)=>progress&&progress(fraction,msg);
+  if(file.size>16*1024*1024)throw new Error('Dokumen lebih dari 16 MB, silakan gunakan file yang lebih kecil.');
+  if(/\.docx$/.test(name)){
+    if(!window.mammoth)throw new Error('Pustaka pembaca Word belum tersedia.');
+    prog(.2,'Membaca Word…');
+    const r=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});
+    return {lines:r.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),ocr:false};
+  }
+  if(/\.(xlsx|xls|xlsm)$/.test(name)){
+    if(!window.XLSX)throw new Error('Pustaka pembaca Excel belum tersedia.');
+    prog(.2,'Membaca Excel…');
+    const book=window.XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true}),lines=[],structured=[];
+    const toIso=v=>{
+      if(v instanceof Date&&!isNaN(v))return [v.getFullYear(),String(v.getMonth()+1).padStart(2,'0'),String(v.getDate()).padStart(2,'0')].join('-');
+      if(typeof v==='number'&&v>=43000&&v<=75000){const p=window.XLSX.SSF.parse_date_code(v);if(p)return p.y+'-'+String(p.m).padStart(2,'0')+'-'+String(p.d).padStart(2,'0');}
+      const s=String(v==null?'':v).trim(),a=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/),b=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](20\d{2})$/);
+      return a?a[1]+'-'+a[2].padStart(2,'0')+'-'+a[3].padStart(2,'0'):b?b[3]+'-'+b[2].padStart(2,'0')+'-'+b[1].padStart(2,'0'):'';
+    };
+    book.SheetNames.slice(0,12).forEach(sheet=>{
+      let type=/cuti/i.test(sheet)?'collective':'national';
+      const a=window.XLSX.utils.sheet_to_json(book.Sheets[sheet],{header:1,raw:true,defval:'',blankrows:false});
+      a.slice(0,700).forEach(row=>{
+        const values=row.filter(v=>v!==null&&v!==undefined&&String(v).trim()!=='');if(!values.length)return;
+        const display=values.map(v=>v instanceof Date?dayjs(v).locale('id').format('D MMMM YYYY'):String(v).trim()),line=display.join(' ');
+        lines.push(line);
+        if(/cuti\s+bersama/i.test(line)&&values.length<4){type='collective';return;}
+        if(/libur\s+nasional/i.test(line)&&values.length<4){type='national';return;}
+        const idx=values.findIndex(v=>!!toIso(v));if(idx<0)return;
+        const date=toIso(values[idx]);
+        if(!dayjs(date).isValid()||dayjs(date).format('YYYY-MM-DD')!==date)return;
+        const desc=display.filter((v,i)=>i!==idx&&!/^\d{1,3}$/.test(v)&&!/^(senin|selasa|rabu|kamis|jumat|jum'at|sabtu|minggu|ahad)$/i.test(v)).join(' ').trim();
+        const rowType=/cuti\s+bersama/i.test(desc)?'collective':type;
+        const title=desc.replace(/^(cuti\s+bersama|libur\s+nasional)\s*[:\-]?\s*/i,'').trim();
+        if(title&&title.length>2)structured.push({date,type:rowType,name:(rowType==='collective'?'Cuti Bersama ':'')+title,dow:''});
+      });
+    });
+    const guessed=cmHolGuessYear(lines),map=new Map();
+    cmHolParseSkb(lines,guessed).forEach(r=>map.set(r.date+'|'+r.type,r));
+    structured.forEach(r=>map.set(r.date+'|'+r.type,r));
+    return {lines,parsed:[...map.values()].sort((a,b)=>a.date.localeCompare(b.date)),ocr:false};
+  }
+  if(/\.(csv|txt)$/.test(name)){
+    prog(.2,'Membaca teks…');
+    return {lines:(await file.text()).split(/\r?\n/).map(x=>x.trim()).filter(Boolean),ocr:false};
+  }
+  throw new Error('Format dokumen tidak didukung. Gunakan DOCX, XLSX, XLS, XLSM, CSV atau TXT.');
+}
 function cmHolOpenPdfImport(){
  if(!cmCanMutate())return cmDenyMutation();
  let modal=document.getElementById('cmHolPdfModal');if(!modal){modal=document.createElement('div');modal.id='cmHolPdfModal';modal.className='modal-overlay hidden';document.body.appendChild(modal);}
@@ -10049,9 +10098,9 @@ function cmHolOpenPdfImport(){
   const nN=rows.filter(r=>r.on&&r.type==='national').length,nC=rows.filter(r=>r.on&&r.type==='collective').length;
   const canMerge=!!(cur&&cur.official&&cur.items&&Object.keys(cur.items).length),keepC=canMerge?Object.values(cur.items).filter(v=>v.type==='collective').length:0;
   if(merge===null)merge=canMerge&&nC===0&&keepC>0;
-  modal.innerHTML=`<div class="modal-box hol-pdf-modal"><div class="modal-head"><div><h2>${uiText('Import official holidays (PDF / image)','Import hari libur resmi (PDF / gambar)')}</h2><p class="hol-pdf-sub">${uiText('Reads national holidays & collective leave from the SKB PDF or a screenshot/photo of the list. Check before saving.','Membaca hari libur nasional & cuti bersama dari PDF SKB atau screenshot/foto daftarnya. Periksa dulu sebelum disimpan.')}</p></div><button class="modal-close" data-x>&times;</button></div>
+  modal.innerHTML=`<div class="modal-box hol-pdf-modal"><div class="modal-head"><div><h2>${uiText('Import official holidays (PDF / Word / Excel / image)','Impor hari libur resmi (PDF / Word / Excel / gambar)')}</h2><p class="hol-pdf-sub">${uiText('Reads holidays and collective leave from SKB/SE PDF, Word, Excel or an image. Check before saving.','Membaca libur nasional dan cuti bersama dari PDF, Word, Excel, atau gambar SKB/SE. Periksa sebelum disimpan.')}</p></div><button class="modal-close" data-x>&times;</button></div>
   <div class="modal-body">
-   <label class="hol-pdf-drop" id="holPdfDrop"><input type="file" accept="application/pdf,.pdf,image/*" hidden id="holPdfFile"><span class="hol-pdf-ic">📄</span><span><b>${label?escapeHtml(label):uiText('Choose, drop, or paste (Ctrl+V) a PDF or image','Pilih, tarik, atau tempel (Ctrl+V) PDF atau gambar')}</b><small>${uiText('Text PDFs are read directly; scanned PDFs and images (screenshot/photo) are read with OCR — read locally in the browser.','PDF teks dibaca langsung; PDF scan dan gambar (screenshot/foto) dibaca dengan OCR — diproses lokal di browser.')}</small><span class="sq-progress hidden" id="holPdfProg"><span class="sq-progress-bar"><i id="holPdfBar"></i></span><em id="holPdfTxt"></em></span></span></label>
+   <label class="hol-pdf-drop" id="holPdfDrop"><input type="file" accept="application/pdf,.pdf,image/*,.docx,.xlsx,.xls,.xlsm,.csv,.txt" hidden id="holPdfFile"><span class="hol-pdf-ic">📄</span><span><b>${label?escapeHtml(label):uiText('Choose, drop or paste (Ctrl+V) a PDF, Word, Excel or image','Pilih, tarik, atau tempel (Ctrl+V) PDF, Word, Excel, atau gambar')}</b><small>${uiText('Text PDFs, Word and Excel are read directly. Scanned PDFs and images use OCR; processed locally in browser.','PDF, Word, dan Excel dibaca langsung; PDF scan dan gambar dibaca dengan OCR secara lokal.')}</small><span class="sq-progress hidden" id="holPdfProg"><span class="sq-progress-bar"><i id="holPdfBar"></i></span><em id="holPdfTxt"></em></span></span></label>
    ${rows.length?`<div class="hol-pdf-meta"><label>${uiText('Year','Tahun')}<input type="number" id="holPdfYear" min="2020" max="2100" value="${year}"></label><label class="grow">${uiText('Source / decree','Sumber / nomor SKB')}<input id="holPdfLabel" value="${escapeHtml(label)}"></label></div>
    ${(()=>{const n=rows.filter(r=>r.dow&&r.date&&dayjs(r.date).isValid()&&r.dow!==['minggu','senin','selasa','rabu','kamis','jumat','sabtu'][dayjs(r.date).day()]).length;return n?`<div class="cmpi-note warn" style="margin-bottom:8px">⚠ ${n} ${uiText('row(s) where the weekday in the document does not match the date (highlighted) — likely misread, please check.','baris dengan nama hari di dokumen tidak cocok dengan tanggalnya (ditandai) — kemungkinan salah baca, mohon dicek.')}</div>`:'';})()}
    <div class="hol-pdf-sum">${uiText('Detected','Terdeteksi')}: <b>${nN}</b> ${uiText('national holidays','libur nasional')} · <b>${nC}</b> ${uiText('collective leave','cuti bersama')} · ${uiText('current data for','data saat ini untuk')} ${year}: <b>${escapeHtml(curTxt)}</b> → ${merge&&canMerge?uiText('merged','digabung'):uiText('will be replaced','akan diganti')}</div>
@@ -10081,20 +10130,27 @@ function cmHolOpenPdfImport(){
    if(cmHolidayYear()!==year)state.calMonth=`${year}-${dayjs().format('MM')}`;if(state.activeTab==='calendar')renderCalendar();
    toast(uiText(`${res.count} holidays for ${year} saved as official${res.shared?' and shared with all users':' (this browser only — sign in to share)'}.`,`${res.count} hari libur ${year} disimpan sebagai data resmi${res.shared?' dan dibagikan ke semua pengguna':' (hanya di browser ini — masuk untuk membagikan)'}.`),'success');};
  };
- const handle=async file=>{
-  const isPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name||''),isImg=/^image\//i.test(file.type)||/\.(png|jpe?g|webp|bmp|gif)$/i.test(file.name||'');
-  if(!isPdf&&!isImg){toast(uiText('Please choose a PDF or image file.','Pilih file PDF atau gambar.'),'error');return;}
+ const handle=async function cmHolNewHandle(file){
+  const isPdf=/pdf$/i.test(file.type)||/\.pdf$/i.test(file.name||'');
+  const isImg=/^image\//i.test(file.type)||/\.(png|jpe?g|webp|bmp|gif)$/i.test(file.name||'');
+  const isOffice=/\.(docx|xlsx|xls|xlsm|csv|txt)$/i.test(file.name||'');
+  if(!isPdf&&!isImg&&!isOffice){toast(uiText('Choose a PDF, Word, Excel, CSV/TXT or image.','Pilih PDF, Word, Excel, CSV/TXT, atau gambar.'),'error');return;}
   const prog=(p,t)=>{const el=modal.querySelector('#holPdfProg');if(!el)return;el.classList.remove('hidden');modal.querySelector('#holPdfBar').style.width=Math.round(p*100)+'%';modal.querySelector('#holPdfTxt').textContent=t||'';};
-  try{prog(.02,uiText('Opening PDF…','Membuka PDF…'));
-   const {lines,ocr}=isPdf?await cmHolPdfLines(file,prog):await cmHolImageLines(file,prog);year=cmHolGuessYear(lines);merge=null;
-   const parsed=cmHolParseSkb(lines,year);rows=parsed.map(r=>({...r,on:r.date.slice(0,4)===String(year)}));
-   const no=(lines.join(' ').match(/nomor\s*[:.]?\s*([0-9a-z./\- ]{3,40}?)(?=\s+(tahun|tentang|nomor)\b)/i)||[])[1];
-   const fname=file.name&&file.name!=='image.png'?file.name:uiText('pasted image','gambar ditempel');
-   label=isPdf?`SKB ${year}${no?' — Nomor '+no.trim():''} · ${fname}`:`${uiText('Official holiday list','Daftar libur resmi')} ${year} · ${fname}`;
-   render();const note=modal.querySelector('#holPdfNote');note.classList.remove('hidden');note.classList.toggle('warn',!rows.length||ocr);
-   note.innerHTML=rows.length?`${uiText('Read','Terbaca')} <b>${rows.length}</b> ${uiText('dates','tanggal')}${ocr?` ${uiText('via OCR — please double-check every row','lewat OCR — mohon cek ulang setiap baris')}`:''}. ${uiText('Untick or edit rows that are wrong, then save.','Hapus centang atau edit baris yang keliru, lalu simpan.')}`:uiText('No holiday dates were found. Make sure the file contains the holiday list, or add rows manually.','Tidak ada tanggal libur yang ditemukan. Pastikan file memuat daftar hari libur, atau tambahkan baris manual.');
-  }catch(err){console.error(err);const note=modal.querySelector('#holPdfNote');if(note){note.classList.remove('hidden');note.classList.add('warn');note.textContent=uiText('Failed to read file: ','Gagal membaca file: ')+(err.message||err);}}
- };
+  try{
+    prog(.02,uiText('Opening document…','Membuka dokumen…'));
+    const result=isPdf?await cmHolPdfLines(file,prog):isImg?await cmHolImageLines(file,prog):await cmHolDocumentLines(file,prog);
+    const {lines,ocr}=result;
+    const parsed=result.parsed||cmHolParseSkb(lines,cmHolGuessYear(lines));
+    year=parsed.length?Number(parsed[0].date.slice(0,4)):cmHolGuessYear(lines);merge=null;
+    rows=parsed.map(r=>({...r,on:r.date.slice(0,4)===String(year)}));
+    const no=(lines.join(' ').match(/nomor\s*[:.]?\s*([0-9a-z./\- ]{3,40}?)(?=\s+(tahun|tentang|nomor)\b)/i)||[])[1];
+    const fname=file.name&&file.name!=='image.png'?file.name:uiText('pasted image','gambar ditempel');
+    label=`SKB/SE ${year}${no?' — Nomor '+no.trim():''} · ${fname}`;
+    render();
+    const note=modal.querySelector('#holPdfNote');note.classList.remove('hidden');note.classList.toggle('warn',!rows.length||ocr);
+    note.innerHTML=rows.length?`${uiText('Read','Terbaca')} <b>${rows.length}</b> ${uiText('dates','tanggal')}${ocr?` ${uiText('via OCR — please double-check every row','lewat OCR — mohon periksa setiap baris')}`:''}. ${uiText('Untick or edit incorrect rows, then save.','Hapus centang atau perbaiki baris yang keliru, lalu simpan.')}`:uiText('No holiday dates found. Check the file or add rows manually.','Tidak ada tanggal terbaca. Periksa berkas atau tambahkan baris manual.');
+  }catch(err){console.error(err);const note=modal.querySelector('#holPdfNote');if(note){note.classList.remove('hidden');note.classList.add('warn');note.textContent=uiText('Failed to read file: ','Gagal membaca berkas: ')+(err.message||err);}}
+};
  render();
 }
 
@@ -10141,8 +10197,8 @@ function cmHolOpenManager(){
   const chips=years.map(y=>{const e=cmHolidayGetYearEntry(y),k=cmHolSourceKind(e);const canReset=e&&(e.source==='computed-applied'||e.source==='official-pdf');return `<span class="hol-yr ${k.k}" title="${escapeHtml(k.t)}"><b>${y}</b><em>${escapeHtml(k.t)}</em>${canReset?`<button type="button" data-reset="${y}" title="${uiText('Undo — back to automatic','Batalkan — kembali otomatis')}">×</button>`:''}</span>`;}).join('');
   modal.innerHTML=`<div class="modal-box hol-mgr"><div class="modal-head"><div><h2>${uiText('Manage holidays','Kelola hari libur')}</h2><p>${uiText('Calendar','Kalender')} ${calY}: <b>${escapeHtml(kind.t)}</b>${cur?.sourceLabel||cur?.sourceUrl?` · ${escapeHtml(cur.sourceLabel||cur.sourceUrl)}`:''}</p></div><button class="modal-close" data-x>&times;</button></div>
   <div class="modal-body hol-mgr-body">
-   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">1</span><div><h3>${uiText('Official document','Dokumen resmi')}</h3><p>${uiText('SKB PDF, or a screenshot/photo of the official list. Highest priority — never overwritten by sync or prediction.','PDF SKB, atau screenshot/foto daftar resminya. Prioritas tertinggi — tidak tertimpa sinkron maupun prediksi.')}</p></div></div>
-    <button type="button" class="btn btn-gold btn-sm" id="holMgrImport">${uiText('Import PDF / image','Import PDF / gambar')}</button></section>
+   <section class="hol-card"><div class="hol-card-h"><span class="hol-num">1</span><div><h3>${uiText('Official document','Dokumen resmi')}</h3><p>${uiText('SKB/SE in PDF, Word, Excel or screenshot. Highest priority — never overwritten by sync or prediction.','SKB/SE dalam PDF, Word, Excel, atau gambar. Prioritas tertinggi — tidak tertimpa sinkron maupun prediksi.')}</p></div></div>
+    <button type="button" class="btn btn-gold btn-sm" id="holMgrImport">${uiText('Import PDF / Word / Excel / image','Impor PDF / Word / Excel / gambar')}</button></section>
    <section class="hol-card"><div class="hol-card-h"><span class="hol-num">2</span><div><h3>${uiText('Automatic sync','Sinkron otomatis')}</h3><p>${uiText('The sync button checks these sources in order:','Tombol sinkron mengecek sumber berikut secara berurutan:')}</p></div></div>
     <ol class="hol-src"><li><b>${uiText('Team sync server','Server sinkron tim')}</b> <code>${escapeHtml(workerHost)}</code><small>${uiText('Cloudflare Worker that fetches the official Setneg/JDIH data. If it answers, the result is marked official.','Cloudflare Worker yang mengambil data resmi Setneg/JDIH. Kalau menjawab, hasilnya ditandai resmi.')}</small></li>
     <li><b>${uiText('Public API “Tanggal Merah”','API publik “Tanggal Merah”')}</b> <code>${escapeHtml(apiHost)}</code><small>${uiText('Community data, not official — only used as a backup and never replaces official data or an applied prediction.','Data komunitas, tidak resmi — hanya cadangan, tidak pernah menimpa data resmi maupun prediksi yang diterapkan.')}</small></li>
@@ -20712,7 +20768,7 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 <script>
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
-<script src="dcm-guide-header.js?v=20261113-01"></script>
+<script src="dcm-guide-header.js?v=20261113-12"></script>
 <script src="dcm-detail-v2.js?v=261113-10"></script>
 </body>
 </html>
