@@ -1,0 +1,333 @@
+/*
+ * Dashboard CM · 261114-DCM-26
+ * Header tools in Modul Transformasi "Ghost Line" style.
+ * CSS-only: original interactive controls, roles, popovers, account menu and
+ * bottom alignment of header tools remain unchanged.
+ */
+#appHeader{
+  --dcm-hdr-ghost:#D9E5F2;
+  --dcm-hdr-gold:#FDB913;
+  --dcm-hdr-navy:#102C4E;
+}
+#appHeader .topbar-actions{
+  gap:4px!important;
+  font-family:Inter,Arial,sans-serif!important;
+  align-self:end!important;
+  align-items:center!important;
+  overflow:visible!important;
+}
+#appHeader .topbar-actions > .topbar-divider{display:none!important}
+#appHeader .topbar-actions .dcm-header-icon,
+#appHeader .topbar-actions #btnReminderCenter{
+  box-sizing:border-box!important;
+  position:relative!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:var(--dcm-hdr-ghost)!important;
+  box-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+  display:inline-flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  transition:background-color .16s ease,color .16s ease!important;
+}
+#appHeader .topbar-actions .dcm-header-icon svg,
+#appHeader .topbar-actions .dcm-header-icon svg.icon{
+  width:18px!important;height:18px!important;
+  flex:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.8!important;
+  filter:none!important;
+  transform:none!important;
+}
+#appHeader .topbar-actions .dcm-header-icon:hover,
+#appHeader .topbar-actions .dcm-header-icon:focus-visible{
+  background:#FFF!important;
+  color:var(--dcm-hdr-navy)!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+#appHeader .topbar-actions .dcm-header-icon:hover svg,
+#appHeader .topbar-actions .dcm-header-icon:focus-visible svg{
+  stroke:var(--dcm-hdr-navy)!important;
+  transform:none!important;
+}
+
+/* Import/Export/Backup/Restore stay in Settings as before. Never unhide them. */
+#appHeader .topbar-actions .hidden,
+#appHeader .topbar-actions button[hidden]{
+  display:none!important;
+}
+#appHeader #storagePill{
+  box-sizing:border-box!important;
+  width:17px!important;
+  min-width:17px!important;
+  height:26px!important;
+  margin:0 3px 0 0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#appHeader #storagePill .dot{
+  width:8px!important;height:8px!important;
+  box-shadow:0 0 0 3px rgba(34,197,94,.13)!important;
+}
+#appHeader #storagePill .dot.saving{box-shadow:0 0 0 3px rgba(253,185,19,.14)!important}
+
+/* Notification: the one intentional accent, gold bell and small red count dot. */
+#appHeader .topbar-actions #btnReminderCenter,
+#appHeader .topbar-actions #btnReminderCenter.has-notifications,
+#appHeader #btnReminderCenter:not(:hover):not(:focus-visible){
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:var(--dcm-hdr-gold)!important;
+}
+#appHeader .topbar-actions #btnReminderCenter svg,
+#appHeader .topbar-actions #btnReminderCenter:not(:hover):not(:focus-visible) svg{
+  width:19px!important;height:19px!important;
+  fill:var(--dcm-hdr-gold)!important;
+  stroke:#FFF!important;
+  stroke-width:1.7!important;
+  filter:none!important;
+}
+#appHeader .topbar-actions #btnReminderCenter:hover,
+#appHeader .topbar-actions #btnReminderCenter:focus-visible,
+#appHeader .topbar-actions #btnReminderCenter.has-notifications:hover{
+  background:var(--dcm-hdr-gold)!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:var(--dcm-hdr-navy)!important;
+}
+#appHeader .topbar-actions #btnReminderCenter:hover svg,
+#appHeader .topbar-actions #btnReminderCenter:focus-visible svg{
+  fill:var(--dcm-hdr-navy)!important;
+  stroke:var(--dcm-hdr-navy)!important;
+}
+#appHeader .topbar-actions #btnReminderCenter .cm-reminder-badge:not(.hidden){
+  box-sizing:border-box!important;
+  position:absolute!important;
+  top:3px!important;right:3px!important;left:auto!important;
+  min-width:9px!important;
+  width:9px!important;
+  height:9px!important;
+  padding:0!important;
+  border:2px solid #102C4E!important;
+  border-radius:50%!important;
+  background:#EF4054!important;
+  color:transparent!important;
+  font-size:0!important;
+  line-height:0!important;
+  box-shadow:none!important;
+  overflow:hidden!important;
+}
+#appHeader .topbar-actions #btnReminderCenter .cm-reminder-badge.hidden{
+  display:none!important;
+}
+
+/* Guide, language and profile visually unobtrusive. */
+#appHeader .topbar-actions .dcm-guide-toggle{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  width:auto!important;
+  height:25px!important;
+  min-height:25px!important;
+  min-width:0!important;
+  padding:0 10px!important;
+  margin:0 4px!important;
+  border:0!important;
+  border-left:1px solid rgba(194,211,235,.25)!important;
+  border-right:1px solid rgba(194,211,235,.25)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#D4DFEF!important;
+  font:600 12px/1.2 Inter,Arial,sans-serif!important;
+}
+#appHeader .topbar-actions .dcm-guide-toggle:hover,
+#appHeader .topbar-actions .dcm-guide-toggle:focus-visible{
+  background:transparent!important;
+  color:#FFF!important;
+}
+#appHeader .dcm-guide-track{
+  width:26px!important;height:15px!important;
+  flex:none!important;
+}
+#appHeader .dcm-guide-track i{
+  left:2px!important;top:2px!important;
+  width:11px!important;height:11px!important;
+}
+#appHeader .dcm-guide-toggle[aria-checked="true"] .dcm-guide-track{
+  background:var(--dcm-hdr-gold)!important;
+}
+#appHeader .dcm-guide-toggle[aria-checked="false"] .dcm-guide-track{background:#637991!important}
+#appHeader .dcm-guide-toggle[aria-checked="true"] .dcm-guide-track i{
+  transform:translateX(11px)!important;
+}
+#appHeader #btnLangToggle{
+  box-sizing:border-box!important;
+  height:29px!important;
+  min-height:29px!important;
+  padding:0 3px!important;
+  margin:0 3px!important;
+  border:1px solid rgba(190,208,232,.22)!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:#D4DFEF!important;
+  box-shadow:none!important;
+  font:650 11px/1 Inter,Arial,sans-serif!important;
+}
+#appHeader #btnLangToggle:hover,
+#appHeader #btnLangToggle:focus-visible{
+  border-color:rgba(255,255,255,.45)!important;
+  background:rgba(255,255,255,.09)!important;
+}
+#appHeader #btnLangToggle .lang-opt{
+  padding:4px 5px!important;
+  border-radius:5px!important;
+}
+#appHeader #btnLangToggle .lang-sep{padding:0!important}
+#appHeader #btnLangToggle .lang-opt[data-lang-opt]{
+  font-family:inherit!important;
+}
+
+/* User is a compact avatar+identity, no oversized pill or white framed card. */
+#appHeader #authPill{
+  margin:0 0 0 4px!important;
+  align-self:center!important;
+}
+#appHeader #userPill{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  min-height:34px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#appHeader #userPill.hidden{display:none!important}
+#appHeader #userAvatar.cm-user-av,
+#appHeader #userAvatar{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  height:34px!important;
+  border:0!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+  background:#E9EFF7!important;
+  color:var(--dcm-hdr-navy)!important;
+  font:750 12px/1 Inter,Arial,sans-serif!important;
+  overflow:hidden!important;
+}
+#appHeader #userName{
+  max-width:116px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  font:650 11.5px/1.2 Inter,Arial,sans-serif!important;
+  color:#E8F0FB!important;
+}
+#appHeader #userPill .cm-role-badge{
+  min-height:18px!important;
+  height:18px!important;
+  padding:2px 5px!important;
+  font:750 9px/1 Inter,Arial,sans-serif!important;
+  letter-spacing:.015em!important;
+  border-radius:5px!important;
+}
+#appHeader #btnAccessAdmin,
+#appHeader #btnLogout{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 29px!important;
+  width:29px!important;
+  height:29px!important;
+  min-width:29px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:8px!important;
+  color:#D9E5F2!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+#appHeader #btnAccessAdmin.hidden{display:none!important}
+#appHeader #btnAccessAdmin svg,
+#appHeader #btnLogout svg{
+  width:17px!important;height:17px!important;
+  stroke:currentColor!important;
+  stroke-width:1.8!important;
+}
+#appHeader #btnAccessAdmin:hover,
+#appHeader #btnAccessAdmin:focus-visible,
+#appHeader #btnLogout:hover,
+#appHeader #btnLogout:focus-visible{
+  color:var(--dcm-hdr-navy)!important;
+  background:#FFF!important;
+}
+#appHeader #btnAccessAdmin svg{stroke:currentColor!important}
+#appHeader #btnGoogleLogin{
+  box-sizing:border-box!important;
+  min-height:31px!important;
+  height:31px!important;
+  padding:0 9px!important;
+  gap:5px!important;
+  border:1px solid rgba(199,218,239,.3)!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:#E4EDFA!important;
+  box-shadow:none!important;
+  font:650 11.5px/1 Inter,Arial,sans-serif!important;
+}
+#appHeader #btnGoogleLogin:hover,
+#appHeader #btnGoogleLogin:focus-visible{
+  background:#FFF!important;
+  color:var(--dcm-hdr-navy)!important;
+  border-color:#FFF!important;
+}
+/* Don't override hidden access controls when roles/auth state change. */
+#appHeader #btnGoogleLogin.hidden,
+#appHeader #userPill.hidden,
+#appHeader #btnLogout.hidden{display:none!important}
+
+@media(max-width:1360px){
+  #appHeader .topbar-actions{gap:2px!important}
+  #appHeader #userName{max-width:85px!important}
+  #appHeader #authPill{margin-left:2px!important}
+  #appHeader .topbar-actions .dcm-guide-toggle{padding:0 7px!important;margin:0 2px!important}
+}
+@media(max-width:1090px){
+  #appHeader .topbar-actions{max-width:55vw!important;overflow-x:auto!important;scrollbar-width:none}
+  #appHeader #userName{max-width:70px!important}
+}
+@media(max-width:720px){
+  #appHeader .topbar-actions .dcm-guide-toggle > span:first-child{display:none!important}
+  #appHeader .topbar-actions .dcm-guide-toggle{padding:0 6px!important}
+  #appHeader #userName{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #appHeader .topbar-actions :is(button,svg){transition:none!important}
+}
