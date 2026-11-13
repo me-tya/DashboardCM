@@ -1,0 +1,26 @@
+name: DCM 261113-21 pre-import backup
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-import-pegawai.yml']
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backup original entire repository as 261113-DCM-21.zip
+        run: |
+          git fetch origin refs/heads/backup/261113-DCM-21:refs/remotes/origin/backup/261113-DCM-21
+          git archive --format=zip --output=/tmp/261113-DCM-21.zip origin/backup/261113-DCM-21
+          unzip -t /tmp/261113-DCM-21.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-21
+          path: /tmp/261113-DCM-21.zip
+          retention-days: 30
+      - name: Check live app baseline
+        run: |
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-tim-pusmantap-smoke.cjs
