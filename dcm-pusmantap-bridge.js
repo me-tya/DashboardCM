@@ -87,6 +87,7 @@ function edit(m,action,d){
  }else if(action==='leave-save'){
   const name=clean(d.name),mulai=clean(d.mulai),selesai=clean(d.selesai),jenis=clean(d.jenis);
   if(!name||!validDate(mulai)||!validDate(selesai)||selesai<mulai||!allowedLeave.includes(jenis))throw Error('Rencana cuti tidak valid');
+  if(['Cuti Sakit','Cuti Melahirkan'].includes(jenis)&&mulai>day())throw Error('Cuti Sakit/Melahirkan tidak dapat direncanakan di masa depan');
   const id=clean(d.id)||'LV-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   const row={id,name,mulai,selesai,jenis,catatan:clean(d.catatan)};
   const i=m.leaves.findIndex(l=>l.id===id);
@@ -119,6 +120,7 @@ async function saveResourceLeave(action,d){
   list=list.filter(x=>x.id!==clean(d.id));
  }else{
   if(!validDate(clean(d.mulai))||!validDate(clean(d.selesai))||clean(d.selesai)<clean(d.mulai)||!allowedLeave.includes(clean(d.jenis)))throw Error('Data cuti tidak valid');
+  if(['Cuti Sakit','Cuti Melahirkan'].includes(clean(d.jenis))&&clean(d.mulai)>day())throw Error('Cuti Sakit/Melahirkan tidak dapat direncanakan di masa depan');
   const id=clean(d.id)||'LV-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   const row={id,mulai:clean(d.mulai),selesai:clean(d.selesai),jenis:clean(d.jenis),catatan:clean(d.catatan)};
   const i=list.findIndex(x=>x.id===id);
