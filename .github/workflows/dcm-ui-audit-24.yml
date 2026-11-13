@@ -64,3 +64,30 @@ jobs:
            print('ELEMENT',ident,s[max(0,i-450):i+2600][:3050] if i>=0 else 'NOT FOUND')
 
           PY
+
+      - name: Inventory per-menu hero/header and nested tab groups
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,collections
+          s=Path('index.html').read_text(encoding='utf8')
+          lines=s.splitlines()
+          print('=== Menu-banner selectors and occurrences ===')
+          patterns=['res-hero','kb-hero','contact-hero','priority-hero','survey-hero',
+                    'overview-hero','hero-title','cm-tab','subtab','sub-tab','tabs2',
+                    'st-tabs','view-tabs','activity-view','section-banner','section-head',
+                    'panel-header','panel-head','page-title','tab-title','main-title','activity-header']
+          for pattern in patterns:
+            hits=[(i+1,x[:320]) for i,x in enumerate(lines) if pattern in x]
+            print('SEARCH',pattern,'count',len(hits))
+            for i,x in hits[:5]:print('   ',i,x)
+          print('=== Top-level per panel content ===')
+          for panel in ['analytics','table','tasks','calendar','kanban','matrix','knowledge','contact','resource','survey','priority']:
+            for keyword in ['function render'+panel.title(),'function render'+panel.capitalize(),'id="tab-'+panel+'"','function cmRender'+panel.title()]:
+              i=s.find(keyword)
+              if i>=0:print(panel,'at',s.count('\n',0,i)+1,s[i:i+500].replace('\n',' ')[:500]);break
+          print('=== Dynamic nav groups ===')
+          rx=re.compile(r'(<(?:nav|div)[^>]*(?:class|id)=["\'][^"\']*(?:tabs|subnav|tabnav)[^"\']*["\'][^>]*>)',re.I)
+          candidates=collections.Counter(m.group(1)[:170] for m in rx.finditer(s))
+          for k,v in candidates.most_common(24):print(v,k)
+          PY
