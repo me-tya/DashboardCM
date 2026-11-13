@@ -1,0 +1,35 @@
+name: Backup DCM 261113-20 and check mockup fidelity
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-tp-style-fidelity.yml'
+      - 'tim-pusmantap.html'
+permissions:
+  contents: read
+jobs:
+  backup-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build full ZIP backup of previous version
+        run: |
+          git fetch origin refs/heads/backup/261113-DCM-20:refs/remotes/origin/backup/261113-DCM-20
+          git archive --format=zip --output=/tmp/261113-DCM-20.zip origin/backup/261113-DCM-20
+          unzip -t /tmp/261113-DCM-20.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-20
+          path: /tmp/261113-DCM-20.zip
+          retention-days: 30
+      - name: Validate existing live features and mockup styling
+        run: |
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('tim-pusmantap.html').read_text()
+          if 'data-mockup-v4="restored"' in s:
+           for marker in ['--navy:#0E2A5C','--gold:#C9A443','.seg.tabs2','mockup-original-css','data-view=']:
+            assert marker in s, marker
+          PY
