@@ -160,10 +160,60 @@
       if(label)el.setAttribute('title',label);
     });
   }
+
+  /* Kelompok kontrol kanan: ikon Import/Export tetap seperti sebelumnya. */
+  function alignHeaderTools(){
+    var actions=document.querySelector('#appHeader .topbar-actions');
+    var start=document.getElementById('btnImport');
+    if(!actions||!start||!actions.contains(start))return;
+    while(start.parentElement&&start.parentElement!==actions)start=start.parentElement;
+    if(start.previousElementSibling&&start.previousElementSibling.classList.contains('topbar-divider')){
+      start=start.previousElementSibling;
+    }
+    start.classList.add('dcm-utility-start');
+  }
+  /* Ganti gambar SVG saja, bukan tombol, sehingga event Backup/Restore tidak berubah. */
+  function updateBackupRestoreSymbols(){
+    var icons={
+      btnBackupAll:'<rect x="3" y="4" width="18" height="4" rx="1"></rect>'+
+        '<path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"></path>'+
+        '<path d="M9 13h6"></path>',
+      btnRestoreAll:'<path d="M3 11a9 9 0 1 1 2.7 6.5"></path>'+
+        '<path d="M3 4v7h7"></path>'+
+        '<path d="M12 7v5l3.5 2.2"></path>'
+    };
+    Object.keys(icons).forEach(function(id){
+      var btn=document.getElementById(id);
+      if(!btn)return;
+      var svg=btn.querySelector('svg');
+      if(!svg){
+        svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+        btn.insertBefore(svg,btn.firstChild);
+      }
+      svg.classList.add('icon','dcm-header-custom-svg');
+      svg.setAttribute('viewBox','0 0 24 24');
+      svg.setAttribute('width','19');
+      svg.setAttribute('height','19');
+      svg.setAttribute('stroke','currentColor');
+      svg.setAttribute('stroke-width','2');
+      svg.setAttribute('stroke-linecap','round');
+      svg.setAttribute('stroke-linejoin','round');
+      svg.setAttribute('fill','none');
+      svg.setAttribute('aria-hidden','true');
+      if(svg.getAttribute('data-dcm-symbol')!==id){
+        svg.innerHTML=icons[id];
+        svg.setAttribute('data-dcm-symbol',id);
+      }
+      btn.classList.add('dcm-custom-action-icon');
+    });
+  }
+
   function install(){
     var actions=document.querySelector('#appHeader .topbar-actions');
     if(!actions)return;
     updateIconLabels();
+    alignHeaderTools();
+    updateBackupRestoreSymbols();
     var el=document.getElementById('cmGuideToggle');
     if(!el){
       el=document.createElement('button');
