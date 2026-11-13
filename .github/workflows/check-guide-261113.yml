@@ -1,0 +1,28 @@
+name: Validate Dashboard CM Guide integration
+on:
+  push:
+    branches:
+      - backup/261113-DCM-01
+    paths:
+      - .github/workflows/check-guide-261113.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Guide code on main
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          git show origin/main:dcm-guide-header.js > /tmp/dcm-guide-header.js
+          git show origin/main:dcm-guide-header.css > /tmp/dcm-guide-header.css
+          git show origin/main:index.html > /tmp/dcm-main-index.html
+          node --check /tmp/dcm-guide-header.js
+          grep -q 'dcm-guide-header.js?v=20261113-01' /tmp/dcm-main-index.html
+          grep -q 'dcm-guide-header.css?v=20261113-01' /tmp/dcm-main-index.html
+          grep -q 'cmGuideToggle' /tmp/dcm-guide-header.js
+          grep -q 'btnBackupAll' /tmp/dcm-guide-header.js
+          test -s /tmp/dcm-guide-header.css
+          unzip -t 261113-DCM-01.zip
