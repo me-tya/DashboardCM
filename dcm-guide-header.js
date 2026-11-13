@@ -505,3 +505,74 @@
     document.addEventListener('DOMContentLoaded',installActivityViews,{once:true});
   else installActivityViews();
 })();
+
+
+/* DCM 261113-DCM-17 — kelas heatmap biru berdasarkan jumlah aktivitas. */
+(function(){
+  'use strict';
+  if(window.DCM_MATRIX_BLUE_26111317)return;
+  window.DCM_MATRIX_BLUE_26111317=true;
+
+  function heatTier(value){
+    if(!Number.isFinite(value)||value<=0)return '0';
+    if(value<=2)return '1';
+    if(value<=5)return '2';
+    if(value<=10)return '3';
+    if(value<=20)return '4';
+    return '5';
+  }
+
+  function enhanceMatrix(){
+    var panel=document.getElementById('tab-matrix');
+    if(!panel)return;
+    // Nilai dibaca dari sel hasil perhitungan asli renderMatrix. Tidak mengubah data/filter.
+    panel.querySelectorAll('table.matrix-table td.matrix-cell,table.matrix-table td.matrix-total')
+      .forEach(function(cell){
+        var n=Number(String(cell.textContent||'').trim());
+        cell.setAttribute('data-dcm-heat',heatTier(n));
+      });
+
+    var toolbar=panel.firstElementChild;
+    if(!toolbar||toolbar.querySelector('.dcm-matrix-legend'))return;
+    toolbar.classList.add('dcm-matrix-toolbar');
+    var legend=document.createElement('div');
+    legend.className='dcm-matrix-legend';
+    legend.setAttribute('role','note');
+    legend.setAttribute('aria-label','Legenda jumlah aktivitas berdasarkan intensitas biru');
+    var items=[['1','1–2'],['2','3–5'],['3','6–10'],['4','11–20'],['5','>20']];
+    var title=document.createElement('span');
+    title.className='dcm-matrix-legend-title';
+    title.textContent='Jumlah aktivitas:';
+    legend.appendChild(title);
+    items.forEach(function(item){
+      var el=document.createElement('span');
+      el.className='dcm-matrix-legend-item';
+      var chip=document.createElement('span');
+      chip.className='dcm-matrix-legend-chip';
+      chip.setAttribute('data-dcm-heat',item[0]);
+      chip.setAttribute('aria-hidden','true');
+      var label=document.createElement('span');
+      label.textContent=item[1];
+      el.appendChild(chip);
+      el.appendChild(label);
+      legend.appendChild(el);
+    });
+    toolbar.appendChild(legend);
+  }
+
+  function install(){
+    var panel=document.getElementById('tab-matrix');
+    if(!panel)return;
+    // renderMatrix mengganti innerHTML setiap perubahan filter/dimensi:
+    // amati hanya penggantian anak langsung agar tidak terjadi loop.
+    var observer=new MutationObserver(function(mutations){
+      if(mutations.some(function(m){return m.type==='childList'&&m.target===panel;}))
+        enhanceMatrix();
+    });
+    observer.observe(panel,{childList:true});
+    enhanceMatrix();
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
