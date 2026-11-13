@@ -1,0 +1,392 @@
+/*
+ * Dashboard CM • 261114-DCM-25
+ * Completes the approved design across ALL top-level menus and contextual tabs.
+ * Display-only CSS; no HTML, JS, Firestore, forms, permissions or business rules.
+ * Hierarchy: 1) original app header  2) navy primary active menu
+ *            3) soft-blue equal-width contextual tab  4) content directly.
+ */
+:root{
+  --dcm-25-sub-active:#DCE9FB;
+  --dcm-25-sub-text:#173A74;
+  --dcm-25-sub-muted:#4C6080;
+  --dcm-25-sub-rest:#F1F5FC;
+  --dcm-25-sub-border:#DEE7F4;
+  --dcm-25-space:10px;
+}
+
+/* SECURITY / ACCESSIBILITY: retain hidden/role-restricted primary menus.
+   Earlier visual CSS used display:flex !important; never show hidden menus. */
+#appMain > .tabs-row #tabNav .tab-btn.hidden,
+#appMain > .tabs-row #tabNav .tab-btn[hidden],
+#appMain > .tabs-row #tabNav .tab-btn[aria-hidden="true"],
+#appMain > .tabs-row #tabNav .tab-btn[style*="display: none"],
+#appMain > .tabs-row #tabNav .tab-btn[style*="display:none"]{
+  display:none!important;
+}
+
+/* No extra underline for active PRIMARY menu.
+   Preserve the ::after lock pictogram for permission-management preview. */
+#appMain > .tabs-row #tabNav .tab-btn.active:not(.cm-tab-limited)::after{
+  content:none!important;
+  height:0!important;
+  background:transparent!important;
+  border:0!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn.active{
+  border-bottom:0!important;
+  outline-offset:2px;
+}
+
+/* One consistent spacing rhythm under the shared primary nav. */
+#appMain > .tabs-row{margin-bottom:var(--dcm-25-space)!important}
+#appMain > .tab-panel{
+  scroll-margin-top:140px;
+}
+#appMain > .tab-panel:not(.hidden){margin-top:0!important}
+
+/* A contextual-tab design token, shared by Activity, CRA and Priority.
+   Keeps tab heights and widths stable independent of their text length. */
+#dcm-activity-view-tabs,
+#tab-survey .cm-survey-subtabs,
+#tab-priority .cm-survey-subtabs{
+  box-sizing:border-box!important;
+  gap:4px!important;
+  padding:4px!important;
+  background:var(--dcm-25-sub-rest)!important;
+  border:1px solid var(--dcm-25-sub-border)!important;
+  border-radius:11px!important;
+  box-shadow:none!important;
+  margin-top:0!important;
+  margin-bottom:10px!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn,
+#tab-survey .cm-survey-subtabs .cm-survey-subtab,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab{
+  box-sizing:border-box!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  min-height:36px!important;
+  border:0!important;
+  border-bottom:0!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  color:var(--dcm-25-sub-muted)!important;
+  box-shadow:none!important;
+  font:650 12px/1.25 Inter,Arial,sans-serif!important;
+  text-align:center!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active,
+#tab-survey .cm-survey-subtabs .cm-survey-subtab.active,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab.active{
+  color:var(--dcm-25-sub-text)!important;
+  background:var(--dcm-25-sub-active)!important;
+  font-weight:750!important;
+  box-shadow:none!important;
+  border:0!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active::after,
+#tab-survey .cm-survey-subtabs .cm-survey-subtab.active::after,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab.active::after{
+  box-shadow:none!important;
+  border-bottom:0!important;
+}
+/* CRA contextual help is a tool, not an equal-width navigation item. */
+#tab-survey .cm-survey-subtabs .cm-context-help{
+  flex:0 0 33px!important;
+  width:33px!important;
+  min-width:33px!important;
+  height:33px!important;
+  align-self:center!important;
+  margin:0 1px!important;
+  border-radius:50%!important;
+}
+
+/* OVERVIEW: already starts with the dashboard itself, not a duplicate title. */
+#tab-analytics .overview-kpi-grid{margin-top:0!important}
+
+/* AGENDA: maintain equally sized four secondary views and compact search/filter. */
+#dcm-activity-view-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  width:100%!important;
+  max-width:100%!important;
+  overflow:visible!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn{
+  width:100%!important;
+  flex:none!important;
+  justify-content:center!important;
+}
+
+/* PENUGASAN: the large repeated "Penugasan Tim CM" title is unnecessary.
+   Hide only top-level descriptive copy; keep add/import/export actions. */
+#tab-tasks > .task-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  min-height:0!important;
+  margin:0 0 10px!important;
+  padding:0!important;
+  gap:8px!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#tab-tasks > .task-head > div:first-child:has(h2){display:none!important}
+#tab-tasks > .task-head .task-actions{
+  margin-left:auto!important;
+  display:flex!important;
+  gap:7px!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+}
+/* Never target .task-head inside a comment row/modal. */
+
+/* KNOWLEDGE: the decorative hero only contains a repeated menu heading.
+   Keep category tiles, search, reference library and all internal sections. */
+#tab-knowledge > .kb-hero,
+#tab-knowledge .kb-hero:has(> .kb-hero-text:only-child){
+  display:none!important;
+}
+#tab-knowledge .kb-category-row{
+  margin-top:0!important;
+}
+/* Existing knowledge-group titles are content titles and remain visible. */
+
+/* CRA: replace redundant navy hero with compact, readable KPI tiles.
+   Hide repeated title but preserve active/response/history counters. */
+#tab-survey .cm-survey-hero{
+  display:flex!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  background:none!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+  color:var(--dcm-25-sub-text)!important;
+}
+#tab-survey .cm-survey-hero > div:first-child:has(h2){display:none!important}
+#tab-survey .cm-survey-hero:not(:has(.cm-survey-hero-stat)){
+  display:none!important;
+}
+#tab-survey .cm-survey-hero-stat{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  width:100%!important;
+  flex:1!important;
+  max-width:none!important;
+  gap:10px!important;
+  justify-content:stretch!important;
+  align-items:stretch!important;
+  margin:0!important;
+}
+#tab-survey .cm-survey-hero-stat .cm-mini-stat{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:63px!important;
+  padding:10px 13px!important;
+  border:1px solid #DCE6F4!important;
+  border-radius:11px!important;
+  background:linear-gradient(115deg,#F7FAFF 0%,#EFF5FD 100%)!important;
+  box-shadow:none!important;
+}
+#tab-survey .cm-survey-hero-stat .cm-mini-stat b{
+  display:block!important;
+  color:#10356E!important;
+  font:750 20px/1.15 Inter,Arial,sans-serif!important;
+}
+#tab-survey .cm-survey-hero-stat .cm-mini-stat small{
+  display:block!important;
+  margin-top:4px!important;
+  color:#4F6486!important;
+  font:600 11px/1.25 Inter,Arial,sans-serif!important;
+}
+
+/* PRIORITY: missing in the earlier rollout. Remove heavy extra banner
+   but retain +Tambah Proyek, Ekspor Excel, Laporan, and four child tabs. */
+#tab-priority .prio-page > .prio-hero{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  min-height:0!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  background:transparent!important;
+  background-image:none!important;
+  color:var(--dcm-25-sub-text)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#tab-priority .prio-page > .prio-hero > div:first-child:has(h2){display:none!important}
+#tab-priority .prio-hero-actions{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+  margin-left:auto!important;
+}
+#tab-priority .prio-hero-actions .prio-btn-light{
+  background:#FFF!important;
+  color:#173A74!important;
+  border:1px solid #CAD7EA!important;
+  box-shadow:none!important;
+}
+#tab-priority .prio-hero-actions .prio-btn-light:not(:disabled):hover{
+  background:#EDF4FE!important;
+  color:#12386F!important;
+  border-color:#AABFDC!important;
+}
+#tab-priority .prio-hero-actions button:disabled{opacity:.5!important}
+
+/* SQUAD TEAM: no second page title, preserve all action buttons and directories. */
+#tab-contact > .context-section-head{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  min-height:0!important;
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#tab-contact > .context-section-head > div:first-child:has(h3){display:none!important}
+#tab-contact > .context-section-head .context-section-actions{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  justify-content:flex-end!important;
+  gap:7px!important;
+  margin-left:auto!important;
+}
+
+/* CM TEAM: compact resource actions, no blank dark hero for read-only users. */
+#tab-resource .res-page > .res-hero{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+  padding:0!important;
+  margin:0 0 10px!important;
+  min-height:0!important;
+  background:none!important;
+  color:var(--dcm-25-sub-text)!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+#tab-resource .res-page > .res-hero > div:first-child:has(h2){display:none!important}
+#tab-resource .res-page > .res-hero:not(:has(button)){display:none!important}
+#tab-resource .res-hero > button{margin-left:auto!important}
+
+/* SETTINGS: nine tabs were left unequal and used a gold underline.
+   Same soft secondary treatment, each setting tab has exactly equal width. */
+#cmAccessPanel .cm-ap-tabs{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  width:100%!important;
+  max-width:100%!important;
+  gap:4px!important;
+  padding:4px!important;
+  margin:0!important;
+  min-height:49px!important;
+  box-sizing:border-box!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  border:1px solid var(--dcm-25-sub-border)!important;
+  border-radius:10px!important;
+  background:var(--dcm-25-sub-rest)!important;
+  scrollbar-width:thin;
+  box-shadow:none!important;
+}
+#cmAccessPanel .cm-ap-tabs [data-ap-tab]{
+  display:flex!important;
+  flex:1 1 0!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  min-height:39px!important;
+  padding:7px 5px!important;
+  margin:0!important;
+  border:0!important;
+  border-bottom:0!important;
+  border-radius:8px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font:650 11px/1.25 Inter,Arial,sans-serif!important;
+  color:var(--dcm-25-sub-muted)!important;
+  white-space:normal!important;
+  text-align:center!important;
+  overflow-wrap:normal!important;
+}
+#cmAccessPanel .cm-ap-tabs [data-ap-tab].on,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab][aria-selected="true"]{
+  background:var(--dcm-25-sub-active)!important;
+  color:var(--dcm-25-sub-text)!important;
+  font-weight:750!important;
+  box-shadow:none!important;
+}
+#cmAccessPanel .cm-ap-tabs [data-ap-tab]:not(.on):hover{
+  background:#E8EFFA!important;
+  color:var(--dcm-25-sub-text)!important;
+}
+/* Data & Backup is a separate utility popover; leave its functionality alone. */
+
+/* Desktop: identical tab widths. Small screens: identical fixed widths + scroll.
+   Deliberately avoid two-row wrap and header movement. */
+@media(max-width:1420px){
+  #cmAccessPanel .cm-ap-tabs [data-ap-tab]{
+    flex:0 0 149px!important;
+    min-width:149px!important;
+    max-width:149px!important;
+  }
+}
+@media(max-width:920px){
+  #tab-survey .cm-survey-hero-stat{gap:6px!important}
+  #tab-survey .cm-survey-hero-stat .cm-mini-stat{padding:9px 10px!important}
+  #tab-survey .cm-survey-subtabs .cm-survey-subtab,
+  #tab-priority .cm-survey-subtabs .cm-survey-subtab{
+    flex:0 0 155px!important;
+    min-width:155px!important;
+    max-width:155px!important;
+    white-space:nowrap!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+  }
+}
+@media(max-width:650px){
+  #tab-survey .cm-survey-hero-stat{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+  #tab-survey .cm-survey-hero-stat .cm-mini-stat b{font-size:17px!important}
+  #tab-survey .cm-survey-hero-stat .cm-mini-stat small{font-size:10px!important}
+  #tab-priority .prio-hero-actions,
+  #tab-contact .context-section-actions,
+  #tab-tasks .task-actions{justify-content:flex-end!important}
+  #cmAccessPanel .cm-ap-tabs [data-ap-tab]{
+    flex:0 0 145px!important;
+    min-width:145px!important;
+    max-width:145px!important;
+  }
+}
+
+/* Global focus stays visible (keyboard access). */
+#appMain > .tabs-row #tabNav .tab-btn:focus-visible,
+#dcm-activity-view-tabs .dcm-activity-view-btn:focus-visible,
+#tab-survey .cm-survey-subtabs button:focus-visible,
+#tab-priority .cm-survey-subtabs button:focus-visible,
+#cmAccessPanel .cm-ap-tabs button:focus-visible{
+  outline:2px solid #3C70B7!important;
+  outline-offset:2px!important;
+}
