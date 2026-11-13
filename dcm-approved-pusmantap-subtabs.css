@@ -1,0 +1,57 @@
+/* Approved Dashboard CM contextual navigation inside Tim Pusmantap iframe.
+   Match the main app's soft submenu treatment; preserve buttons and CRUD behavior. */
+body.cm-embedded .tp-live .seg.tabs2{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  width:100%!important;
+  min-height:45px!important;
+  gap:4px!important;
+  padding:4px!important;
+  background:#F1F5FC!important;
+  border:1px solid #DEE7F4!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+  overflow-x:auto!important;
+  scrollbar-width:thin;
+}
+body.cm-embedded .tp-live .seg.tabs2 button{
+  display:flex!important;
+  flex:1 1 0!important;
+  min-width:0!important;
+  width:auto!important;
+  min-height:36px!important;
+  padding:8px 4px!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:9px!important;
+  background:transparent!important;
+  color:#3F5578!important;
+  box-shadow:none!important;
+  white-space:nowrap!important;
+  font:650 12px/1.2 "Segoe UI",Arial,sans-serif!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 button.on,
+body.cm-embedded .tp-live .seg.tabs2 button[aria-selected="true"]{
+  background:#DCE9FB!important;
+  color:#173A74!important;
+  box-shadow:none!important;
+  border:0!important;
+  font-weight:750!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 button.on svg,
+body.cm-embedded .tp-live .seg.tabs2 button[aria-selected="true"] svg{
+  color:#173A74!important;
+  stroke:currentColor!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 button:not(.on):hover{
+  background:#E8EFFA!important;
+  color:#173A74!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 svg.i{width:16px!important;height:16px!important}
+@media(max-width:1050px){
+  body.cm-embedded .tp-live .seg.tabs2 button{
+    flex:0 0 145px!important;
+    min-width:145px!important;
+  }
+}
