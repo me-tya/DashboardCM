@@ -333,6 +333,8 @@ body.cm-embedded{font:13px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,s
 
 /* Dual-leg placement: preserve v4 navy-gold visual geometry. */
 .tp-placement .kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.tp-placement .tp-board-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden}
+.tp-placement .tp-board-scroll .board{overflow:visible;min-width:1390px}
 .tp-placement .tp-legs-head{display:grid;grid-template-columns:minmax(190px,1fr) minmax(0,6fr);gap:10px;min-width:1390px;margin:5px 0 7px;font-size:11px;font-weight:750;letter-spacing:.35px}
 .tp-placement .tp-legs-head>div{border-radius:9px;background:var(--gold-l);color:var(--gold-d);border:1px solid #E9D8A7;padding:7px 10px;text-align:center}
 .tp-placement .tp-legs-head>div:last-child{background:var(--navy-l);color:var(--navy2);border-color:#CDD9EB}
@@ -503,7 +505,7 @@ function placement(){
   ['cal',(data.activities||[]).filter(a=>a.date<=today()&&a.end>=today()).length,'Agenda hari ini','var(--v-l)','var(--v)']
  ].map(x=>'<div class="kpi"><span class="ico" style="background:'+x[3]+';color:'+x[4]+'">'+ic(x[0])+'</span><div><b>'+x[1]+'</b><small>'+esc(x[2])+'</small></div></div>').join('');
  return titleBar('Penempatan Tim','Dua kaki independen: jabatan struktural dan tim penugasan. Satu pegawai dapat tampil pada keduanya, tanpa terhitung dua kali.',edit()?btn('⇧ Impor Pegawai','import-members')+btn('＋ Tambah Pegawai','add-member',true):'')+
-  '<div class="tp-placement"><div class="kpis">'+kpis+'</div><div class="tp-legs-head"><div>KAKI 1 · STRUKTURAL</div><div>KAKI 2 · PENUGASAN TIM</div></div><div class="board">'+strCol+col('')+TEAM.map(col).join('')+'</div>'+
+  '<div class="tp-placement"><div class="kpis">'+kpis+'</div><div class="tp-board-scroll"><div class="tp-legs-head"><div>KAKI 1 · STRUKTURAL</div><div>KAKI 2 · PENUGASAN TIM</div></div><div class="board">'+strCol+col('')+TEAM.map(col).join('')+'</div></div>'+
   '<div class="foot"><div class="leg"><span><i style="background:var(--gold)"></i>Struktural</span><span><i style="background:var(--o)"></i>WFO</span><span><i style="background:var(--h)"></i>WFH</span><span><i style="background:var(--s)"></i>Dinas luar</span><span><i style="background:var(--c)"></i>Cuti</span></div>'+
   '<span>Seret pada kaki tim tidak mengubah penempatan struktural</span></div></div>';
 }
