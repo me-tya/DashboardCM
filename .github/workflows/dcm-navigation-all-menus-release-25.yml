@@ -1,0 +1,103 @@
+name: Release DCM 25 ALL menus approved navigation
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-navigation-all-menus-release-25.yml'
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Reconfirm full original ZIP was saved before changes
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-25:refs/remotes/origin/backup/261114-DCM-25
+          git archive --format=zip --output=/tmp/261114-DCM-25.zip origin/backup/261114-DCM-25
+          unzip -t /tmp/261114-DCM-25.zip | tail -1
+          test -s /tmp/261114-DCM-25.zip
+      - name: Validate every menu, Settings, action visibility and style coverage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          old=Path('dcm-approved-navigation.css').read_text('utf8')
+          full=Path('dcm-navigation-all-menus-25.css').read_text('utf8')
+          iframe=Path('dcm-navigation-pusmantap-all-25.css').read_text('utf8')
+          index=Path('index.html').read_text('utf8')
+          tp=Path('tim-pusmantap.html').read_text('utf8')
+          for name,css in [('primary',old),('all menus',full),('iframe',iframe)]:
+            assert css.count('{')==css.count('}'),(name,'mismatched CSS braces')
+            assert 'html{display:none' not in css, (name,'dangerous global rule')
+          names=['analytics','table','tasks','knowledge','survey','priority','contact','resource','pusmantap']
+          for name in names:
+            assert 'id="tab-'+name+'"' in index,name
+          mappings={
+            'Overview':'#tab-analytics',
+            'Agenda':'#dcm-activity-view-tabs',
+            'Penugasan':'#tab-tasks',
+            'Knowledge':'#tab-knowledge',
+            'CRA':'#tab-survey',
+            'Priority':'#tab-priority',
+            'Squad Team':'#tab-contact',
+            'CM Team':'#tab-resource',
+          }
+          for name,sel in mappings.items():
+            assert sel in full,(name,sel)
+          assert '#tabNav' in old and '.tab-btn.active' in old
+          for marker in ['#cmAccessPanel .cm-ap-tabs','[data-ap-tab]','.tab-btn.hidden','.tab-btn[hidden]',
+                         '.tab-btn[style*="display: none"]','.prio-hero-actions','.context-section-actions',
+                         '.task-actions','.cm-survey-hero-stat']:
+            assert marker in full,marker
+          assert 'body.cm-embedded .tp-live .seg.tabs2' in iframe
+          assert 'body.cm-embedded .tp-live .tp-section-head' in iframe
+          assert 'body.cm-embedded .tp-live .band' in iframe
+          assert 'document.body.classList.add(' in tp
+          assert 'dcm-approved-navigation.css?v=261114-24' in index
+          assert 'dcm-approved-pusmantap-subtabs.css?v=261114-24' in tp
+          print('PASS 9/9 primary menus; Activity, CRA, Priority, Settings and Tim Pusmantap child tabs')
+          print('PASS role-hidden menus, preserved buttons, HTML intact and CSS valid')
+          PY
+      - name: Run existing JavaScript feature regression tests
+        run: |
+          node --check dcm-guide-header.js
+          node --check dcm-pusmantap-bridge.js
+          node --check dcm-pusmantap-import.js
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+      - name: Enable completed all-menu design without modifying business logic
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          inserts=[
+            (Path('index.html'),'dcm-navigation-all-menus-25.css?v=261114-25',
+             'dcm-approved-navigation.css?v=261114-24'),
+            (Path('tim-pusmantap.html'),'dcm-navigation-pusmantap-all-25.css?v=261114-25',
+             'dcm-approved-pusmantap-subtabs.css?v=261114-24')
+          ]
+          for file,src,required in inserts:
+            original=file.read_text(encoding='utf8')
+            assert required in original,(file,'missing previous approved design')
+            tag='<link rel="stylesheet" href="'+src+'">'
+            assert tag not in original
+            close=original.lower().find('</head>')
+            body=original.lower().find('<body')
+            assert close>0 and (body<0 or close<body),(file,'document head boundary invalid')
+            amended=original[:close]+tag+'\n'+original[close:]
+            assert amended.replace(tag+'\n','',1)==original,(file,'modified more than stylesheet link')
+            assert amended.count(tag)==1
+            file.write_text(amended,encoding='utf8')
+            print('Style linked:',file,src)
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish style-only changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap.html
+          git commit -m "style(dcm): unify all nine menus, submenus, settings and Tim Pusmantap without duplicate banners"
+          git push origin HEAD:main
