@@ -29,7 +29,7 @@
 .tp-imp-help{font-size:11px;color:var(--ink3);line-height:1.5;margin:9px 0 11px;background:#F3F6FB;border-left:3px solid var(--gold);border-radius:4px;padding:7px 10px}
 .tp-imp-emptystate{padding:23px 15px;border-radius:9px;background:#F8FAFD;border:1px solid var(--line);color:var(--ink3);text-align:center;font-size:12px}
 .tp-imp-tablewrap{border:1px solid var(--line);border-radius:9px;max-height:43vh;overflow:auto}
-.tp-imp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;min-width:970px;table-layout:fixed}
+.tp-imp-table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;min-width:1240px;table-layout:fixed}
 .tp-imp-table th{position:sticky;top:0;z-index:1;text-align:left;color:var(--ink3);font-size:11px;white-space:nowrap;padding:8px 7px;border-bottom:1px solid var(--line);background:#F6F8FC}
 .tp-imp-table td{border-bottom:1px solid var(--line2);padding:5px 5px;vertical-align:middle}
 .tp-imp-table tbody tr:hover{background:#F9FBFE}
@@ -40,8 +40,9 @@
 .tp-imp-table th:nth-child(5){width:13%}
 .tp-imp-table th:nth-child(6){width:95px}
 .tp-imp-table th:nth-child(7){width:12%}
-.tp-imp-table th:nth-child(8){width:145px}
-.tp-imp-table th:nth-child(9){width:32px}
+.tp-imp-table th:nth-child(8){width:255px}
+.tp-imp-table th:nth-child(9){width:145px}
+.tp-imp-table th:nth-child(10){width:32px}
 .tp-imp-table input:not([type="checkbox"]),.tp-imp-table select{display:block;width:100%;min-width:0;background:#fff;border:1px solid #D5DDEA;border-radius:6px;font:11.5px/1.35 "Segoe UI",system-ui,Arial,sans-serif;padding:6px 5px;color:var(--ink)}
 .tp-imp-table input:focus,.tp-imp-table select:focus{outline:1px solid var(--gold);border-color:var(--gold)}
 .tp-imp-table input[type="checkbox"]{width:16px;height:16px;accent-color:var(--navy);margin:0}
