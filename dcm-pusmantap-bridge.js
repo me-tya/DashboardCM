@@ -16,7 +16,7 @@ const normal=m=>({members:Array.isArray(m?.members)?m.members:[],teams:m?.teams&
 function own(){return typeof cmCanMutate==='function'&&cmCanMutate()&&typeof isLoggedIn==='function'&&isLoggedIn();}
 function people(){
  return (Array.isArray(state.resources)?state.resources:[]).filter(r=>!((typeof resourceIsInactive==='function')&&resourceIsInactive(r))).map(r=>({
-  id:clean(r.id),name:clean(r.nama),job:clean(r.jabatan),unit:clean(r.unit),role:clean(r.peran),
+  id:clean(r.id),name:clean(r.nama),nip:clean(r.nip),job:clean(r.jabatan),unit:clean(r.unit),role:clean(r.peran),
   jenis:clean(r.jenisPegawai||r.jenisKepegawaian||r.jenis||r.penugasan||'Pegawai'),
   wfhDays:Array.isArray(r.wfhDays)?r.wfhDays:[],leavePlans:Array.isArray(r.rencanaCuti)?r.rencanaCuti:[],
   status:clean(r.status),statusMulai:clean(r.statusMulai),statusSelesai:clean(r.statusSelesai),
@@ -63,11 +63,51 @@ async function initRemote(){
  }catch(e){console.warn('[Tim Pusmantap] Firebase listener failed',e)}
 }
 function edit(m,action,d){
- if(action==='member-save'){
+ if(action==='members-import'){
+  if(!Array.isArray(d.entries)||!d.entries.length||d.entries.length>500)throw Error('Jumlah pegawai yang diimpor harus antara 1 sampai 500.');
+  const mode=d.mode==='merge'?'merge':'skip',live=people(),seen=new Set();
+  const stats={added:0,updated:0,assigned:0,skipped:0};
+  for(const source of d.entries){
+   const name=clean(source.name).replace(/\s+/g,' ');
+   const nip=clean(source.nip).replace(/[^\d]/g,'');
+   if(!name||name.length<3){stats.skipped++;continue;}
+   if(nip&&(!/^\d{6,20}$/.test(nip)))throw Error('NIP '+name+' tidak valid.');
+   const team=clean(source.team).toUpperCase();
+   if(team&&!['DCS','DOA','SPP','SSB','CM'].includes(team))throw Error('Tim '+name+' tidak dikenal.');
+   const ident=nip?'nip:'+nip:'name:'+fold(name);
+   if(seen.has(ident)){stats.skipped++;continue;}
+   seen.add(ident);
+   const same=(x)=>fold(x.name)===fold(name)||(nip&&clean(x.nip)===nip);
+   const fromCM=live.find(same),fromManual=m.members.find(same);
+   if(fromCM){
+    if(mode==='merge'&&team){m.teams[fromCM.name]=team;stats.assigned++;}
+    else stats.skipped++;
+    continue;
+   }
+   if(fromManual){
+    if(mode!=='merge'){stats.skipped++;continue;}
+    Object.assign(fromManual,{
+      job:clean(source.job)||fromManual.job||'',
+      unit:clean(source.unit)||fromManual.unit||'',
+      jenis:clean(source.jenis)||fromManual.jenis||'Pegawai',
+      nip:nip||fromManual.nip||''
+    });
+    if(team)m.teams[fromManual.name]=team;
+    stats.updated++;continue;
+   }
+   const created={name,nip,job:clean(source.job),unit:clean(source.unit),jenis:clean(source.jenis)||'Pegawai',createdAt:new Date().toISOString()};
+   m.members.push(created);
+   if(team)m.teams[name]=team;
+   stats.added++;
+  }
+  return stats;
+ }else if(action==='member-save'){
   const old=clean(d.oldName),name=clean(d.name);if(!name)throw Error('Nama pegawai wajib diisi');
   if(people().some(p=>fold(p.name)===fold(name)))throw Error('Pegawai ini sudah ada di CM Team. Ubah lewat menu CM Team.');
   if(m.members.some(p=>fold(p.name)===fold(name)&&fold(p.name)!==fold(old)))throw Error('Nama pegawai sudah terdaftar');
-  const item={name,job:clean(d.job),unit:clean(d.unit),jenis:clean(d.jenis||'Pegawai'),createdAt:clean(d.createdAt||new Date().toISOString())};
+  const item={name,nip:clean(d.nip),job:clean(d.job),unit:clean(d.unit),jenis:clean(d.jenis||'Pegawai'),createdAt:clean(d.createdAt||new Date().toISOString())};
+  if(item.nip&&people().some(p=>clean(p.nip)===item.nip))throw Error('NIP sudah terdaftar di CM Team.');
+  if(item.nip&&m.members.some(p=>clean(p.nip)===item.nip&&fold(p.name)!==fold(old)))throw Error('NIP sudah digunakan oleh pegawai lain.');
   if(old){const idx=m.members.findIndex(x=>fold(x.name)===fold(old));if(idx<0)throw Error('Pegawai tidak ditemukan');m.members[idx]={...m.members[idx],...item};
     if(old!==name){if(m.teams[old]){m.teams[name]=m.teams[old];delete m.teams[old]}m.leaves.forEach(x=>{if(fold(x.name)===fold(old))x.name=name});Object.keys(m.attendance).forEach(k=>{if(k.startsWith(old+'|')){m.attendance[name+k.slice(old.length)]=m.attendance[k];delete m.attendance[k]}});}
   }else m.members.push(item);
@@ -104,12 +144,13 @@ async function saveManual(action,data){
  const updated=await window.fbRunTransaction(window.fbDb,async tx=>{
   const snap=await tx.get(ref);let base=empty();
   if(snap.exists()){try{base=normal(JSON.parse(snap.data().value||'{}'));}catch(e){}}
-  edit(base,action,data);
+  const stats=edit(base,action,data)||{};
   tx.set(ref,{value:JSON.stringify(base),updatedAt:new Date().toISOString(),updatedBy:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():''});
-  return base;
+  return {base,stats};
  });
- manual=updated;try{localStorage.setItem(KEY,JSON.stringify(updated))}catch(e){}
+ manual=updated.base;try{localStorage.setItem(KEY,JSON.stringify(manual))}catch(e){}
  send(true);
+ return updated.stats;
 }
 async function saveResourceLeave(action,d){
  if(!own())throw Error('Hak akses tidak tersedia');
@@ -154,9 +195,10 @@ window.addEventListener('message',async ev=>{
  if(m.type!=='mutation')return;
  try{
   const act=clean(m.action),d=m.data||{};
+  let stats={};
   if((act==='leave-save'||act==='leave-delete')&&state.resources.some(r=>fold(r.nama)===fold(d.name)))await saveResourceLeave(act,d);
-  else await saveManual(act,d);
-  frame()?.contentWindow?.postMessage({source:SOURCE,type:'mutation-result',requestId:m.requestId,ok:true},location.origin);
+  else stats=await saveManual(act,d);
+  frame()?.contentWindow?.postMessage({source:SOURCE,type:'mutation-result',requestId:m.requestId,ok:true,stats},location.origin);
  }catch(e){
   frame()?.contentWindow?.postMessage({source:SOURCE,type:'mutation-result',requestId:m.requestId,ok:false,error:String(e.message||e)},location.origin);
  }
