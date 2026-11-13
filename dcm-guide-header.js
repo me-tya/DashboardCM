@@ -331,6 +331,35 @@
     return svg ? svg.cloneNode(true) : null;
   }
 
+  /* Settings is a separate high-layer overlay. Existing legacy import/backup
+     modals use z-index:100, so they otherwise open behind Settings and appear inert.
+     Keep the original handlers and data format; only fix visibility + feedback. */
+  function dcmSettingsDataLayer(id) {
+    var targetId = id === 'btnImport' ? 'importModal'
+      : (id === 'btnBackupAll' || id === 'btnRestoreAll' ? 'backupModal' : '');
+    if (!targetId) return null;
+    var layer = $id(targetId);
+    if (layer) {
+      // A body-level modal must be above the Settings dialog and its scrim.
+      layer.style.setProperty('z-index', '2147483000', 'important');
+    }
+    return layer;
+  }
+  function dcmSettingsDataMessage(button, message, error) {
+    var box = button.closest('.dcm-settings-utility-drop');
+    var meta = box && box.querySelector('.dcm-settings-utility-meta');
+    if (!meta) return;
+    var status = meta.querySelector('[data-dcm-data-action-status]');
+    if (!status) {
+      status = document.createElement('div');
+      status.setAttribute('data-dcm-data-action-status', 'true');
+      status.setAttribute('role', 'status');
+      meta.prepend(status);
+    }
+    status.textContent = message;
+    status.style.color = error ? '#A43A3A' : '#1F527D';
+    status.style.fontWeight = '600';
+  }
   function utilityButton(id, text) {
     var button = document.createElement('button');
     button.type = 'button';
@@ -342,9 +371,40 @@
     var label = document.createElement('span');
     label.textContent = text;
     button.appendChild(label);
-    button.addEventListener('click', function () {
+    button.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
       var original = $id(id);
-      if (original) original.click();
+      if (!original) {
+        dcmSettingsDataMessage(button, 'Tombol utama '+text+' tidak ditemukan. Muat ulang halaman.', true);
+        return;
+      }
+      var isExport = id === 'btnExport';
+      var allowed = isExport ? window.cmCanReport : window.cmCanMutate;
+      if (typeof allowed === 'function' && !allowed()) {
+        dcmSettingsDataMessage(button, 'Akun ini tidak memiliki hak akses '+text+'.', true);
+        return;
+      }
+      var layer = dcmSettingsDataLayer(id);
+      if (original.disabled) {
+        dcmSettingsDataMessage(button, 'Fungsi '+text+' sedang dinonaktifkan.', true);
+        return;
+      }
+      // Legacy click handlers perform the real operation. Never invent another
+      // download, restore or import path which could desynchronise Firestore.
+      original.click();
+      if (layer) {
+        if (layer.classList.contains('hidden')) {
+          dcmSettingsDataMessage(button, 'Dialog '+text+' tidak terbuka. Periksa izin akun dan muat ulang halaman.', true);
+        } else {
+          var drop = button.closest('.dcm-settings-utility-drop');
+          if (drop) drop.hidden = true;
+          var trigger = button.closest('.dcm-settings-utility-anchor')?.querySelector('.dcm-settings-utility-trigger');
+          if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        }
+      } else {
+        dcmSettingsDataMessage(button, 'Ekspor dimulai. Periksa unduhan di browser.', false);
+      }
     });
     return button;
   }
