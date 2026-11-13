@@ -1,0 +1,48 @@
+name: DCM deploy employee importer and invalidate old iframe cache
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-import-cache-deploy.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify full pre-change ZIP branch exists
+        run: |
+          git fetch origin backup/261113-DCM-21
+          git archive --format=zip --output=/tmp/261113-DCM-21.zip origin/backup/261113-DCM-21
+          unzip -t /tmp/261113-DCM-21.zip | tail -1
+      - name: Verify imports, OCR and existing live features
+        run: |
+          node --check dcm-pusmantap-import.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Cache-bust original iframe and bridge only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          a='tim-pusmantap.html?embedded=1&amp;v=20261113-19'
+          b='dcm-pusmantap-bridge.js?v=20261113-19'
+          assert s.count(a)==1,(a,s.count(a))
+          assert s.count(b)==1,(b,s.count(b))
+          s=s.replace(a,'tim-pusmantap.html?embedded=1&amp;v=20261113-21',1)
+          s=s.replace(b,'dcm-pusmantap-bridge.js?v=20261113-21',1)
+          assert s.count('dcm-pusmantap-bridge.js')==1
+          p.write_text(s,encoding='utf8')
+          PY
+          git diff --check
+      - name: Commit and deploy import update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): activate JSON Excel and OCR employee import with new live iframe cache key"
+          git push origin HEAD:main
