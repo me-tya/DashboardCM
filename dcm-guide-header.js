@@ -263,3 +263,184 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
 })();
+
+
+/* DCM COMPACT HEADER — 261113-DCM-12 */
+(function () {
+  'use strict';
+  if (window.DCM_COMPACT_HEADER_261113) return;
+  window.DCM_COMPACT_HEADER_261113 = true;
+
+  function $id(id) { return document.getElementById(id); }
+  function configureSyncTooltip() {
+    var pill = $id('storagePill'), label = $id('storageText');
+    if (!pill || !label) return;
+    function refresh() {
+      var status = (label.textContent || 'Status sinkronisasi data').trim();
+      pill.title = status;
+      pill.setAttribute('aria-label', 'Sinkronisasi data: ' + status);
+      pill.setAttribute('role', 'status');
+    }
+    refresh();
+    if (window.MutationObserver) new MutationObserver(refresh).observe(label, {
+      characterData:true, childList:true, subtree:true
+    });
+  }
+
+  function positionControls() {
+    var actions = document.querySelector('#appHeader .topbar-actions');
+    if (!actions) return;
+    // Gunakan DOM node asli agar semua event listener, login, dan notifikasi tetap bekerja.
+    ['storagePill', 'btnReminderCenter', 'cmGuideToggle', 'btnLangToggle', 'authPill']
+      .forEach(function (id) {
+        var item = $id(id);
+        if (item && actions.contains(item) && item.parentElement === actions) {
+          actions.appendChild(item);
+        }
+      });
+  }
+
+  function getSettingsModal() {
+    // Hanya cari modal Settings yang benar-benar terbuka.
+    var tabs = Array.from(document.querySelectorAll('button,a,[role="tab"],span'))
+      .filter(function (el) {
+        var t = (el.textContent || '').trim();
+        return t === 'Statistik Kunjungan Tamu' &&
+          el.getClientRects().length > 0;
+      });
+    for (var i = 0; i < tabs.length; i++) {
+      var node = tabs[i];
+      var modal = node.closest('.modal-box,.modal-content,.settings-modal,.settings-box,[role="dialog"]');
+      if (modal && modal.getBoundingClientRect().height > 240) return modal;
+      var parent = node.parentElement;
+      while (parent && parent !== document.body) {
+        var rect = parent.getBoundingClientRect();
+        if (rect.width > 500 && rect.height > 300 &&
+          /Pengguna/.test(parent.textContent || '') &&
+          /Standar Penomoran/.test(parent.textContent || '')) {
+          return parent;
+        }
+        parent = parent.parentElement;
+      }
+    }
+    return null;
+  }
+
+  function svgFor(id) {
+    var source = $id(id), svg = source && source.querySelector('svg');
+    return svg ? svg.cloneNode(true) : null;
+  }
+
+  function utilityButton(id, text) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'dcm-header-icon';
+    button.setAttribute('aria-label', text);
+    button.title = text;
+    var icon = svgFor(id);
+    if (icon) button.appendChild(icon);
+    var label = document.createElement('span');
+    label.textContent = text;
+    button.appendChild(label);
+    button.addEventListener('click', function () {
+      var original = $id(id);
+      if (original) original.click();
+    });
+    return button;
+  }
+
+  function metadataValue(id, empty) {
+    var node = $id(id);
+    if (!node) return empty;
+    var text = (node.textContent || '').replace(/\s+/g, ' ').trim();
+    return text && text.indexOf(':') < text.length - 1 ? text : empty;
+  }
+
+  function mountUtilities() {
+    var modal = getSettingsModal();
+    if (!modal) return false;
+    if (modal.querySelector('.dcm-settings-utility-anchor')) return true;
+    var computed = window.getComputedStyle(modal);
+    if (computed.position === 'static') modal.style.position = 'relative';
+
+    var anchor = document.createElement('div');
+    anchor.className = 'dcm-settings-utility-anchor';
+
+    var toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'dcm-settings-utility-trigger';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Pengelolaan data dan backup');
+    toggle.innerHTML =
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
+      '<path d="M4 7h16M4 12h16M4 17h16"></path></svg><span>Data &amp; Backup</span>';
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'dcm-settings-utility-drop';
+    dropdown.hidden = true;
+    dropdown.innerHTML = '<h4>Pengelolaan Data</h4>';
+    var buttons = document.createElement('div');
+    buttons.className = 'dcm-settings-utility-actions';
+    [['btnImport','Impor'],['btnExport','Ekspor'],
+     ['btnBackupAll','Backup'],['btnRestoreAll','Restore']].forEach(function (a) {
+      buttons.appendChild(utilityButton(a[0],a[1]));
+    });
+    dropdown.appendChild(buttons);
+    var meta = document.createElement('div');
+    meta.className = 'dcm-settings-utility-meta';
+    dropdown.appendChild(meta);
+
+    function refreshMeta() {
+      meta.textContent = '';
+      var last = document.createElement('div');
+      last.textContent = metadataValue('lastUpdatePill','Terakhir diperbarui: belum tersedia');
+      meta.appendChild(last);
+      var importText = metadataValue('lastSyncPill','');
+      if (importText) {
+        var imported = document.createElement('div');
+        imported.textContent = importText;
+        meta.appendChild(imported);
+      }
+    }
+    toggle.addEventListener('click', function () {
+      var willOpen = dropdown.hidden;
+      dropdown.hidden = !willOpen;
+      toggle.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) refreshMeta();
+    });
+    anchor.appendChild(toggle);
+    anchor.appendChild(dropdown);
+    modal.appendChild(anchor);
+    document.addEventListener('pointerdown', function (event) {
+      if (!anchor.isConnected) return;
+      if (!anchor.contains(event.target)) {
+        dropdown.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    return true;
+  }
+
+  function afterSettingsOpen() {
+    [0,80,240,600,1200].forEach(function (delay) {
+      window.setTimeout(mountUtilities, delay);
+    });
+  }
+
+  function install() {
+    positionControls();
+    configureSyncTooltip();
+    // Tidak mengganti handler Settings yang sudah ada.
+    document.addEventListener('click', function (event) {
+      if (event.target && event.target.closest &&
+          event.target.closest('#btnAccessAdmin')) afterSettingsOpen();
+      if (event.target && event.target.closest &&
+          event.target.closest('#btnLangToggle')) {
+        window.setTimeout(positionControls, 0);
+      }
+    }, false);
+  }
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', install, {once:true});
+  else install();
+})();
