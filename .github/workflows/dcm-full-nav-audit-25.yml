@@ -1,0 +1,57 @@
+name: DCM 25 complete backup and cross-menu UI inventory
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-full-nav-audit-25.yml'
+permissions:
+  contents: read
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create immutable full ZIP of exact pre-change commit
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-25:refs/remotes/origin/backup/261114-DCM-25
+          git archive --format=zip --output=/tmp/261114-DCM-25.zip origin/backup/261114-DCM-25
+          unzip -t /tmp/261114-DCM-25.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-25
+          path: /tmp/261114-DCM-25.zip
+          retention-days: 30
+      - name: Audit every menu and submenu class, header and navigation components
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, collections
+          s=Path('index.html').read_text(encoding='utf8')
+          p=Path('tim-pusmantap.html').read_text(encoding='utf8')
+          names=['analytics','table','tasks','knowledge','survey','priority','contact','resource','pusmantap','calendar','kanban','matrix']
+          refs={'analytics':'renderAnalytics','table':'renderTable','tasks':'renderTasks',
+                'knowledge':'renderKnowledge','survey':'renderSurveyHub','priority':'renderPriority',
+                'contact':'renderContact','resource':'renderResource','pusmantap':'cmTpFrame'}
+          for k in names:
+            print('\nMENU',k)
+            key=refs.get(k,'render'+k.title())
+            for match in list(re.finditer(re.escape(key),s))[-3:]:
+              i=match.start()
+              snippet=s[i:i+7000]
+              classes=collections.Counter(re.findall(r'class=["\x27]([^"\x27]{3,120})',snippet))
+              print('LINE',s.count(chr(10),0,i)+1, 'CLASSES',classes.most_common(22))
+              print('BEGIN',snippet[:580].replace(chr(10),' '))
+            rootid='tab-'+k
+            pat=r'<[^>]+id="'+rootid+'"[^>]*>'
+            hits=re.findall(pat,s)
+            print('PANEL',hits[:2])
+          print('\nSUBMENU COMPONENT INSTANCES')
+          for name in ['cm-survey-subtabs','cm-survey-subtab','prio-subtabs','af-tabs','cm-ap-tabs','res-tabs','kb-tabs','contact-tabs','task-tabs','squad-tabs','seg tabs2','seg','tabs2','st-tab','tab-nav']:
+            hits=[(i+1,line[:320]) for i,line in enumerate(s.splitlines()) if name in line]
+            print(name,len(hits),'EX',hits[-3:])
+          print('\nTIM PUSMANTAP TAB DEF')
+          for name in ['seg','tabs2','tab-s','switchTab','data-tab','sub','function titleBar','function render','function placement','function profile','function leave','function member']:
+            hits=[(i+1,line[:230]) for i,line in enumerate(p.splitlines()) if name in line]
+            print(name,len(hits),'EX',hits[:8])
+          print('\nHEAD CSS LINKS',re.findall(r'<link[^>]+href="([^"]+css[^"]*)"',s)[:35])
+          PY
