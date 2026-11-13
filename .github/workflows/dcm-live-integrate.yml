@@ -1,0 +1,88 @@
+name: DCM deploy live Tim Pusmantap safely
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-live-integrate.yml']
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Require full prechange backup branch and ZIP
+        shell: bash
+        run: |
+          git fetch origin backup/261113-DCM-19
+          git archive --format=zip --output=/tmp/261113-DCM-19.zip origin/backup/261113-DCM-19
+          unzip -t /tmp/261113-DCM-19.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-19
+          path: /tmp/261113-DCM-19.zip
+          retention-days: 30
+      - name: Link live bridge, do not edit other features
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          assert 'function cmRenderTimPusmantap(){' in s
+          assert 'src="tim-pusmantap.html?embedded=1"' in s
+          s=s.replace('src="tim-pusmantap.html?embedded=1"','src="tim-pusmantap.html?embedded=1&amp;v=20261113-19"',1)
+          assert s.count('src="tim-pusmantap.html?embedded=1&amp;v=20261113-19"')==1
+          marker='</body>'
+          pos=s.rfind(marker)
+          assert pos>0 and pos>len(s)-1500, 'Could not safely locate final body closing tag'
+          tag='<script src="dcm-pusmantap-bridge.js?v=20261113-19"></script>\n'
+          assert 'dcm-pusmantap-bridge.js' not in s
+          s=s[:pos]+tag+s[pos:]
+          assert s.count('dcm-pusmantap-bridge.js')==1
+          p.write_text(s,encoding='utf-8')
+          print('Connected live bridge once; original activity, resource and DOM modules intact.')
+          PY
+      - name: Validate scripts, HTML and data integrity
+        shell: bash
+        run: |
+          node --check dcm-pusmantap-bridge.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          from html.parser import HTMLParser
+          class Check(HTMLParser):
+              def __init__(self):super().__init__();self.errors=[];self.stack=[]
+              def handle_starttag(self, tag,attrs):
+                  if tag=='script':self.stack.append(tag)
+              def handle_endtag(self,tag):
+                  if tag=='script':
+                      if not self.stack:self.errors.append('orphan close script')
+                      else:self.stack.pop()
+          for f in ['index.html','tim-pusmantap.html']:
+              s=Path(f).read_text(encoding='utf-8')
+              parser=Check();parser.feed(s)
+              assert not parser.errors and not parser.stack, (f,parser.errors)
+              for i,sc in enumerate(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script\s*>',s,re.I|re.S)):
+                  if not sc.strip() or 'application/json' in s[max(0,s.find(sc)-120):s.find(sc)]:continue
+                  name=f'/tmp/{f}-{i}.js'
+                  Path(name).write_text(sc,encoding='utf-8')
+                  subprocess.run(['node','--check',name],check=True)
+          t=Path('tim-pusmantap.html').read_text()
+          assert 'PROTOTYPE · LOGIN SEBAGAI' not in t
+          assert 'const TODAY=' not in t
+          assert 'dcm-tim-pusmantap' in t
+          assert 'member-save' in t and 'leave-save' in t and 'attendance-save' in t
+          assert 'data.activities' in t and 'data.resources' in t
+          print('HTML + inline JS validated; static prototype data removed.')
+          PY
+          git diff --check
+      - name: Commit targeted live bridge
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): connect Tim Pusmantap to live Activity and CM Team data"
+          git push origin HEAD:main
