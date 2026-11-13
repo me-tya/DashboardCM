@@ -54,9 +54,11 @@ jobs:
           ]
           for p,tag in updates:
             original=p.read_text(encoding='utf8')
-            assert original.lower().count('</head>')==1,(p,'Missing exactly one closing head')
+            close=original.lower().find('</head>')
+            body=original.lower().find('<body')
+            assert close>0 and (body<0 or close<body),(p,'Cannot find real document head')
             assert tag not in original,(p,'Style link already exists')
-            updated=original.replace('</head>',tag+'\n</head>',1)
+            updated=original[:close]+tag+'\n'+original[close:]
             assert updated.replace(tag+'\n','',1)==original,(p,'Unexpected markup change')
             assert updated.count(tag)==1
             p.write_text(updated,encoding='utf8')
