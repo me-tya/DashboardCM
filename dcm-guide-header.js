@@ -1,0 +1,207 @@
+/* Dashboard CM — Guide global seluruh menu dan header ikon.
+   Event delegation: tetap bekerja pada panel/tab yang dibuat ulang tanpa observer berat. */
+(function(){
+  'use strict';
+  if(window.DCM_GUIDE_UI_READY)return;
+  window.DCM_GUIDE_UI_READY=true;
+
+  var KEY='dcm_guide_tooltips_v1';
+  var enabled=true,tooltip=null,active=null,timer=null,oldTitle=null,oldDesc=null;
+  var mutedTitles=new Map();
+  try{enabled=localStorage.getItem(KEY)!=='off'}catch(e){enabled=true}
+
+  var TABS={
+    analytics:['Menyajikan ringkasan, indikator, grafik dan analisis seluruh agenda CM.','Angka mengikuti data dan filter yang tersedia pada dashboard.'],
+    table:['Mengelola daftar agenda dan aktivitas CM beserta rincian, dokumen dan tindak lanjut.','Perubahan atau penghapusan aktivitas mengikuti hak akses pengguna.'],
+    tasks:['Memantau penugasan, pembagian pekerjaan, progres dan tenggat kegiatan.','Pastikan penanggung jawab serta tenggat telah diverifikasi.'],
+    calendar:['Melihat jadwal agenda menurut tanggal agar benturan waktu mudah diketahui.','Jadwal mengikuti tanggal yang diisi pada masing-masing aktivitas.'],
+    kanban:['Memantau aktivitas menurut kelompok status pada papan kerja.','Perubahan status harus sesuai realisasi pekerjaan.'],
+    matrix:['Membandingkan agenda dan progres melalui tampilan matriks.','Hasil mengikuti data yang tersimpan dan parameter yang dipilih.'],
+    knowledge:['Menyimpan dan menemukan materi, referensi dan pengetahuan kerja tim CM.','Perhatikan klasifikasi informasi serta izin akses sebelum membagikan materi.'],
+    survey:['Menyusun dan memantau Change Readiness Assessment (CRA).','Interpretasi hasil asesmen perlu mempertimbangkan cakupan responden dan bukti pendukung.'],
+    priority:['Menilai dan memetakan prioritas pendampingan manajemen perubahan.','Hasil penilaian mengikuti kriteria, data dan justifikasi yang diisi.'],
+    contact:['Mengelola informasi Squad Team dan jejaring kerja yang mendukung aktivitas.','Periksa ketepatan data kontak sebelum digunakan atau dibagikan.'],
+    resource:['Melihat personel Tim CM, peran dan kapasitas penugasan.','Informasi personel tidak otomatis mengubah surat keputusan atau penugasan resmi.']
+  };
+  var ACTIONS={
+    btnImport:['Mengimpor aktivitas dari berkas Excel sesuai format yang didukung.','Periksa isi dan kemungkinan data duplikat sebelum mengonfirmasi impor.'],
+    btnExport:['Mengunduh data aktivitas menjadi berkas Excel.','Data yang terunduh mengikuti hak akses dan kondisi saat ekspor.'],
+    btnBackupAll:['Mengunduh cadangan data aplikasi, termasuk aktivitas dan data pendukung.','Simpan berkas cadangan di lokasi aman dan jangan dibagikan sembarangan.'],
+    btnRestoreAll:['Memulihkan data aplikasi dari berkas backup.','Verifikasi berkas sebelum pemulihan karena data saat ini dapat terdampak.'],
+    btnReminderCenter:['Membuka pusat notifikasi dan pengingat.','Pengingat mengikuti pengaturan dan data yang tersedia.'],
+    btnLangToggle:['Mengganti bahasa tampilan Indonesia atau Inggris.','Perubahan bahasa tidak mengubah data yang telah tersimpan.'],
+    btnGoogleLogin:['Masuk menggunakan akun Google yang diizinkan.','Akses fitur ditentukan oleh peran pengguna.'],
+    btnLogout:['Keluar dari akun dashboard yang aktif.','Pastikan perubahan data telah tersimpan sebelum keluar.'],
+    btnAccessAdmin:['Membuka pengaturan dan pengelolaan akses pengguna.','Hanya pengguna berwenang yang dapat mengubah konfigurasi dan hak akses.'],
+    cmContextHelp:['Membuka panduan penggunaan dashboard.','Panduan menjelaskan alur fitur tetapi tidak mengubah data.'],
+    btnAdd:['Menambahkan aktivitas CM baru pada daftar agenda.','Lengkapi informasi wajib dan bukti dukung sesuai kebutuhan.'],
+    btnFilterToggle:['Menampilkan atau menyembunyikan filter lanjutan.','Filter hanya mengubah tampilan, bukan menghapus data.'],
+    btnClearSearch:['Menghapus kata pencarian saat ini.','Data dan filter lainnya tetap tersimpan.']
+  };
+  var SELECTOR=[
+    '#tabNav button','#appHeader .topbar-actions button',
+    '#contextFilterBar button','#appMain .tab-panel button',
+    '#appMain .tab-panel a[href]','#appMain .tab-panel [role="tab"]',
+    '#appMain nav button','.modal-overlay:not(.hidden) button',
+    '.cm-reminder-panel:not(.hidden) button'
+  ].join(',');
+
+  function labelOf(el){
+    if(el.hasAttribute('data-tab')){var tab=el.querySelector('[data-i18n]');if(tab)return (tab.textContent||'').trim()}
+    var raw=el.getAttribute('aria-label')||el.getAttribute('data-dcm-label')||
+      el.getAttribute('title')||(el.querySelector('[data-i18n]')||{}).textContent||
+      el.textContent||'';
+    raw=String(raw).replace(/\s+/g,' ').trim();
+    return raw.length>90?raw.slice(0,87)+'...':(raw||'Fitur');
+  }
+  function targetFor(node){
+    if(!node||typeof node.closest!=='function')return null;
+    var el=node.closest(SELECTOR);
+    if(!el||el.closest('.hidden,[hidden]')||el.disabled||el.id==='cmGuideToggle')return null;
+    return el;
+  }
+  function guideOf(el,label){
+    if(el.hasAttribute('data-tab')&&TABS[el.dataset.tab])return TABS[el.dataset.tab];
+    if(el.id&&ACTIONS[el.id])return ACTIONS[el.id];
+    var title=el.getAttribute('title')||mutedTitles.get(el)||'';
+    if(title&&title!==label)return [title,'Gunakan fitur sesuai peran dan periksa data sebelum menyimpan perubahan.'];
+    var isNav=!!el.closest('nav,[role="tablist"]')||el.hasAttribute('role')&&el.getAttribute('role')==='tab';
+    if(isNav)return ['Membuka bagian '+label+' pada halaman aktif.','Berpindah menu tidak mengubah data yang telah disimpan.'];
+    if(/hapus|delete|remove/i.test(label))return ['Menghapus item yang dipilih.','Periksa kembali item sebelum menyetujui penghapusan.'];
+    if(/simpan|save|submit|kirim/i.test(label))return ['Menyimpan informasi yang telah diisi.','Periksa kelengkapan dan ketepatan isian sebelum menyimpan.'];
+    if(/unduh|download|ekspor|export/i.test(label))return ['Mengunduh informasi yang tersedia dari fitur ini.','Perhatikan kerahasiaan berkas hasil unduhan.'];
+    if(/ubah|edit|kelola/i.test(label))return ['Membuka pengubahan atau pengelolaan '+label+'.','Perubahan hanya berlaku sesuai hak akses.'];
+    return ['Membuka atau menjalankan fitur '+label+'.','Ikuti petunjuk pada formulir dan pastikan data yang digunakan benar.'];
+  }
+  function ensureTooltip(){
+    if(tooltip)return tooltip;
+    tooltip=document.createElement('div');
+    tooltip.id='dcm-global-guide-tip';tooltip.hidden=true;
+    tooltip.setAttribute('role','tooltip');
+    tooltip.innerHTML='<b class="dcm-tip-label"></b><span class="dcm-tip-sub">Fungsi</span>'+
+      '<div class="dcm-tip-text" data-dcm-function></div><span class="dcm-tip-sub">Batasan</span>'+
+      '<div class="dcm-tip-text" data-dcm-bound></div>';
+    document.body.appendChild(tooltip);return tooltip;
+  }
+  function hide(){
+    if(timer!==null){clearTimeout(timer);timer=null}
+    if(active&&active.isConnected){
+      if(oldTitle!==null&&!active.hasAttribute('title'))active.setAttribute('title',oldTitle);
+      if(oldDesc===null)active.removeAttribute('aria-describedby');
+      else active.setAttribute('aria-describedby',oldDesc);
+    }
+    active=null;oldTitle=null;oldDesc=null;
+    if(tooltip)tooltip.hidden=true;
+  }
+  function position(el){
+    if(!tooltip||tooltip.hidden||!el.isConnected)return;
+    var rect=el.getBoundingClientRect(),w=tooltip.offsetWidth,h=tooltip.offsetHeight;
+    var left=Math.round(rect.left+(rect.width-w)/2);
+    var top=Math.round(rect.bottom+9);
+    if(left+w>window.innerWidth-9)left=window.innerWidth-w-9;
+    if(left<9)left=9;
+    if(top+h>window.innerHeight-9)top=Math.round(rect.top-h-9);
+    tooltip.style.left=Math.max(9,left)+'px';
+    tooltip.style.top=Math.max(9,top)+'px';
+  }
+  function show(el){
+    if(!enabled||!el||!el.isConnected)return;
+    hide();
+    var spec=guideOf(el,labelOf(el));
+    var tip=ensureTooltip();
+    active=el;
+    oldTitle=el.hasAttribute('title')?el.getAttribute('title'):null;
+    oldDesc=el.getAttribute('aria-describedby');
+    if(oldTitle!==null)el.removeAttribute('title');
+    el.setAttribute('aria-describedby',(oldDesc?oldDesc+' ':'')+tip.id);
+    tip.querySelector('.dcm-tip-label').textContent=labelOf(el);
+    tip.querySelector('[data-dcm-function]').textContent=spec[0];
+    tip.querySelector('[data-dcm-bound]').textContent=spec[1];
+    tip.hidden=false;position(el);
+  }
+  function arm(el,ms){
+    if(!enabled||!el||el===active)return;
+    hide();
+    timer=setTimeout(function(){timer=null;show(el)},ms);
+  }
+  function muteNavTitles(){
+    document.querySelectorAll('#tabNav button').forEach(function(el){
+      if(el.hasAttribute('title')&&!mutedTitles.has(el)){
+        mutedTitles.set(el,el.getAttribute('title'));el.removeAttribute('title');
+      }
+    });
+  }
+  function restoreNavTitles(){
+    mutedTitles.forEach(function(value,el){
+      if(el.isConnected&&!el.hasAttribute('title'))el.setAttribute('title',value);
+    });
+    mutedTitles.clear();
+  }
+  function refreshGuide(){
+    var el=document.getElementById('cmGuideToggle');if(!el)return;
+    el.setAttribute('aria-checked',String(enabled));
+    el.setAttribute('aria-label','Guide '+(enabled?'aktif':'nonaktif')+'. Klik untuk mengubah.');
+    el.title=enabled?'Guide aktif: arahkan kursor untuk melihat fungsi dan batasan fitur.':'Guide nonaktif: klik untuk mengaktifkan panduan fitur.';
+    if(enabled)restoreNavTitles();else muteNavTitles();
+  }
+  function setGuide(next){
+    enabled=!!next;hide();
+    try{localStorage.setItem(KEY,enabled?'on':'off')}catch(e){}
+    refreshGuide();
+  }
+  function updateIconLabels(){
+    ['btnImport','btnExport','btnBackupAll','btnRestoreAll'].forEach(function(id){
+      var el=document.getElementById(id);if(!el)return;
+      el.classList.add('dcm-header-icon');
+      var labelEl=el.querySelector('span[data-i18n]');
+      var label=labelEl?(labelEl.textContent||'').trim():'';
+      if(label)el.setAttribute('data-dcm-label',label);
+      if(label)el.setAttribute('aria-label',label);
+      if(label)el.setAttribute('title',label);
+    });
+  }
+  function install(){
+    var actions=document.querySelector('#appHeader .topbar-actions');
+    if(!actions)return;
+    updateIconLabels();
+    var el=document.getElementById('cmGuideToggle');
+    if(!el){
+      el=document.createElement('button');
+      el.type='button';el.id='cmGuideToggle';el.className='dcm-guide-toggle';
+      el.setAttribute('role','switch');
+      el.innerHTML='<span>Guide</span><span class="dcm-guide-track" aria-hidden="true"><i></i></span>';
+      el.addEventListener('click',function(){setGuide(!enabled)});
+      var bell=document.getElementById('btnReminderCenter');
+      if(bell&&bell.parentElement===actions)bell.insertAdjacentElement('afterend',el);
+      else actions.appendChild(el);
+    }
+    refreshGuide();
+  }
+  document.addEventListener('pointerover',function(ev){
+    if(ev.pointerType==='touch')return;
+    var el=targetFor(ev.target);if(!el)return;
+    if(!enabled){if(el.closest('#tabNav'))muteNavTitles();return}
+    if(el!==active)arm(el,230);
+  });
+  document.addEventListener('pointerout',function(ev){
+    var el=targetFor(ev.target);if(!el)return;
+    if(ev.relatedTarget&&el.contains(ev.relatedTarget))return;
+    if(el===active||timer!==null)hide();
+  });
+  document.addEventListener('focusin',function(ev){
+    var el=targetFor(ev.target);if(!el||!enabled)return;
+    arm(el,60);
+  });
+  document.addEventListener('focusout',function(ev){if(active===ev.target)hide()});
+  document.addEventListener('scroll',hide,true);
+  document.addEventListener('pointerdown',hide,true);
+  document.addEventListener('keydown',function(ev){if(ev.key==='Escape')hide()});
+  window.addEventListener('resize',hide);
+  document.addEventListener('click',function(ev){
+    if(ev.target&&ev.target.closest&&ev.target.closest('#btnLangToggle')){
+      setTimeout(updateIconLabels,0);
+    }
+  });
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
