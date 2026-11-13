@@ -1,0 +1,30 @@
+name: Build DCM pre-change ZIP 261113
+on:
+  push:
+    branches:
+      - backup/261113-DCM-01
+    paths:
+      - .github/workflows/build-backup-261113-dcm.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Package original source snapshot
+        shell: bash
+        run: |
+          zip -q -r 261113-DCM-01.zip . -x '.git/*' '.github/*'
+          unzip -t 261113-DCM-01.zip
+      - name: Save ZIP on backup branch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 261113-DCM-01.zip
+          git commit -m 'Store full pre-change backup 261113-DCM-01.zip'
+          git push origin HEAD:backup/261113-DCM-01
