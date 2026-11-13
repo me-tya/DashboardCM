@@ -1,0 +1,38 @@
+name: DCM 23 backup and diagnose settings data actions
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-settings-diagnose.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive original full repository as requested
+        run: |
+          git fetch origin backup/261114-DCM-23
+          git archive --format=zip --output=/tmp/261114-DCM-23.zip origin/backup/261114-DCM-23
+          unzip -t /tmp/261114-DCM-23.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-23
+          path: /tmp/261114-DCM-23.zip
+          retention-days: 30
+      - name: Diagnose import export backup restore UI handlers
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf8')
+          ls=s.splitlines()
+          print('=== LINES',len(ls),'CHARACTERS',len(s),'===')
+          patterns=[r'Data & Backup',r'Pengelolaan Data',r'Backup</button>',r'Restore</button>',r'Impor</button>',r'Ekspor</button>',r'Import</button>',r'Export</button>',r'cm.*Data.*Backup',r'data-backup',r'data-action=.*backup',r'data-action=.*restore',r'backup.*restore',r'function .*Backup',r'function .*Restore',r'function .*Import',r'function .*Export',r'backupInput',r'restoreInput',r'cmDataBackup',r'backup.*click',r'backup.*addEventListener',r'dataBackup',r'function renderSettings',r'settingsModal']
+          for p in patterns:
+           matches=[i for i,l in enumerate(ls) if re.search(p,l,re.I)]
+           print('=== PATTERN',p,'count',len(matches),'matches',matches[:25])
+           for i in matches[:12]:
+            print('---',i+1)
+            for j in range(max(0,i-3),min(len(ls),i+5)):print(j+1,ls[j][:550])
+          PY
