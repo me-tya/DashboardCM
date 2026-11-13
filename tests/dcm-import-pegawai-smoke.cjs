@@ -23,6 +23,29 @@ const csv=imp.parseCsv('\uFEFFNama;NIP;Jabatan;Unit;Tim;Jenis Kepegawaian\n"Rosa
 assert.equal(csv.length,1);assert.equal(csv[0].team,'SSB');
 const ocr=imp.parseOcr('No Nama Jabatan Unit\n1. Sarah Khairina   Analis   Pusmantap   CM\n2. Dina Septiani   Analis   Pusmantap   DCS');
 assert.equal(ocr.length,2);assert.equal(ocr[0].name,'Sarah Khairina');assert.equal(ocr[1].team,'DCS');
+const structuralFixture=[
+ ['Kepala Pusat','','','Kepala Pusat'],
+ ['Kepala Bidang','Bidang Program dan Manajemen Pengetahuan','','Kepala Bidang Program dan Manajemen Pengetahuan'],
+ ['Kepala Subbidang','Bidang Program dan Manajemen Pengetahuan','Subbidang Program dan Sistem Kerja','Kepala Subbidang Program dan Sistem Kerja'],
+ ['Kepala Subbagian','Bidang Program dan Manajemen Pengetahuan','Subbagian Tata Usaha','Kepala Subbagian Tata Usaha'],
+ ['Kepala Subbidang','Bidang Program dan Manajemen Pengetahuan','Subbidang Manajemen Pengetahuan','Kepala Subbidang Manajemen Pengetahuan']
+];
+const hierarchicalJson={statusCode:200,data:structuralFixture.map((v,i)=>({
+ nama:'Pegawai Uji '+(i+1),nip18:'19850101201001200'+(i+1),
+ jabatan:[{namaJabatan:v[0],jenisJabatan:'Struktural',esl2:'Pusat Manajemen Transformasi dan Perubahan',esl3:v[1],esl4:v[2]}],
+ noHp:'do-not-import',nik:'do-not-import',agama:'do-not-import'
+}))};
+const structured=imp.parseJson(JSON.stringify(hierarchicalJson));
+assert.equal(structured.length,5,'Five structural records from pusmantap.json hierarchy');
+structured.forEach((row,i)=>{
+ assert.equal(row.structuralRole,structuralFixture[i][3]);
+ assert.equal(row.job,structuralFixture[i][3]);
+ assert.equal(row.nip,'19850101201001200'+(i+1));
+ assert(!('agama' in row)&&!('nik' in row)&&!('noHp' in row),'Do not retain unrelated sensitive fields');
+});
+const structuralExcel=imp.parseMatrix([['Nama','Jabatan Struktural','Tim'],['Pegawai Uji','Kepala Pusat','DCS']]);
+assert.equal(structuralExcel[0].structuralRole,'Kepala Pusat');
+
 assert.equal(imp.normTeam('TIM SPP'),'SPP');
 assert.throws(()=>imp.parseJson(JSON.stringify({foo:'bar'})),/tidak ditemukan/);
 assert.throws(()=>imp.normalizeRows(Array.from({length:501},(_,i)=>({name:'Pegawai '+i}))),/500/);
@@ -76,5 +99,21 @@ async function request(entries,mode,id){
  assert.equal(manual.teams['Bella Kurnia'],'SPP');
  assert.equal(manual.teams['Atitya Pritasari'],'DOA');
  assert.equal(userState.resources[0].jabatan,'Katim','CM Team master data must not change');
+ stats=await request([
+  {name:'Contoh Dua Kaki',nip:'198501012010012012',job:'Kepala Pusat',unit:'Pusmantap',team:'DCS',jenis:'Pegawai',structuralRole:'Kepala Pusat'}
+ ],'merge','c');
+ assert.equal(stats.added,1);assert.equal(stats.structuralAssigned,1);
+ manual=JSON.parse(store.get('key'));
+ assert.equal(manual.teams['Contoh Dua Kaki'],'DCS');
+ assert.equal(manual.structural['Contoh Dua Kaki'],'Kepala Pusat');
+ await listeners.message({origin:'https://dashboard.test',source:frameWindow,data:{
+  source:'dcm-tim-pusmantap',type:'mutation',requestId:'drag1',action:'team-save',
+  data:{name:'Contoh Dua Kaki',team:'SSB'}
+ }});
+ const move=outgoing.find(x=>x.requestId==='drag1');assert(move&&move.ok,JSON.stringify(move));
+ manual=JSON.parse(store.get('key'));
+ assert.equal(manual.teams['Contoh Dua Kaki'],'SSB');
+ assert.equal(manual.structural['Contoh Dua Kaki'],'Kepala Pusat','Structural role must survive team changes');
+
  console.log('PASS Firebase import: atomic batch, safe skip/merge, NIP duplicate detection and CM Team protection');
 })().catch(e=>{console.error(e);process.exitCode=1});
