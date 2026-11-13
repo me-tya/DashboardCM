@@ -1,0 +1,30 @@
+name: DCM inspect remaining menu chrome details
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-ui-remaining-details-25.yml']
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          for f in ['renderPriority','renderResource','renderSurveyHub','renderContact','renderKnowledge','renderTasks']:
+           m=re.search(r'function\s+'+f+r'\s*\(',s)
+           if not m:continue
+           chunk=s[m.start():m.start()+18000]
+           print('\n===',f,'===')
+           for term in ['el.innerHTML=','root.innerHTML=','container.innerHTML=','const heroHtml=','class="prio-hero','class="prio-','class="cm-survey-hero','class="res-hero','class="task-head','class="context-section-head','class="kb-hero']:
+            hits=[x.start() for x in re.finditer(re.escape(term),chunk)]
+            print('PAT',term,'count',len(hits))
+            for i in hits[:2]:print('SNIP',chunk[max(0,i-130):i+1600].replace('\n',' ')[:1600])
+          print('\nREFERENCE MENU CLASS STRUCTURE')
+          for word in ['.cm-ap-tabs','.cm-survey-subtabs','.prio-tabs','.prio-header','.prio-hero','.prio-top','.kb-hero-search','.context-section-head','.task-head','.tp-panel-body','.res-hero']:
+           hits=list(re.finditer(re.escape(word),s))
+           print(word,'count',len(hits))
+           for m in hits[:3]:print(' ',s[m.start():m.start()+570].replace('\n',' ')[:570])
+          PY
