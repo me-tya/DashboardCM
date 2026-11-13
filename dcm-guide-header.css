@@ -20,6 +20,10 @@
 }
 #appHeader .topbar-actions::-webkit-scrollbar{display:none}
 #appHeader .topbar-actions>*{flex-shrink:0}
+/* Pada layar lebar, seluruh grup ikon, notifikasi, Guide dan bahasa rata kanan. */
+#appHeader .topbar-actions > .dcm-utility-start{margin-left:auto!important}
+#appHeader .dcm-header-custom-svg{fill:none;stroke:currentColor}
+
 #appHeader .topbar-divider{margin:0 2px}
 #appHeader .dcm-header-icon{
   display:inline-flex!important;align-items:center;justify-content:center;
