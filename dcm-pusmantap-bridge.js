@@ -129,13 +129,17 @@ async function saveResourceLeave(action,d){
  try{await resourcePersist();send(true);}
  catch(e){p.rencanaCuti=JSON.parse(orig);send(true);throw e;}
 }
+function switchMenu(tab){
+ const b=document.querySelector('.tab-btn[data-tab="'+tab+'"]');
+ if(b)b.click();
+ else{state.activeTab=tab;if(typeof refreshAll==='function')refreshAll();}
+}
 function gotoActivity(id){
- state.activeTab='table';
- if(typeof refreshAll==='function')refreshAll();
+ switchMenu('table');
  if(id&&typeof openDetail==='function'){
-  setTimeout(()=>{try{openDetail(id)}catch(e){console.warn(e)}},60);
+  setTimeout(()=>{try{openDetail(id)}catch(e){console.warn(e)}},100);
  }else{
-  setTimeout(()=>document.getElementById('btnAdd')?.click(),60);
+  setTimeout(()=>document.getElementById('btnAdd')?.click(),100);
  }
 }
 window.addEventListener('message',async ev=>{
@@ -144,7 +148,7 @@ window.addEventListener('message',async ev=>{
  if(!m||m.source!==SOURCE)return;
  if(m.type==='ready'){await initRemote();send(true);return;}
  if(m.type==='goto-activity'){gotoActivity(clean(m.id));return;}
- if(m.type==='goto-resource'){state.activeTab='resource';refreshAll();return;}
+ if(m.type==='goto-resource'){switchMenu('resource');return;}
  if(m.type!=='mutation')return;
  try{
   const act=clean(m.action),d=m.data||{};
