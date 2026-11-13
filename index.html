@@ -8205,8 +8205,7 @@ function cmRptHtml(model){
   ${c.noTte?'':tteHtml}
   </div>${front}
   <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')}${F?'':` · ${L('Sumber data: Dashboard Master Agenda Change Management','Data source: Change Management Master Agenda dashboard')}`}</div></div>
-  <script src="dcm-guide-header.js?v=20261113-01"></script>
-</body></html>`;
+  </body></html>`;
 }
 
 /* ---------- DOCX renderer ---------- */
@@ -20462,6 +20461,7 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 <script>
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
+<script src="dcm-guide-header.js?v=20261113-01"></script>
 </body>
 </html>
 
