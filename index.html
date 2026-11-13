@@ -2822,6 +2822,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media (hover:none){.cm-svcp-chips label[data-tip]::after,.cm-svcp-chips label[data-tip]::before{display:none!important}}
 </style>
 
+<link rel="stylesheet" href="dcm-guide-header.css?v=20261113-01">
 </head>
 <body>
 
@@ -8204,7 +8205,8 @@ function cmRptHtml(model){
   ${c.noTte?'':tteHtml}
   </div>${front}
   <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')}${F?'':` · ${L('Sumber data: Dashboard Master Agenda Change Management','Data source: Change Management Master Agenda dashboard')}`}</div></div>
-  </body></html>`;
+  <script src="dcm-guide-header.js?v=20261113-01"></script>
+</body></html>`;
 }
 
 /* ---------- DOCX renderer ---------- */
