@@ -8397,7 +8397,10 @@ function cmRptHtml(model){
   ${c.noTte?'':tteHtml}
   </div>${front}
   <div class="sheet content"><div class="runhead"><span>${escapeHtml(model.header||'')}</span><span>${escapeHtml(c.kicker)}</span></div>${body}<div class="foot">${escapeHtml(model.header||'')}${F?'':` · ${L('Sumber data: Dashboard Master Agenda Change Management','Data source: Change Management Master Agenda dashboard')}`}</div></div>
-  <script id="cm-tim-pusmantap-menu-script">
+  </body></html>`;
+}
+
+/* Tim Pusmantap: top-level helper, not inside report HTML template */
 function cmRenderTimPusmantap(){
   const frame=document.getElementById('cmTpFrame');
   if(!frame)return;
@@ -8411,8 +8414,6 @@ function cmRenderTimPusmantap(){
       frame.style.height=(h+8)+'px';
     });
   }
-}
-</script></body></html>`;
 }
 
 /* ---------- DOCX renderer ---------- */
