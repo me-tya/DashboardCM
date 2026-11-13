@@ -233,6 +233,21 @@
       script.defer=true;
       document.body.appendChild(script);
     }
+    /* Kalender libur nasional, proyeksi cuti bersama, dan impor SKB Word/Excel.
+       Muat setelah mesin proyeksi tersedia; jangan ubah header atau handler kalender utama. */
+    if(!document.getElementById('dcm-libur-engine-loader')){
+      var engine=document.createElement('script');
+      engine.id='dcm-libur-engine-loader';
+      engine.src='dcm-libur-engine.js?v=261113-11';
+      engine.onload=function(){
+        if(document.getElementById('dcm-libur-calendar-loader'))return;
+        var liburUi=document.createElement('script');
+        liburUi.id='dcm-libur-calendar-loader';
+        liburUi.src='dcm-libur-calendar.js?v=261113-11';
+        document.body.appendChild(liburUi);
+      };
+      document.body.appendChild(engine);
+    }
   }
   document.addEventListener('pointerover',function(ev){
     if(ev.pointerType==='touch')return;
