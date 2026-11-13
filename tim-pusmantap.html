@@ -170,7 +170,7 @@ function unit(){
 function render(){
  if(!data){$('#app').innerHTML='<div class="tp-empty">Menghubungkan ke data Dashboard CM…</div>';return;}
  const navigation=[['highlight','Overview'],['agenda','Agenda'],['hadir','Kehadiran'],['cuti','Cuti'],['tempat','Penempatan Tim'],['profil','Profil Pegawai'],['sementara','Pegawai Sementara'],['unit','Pendampingan Unit']];
- const view={highlight,agenda,hadir:attendance,cuti,tempat:placement,profil:profile,sementara:temporary,unit}[tab]||highlight;
+ const view={highlight,agenda,hadir:attendance,cuti:leave,tempat:placement,profil:profile,sementara:temporary,unit}[tab]||highlight;
  $('#app').innerHTML='<div class="tp-live"><div class="tp-status"><span class="tp-online">●</span><b>Data langsung dari Dashboard CM</b><span>Aktivitas + CM Team • '+esc(nice(today()))+'</span><span class="tp-badge">'+(edit()?'Bisa kelola':'Lihat saja')+'</span></div>'+
  '<nav class="tp-nav">'+navigation.map(x=>'<button data-view="'+x[0]+'" class="'+(x[0]===tab?'on':'')+'">'+x[1]+'</button>').join('')+'</nav>'+
  '<main>'+view()+'</main></div>';
