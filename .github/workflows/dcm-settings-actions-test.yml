@@ -1,0 +1,26 @@
+name: Dashboard CM Settings data functions regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dcm-guide-header.js'
+      - 'tests/dcm-settings-data-actions-smoke.cjs'
+      - '.github/workflows/dcm-settings-actions-test.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: JavaScript syntax
+        run: node --check dcm-guide-header.js
+      - name: Simulate all four Settings buttons and read-only mode
+        run: node tests/dcm-settings-data-actions-smoke.cjs
+      - name: Verify original app handlers still exist
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf8')
+          for token in ["getElementById('btnImport').addEventListener", "getElementById('btnExport').addEventListener", "getElementById('btnBackupAll').addEventListener", "getElementById('btnRestoreAll').addEventListener", 'function openImportModal()', 'function exportToExcel()', 'function backupAllData()', 'function openRestoreOptionsModal()']:
+           assert token in s,token
+          print('PASS: four legacy original handlers and modals preserved')
+          PY
