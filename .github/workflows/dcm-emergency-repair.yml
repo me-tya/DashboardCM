@@ -1,0 +1,78 @@
+name: Hotfix Dashboard CM - restore script integrity
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-emergency-repair.yml']
+permissions:
+  contents: write
+jobs:
+  fix-and-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Preserve entire previous repository as ZIP
+        shell: bash
+        run: |
+          git fetch origin refs/heads/261113-DCM-01:refs/remotes/origin/261113-DCM-01
+          mkdir -p /tmp/dcm-original
+          git archive --format=zip --output=/tmp/261113-DCM-01.zip origin/261113-DCM-01
+      - name: Upload backup archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-01
+          path: /tmp/261113-DCM-01.zip
+          retention-days: 30
+      - name: Repair accidental script closing inside report template
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          prefix='  <script id="cm-tim-pusmantap-menu-script">\n'
+          suffix='</script></body></html>`;' 
+          a=s.find(prefix)
+          assert a>=0, "Injected start marker was not found; refuse blind modification."
+          b=s.find(suffix,a+len(prefix))
+          assert b>a, "Injected end marker was not found; refuse blind modification."
+          fn=s[a+len(prefix):b]
+          assert fn.count('function cmRenderTimPusmantap(){')==1
+          s=s[:a]+'  </body></html>`;'+s[b+len(suffix):]
+          marker='/* ---------- DOCX renderer ---------- */'
+          assert marker in s, "Could not locate safe insertion anchor"
+          s=s.replace(marker,'/* Tim Pusmantap: top-level helper, not inside report HTML template */\n'+fn+'\n'+marker,1)
+          assert s.count('function cmRenderTimPusmantap(){')==1
+          assert s.count('<script id="cm-tim-pusmantap-menu-script">')==0
+          p.write_text(s,encoding='utf-8')
+          print("Script boundary restored; menu helper preserved")
+          PY
+      - name: Validate complete inline JavaScript with Node
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf-8')
+          pattern=re.compile(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script\s*>', re.I | re.S)
+          scripts=pattern.findall(s)
+          assert scripts
+          for i, source in enumerate(scripts):
+              if not source.strip(): continue
+              f=Path('/tmp/dcm-inline-'+str(i)+'.js')
+              f.write_text(source,encoding='utf-8')
+              import subprocess
+              subprocess.run(['node','--check',str(f)],check=True)
+          print('Checked',len(scripts),'inline scripts')
+          PY
+      - name: Commit targeted hotfix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --check
+          git commit -m "fix(dcm): stop script leak in DOCX renderer and preserve Tim Pusmantap menu"
+          git push origin HEAD:main
