@@ -1,0 +1,23 @@
+name: Full backup DCM before dual structural and team placement
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-structural-backup.yml'
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact prechange version
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-22:refs/remotes/origin/backup/261114-DCM-22
+          git archive --format=zip --output=/tmp/261114-DCM-22.zip origin/backup/261114-DCM-22
+          unzip -t /tmp/261114-DCM-22.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-22
+          path: /tmp/261114-DCM-22.zip
+          retention-days: 30
