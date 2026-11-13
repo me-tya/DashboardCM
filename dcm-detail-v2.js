@@ -5,6 +5,7 @@ function cmDetailV2(a,id){
   const eo=cmIsEoEnabled(a.eoEnabled),can=cmCanMutate(),f=cmRptDocFlags(a);
   const docCount=CM_RPT_DOC_KEYS.filter(k=>f[k]).length,docPercent=Math.round(100*docCount/5);
   const val=x=>String(x??'').trim()||'-';
+  const publicCode=cmActivityPublicCode(a);
   const kv=(label,value,raw=false)=>`<div class="cd-kv"><span>${E(label)}</span><div>${raw?value:E(val(value))}</div></div>`;
   const sec=(num,title,content)=>`<section class="cd-section"><div class="cd-section-title"><span class="cd-section-idx">${num}</span><b>${E(title)}</b></div><div class="cd-section-content">${content}</div></section>`;
   const docs=(key,label)=>{
@@ -50,12 +51,19 @@ function cmDetailV2(a,id){
         ${can?`<button type="button" id="detailEdit" class="btn btn-outline">${U('Edit Activity','Ubah Aktivitas')}</button><button type="button" id="detailDuplicate" class="btn btn-outline">${U('Duplicate','Duplikasi')}</button>`:''}
         <details class="cd-menu"><summary title="${U('More actions','Aksi lainnya')}" aria-label="${U('More actions','Aksi lainnya')}">⋮</summary><div class="cd-menu-drop"><button type="button" id="detailHistory">${U('History','Riwayat')}</button>${eo?`<button type="button" id="detailManageEvent">${U('Manage Event','Kelola Event')}</button>`:''}${can?`<button type="button" id="detailDelete" class="cd-danger">${U('Delete','Hapus')}</button>`:''}</div></details>
         <button type="button" class="modal-close" id="closeDetail" aria-label="${U('Close','Tutup')}">&times;</button></div></div>
-      <div class="modal-body cd-body">${badge}<div class="cd-title-banner"><span class="cd-gold-bar"></span><h3>${E(a.namaKegiatan)}</h3><span class="cd-id">ID ${E(a.id)}</span></div>
+      <div class="modal-body cd-body">${badge}<div class="cd-title-banner"><span class="cd-gold-bar"></span><h3>${E(a.namaKegiatan)}</h3><button type="button" class="cd-id" data-cd-copy-code title="${U('Copy activity number','Salin nomor aktivitas')}" aria-label="${U('Copy activity number','Salin nomor aktivitas')}" style="border:0;cursor:pointer;font-family:inherit">${E(publicCode)}</button></div>
         ${tabs.map(t=>`<div class="cd-panel ${t.k==='info'?'on':''}" data-cd-panel="${t.k}">${panels[t.k]||''}</div>`).join('')}</div>
       </div></div>`;
   modal.classList.remove('hidden');
   hydrateDocThumbs(modal);hydrateGenericActivityFiles(modal);
   modal.querySelector('#closeDetail').onclick=()=>modal.classList.add('hidden');
+  modal.querySelector('[data-cd-copy-code]')?.addEventListener('click',async()=>{
+    try{
+      if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(publicCode);}
+      else {const t=document.createElement('textarea');t.value=publicCode;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();if(!document.execCommand('copy'))throw Error('copy unavailable');t.remove();}
+      toast(U('Activity number copied','Nomor aktivitas disalin'),'success');
+    }catch(e){toast(U('Cannot copy automatically','Tidak dapat menyalin secara otomatis'),'error');}
+  });
   modal.querySelectorAll('[data-cd-tab]').forEach(b=>b.onclick=()=>{
     const k=b.dataset.cdTab;modal.querySelectorAll('[data-cd-tab]').forEach(t=>{t.classList.toggle('on',t.dataset.cdTab===k);t.setAttribute('aria-selected',String(t.dataset.cdTab===k));});
     modal.querySelectorAll('[data-cd-panel]').forEach(p=>p.classList.toggle('on',p.dataset.cdPanel===k));modal.querySelector('.cd-body').scrollTop=0;
