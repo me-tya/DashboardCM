@@ -1,0 +1,51 @@
+name: DCM audit activity data & full backup
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-live-audit.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full repository ZIP before integration
+        run: |
+          git fetch origin backup/261113-DCM-19
+          git archive --format=zip --output=/tmp/261113-DCM-19.zip origin/backup/261113-DCM-19
+          unzip -t /tmp/261113-DCM-19.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-19
+          path: /tmp/261113-DCM-19.zip
+          retention-days: 30
+      - name: Inspect activity state and persistence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          ls=Path('index.html').read_text(encoding='utf-8').splitlines()
+          groups={
+           'state sources':[r'\bconst state\s*=',r'\blet state\s*=',r'\bactivities\s*:',r'state\.activities',r'\bactivities\s*=',r'function load.*[Aa]ctiv',r'function save.*[Aa]ctiv'],
+           'firebase':[r'firebase',r'firestore',r'onSnapshot',r'getDocs\(',r'setDoc\(',r'updateDoc\(',r'deleteDoc\('],
+           'sync':[r'function .*render.*[Aa]ctiv',r'function .*save.*\(',r'function .*upsert',r'function .*persist',r'function .*listen',r'cm.*[Rr]esource'],
+           'activity fields':[r'\.pic\b',r'\.tanggal\b',r'\.startDate\b',r'\.title\b',r'\.date\b',r'\.startTime\b',r'\.timeStart\b'],
+           'script boundaries':[r'<script',r'</script',r'function cmRenderTimPusmantap']
+          }
+          for title,patterns in groups.items():
+           print('===',title,'===')
+           for p in patterns:
+            matches=[(i,l) for i,l in enumerate(ls) if re.search(p,l,re.I)]
+            print('PATTERN',repr(p),'TOTAL',len(matches))
+            for i,l in matches[:7]:
+             print(i+1, l[:420])
+          print('=== Nearby state and init contexts ===')
+          for key in ['const state=', 'let state=', 'function cmRenderTimPusmantap', 'function saveActivity', 'const DB_NAME']:
+           for i,l in enumerate(ls):
+            if key in l:
+             print('---',key,'line',i+1)
+             for j in range(max(0,i-2), min(len(ls),i+16)):print(j+1,ls[j][:440])
+             break
+          PY
