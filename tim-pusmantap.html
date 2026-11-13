@@ -317,6 +317,19 @@ body.cm-embedded{font:13px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,Arial,s
 #tpToast.on{opacity:1;transform:translate(-50%,0)}
 @media(max-width:1250px){.tp-live .seg.tabs2{grid-template-columns:repeat(4,minmax(0,1fr))}.tp-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.tp-team-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.tp-two,.tp-team-grid{grid-template-columns:1fr}.tp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.tp-live .seg.tabs2{grid-template-columns:repeat(2,minmax(0,1fr))}.tp-compact-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.tp-fields{grid-template-columns:1fr}}
+
+.tp-placement .kpis{padding:0;margin:10px 0 12px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.tp-placement .kpi{border:1px solid var(--line);background:#fff}
+.tp-placement .kpi .ico{width:35px;height:35px;display:grid;place-items:center;border-radius:9px}
+.tp-placement .kpi .ico svg{width:18px;height:18px}
+.tp-placement .board{grid-template-columns:repeat(6,minmax(190px,1fr));padding:0 0 12px;gap:10px;align-items:stretch;overflow-x:auto}
+.tp-placement .col{min-height:260px}
+.tp-placement .p{margin-bottom:6px;min-height:52px}
+.tp-placement .p .nm{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.tp-placement .foot{padding:0 0 6px}
+.tp-placement .tp-place-card[draggable="true"]{cursor:grab}
+.tp-placement .tp-place-card:active{cursor:grabbing}
+@media(max-width:760px){.tp-placement .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><div id="app"><div class="tp-empty">Menghubungkan ke data Dashboard CM…</div></div><div id="dialog"></div><div id="tpToast" role="status"></div><script>(function(){
 'use strict';
 document.body.classList.add('cm-embedded');
@@ -442,10 +455,32 @@ function leave(){
  '<div class="tp-leave-list">'+(period.length?period.map(x=>'<div class="tp-leave-row"><div><strong>'+esc(x.name)+'</strong><small>'+esc(x.jenis)+' · '+nice(x.mulai)+' – '+nice(x.selesai)+'</small></div>'+(edit()&&x.source!=='status'?'<div class="tp-actions"><button class="tp-link" data-leave-edit="'+esc(x.id)+'" data-leave-person="'+esc(x.name)+'">Ubah</button><button class="tp-link danger" data-leave-del="'+esc(x.id)+'" data-leave-person="'+esc(x.name)+'">Hapus</button></div>':'')+'</div>').join(''):'<div class="tp-empty">Belum ada rencana cuti untuk bulan ini.</div>')+'</div></section></div>';
 }
 function placement(){
- const ps=staff();
- return titleBar('Penempatan Tim','Penempatan pegawai merupakan data yang dapat diatur manual. Pegawai dari CM Team ditampilkan otomatis; perubahan tidak menyalin atau menghapus profil aslinya.',edit()?btn('＋ Tambah Pegawai','add-member',true):'')+
- '<div class="tp-team-grid">'+[...TEAM,''].map(t=>{const peopleHere=ps.filter(p=>p.team===t);return '<section class="tp-card"><div class="tp-cardhead"><h3>'+esc(t?'Tim '+t:'Tanpa Tim')+'</h3><span>'+peopleHere.length+' orang</span></div>'+
- (peopleHere.length?peopleHere.map(p=>'<div class="tp-person"><span class="tp-avatar">'+esc(p.name.split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase())+'</span><div><strong>'+esc(p.name)+'</strong><small>'+esc(p.job||p.unit||p.jenis)+'</small></div>'+(edit()?'<button class="tp-link" data-team-edit="'+esc(p.name)+'">Atur</button>':'')+'</div>').join(''):'<div class="tp-empty">Belum ada anggota.</div>')+'</section>'}).join('')+'</div>';
+ const list=staff(),un=list.filter(p=>!p.team),temp=list.filter(p=>/secondment|magang|re.entry|sementara|kontrak/i.test(p.jenis+' '+p.job));
+ const colors={DCS:'#2F6FCE',DOA:'#0E8A8A',SPP:'#B5600F',SSB:'#1E8E4E',CM:'#6B4FC4'};
+ const card=p=>{const st=status(p,today()),name=p.name,initials=name.split(/\s+/).slice(0,2).map(v=>v[0]).join('').toUpperCase();
+  return '<div class="p tp-place-card" draggable="'+edit()+'" data-drag-name="'+esc(name)+'">'+
+   '<span class="av" style="background:'+esc(colors[p.team]||'#7E889B')+'">'+esc(initials)+'</span>'+
+   '<div class="x"><div class="nm">'+esc(name)+'</div><div class="sb">'+
+   (p.team?'<span class="chip '+(p.team==='CM'?'cm':'pm')+'">'+esc(p.team==='CM'?'CMO':'PMO')+'</span>':'')+
+   (temp.some(t=>t.name===name)?'<span class="chip tmp">'+esc(p.jenis)+'</span>':'')+
+   '<span>'+esc(st.tag==='WFO'||st.tag==='WFH'?p.unit||p.job:st.tag)+'</span></div></div>'+
+   (edit()?'<button class="mn" type="button" data-team-edit="'+esc(name)+'" aria-label="Atur penempatan '+esc(name)+'" title="Atur penempatan">'+ic('more','s')+'</button>':'')+'</div>'};
+ const col=t=>{
+  const current=t?list.filter(p=>p.team===t):un,col=t?colors[t]:'#E2C77E';
+  return '<section class="col '+(t?'':'un')+'" data-drop-team="'+esc(t)+'"><div class="ch"><div class="t">'+(t?'Tim '+esc(t):'Belum ditempatkan')+' <em>'+current.length+'</em></div>'+
+   '<div class="m">'+(t?(t==='CM'?'CMO':'PMO')+' · Anggota aktif':'Belum mendapatkan tim')+'</div><div class="bar" style="background:'+col+'"></div></div>'+
+   (current.length?current.map(card).join(''):'<div class="empty">'+(t?'Belum ada anggota':'Semua sudah mempunyai tim')+'</div>')+'</section>';
+ };
+ const kpis=[
+  ['users',list.length,'Pegawai aktif','var(--navy-l)','var(--navy)'],
+  ['alert',un.length,'Belum punya tim','#FFF3D6','#9A6A00'],
+  ['hour',temp.length,'Pegawai sementara','var(--s-l)','var(--s)'],
+  ['cal',(data.activities||[]).filter(a=>a.date<=today()&&a.end>=today()).length,'Agenda hari ini','var(--v-l)','var(--v)']
+ ].map(x=>'<div class="kpi"><span class="ico" style="background:'+x[3]+';color:'+x[4]+'">'+ic(x[0])+'</span><div><b>'+x[1]+'</b><small>'+esc(x[2])+'</small></div></div>').join('');
+ return titleBar('Penempatan Tim','Papan penempatan mengikuti ukuran dan warna mockup asli. Anggota diambil otomatis dari CM Team; pindahkan antar kolom atau klik ⋯ untuk pengelolaan.',edit()?btn('＋ Tambah Pegawai','add-member',true):'')+
+  '<div class="tp-placement"><div class="kpis">'+kpis+'</div><div class="board">'+col('')+TEAM.map(col).join('')+'</div>'+
+  '<div class="foot"><div class="leg"><span><i style="background:var(--o)"></i>WFO</span><span><i style="background:var(--h)"></i>WFH</span><span><i style="background:var(--s)"></i>Dinas luar</span><span><i style="background:var(--c)"></i>Cuti</span></div>'+
+  '<span>Penempatan manual tersimpan pada Dashboard CM</span></div></div>';
 }
 function profile(){
  const list=people(selectedTeam).filter(p=>(p.name+' '+p.job+' '+p.unit+' '+p.jenis).toLowerCase().includes(query.toLowerCase()));
@@ -563,6 +598,17 @@ function bind(){
  $$('#app [data-leave-edit]').forEach(x=>x.onclick=()=>openLeave(leaves().find(c=>c.id===x.dataset.leaveEdit&&c.name===x.dataset.leavePerson)));
  $$('#app [data-leave-del]').forEach(x=>x.onclick=async()=>{if(!confirm('Hapus periode cuti ini?'))return;try{await mutation('leave-delete',{name:x.dataset.leavePerson,id:x.dataset.leaveDel});toast('Cuti dihapus')}catch(e){toast(e.message,true)}});
  $$('#app [data-day]').forEach(x=>x.onclick=()=>{filterDate=x.dataset.day;render()});
+
+ $$('#app [data-drag-name]').forEach(el=>{if(!edit())return;el.ondragstart=e=>{e.dataTransfer.setData('text/plain',el.dataset.dragName);e.dataTransfer.effectAllowed='move'}});
+ $$('#app [data-drop-team]').forEach(el=>{if(!edit())return;
+   el.ondragover=e=>{e.preventDefault();el.classList.add('over');e.dataTransfer.dropEffect='move'};
+   el.ondragleave=e=>{if(!el.contains(e.relatedTarget))el.classList.remove('over')};
+   el.ondrop=async e=>{e.preventDefault();el.classList.remove('over');
+    const name=e.dataTransfer.getData('text/plain'),team=el.dataset.dropTeam;
+    if(!name||!staff().some(p=>p.name===name)||staff().find(p=>p.name===name).team===team)return;
+    try{await mutation('team-save',{name,team});toast('Penempatan '+name+' berhasil diubah.')}catch(err){toast(err.message,true)}
+   };
+ });
  $('#tpDate')?.addEventListener('change',e=>{filterDate=e.target.value||today();render()});
  $('#tpMonth')?.addEventListener('change',e=>{month=e.target.value||today().slice(0,7);render()});
  $('#tpTeam')?.addEventListener('change',e=>{selectedTeam=e.target.value;render()});
