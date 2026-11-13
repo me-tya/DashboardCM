@@ -12,7 +12,7 @@ const document={
  querySelector:(sel)=>elements[sel]||null,
  querySelectorAll:()=>[],
  documentElement:{scrollHeight:900},
- body:{}
+ body:{classList:{add(){},remove(){},toggle(){}}}
 };
 const context={
  window,document,location:{origin:'https://dashboard.test'},
