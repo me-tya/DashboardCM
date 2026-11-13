@@ -1,0 +1,55 @@
+name: DCM finalize live Tim Pusmantap menu
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-tp-finalize.yml']
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original full backup reference
+        run: |
+          git fetch origin backup/261113-DCM-19
+          git archive --format=zip --output=/tmp/261113-DCM-19.zip origin/backup/261113-DCM-19
+          unzip -t /tmp/261113-DCM-19.zip | tail -1
+      - name: Remove outdated preview disclaimer and title
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='<div class="cm-tp-preview-note" role="status"><strong>Tim Pusmantap · Pratinjau</strong><span>Susunan menu mengikuti prototype terlampir. Data, penyimpanan, dan sinkronisasi dengan Tim CM, Squad Team, serta Aktivitas masih tahap integrasi. Menu lama tetap aktif untuk operasional.</span></div>'
+          assert s.count(old)==1
+          s=s.replace(old,'',1)
+          old_title='title="Tim Pusmantap — menu baru (tahap pratinjau)"'
+          assert s.count(old_title)==1
+          s=s.replace(old_title,'title="Tim Pusmantap — data langsung dari Aktivitas dan CM Team"',1)
+          assert s.count('dcm-pusmantap-bridge.js')==1
+          assert 'Tim Pusmantap · Pratinjau' not in s
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Validate scripts and smoke
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess
+          s=Path('index.html').read_text(encoding='utf8')
+          scripts=re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script\s*>',s,re.I|re.S)
+          for i,c in enumerate(scripts):
+           if not c.strip() or c.lstrip().startswith('[{'):continue
+           f=Path('/tmp/dcm-'+str(i)+'.js');f.write_text(c)
+           subprocess.run(['node','--check',str(f)],check=True)
+          PY
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+      - name: Commit UI finalization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix(dcm): remove stale Tim Pusmantap prototype banner in live integration"
+          git push origin HEAD:main
