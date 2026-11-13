@@ -4,15 +4,16 @@
 (function(){
 'use strict';
 const SOURCE='dcm-tim-pusmantap', KEY='dcm_tim_pusmantap_manual_v1';
-const empty=()=>({members:[],teams:{},attendance:{},leaves:[]});
+const empty=()=>({members:[],teams:{},structural:{},attendance:{},leaves:[]});
 let manual=empty(), subscribed=false, unload=null, lastSignature='';
 const frame=()=>document.getElementById('cmTpFrame');
 const day=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const clean=x=>String(x==null?'':x).trim().slice(0,500);
 const fold=x=>clean(x).toLocaleLowerCase('id-ID');
 const validDate=x=>/^\d{4}-\d{2}-\d{2}$/.test(x);
+const STRUCTURAL_ROLES=['Kepala Pusat','Kepala Bidang Program dan Manajemen Pengetahuan','Kepala Subbidang Program dan Sistem Kerja','Kepala Subbagian Tata Usaha','Kepala Subbidang Manajemen Pengetahuan'];
 const allowedLeave=['Cuti Tahunan','Cuti Sakit','Cuti Karena Alasan Penting','Cuti Alasan Penting','Cuti Besar','Cuti Melahirkan','Cuti di Luar Tanggungan Negara'];
-const normal=m=>({members:Array.isArray(m?.members)?m.members:[],teams:m?.teams&&typeof m.teams==='object'&&!Array.isArray(m.teams)?m.teams:{},attendance:m?.attendance&&typeof m.attendance==='object'&&!Array.isArray(m.attendance)?m.attendance:{},leaves:Array.isArray(m?.leaves)?m.leaves:[]});
+const normal=m=>({members:Array.isArray(m?.members)?m.members:[],teams:m?.teams&&typeof m.teams==='object'&&!Array.isArray(m.teams)?m.teams:{},structural:m?.structural&&typeof m.structural==='object'&&!Array.isArray(m.structural)?m.structural:{},attendance:m?.attendance&&typeof m.attendance==='object'&&!Array.isArray(m.attendance)?m.attendance:{},leaves:Array.isArray(m?.leaves)?m.leaves:[]});
 function own(){return typeof cmCanMutate==='function'&&cmCanMutate()&&typeof isLoggedIn==='function'&&isLoggedIn();}
 function people(){
  return (Array.isArray(state.resources)?state.resources:[]).filter(r=>!((typeof resourceIsInactive==='function')&&resourceIsInactive(r))).map(r=>({
@@ -66,13 +67,15 @@ function edit(m,action,d){
  if(action==='members-import'){
   if(!Array.isArray(d.entries)||!d.entries.length||d.entries.length>500)throw Error('Jumlah pegawai yang diimpor harus antara 1 sampai 500.');
   const mode=d.mode==='merge'?'merge':'skip',live=people(),seen=new Set();
-  const stats={added:0,updated:0,assigned:0,skipped:0};
+  const stats={added:0,updated:0,assigned:0,structuralAssigned:0,skipped:0};
   for(const source of d.entries){
    const name=clean(source.name).replace(/\s+/g,' ');
    const nip=clean(source.nip).replace(/[^\d]/g,'');
    if(!name||name.length<3){stats.skipped++;continue;}
    if(nip&&(!/^\d{6,20}$/.test(nip)))throw Error('NIP '+name+' tidak valid.');
    const team=clean(source.team).toUpperCase();
+   const structuralRole=clean(source.structuralRole);
+   if(structuralRole&&!STRUCTURAL_ROLES.includes(structuralRole))throw Error('Jabatan struktural '+name+' tidak dikenal.');
    if(team&&!['DCS','DOA','SPP','SSB','CM'].includes(team))throw Error('Tim '+name+' tidak dikenal.');
    const ident=nip?'nip:'+nip:'name:'+fold(name);
    if(seen.has(ident)){stats.skipped++;continue;}
@@ -80,8 +83,10 @@ function edit(m,action,d){
    const same=(x)=>fold(x.name)===fold(name)||(nip&&clean(x.nip)===nip);
    const fromCM=live.find(same),fromManual=m.members.find(same);
    if(fromCM){
-    if(mode==='merge'&&team){m.teams[fromCM.name]=team;stats.assigned++;}
-    else stats.skipped++;
+    if(mode==='merge'&&(team||structuralRole)){
+      if(team){m.teams[fromCM.name]=team;stats.assigned++;}
+      if(structuralRole){m.structural[fromCM.name]=structuralRole;stats.structuralAssigned++;}
+    } else stats.skipped++;
     continue;
    }
    if(fromManual){
@@ -93,11 +98,13 @@ function edit(m,action,d){
       nip:nip||fromManual.nip||''
     });
     if(team)m.teams[fromManual.name]=team;
+    if(structuralRole){m.structural[fromManual.name]=structuralRole;stats.structuralAssigned++;}
     stats.updated++;continue;
    }
    const created={name,nip,job:clean(source.job),unit:clean(source.unit),jenis:clean(source.jenis)||'Pegawai',createdAt:new Date().toISOString()};
    m.members.push(created);
    if(team)m.teams[name]=team;
+   if(structuralRole){m.structural[name]=structuralRole;stats.structuralAssigned++;}
    stats.added++;
   }
   return stats;
@@ -109,16 +116,24 @@ function edit(m,action,d){
   if(item.nip&&people().some(p=>clean(p.nip)===item.nip))throw Error('NIP sudah terdaftar di CM Team.');
   if(item.nip&&m.members.some(p=>clean(p.nip)===item.nip&&fold(p.name)!==fold(old)))throw Error('NIP sudah digunakan oleh pegawai lain.');
   if(old){const idx=m.members.findIndex(x=>fold(x.name)===fold(old));if(idx<0)throw Error('Pegawai tidak ditemukan');m.members[idx]={...m.members[idx],...item};
-    if(old!==name){if(m.teams[old]){m.teams[name]=m.teams[old];delete m.teams[old]}m.leaves.forEach(x=>{if(fold(x.name)===fold(old))x.name=name});Object.keys(m.attendance).forEach(k=>{if(k.startsWith(old+'|')){m.attendance[name+k.slice(old.length)]=m.attendance[k];delete m.attendance[k]}});}
+    if(old!==name){if(m.teams[old]){m.teams[name]=m.teams[old];delete m.teams[old]}if(m.structural[old]){m.structural[name]=m.structural[old];delete m.structural[old]}m.leaves.forEach(x=>{if(fold(x.name)===fold(old))x.name=name});Object.keys(m.attendance).forEach(k=>{if(k.startsWith(old+'|')){m.attendance[name+k.slice(old.length)]=m.attendance[k];delete m.attendance[k]}});}
   }else m.members.push(item);
+  if(Object.prototype.hasOwnProperty.call(d,'structuralRole')){
+    const role=clean(d.structuralRole);if(role&&!STRUCTURAL_ROLES.includes(role))throw Error('Jabatan struktural tidak dikenal');
+    if(role)m.structural[name]=role;else delete m.structural[name];
+  }
  }else if(action==='member-delete'){
   const name=clean(d.name);if(!m.members.some(x=>fold(x.name)===fold(name)))throw Error('Hapus pegawai dari CM Team melalui menu CM Team');
-  m.members=m.members.filter(x=>fold(x.name)!==fold(name));delete m.teams[name];m.leaves=m.leaves.filter(x=>fold(x.name)!==fold(name));
+  m.members=m.members.filter(x=>fold(x.name)!==fold(name));delete m.teams[name];delete m.structural[name];m.leaves=m.leaves.filter(x=>fold(x.name)!==fold(name));
   Object.keys(m.attendance).forEach(k=>{if(k.startsWith(name+'|'))delete m.attendance[k]});
  }else if(action==='team-save'){
   const name=clean(d.name);if(!name)throw Error('Pilih pegawai');
   const t=clean(d.team);if(!['','DCS','DOA','SPP','SSB','CM'].includes(t))throw Error('Tim tidak dikenal');
   if(t)m.teams[name]=t;else delete m.teams[name];
+  if(Object.prototype.hasOwnProperty.call(d,'structuralRole')){
+    const role=clean(d.structuralRole);if(role&&!STRUCTURAL_ROLES.includes(role))throw Error('Jabatan struktural tidak dikenal');
+    if(role)m.structural[name]=role;else delete m.structural[name];
+  }
  }else if(action==='attendance-save'){
   const name=clean(d.name),date=clean(d.date),status=clean(d.status);
   if(!name||!validDate(date)||!['WFO','WFH','Dinas luar',''].includes(status))throw Error('Status kehadiran tidak valid');
