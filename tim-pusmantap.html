@@ -345,7 +345,9 @@ const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 const dt=x=>new Date(str(x).slice(0,10)+'T12:00:00');
 const nice=x=>x?dt(x).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'—';
 const days=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-const TEAM=['DCS','DOA','SPP','SSB','CM'], LEAVES=['Cuti Tahunan','Cuti Sakit','Cuti Karena Alasan Penting','Cuti Besar','Cuti Melahirkan','Cuti di Luar Tanggungan Negara'];
+const TEAM=['DCS','DOA','SPP','SSB','CM'];
+const STRUCT=['Kepala Pusat','Kepala Bidang Program dan Manajemen Pengetahuan','Kepala Subbidang Program dan Sistem Kerja','Kepala Subbagian Tata Usaha','Kepala Subbidang Manajemen Pengetahuan'];
+const LEAVES=['Cuti Tahunan','Cuti Sakit','Cuti Karena Alasan Penting','Cuti Besar','Cuti Melahirkan','Cuti di Luar Tanggungan Negara'];
 const cap=t=>TEAM.includes(t)?t:'Belum ditetapkan';
 const edit=()=>!!data?.canEdit;
 const today=()=>data?.today||iso(new Date());
@@ -355,7 +357,7 @@ function staff(){
  if(!data)return[];
  const base=(data.resources||[]).map(r=>({name:r.name,nip:r.nip||'',job:r.job,unit:r.unit,jenis:r.jenis||'Pegawai',wfhDays:r.wfhDays||[],leavePlans:r.leavePlans||[],source:'cm-team',id:r.id,role:r.role,original:r}));
  for(const m of data.manual?.members||[]){if(!base.some(r=>norm(r.name)===norm(m.name)))base.push({...m,source:'manual',wfhDays:[],leavePlans:[]})}
- return base.filter(x=>str(x.name)).map(x=>({...x,team:data.manual?.teams?.[x.name]||(x.source==='cm-team'?'CM':'')})).sort((a,b)=>TEAM.indexOf(a.team)-TEAM.indexOf(b.team)||a.name.localeCompare(b.name,'id'));
+ return base.filter(x=>str(x.name)).map(x=>({...x,team:data.manual?.teams?.[x.name]||(x.source==='cm-team'?'CM':''),structuralRole:data.manual?.structural?.[x.name]||(STRUCT.includes(x.job)?x.job:'')})).sort((a,b)=>TEAM.indexOf(a.team)-TEAM.indexOf(b.team)||a.name.localeCompare(b.name,'id'));
 }
 function leaves(){
  const a=[];for(const p of staff()){
@@ -541,11 +543,11 @@ function openLeave(existing){
 function openMember(p){
  popup(p?'Ubah Pegawai':'Tambah Pegawai','member',
  formField('Nama lengkap','name','text',p?.name)+formField('NIP (opsional)','nip','text',p?.nip)+formField('Jabatan','job','text',p?.job)+formField('Unit kerja','unit','text',p?.unit)+
- formField('Jenis kepegawaian','jenis','select',p?.jenis||'Pegawai',['Pegawai','Secondment','Re-entry','Magang Kemnaker','Pegawai Sementara'])+
+ formField('Jenis kepegawaian','jenis','select',p?.jenis||'Pegawai',['Pegawai','Secondment','Re-entry','Magang Kemnaker','Pegawai Sementara'])+formField('Kaki struktural','structuralRole','select',p?.structuralRole||'',['',...STRUCT])+
  '<input type="hidden" name="oldName" value="'+esc(p?.name||'')+'">');
 }
 function openTeam(p){
- popup('Penempatan Tim · '+p.name,'team',formField('Nama pegawai','name','text',p.name)+formField('Tim utama','team','select',p.team,['',...TEAM]));
+ popup('Dua Kaki Penempatan · '+p.name,'team',formField('Nama pegawai','name','text',p.name)+formField('Kaki tim penugasan','team','select',p.team,['',...TEAM])+formField('Kaki struktural','structuralRole','select',p.structuralRole||'',['',...STRUCT]));
  const f=$('#tpForm [name=name]');f.readOnly=true;
 }
 function openAttendance(p){
