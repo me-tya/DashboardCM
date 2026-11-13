@@ -1,0 +1,23 @@
+name: Named full backup DCM 261113-18
+on:
+  push:
+    branches:
+      - backups/261113-DCM-18-artifact
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate full source backup ZIP from before changes
+        run: git archive --format=zip --output=261113-DCM-18.zip 877dfb9f4e50b236ce009046a4cc4062cac19c33
+      - name: Publish ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: 261113-DCM-18
+          path: 261113-DCM-18.zip
+          if-no-files-found: error
