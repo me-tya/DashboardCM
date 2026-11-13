@@ -226,6 +226,13 @@
       else actions.appendChild(el);
     }
     refreshGuide();
+    if(!document.getElementById('dcm-activity-labels-loader')){
+      var script=document.createElement('script');
+      script.id='dcm-activity-labels-loader';
+      script.src='dcm-activity-labels.js';
+      script.defer=true;
+      document.body.appendChild(script);
+    }
   }
   document.addEventListener('pointerover',function(ev){
     if(ev.pointerType==='touch')return;
