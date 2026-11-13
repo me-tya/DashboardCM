@@ -9304,11 +9304,11 @@ async function shareActivityWhatsApp(a){
 }
 function iconCopyLink(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/></svg>`;}
 async function copyActivityLocationLink(a){
-  const raw=getMeetingLink(a).trim();
-  if(!isUrlLike(raw)){toast(uiText('No link available to copy','Tidak ada link yang dapat disalin'),'info');return;}
-  const url=/^www\./i.test(raw)?'https://'+raw:raw;
-  try{await copyTextToClipboard(url);toast(uiText('Meeting link copied','Link rapat disalin'),'success');}
-  catch(e){toast(uiText('Could not copy link','Link gagal disalin'),'error');}
+  const url=cmMeetingUrl(getMeetingLink(a));
+  if(!url){toast(uiText('No link available to copy','Tidak ada link rapat yang dapat disalin'),'info');return Promise.resolve();}
+  return copyTextToClipboard(url)
+    .then(()=>toast(uiText('Meeting link copied','Link rapat disalin'),'success'))
+    .catch(()=>toast(uiText('Could not copy link','Link gagal disalin'),'error'));
 }
 function iconEdit(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>`;}
 function iconTrash(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>`;}
@@ -12728,6 +12728,27 @@ function isUrlLike(s) {
   return /^(https?:\/\/|www\.)/i.test(String(s).trim());
 }
 
+// Hanya tautan platform rapat dan shortlink resmi yang diakui; portal Satu Kemenkeu
+// tidak termasuk. Pencocokan hostname persis mencegah subdomain palsu.
+function cmMeetingUrl(value){
+  const raw=String(value||'').trim();
+  if(!raw||/\s/.test(raw))return '';
+  try{
+    const u=new URL(/^https?:\/\//i.test(raw)?raw:'https://'+raw);
+    if(!['https:','http:'].includes(u.protocol)||u.username||u.password)return '';
+    const host=u.hostname.toLowerCase().replace(/\.$/,'');
+    const officialShort=host==='s.kemenkeu.go.id'||host==='t.kemenkeu.go.id';
+    const commonShort=['s.id','bit.ly','tinyurl.com'].includes(host);
+    const teams=['teams.microsoft.com','teams.live.com','teams.cloud.microsoft'].includes(host);
+    const provider=host==='meet.google.com'||host==='meet.jit.si'||
+      host==='zoom.us'||host.endsWith('.zoom.us')||
+      host==='webex.com'||host.endsWith('.webex.com');
+    if(!(officialShort||commonShort||teams||provider))return '';
+    if((!u.pathname||u.pathname==='/')&&!u.search)return '';
+    return u.href;
+  }catch(e){return '';}
+}
+
 // Derives a human-readable file name from a SharePoint/OneDrive-style URL so the
 // hyperlink text shows what the file actually is, instead of the raw link.
 function fileNameFromUrl(url) {
@@ -12869,8 +12890,8 @@ function renderLocationValue(lokasi, compact=false) {
 
 function renderLocationWithCopy(lokasi, compact=false, activityId='') {
   if (!lokasi) return '-';
-  const raw=String(lokasi).trim();
-  if(!isUrlLike(raw)) return renderLocationValue(raw,compact);
+  const rawInput=String(lokasi).trim(),raw=cmMeetingUrl(rawInput);
+  if(!raw)return escapeHtml(rawInput);
   const tip=uiText('Copy meeting link','Salin link rapat');
   return `<span class="activity-link-wrap">${renderLocationValue(raw,compact)}<button type="button" class="activity-link-copy" data-inline-copy-link="${escapeHtml(activityId)}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}">${iconCopyLink()}</button></span>`;
 }
@@ -13195,14 +13216,28 @@ function openImageLightbox(url, name) {
 ============================================================ */
 function getMeetingMode(a){
   if(a?.meetingMode&&['online','offline','hybrid'].includes(a.meetingMode))return a.meetingMode;
-  const raw=String(a?.lokasiChannel||'').trim();
-  if(/^hybrid$/i.test(raw)||(/https?:\/\//i.test(raw)&&/\s[|;+]\s/.test(raw)))return 'hybrid';
-  if(/https?:\/\//i.test(raw)||/\b(ms\s*teams?|microsoft\s*teams?|zoom|google\s*meet|webex|youtube|webinar)\b/i.test(raw))return 'online';
+  const raw=String(a?.lokasiChannel||'').trim(),links=cmUndLinks(raw);
+  if(/^hybrid$/i.test(raw)||(links.length&&/\s[|;+]\s/.test(raw)))return 'hybrid';
+  if(links.length||/\b(ms\s*teams?|microsoft\s*teams?|zoom|google\s*meet|webex|youtube|webinar)\b/i.test(raw))return 'online';
   return 'offline';
 }
 function meetingModeLabel(mode){return mode==='online'?'Online':mode==='hybrid'?'Hybrid':'Offline';}
-function getMeetingLocation(a){if(a?.meetingLocation!=null)return getMeetingMode(a)==='online'?'':String(a.meetingLocation||'');return getMeetingMode(a)==='offline'?String(a?.lokasiChannel||''):'';}
-function getMeetingLink(a){if(a?.meetingLink!=null)return getMeetingMode(a)==='offline'?'':String(a.meetingLink||'');return getMeetingMode(a)==='online'?String(a?.lokasiChannel||''):'';}
+function getMeetingLocation(a){
+  if(a?.meetingLocation!=null)return getMeetingMode(a)==='online'?'':String(a.meetingLocation||'');
+  const raw=String(a?.lokasiChannel||'').trim(),mode=getMeetingMode(a);
+  if(mode==='online')return '';
+  if(mode==='offline'){
+    // URL portal lama tidak diperlakukan sebagai lokasi rapat di daftar.
+    return /^(?:https?:\/\/|www\.|(?:[a-z0-9-]+\.)+[a-z]{2,}\/)/i.test(raw)?'':raw;
+  }
+  const link=cmUndLinks(raw)[0];
+  return link?raw.replace(link,'').replace(/[\s|;+]+$/,'').trim():raw;
+}
+function getMeetingLink(a){
+  if(getMeetingMode(a)==='offline')return '';
+  const raw=a?.meetingLink!=null?String(a.meetingLink||''):String(a?.lokasiChannel||'');
+  return cmMeetingUrl(raw)||cmUndLinks(raw).map(cmMeetingUrl).find(Boolean)||'';
+}
 /* ============================================================
    IMPORT UNDANGAN — read an invitation letter (PDF/DOCX/TXT), map its labelled parts
    (Hal, hari/tanggal, waktu, tempat, …) to Add Activity fields, let the user review/edit,
@@ -13300,7 +13335,15 @@ function cmUndParseTimes(text){
   if((m=new RegExp(T,'i').exec(t)))return {start:hm(m[1],m[2]),end:'',zone:(/\b(WITA|WIT)\b/i.exec(t)||[])[1]||''};
   return null;
 }
-function cmUndLinks(text){const out=[];String(text||'').replace(/\b((?:https?:\/\/|www\.)[^\s<>"')\]]+|(?:[a-z0-9-]+\.)?(?:zoom\.us|teams\.microsoft\.com|teams\.live\.com|meet\.google\.com|webex\.com|s\.id|bit\.ly|tinyurl\.com)\/[^\s<>"')\]]*)/gi,u=>{u=u.replace(/[.,;:]+$/,'');if(!out.includes(u))out.push(u);return u;});return out;}
+function cmUndLinks(text){
+  const out=[];
+  String(text||'').replace(/\b((?:https?:\/\/|www\.)[^\s<>"')\]]+|(?:(?:[a-z0-9-]+\.)?(?:zoom\.us|teams\.microsoft\.com|teams\.live\.com|teams\.cloud\.microsoft|meet\.google\.com|meet\.jit\.si|webex\.com|s\.id|bit\.ly|tinyurl\.com)|[st]\.kemenkeu\.go\.id)\/[^\s<>"')\]]+)/gi,u=>{
+    u=u.replace(/[.,;:]+$/,'');
+    if(cmMeetingUrl(u)&&!out.includes(u))out.push(u);
+    return u;
+  });
+  return out;
+}
 function cmUndGuessUnit(lines,fromValue){
   const pick=txt=>{for(const [code,re] of CM_UND_UNIT_NAMES)if(re.test(txt))return code;return '';};
   if(fromValue){const c=pick(fromValue);if(c)return {value:c,src:'Dari'};}
@@ -13365,7 +13408,7 @@ function cmUndParse(text,map,fileName){
   const links=cmUndLinks(raw),lk=find(F('link').labels,2);
   /* Tautan rapat tanpa label hanya diambil bila berupa platform rapat (Zoom/Teams/Meet/Webex/shortlink). URL lain di surat
      (mis. footer TTE/verifikasi satu.kemenkeu.go.id) bukan tautan rapat dan tidak boleh membuat metode jadi Hybrid/Online. */
-  let link='';if(lk){link=cmUndLinks(lk.value.join(' '))[0]||'';}if(!link)link=links.find(u=>/zoom\.us|zoom\.com|teams\.microsoft|teams\.live|meet\.google|webex|meet\.jit\.si|s\.id\/|bit\.ly\/|tinyurl/i.test(u)&&!/kemenkeu\.go\.id\/(?:verif|tte|ds|bsre)|satu\.kemenkeu\.go\.id/i.test(u))||'';
+  let link='';if(lk){link=cmUndLinks(lk.value.join(' '))[0]||'';}if(!link)link=links[0]||'';
   let tpx=tp;if(!tpx){const mm=/\b(?:bertempat\s+di|tempat\s+di|di\s+ruang)\s+([^.\n]{3,120})/i.exec(raw.replace(/\n/g,' '));if(mm)tpx={value:[(/^di\s+ruang/i.test(mm[0])?'Ruang ':'')+mm[1].trim()],src:uiText('letter body','isi surat')};}
   const tp2=tpx;if(tp2){const tp=tp2;let loc=tp.value.join(' ').replace(/\s+/g,' ').trim();cmUndLinks(loc).forEach(u=>{loc=loc.replace(u,'').trim();});loc=loc.replace(/[(\[]\s*[)\]]/g,'').replace(/[,;:\-–]+\s*$/,'').trim();
     // Rule: "Tempat" in the letter always maps to Lokasi Rapat (only an embedded URL is moved to Link Rapat)
