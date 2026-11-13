@@ -1,0 +1,336 @@
+/*
+ * Dashboard CM 261114-DCM-24 — approved navigation treatment.
+ * Visual only: do not replace, move, rename or unbind any controls.
+ * Main menu navy/white with gold icon; subtabs soft blue and equal-width.
+ */
+:root{
+  --dcm-nav-navy:#092B60;
+  --dcm-nav-gold:#F2C43D;
+  --dcm-sub-active:#DCE9FB;
+  --dcm-sub-ink:#173A74;
+  --dcm-sub-rest:#F0F5FC;
+}
+#appHeader.topbar{
+  min-height:84px!important;
+  padding:10px 22px!important;
+  background:linear-gradient(112deg,#081D40 0%,#0D2B5D 58%,#10356E 100%)!important;
+  overflow:visible;
+  isolation:isolate;
+}
+/* Only a very subtle blue line motif: no thick gold wave. */
+#appHeader.topbar::before{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='130' viewBox='0 0 1000 130'%3E%3Cg fill='none' stroke='%236A94CD' stroke-opacity='.15' stroke-width='.8'%3E%3Cpath d='M0 127 C235 112 345 10 548 59 S826 142 1000 49'/%3E%3Cpath d='M0 120 C245 104 362 4 562 52 S830 134 1000 43'/%3E%3Cpath d='M0 114 C255 97 370 0 577 45 S850 125 1000 36'/%3E%3Cpath d='M0 107 C265 89 382 -8 593 38 S869 117 1000 31'/%3E%3C/g%3E%3C/svg%3E") no-repeat right 32% / min(65vw,950px) 100%;
+}
+#appHeader .brand,#appHeader .topbar-actions{position:relative;z-index:1}
+#appHeader .brand{gap:16px!important}
+#appHeader .brand-mark{transform:scale(1.04)!important;transform-origin:center}
+#appHeader .brand-text h1,#appHeader .brand-text p{font-family:Inter,Arial,sans-serif}
+#appMain.content{padding-top:10px!important}
+
+/* PRIMARY NAV: one level only; all visible menu buttons share the available width. */
+#appMain > .tabs-row{
+  margin:0 0 10px!important;
+  padding:0!important;
+  gap:7px!important;
+  min-height:70px!important;
+  align-items:stretch!important;
+}
+#appMain > .tabs-row #tabNav.tabs{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  padding:4px 5px!important;
+  gap:5px!important;
+  margin:0!important;
+  border:1px solid #E6EBF3!important;
+  border-radius:13px!important;
+  background:#FFFFFF!important;
+  box-shadow:0 1px 4px rgba(10,30,68,.045)!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none;
+  align-items:stretch!important;
+}
+#appMain > .tabs-row #tabNav::-webkit-scrollbar{display:none}
+#appMain > .tabs-row #tabNav .tab-btn{
+  display:flex!important;
+  flex:1 1 0!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:0!important;
+  width:auto!important;
+  height:62px!important;
+  min-height:62px!important;
+  margin:0!important;
+  padding:7px 5px!important;
+  gap:5px!important;
+  border:0!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  color:#142F60!important;
+  box-shadow:none!important;
+  font-family:Inter,Arial,sans-serif!important;
+  font-size:12px!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+  position:relative;
+  transition:background-color .16s ease,color .16s ease,box-shadow .16s ease!important;
+  transform:none!important;
+  white-space:nowrap!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn::before,
+#appMain > .tabs-row #tabNav .tab-btn::after{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn .tab-icon{
+  display:block!important;
+  flex:none!important;
+  width:22px!important;
+  height:22px!important;
+  margin:0!important;
+  color:inherit!important;
+  stroke:currentColor!important;
+  opacity:1!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn > span:not(.count-badge){
+  display:block!important;
+  max-width:100%!important;
+  font-family:inherit!important;
+  font-size:12px!important;
+  font-weight:650!important;
+  line-height:1.2!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn:not(.active):hover{
+  color:#10356E!important;
+  background:#EDF3FC!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn.active,
+#appMain > .tabs-row #tabNav .tab-btn.active:hover{
+  color:#FFF!important;
+  background:linear-gradient(180deg,#123D7B 0%,var(--dcm-nav-navy) 100%)!important;
+  box-shadow:0 2px 8px rgba(10,35,79,.14)!important;
+  border:0!important;
+  outline:0!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn.active .tab-icon,
+#appMain > .tabs-row #tabNav .tab-btn.active .tab-icon *{
+  color:var(--dcm-nav-gold)!important;
+  stroke:var(--dcm-nav-gold)!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn.active > span:not(.count-badge){
+  color:#FFF!important;
+  font-weight:750!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn .count-badge{
+  position:absolute!important;
+  top:2px!important;
+  left:calc(50% + 10px)!important;
+  padding:1px 5px!important;
+  min-height:15px!important;
+  font-size:9px!important;
+  background:#E6EBF5!important;
+  color:#233C65!important;
+  border:0!important;
+}
+#appMain > .tabs-row #tabNav .tab-btn.active .count-badge{
+  background:rgba(255,255,255,.19)!important;
+  color:#FFF!important;
+}
+/* Preserve existing restrictions/role indicators, rather than hiding them. */
+#appMain > .tabs-row #tabNav .tab-btn.cm-tab-limited::after{
+  border-bottom:0!important;
+  box-shadow:none!important;
+}
+#appMain > .tabs-row #cmContextHelp{
+  align-self:center!important;
+  flex:0 0 34px!important;
+  width:34px!important;
+  height:34px!important;
+  margin:0 2px!important;
+}
+#appMain > .tabs-row #btnAdd{align-self:center!important}
+
+/* SECONDARY NAV: smaller, softer, equal widths. No gold indicator. */
+#dcm-activity-view-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:4px!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-height:45px!important;
+  padding:4px!important;
+  margin:0 0 9px!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+  border:1px solid #DEE7F4!important;
+  border-radius:12px!important;
+  background:#F1F5FC!important;
+  box-shadow:none!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn{
+  display:flex!important;
+  flex:none!important;
+  width:100%!important;
+  min-width:0!important;
+  height:36px!important;
+  min-height:36px!important;
+  padding:6px 8px!important;
+  gap:7px!important;
+  font:650 12px/1.2 Inter,Arial,sans-serif!important;
+  color:#3F5578!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:9px!important;
+  box-shadow:none!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn .tab-icon{
+  width:17px!important;height:17px!important;
+  flex:none!important;stroke:currentColor!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active,
+#dcm-activity-view-tabs .dcm-activity-view-btn.active:hover{
+  background:var(--dcm-sub-active)!important;
+  color:var(--dcm-sub-ink)!important;
+  box-shadow:none!important;
+  border:0!important;
+  outline:0!important;
+  font-weight:750!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn:not(.active):hover{
+  background:#E8EFFA!important;
+  color:var(--dcm-sub-ink)!important;
+}
+
+/* CRA and Priority have their own contextual tab bars: use same subdued hierarchy. */
+#tab-survey .cm-survey-subtabs,
+#tab-priority .cm-survey-subtabs{
+  display:flex!important;
+  align-items:stretch!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-height:45px!important;
+  padding:4px!important;
+  gap:4px!important;
+  border:1px solid #DEE7F4!important;
+  border-radius:12px!important;
+  background:#F1F5FC!important;
+  overflow-x:auto!important;
+  box-shadow:none!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab{
+  flex:1 1 0!important;
+  min-width:0!important;
+  padding:8px 6px!important;
+  border:0!important;
+  border-radius:9px!important;
+  background:transparent!important;
+  color:#3F5578!important;
+  font:650 12px/1.25 Inter,Arial,sans-serif!important;
+  text-align:center!important;
+  box-shadow:none!important;
+  white-space:normal!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab.active,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab.active,
+#tab-survey .cm-survey-subtabs .cm-survey-subtab[aria-selected="true"],
+#tab-priority .cm-survey-subtabs .cm-survey-subtab[aria-selected="true"]{
+  background:var(--dcm-sub-active)!important;
+  color:var(--dcm-sub-ink)!important;
+  box-shadow:none!important;
+  border:0!important;
+  font-weight:750!important;
+}
+#tab-survey .cm-survey-subtabs .cm-survey-subtab:not(.active):hover,
+#tab-priority .cm-survey-subtabs .cm-survey-subtab:not(.active):hover{
+  background:#E8EFFA!important;
+  color:var(--dcm-sub-ink)!important;
+}
+
+/* Remove redundant navy MENU hero only. Keep every original command/search. */
+#tab-resource .res-hero,
+#tab-survey .cm-survey-hero,
+#tab-knowledge .kb-hero{
+  background:transparent!important;
+  color:var(--dcm-sub-ink)!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  border:0!important;
+  border-radius:0!important;
+  min-height:0!important;
+  margin:0 0 9px!important;
+  padding:0!important;
+}
+#tab-resource .res-hero{justify-content:flex-end!important}
+#tab-resource .res-hero > div:first-child:has(> h2){display:none!important}
+#tab-survey .cm-survey-hero > div:first-child:has(> h2){display:none!important}
+#tab-survey .cm-survey-hero:has(> div:only-child){display:none!important}
+#tab-knowledge .kb-hero-text{display:none!important}
+#tab-knowledge .kb-hero{
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+}
+#tab-knowledge .kb-hero-search{
+  color:#203A65!important;
+  border:1px solid #DBE5F3!important;
+  background:#FFF!important;
+  box-shadow:none!important;
+}
+
+/* Mobile: allow equal-size nav scroll rather than squeeze or shift header. */
+@media(max-width:1290px){
+  #appHeader.topbar{padding:9px 17px!important}
+  #appMain > .tabs-row #tabNav .tab-btn{
+    flex:0 0 116px!important;
+    width:116px!important;
+    min-width:116px!important;
+  }
+}
+@media(max-width:720px){
+  #appMain > .tabs-row{min-height:66px!important}
+  #appMain > .tabs-row #tabNav .tab-btn{
+    flex:0 0 106px!important;
+    width:106px!important;
+    min-width:106px!important;
+    height:58px!important;
+    min-height:58px!important;
+  }
+  #appMain > .tabs-row #tabNav .tab-btn .tab-icon{width:19px!important;height:19px!important}
+  #appMain > .tabs-row #tabNav .tab-btn > span:not(.count-badge){font-size:11px!important}
+  #dcm-activity-view-tabs{
+    display:flex!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x mandatory;
+  }
+  #dcm-activity-view-tabs .dcm-activity-view-btn{
+    flex:0 0 135px!important;
+    width:135px!important;
+    min-width:135px!important;
+    scroll-snap-align:start;
+  }
+  #tab-survey .cm-survey-subtabs .cm-survey-subtab,
+  #tab-priority .cm-survey-subtabs .cm-survey-subtab{
+    flex:0 0 145px!important;
+    min-width:145px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #appMain > .tabs-row #tabNav .tab-btn,
+  #dcm-activity-view-tabs .dcm-activity-view-btn{transition:none!important}
+}
