@@ -264,3 +264,104 @@
   .dcm-settings-utility-trigger{padding:7px 8px}
   .dcm-settings-utility-drop{width:min(270px,calc(100vw - 36px))}
 }
+
+
+/* DCM 261113-DCM-15 — tata letak tab Aktivitas, filter dan header rapat. */
+/* Header: dua kelompok berbagi satu garis dasar; kontrol kanan tidak mengambang. */
+#appHeader.topbar{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-rows:auto!important;
+  align-items:end!important;align-content:end!important;
+  min-height:0!important;
+  padding:8px 18px!important;
+  column-gap:12px!important;row-gap:0!important;
+}
+#appHeader .brand{
+  align-self:end!important;align-items:flex-end!important;min-height:0!important;
+}
+#appHeader .brand-mark{align-self:flex-end!important}
+#appHeader .brand-text{align-self:flex-end!important;padding-bottom:0!important}
+#appHeader .brand-text p{margin-bottom:0!important}
+#appHeader .topbar-actions{
+  align-self:end!important;align-items:center!important;
+  margin:0!important;padding:0!important;
+  transform:translateY(-2px);
+}
+@media(max-width:1250px){
+  #appHeader.topbar{padding:8px 13px!important;column-gap:9px!important}
+}
+@media(max-width:980px){
+  #appHeader.topbar{
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+    row-gap:8px!important;
+  }
+  #appHeader .topbar-actions{
+    width:100%!important;max-width:100%!important;
+    justify-self:end!important;justify-content:flex-end!important;
+    overflow-x:auto!important;overflow-y:hidden!important;
+    transform:none!important;
+  }
+}
+
+/* Tab dalam menu Agenda / Aktivitas: tepat di atas filter. */
+#dcm-activity-view-tabs{
+  display:flex;align-items:center;flex-wrap:nowrap;gap:5px;
+  width:max-content;max-width:100%;margin:0 0 8px;
+  padding:4px;box-sizing:border-box;
+  border:1px solid #D9E3F1;border-radius:11px;
+  background:#F1F5FC;box-shadow:0 1px 3px rgba(13,33,72,.05);
+  overflow-x:auto;scrollbar-width:thin;
+}
+#dcm-activity-view-tabs[hidden]{display:none!important}
+#dcm-activity-view-tabs .dcm-activity-view-btn{
+  display:inline-flex!important;flex:0 0 auto!important;flex-direction:row!important;
+  align-items:center!important;justify-content:center!important;
+  width:auto!important;min-width:0!important;height:34px!important;
+  padding:7px 13px!important;margin:0!important;gap:7px!important;
+  border:0!important;border-radius:8px!important;
+  background:transparent!important;box-shadow:none!important;
+  color:#516584!important;white-space:nowrap!important;
+  font:700 12px/1.2 Inter,Arial,sans-serif!important;cursor:pointer;
+  transition:background-color .15s ease,color .15s ease,box-shadow .15s ease!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn .tab-icon{
+  display:block!important;width:16px!important;height:16px!important;
+  flex:none;margin:0!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn:hover,
+#dcm-activity-view-tabs .dcm-activity-view-btn:focus-visible{
+  background:#FFF4D4!important;color:#183662!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active{
+  background:#183867!important;color:#FFF!important;
+  box-shadow:0 2px 7px rgba(16,41,85,.16)!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active:hover{
+  background:#244879!important;color:#FFF!important;
+}
+/* Filter lebih pendek, baik saat tertutup maupun dibuka. */
+#appMain > #contextFilterBar.context-filter-bar{
+  padding:8px 11px!important;margin-top:0!important;
+  margin-bottom:9px!important;border-radius:11px!important;
+}
+#contextFilterBar .filter-bar-row1{gap:7px!important;min-height:34px!important}
+#contextFilterBar .search-wrap input{
+  box-sizing:border-box!important;height:34px!important;
+  padding-top:6px!important;padding-bottom:6px!important;
+}
+#contextFilterBar .btn-filter-toggle{
+  min-height:34px!important;padding:6px 10px!important;
+}
+#contextFilterBar .filter-bar-body{
+  margin-top:8px!important;padding-top:8px!important;gap:6px!important;
+}
+#contextFilterBar .filter-select,
+#contextFilterBar .filter-date{
+  height:33px!important;min-height:33px!important;
+}
+@media(max-width:600px){
+  #dcm-activity-view-tabs{width:100%;margin-bottom:7px}
+  #dcm-activity-view-tabs .dcm-activity-view-btn{padding:7px 10px!important}
+  #appMain > #contextFilterBar.context-filter-bar{padding:7px 9px!important}
+}

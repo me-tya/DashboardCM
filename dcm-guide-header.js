@@ -444,3 +444,64 @@
     document.addEventListener('DOMContentLoaded', install, {once:true});
   else install();
 })();
+
+
+/* DCM 261113-DCM-15 — Kalender / Workboard / Matriks menjadi tab Aktivitas.
+   Memindahkan tombol asli (tanpa kloning) agar handler, filter, izin, dan data tetap bekerja. */
+(function(){
+  'use strict';
+  if(window.DCM_ACTIVITY_VIEWS_26111315)return;
+  window.DCM_ACTIVITY_VIEWS_26111315=true;
+  function installActivityViews(){
+    var nav=document.getElementById('tabNav');
+    var filter=document.getElementById('contextFilterBar');
+    if(!nav||!filter||document.getElementById('dcm-activity-view-tabs'))return;
+    var agenda=nav.querySelector('button[data-tab="table"]');
+    if(!agenda)return;
+    var views=['calendar','kanban','matrix'];
+    var originals=views.map(function(k){return nav.querySelector('button[data-tab="'+k+'"]')});
+    if(originals.some(function(el){return !el}))return;
+    var tabs=document.createElement('nav');
+    tabs.id='dcm-activity-view-tabs';
+    tabs.setAttribute('aria-label','Pilihan tampilan Aktivitas');
+    tabs.hidden=true;
+    var list=document.createElement('button');
+    list.type='button';
+    list.className='dcm-activity-view-btn';
+    list.setAttribute('data-view','table');
+    list.title='Lihat Daftar Aktivitas';
+    list.innerHTML='<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 6h14M7 12h14M7 18h14"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg><span>Daftar Aktivitas</span>';
+    list.addEventListener('click',function(){agenda.click()});
+    tabs.appendChild(list);
+    originals.forEach(function(el){
+      el.classList.add('dcm-activity-view-btn');
+      tabs.appendChild(el);
+    });
+    filter.parentNode.insertBefore(tabs,filter);
+    agenda.classList.add('dcm-activity-parent');
+    var syncing=false;
+    function sync(){
+      if(syncing)return;
+      syncing=true;
+      var activeView=null;
+      originals.forEach(function(el,i){if(el.classList.contains('active'))activeView=views[i]});
+      if(!activeView&&agenda.classList.contains('active'))activeView='table';
+      var visible=!!activeView;
+      if(tabs.hidden===visible)tabs.hidden=!visible;
+      if(visible&&!agenda.classList.contains('active'))agenda.classList.add('active');
+      var isList=activeView==='table';
+      if(list.classList.contains('active')!==isList)list.classList.toggle('active',isList);
+      list.setAttribute('aria-current',isList?'page':'false');
+      originals.forEach(function(el){el.setAttribute('aria-current',el.classList.contains('active')?'page':'false')});
+      syncing=false;
+    }
+    var observer=new MutationObserver(sync);
+    [agenda].concat(originals).forEach(function(el){
+      observer.observe(el,{attributes:true,attributeFilter:['class']});
+    });
+    sync();
+  }
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',installActivityViews,{once:true});
+  else installActivityViews();
+})();
