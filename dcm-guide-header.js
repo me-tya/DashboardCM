@@ -305,7 +305,7 @@
     var tabs = Array.from(document.querySelectorAll('button,a,[role="tab"],span'))
       .filter(function (el) {
         var t = (el.textContent || '').trim();
-        return t === 'Statistik Kunjungan Tamu' &&
+        return t.includes('Statistik Kunjungan Tamu') && t.length < 100 &&
           el.getClientRects().length > 0;
       });
     for (var i = 0; i < tabs.length; i++) {
