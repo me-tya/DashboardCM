@@ -127,7 +127,7 @@ function parseOcr(text){
    if(r)rows.push(r);
    continue;
   }
-  l=l.replace(/^\s*\d{1,4}[.\)-]\s*/,'').trim();
+  l=l.replace(/^\s*\d{1,4}[.\)-]?\s+/,'').trim();
   const nip=l.match(/\b\d{15,20}\b/);if(nip)l=l.replace(nip[0],' ').replace(/\s+/g,' ').trim();
   const team=l.match(/(?:^|\s)(?:TIM\s+)?(DCS|DOA|SPP|SSB|CM)\s*$/i);
   if(team)l=l.slice(0,team.index).trim();
