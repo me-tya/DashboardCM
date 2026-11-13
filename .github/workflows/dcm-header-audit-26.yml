@@ -1,0 +1,45 @@
+name: DCM 26 backup and header style comparison
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-audit-26.yml']
+permissions: {contents: read}
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Full exact pre-change backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-26:refs/remotes/origin/backup/261114-DCM-26
+          git archive --format=zip --output=/tmp/261114-DCM-26.zip origin/backup/261114-DCM-26
+          unzip -t /tmp/261114-DCM-26.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-26
+          path: /tmp/261114-DCM-26.zip
+          retention-days: 30
+      - name: Audit Dashboard CM header structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          l=s.splitlines()
+          for term in ['id="appHeader"','topbar-actions','class="brand"','cm-reminder-bell','dcm-header-icon','cm-user-chip','cm-user-avatar',
+                       'user-avatar','topbar-divider','cmRoleLabel','role-label','cm-user-name','dcm-guide-toggle',
+                       'cmLanguageToggle','lang-toggle','dcm-utility-start','cmHelp','cmGuide','notificationBtn',
+                       'id="btnGuide"','cmTpFrame','dcm-guide-header.css']:
+           hits=[i for i,x in enumerate(l) if term in x]
+           print('\\nTERM',term,'count',len(hits))
+           for i in hits[:5]:
+            print('LINE',i+1)
+            for j in range(max(0,i-1),min(len(l),i+3)):print(j+1,l[j][:1300])
+          for term in ['.topbar-actions{','.topbar-actions .','.topbar-divider{','.cm-reminder-bell{','.user-chip{','.user-avatar{',
+                       '.cm-user-chip{','.cm-user-avatar{','.brand-mark{','.topbar{',
+                       '.header-actions{','.role-badge{']:
+           hits=list(re.finditer(re.escape(term),s))
+           print('\\nCSS',term,len(hits))
+           for m in hits[-4:]:print('SNIP',s[m.start():m.start()+730].replace(chr(10),' ')[:730])
+          print('\\nHEAD LINKS',re.findall(r'<link[^>]+href="([^"]+\\.css[^"]*)"',s)[:40])
+          PY
