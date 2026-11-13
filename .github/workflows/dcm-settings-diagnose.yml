@@ -37,18 +37,21 @@ jobs:
             for j in range(max(0,i-3),min(len(ls),i+5)):print(j+1,ls[j][:550])
           PY
 
-      - name: Trace original button presence and handlers
+
+      - name: Inspect settings overlay lifecycle and CSS
         run: |
           python3 - <<'PY'
-          import re
           from pathlib import Path
-          ls=Path('index.html').read_text(encoding='utf8').splitlines()
-          for a,b in [(3000,3140),(3150,3195),(17290,17330),(17465,17534),(17580,17665),(17685,17760),(18965,19028),(20765,20804)]:
-            print('=== RANGE ===',a,b)
-            for i in range(a-1,min(len(ls),b)):
-              print(i+1,ls[i][:1000])
-          for p in [r'btnImport',r'btnExport',r'btnBackupAll',r'btnRestoreAll',r'fileInput',r'inputImport',r'fileBackup',r'backupFile',r'addEventListener\\(\\x27click',r'openBackupOptionsModal',r'handleBackupFileUpload']:
-            a=[(i+1,l[:800]) for i,l in enumerate(ls) if re.search(p,l,re.I)]
-            print('=== OCCURRENCES ===',p,'total',len(a))
-            for i,l in a[:23]:print(i,l)
+          s=Path('index.html').read_text(encoding='utf8')
+          terms=['Statistik Kunjungan Tamu','id="accessAdminModal"','id="settingsModal"','id="btnAccessAdmin"','id="closeAccessAdmin"','function cmOpenAccessAdmin','function openAccessAdmin','.modal-overlay{','.modal-overlay {','z-index:9999','z-index: 9999','function openImportModal','function exportToExcel','function cmCanMutate','function cmDenyMutation','id="btnImport"','id="btnBackupAll"','dcm-guide-header.js']
+          for t in terms:
+            matches=[];start=0
+            while len(matches)<12:
+              i=s.find(t,start)
+              if i<0:break
+              matches.append(i);start=i+len(t)
+            print('===',t,'count-first',len(matches),'===')
+            for i in matches[:6]:
+              print('OFFSET',i,'LINE',s.count('\\n',0,i)+1)
+              print(s[max(0,i-230):i+650].replace('\\n',' ').strip()[:930])
           PY
