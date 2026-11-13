@@ -1,0 +1,91 @@
+/* Dashboard CM — Guide global dan tombol header ikon, 13 Nov 2026.
+   Menjaga tinggi/header stabil ketika menu/tab berubah. */
+#appHeader.topbar{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto;
+  align-content:center;
+  align-items:center;
+  gap:8px;
+  padding:12px 22px;
+  box-sizing:border-box;
+  width:100%;
+}
+#appHeader .brand{min-width:0;max-width:100%}
+#appHeader .brand-text{min-width:0}
+#appHeader .topbar-actions{
+  min-width:0;width:100%;display:flex;align-items:center;
+  flex-wrap:nowrap;gap:7px;overflow-x:auto;overflow-y:hidden;
+  padding:2px 0 3px;scrollbar-width:none;
+}
+#appHeader .topbar-actions::-webkit-scrollbar{display:none}
+#appHeader .topbar-actions>*{flex-shrink:0}
+#appHeader .topbar-divider{margin:0 2px}
+#appHeader .dcm-header-icon{
+  display:inline-flex!important;align-items:center;justify-content:center;
+  width:37px;height:37px;min-width:37px;padding:0!important;
+  border:1px solid transparent!important;border-radius:9px!important;
+  color:#E8F1FF;background:transparent!important;
+  box-shadow:none!important;vertical-align:middle;cursor:pointer;
+  transition:background-color .16s ease,border-color .16s ease,color .16s ease,
+    box-shadow .16s ease,transform .16s ease!important;
+}
+#appHeader .dcm-header-icon > span[data-i18n]{display:none!important}
+#appHeader .dcm-header-icon svg.icon{width:19px;height:19px;flex:none;transition:transform .16s ease}
+#appHeader .dcm-header-icon:hover,
+#appHeader .dcm-header-icon:focus-visible,
+#appHeader .cm-reminder-bell:hover,
+#appHeader .cm-reminder-bell:focus-visible{
+  color:#FFD76C!important;background:rgba(255,215,108,.14)!important;
+  border-color:rgba(255,215,108,.48)!important;
+  box-shadow:0 0 0 1px rgba(255,215,108,.13),0 4px 14px rgba(0,0,0,.12)!important;
+  transform:translateY(-2px);
+}
+#appHeader .dcm-header-icon:hover svg.icon,
+#appHeader .dcm-header-icon:focus-visible svg.icon{transform:scale(1.12)}
+#appHeader .dcm-header-icon:active{transform:translateY(0) scale(.96)}
+#appHeader .dcm-header-icon:disabled{opacity:.45;transform:none;cursor:not-allowed}
+#appHeader .dcm-guide-toggle{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:35px;min-width:96px;margin:0 1px;padding:0 12px;
+  background:transparent;border:0;border-left:1px solid #45607F;
+  border-right:1px solid #45607F;border-radius:0;
+  color:#DCE6F6;white-space:nowrap;cursor:pointer;
+  font:600 12px/1.3 Inter,Arial,sans-serif;
+  transition:color .15s ease,background-color .15s ease;
+}
+#appHeader .dcm-guide-toggle:hover,#appHeader .dcm-guide-toggle:focus-visible{
+  color:#FFF;background:rgba(255,255,255,.06);
+}
+#appHeader .dcm-guide-toggle:focus-visible{outline:2px solid #FFD76C;outline-offset:2px}
+#appHeader .dcm-guide-track{
+  position:relative;display:inline-block;width:29px;height:17px;
+  border-radius:20px;background:#637791;transition:background-color .18s ease;
+}
+#appHeader .dcm-guide-track i{
+  position:absolute;display:block;left:3px;top:3px;width:11px;height:11px;
+  border-radius:50%;background:#FFF;transition:transform .18s ease;
+  box-shadow:0 1px 2px rgba(0,0,0,.2);
+}
+#appHeader .dcm-guide-toggle[aria-checked="true"] .dcm-guide-track{background:#E5B943}
+#appHeader .dcm-guide-toggle[aria-checked="true"] .dcm-guide-track i{transform:translateX(12px)}
+#dcm-global-guide-tip{
+  position:fixed;z-index:300000;box-sizing:border-box;
+  width:max-content;max-width:min(345px,calc(100vw - 20px));
+  padding:10px 12px;border:1px solid #526F94;border-top:3px solid #F0BD47;
+  border-radius:10px;color:#E9F1FB;background:#102A50;
+  box-shadow:0 9px 28px rgba(2,12,33,.27);pointer-events:none;
+  font:500 12px/1.5 Inter,Arial,sans-serif;white-space:normal;
+}
+#dcm-global-guide-tip[hidden]{display:none!important}
+#dcm-global-guide-tip .dcm-tip-label{display:block;font-weight:800;font-size:12.5px;color:#FFF;margin:0 0 5px}
+#dcm-global-guide-tip .dcm-tip-sub{display:block;color:#FFD778;font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.04em;margin-top:6px}
+#dcm-global-guide-tip .dcm-tip-text{font-size:11.5px;color:#E8F1FA}
+@media(max-width:780px){
+  #appHeader.topbar{padding:10px 12px;gap:7px}
+  #appHeader .brand-text h1{font-size:15px}
+  #appHeader .topbar-actions{gap:5px}
+}
+@media(prefers-reduced-motion:reduce){
+  #appHeader .dcm-header-icon,#appHeader .dcm-guide-track,#appHeader .dcm-guide-track i{transition:none!important}
+}
