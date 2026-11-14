@@ -2,7 +2,12 @@ name: DCM 50 Side by Side Import Validation and Activation
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-profile-compare-50.yml']
+    paths:
+      - '.github/workflows/dcm-profile-compare-50.yml'
+      - 'tests/dcm-profile-compare-50.test.cjs'
+      - 'tests/dcm-profile-compare-ui-50.test.cjs'
+      - 'mt-team-exact/dcm-profile-compare-50.js'
+      - 'mt-team-exact/dcm-profile-photo-import-48.js'
 permissions:
   contents: write
 jobs:
