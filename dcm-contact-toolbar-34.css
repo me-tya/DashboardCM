@@ -1,0 +1,169 @@
+/*
+ * Dashboard CM 261114-DCM-34 — Tim Squad / Kontak PMO & CMO
+ * Remove duplicate decorative navy hero; keep one compact filter/action row.
+ * Feedback directly left of Add Contact; reset uses existing rotate-ccw icon.
+ * Styles scoped to this menu. No data, permissions or callbacks changed.
+ */
+#tab-contact .review-dir{
+  margin-bottom:20px!important;
+}
+#tab-contact .review-dir > .review-toolbar{
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:wrap!important;
+  gap:8px!important;
+  margin:0 0 12px!important;
+  padding:0!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+#tab-contact .review-toolbar > #reviewSearch{
+  flex:1 1 320px!important;
+  width:auto!important;
+  min-width:240px!important;
+  min-height:40px!important;
+  height:40px!important;
+  box-sizing:border-box!important;
+  font:500 12.5px/1.2 Inter,Arial,sans-serif!important;
+}
+#tab-contact .review-toolbar > #reviewPicFilter{
+  flex:0 1 185px!important;
+  width:185px!important;
+  min-width:140px!important;
+  height:40px!important;
+  font:500 12px/1.2 Inter,Arial,sans-serif!important;
+}
+#tab-contact .review-toolbar > #reviewUnitFilter{
+  flex:0 1 165px!important;
+  width:165px!important;
+  min-width:135px!important;
+  height:40px!important;
+  font:500 12px/1.2 Inter,Arial,sans-serif!important;
+}
+/* Compact reset is a real button, retaining the original reset-filter handler.
+   Its existing ::before pseudo-element already contains the rotate icon. */
+#tab-contact .review-toolbar > #reviewReset{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 40px!important;
+  width:40px!important;
+  min-width:40px!important;
+  max-width:40px!important;
+  height:40px!important;
+  min-height:40px!important;
+  padding:0!important;
+  margin:0!important;
+  background:#FFF8F8!important;
+  border:1px solid #F0C8CE!important;
+  border-radius:9px!important;
+  color:#BA2D38!important;
+  box-shadow:none!important;
+  font-size:0!important;
+  line-height:0!important;
+  cursor:pointer;
+}
+#tab-contact .review-toolbar > #reviewReset::before{
+  content:""!important;
+  flex:0 0 18px!important;
+  width:18px!important;
+  height:18px!important;
+  margin:0!important;
+  background:currentColor!important;
+}
+#tab-contact .review-toolbar > #reviewReset:hover,
+#tab-contact .review-toolbar > #reviewReset:focus-visible{
+  background:#FFE9EC!important;
+  border-color:#E8A2AA!important;
+  color:#A91D2B!important;
+  box-shadow:none!important;
+}
+#tab-contact .review-toolbar > #reviewReset:focus-visible{
+  outline:2px solid #9AB4DA!important;
+  outline-offset:2px!important;
+}
+/* Action group takes the right edge; no spacer or duplicate action bar. */
+#tab-contact .review-toolbar > .rv-hero-actions{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  flex:0 0 auto!important;
+  flex-wrap:nowrap!important;
+  gap:8px!important;
+  margin:0 0 0 auto!important;
+  padding:0!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions > button{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  height:40px!important;
+  min-height:40px!important;
+  margin:0!important;
+  padding:0 13px!important;
+  border-radius:9px!important;
+  white-space:nowrap!important;
+  flex:0 0 auto!important;
+  font:650 12px/1.2 Inter,Arial,sans-serif!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions #reviewAdd{
+  background:#DAB040!important;
+  color:#102A56!important;
+  border:1px solid #C9A02B!important;
+  box-shadow:none!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions #reviewAdd:hover,
+#tab-contact .review-toolbar > .rv-hero-actions #reviewAdd:focus-visible{
+  background:#EDC453!important;
+  color:#102A56!important;
+  border-color:#C59D28!important;
+}
+/* Keep the red feedback count and the original feedback dialog behavior. */
+#tab-contact .review-toolbar > .rv-hero-actions .rv-fb-btn{
+  background:#FFFFFF!important;
+  border:1px solid #C9D6F2!important;
+  color:#17376D!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions .rv-fb-btn:hover{
+  background:#EEF4FD!important;
+  border-color:#9DB6E6!important;
+}
+/* Preserve responsive proportional widths, avoiding horizontal overflow. */
+@media(max-width:1350px){
+  #tab-contact .review-toolbar > #reviewSearch{
+    flex:1 1 100%!important;
+  }
+  #tab-contact .review-toolbar > #reviewPicFilter{
+    flex:1 1 185px!important;
+    width:auto!important;
+  }
+  #tab-contact .review-toolbar > #reviewUnitFilter{
+    flex:1 1 155px!important;
+    width:auto!important;
+  }
+}
+@media(max-width:650px){
+  #tab-contact .review-toolbar{
+    gap:7px!important;
+  }
+  #tab-contact .review-toolbar > #reviewSearch{
+    min-width:0!important;
+    width:100%!important;
+  }
+  #tab-contact .review-toolbar > #reviewPicFilter,
+  #tab-contact .review-toolbar > #reviewUnitFilter{
+    flex:1 1 calc(50% - 4px)!important;
+    min-width:0!important;
+  }
+  #tab-contact .review-toolbar > .rv-hero-actions{
+    margin-left:auto!important;
+  }
+  #tab-contact .review-toolbar > .rv-hero-actions > button{
+    padding:0 9px!important;
+    font-size:11px!important;
+  }
+}
