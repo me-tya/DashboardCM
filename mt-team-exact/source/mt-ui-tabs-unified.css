@@ -1,0 +1,705 @@
+/* Tab tingkat kedua Modul Transformasi — referensi visual WBS & Progres, 7 Nov 2026.
+   Tidak mengubah menu/tahapan utama (.ptabs.pmo-journey, .cm-journey)
+   ataupun tahapan wizard (.sw-nav, .wz-steps). */
+:root{--mt-tab-ink:#0B2447;--mt-tab-muted:#5F6B85;--mt-tab-line:#DCE3EF;--mt-tab-yellow:#FDB913}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar){
+  display:flex!important;grid-template-columns:none!important;align-items:stretch!important;
+  flex-wrap:nowrap!important;gap:4px!important;width:100%!important;max-width:100%!important;
+  min-height:46px!important;margin:6px 0 12px!important;padding:4px 4px 0!important;
+  background:transparent!important;border:0!important;border-bottom:2px solid var(--mt-tab-line)!important;
+  border-radius:0!important;box-shadow:none!important;
+  overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin;
+}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)
+  >:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab){
+  position:relative!important;display:inline-flex!important;flex:0 0 auto!important;
+  align-items:center!important;justify-content:center!important;gap:7px!important;
+  min-width:0!important;min-height:40px!important;height:auto!important;
+  margin:0!important;padding:8px 14px 9px!important;
+  font-family:inherit!important;font-size:13px!important;font-weight:800!important;
+  line-height:1.35!important;white-space:nowrap!important;text-decoration:none!important;
+  color:var(--mt-tab-muted)!important;background:transparent!important;
+  border:1px solid transparent!important;border-radius:10px 10px 0 0!important;
+  box-shadow:none!important;cursor:pointer;transition:background .15s,color .15s;
+}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)
+  >:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab):is(:hover,:focus-visible):not(.on):not(.active):not([aria-selected="true"]){
+  color:var(--mt-tab-ink)!important;background:#F3F7FD!important;
+}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)
+  >:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab):is(.on,.active,[aria-selected="true"]){
+  color:var(--mt-tab-ink)!important;background:#fff!important;
+  border-color:var(--mt-tab-line)!important;border-bottom-color:transparent!important;
+  box-shadow:0 1px 2px rgba(11,31,69,.045)!important;
+}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)
+  >:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab):is(.on,.active,[aria-selected="true"])::after{
+  content:""!important;position:absolute!important;left:0!important;right:0!important;
+  bottom:-2px!important;height:4px!important;background:var(--mt-tab-yellow)!important;
+  border-radius:0!important;pointer-events:none!important;
+}
+:is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)
+  >:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab):focus-visible{
+  outline:2px solid #1C67B4!important;outline-offset:-3px!important;
+}
+.subt a::before{display:none!important}
+.subt.ctabs a.on::after{height:4px!important}
+:is(.subt a .sb,.ws-tab b,.hp-tabs button b,.dx-tabs .dx-badge){
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-width:20px!important;padding:2px 8px!important;border-radius:999px!important;
+  background:#EEF1F6!important;color:var(--mt-tab-muted)!important;
+  font-size:11px!important;font-weight:800!important;line-height:1.35!important;
+}
+:is(.subt a.on .sb,.ws-tab.on b,.hp-tabs button.on b,.dx-tabs button.on .dx-badge){
+  background:var(--mt-tab-yellow)!important;color:var(--mt-tab-ink)!important;
+}
+.chtabs{position:sticky!important;top:0!important;z-index:22!important;min-height:0!important}
+.chtabs button{min-height:43px!important;text-align:left!important;gap:7px!important}
+.chtabs button span{min-width:0;display:block!important}
+.chtabs button b{font-size:12px!important;color:inherit!important}
+.chtabs button i,.wz-sub button i{
+  flex:0 0 22px!important;width:22px!important;height:22px!important;
+  display:inline-grid!important;place-items:center!important;border-radius:50%!important;
+  background:#EDF2F9!important;color:#486080!important;font-size:11px!important;
+}
+.chtabs button.on i,.wz-sub button.on i{background:var(--mt-tab-yellow)!important;color:var(--mt-tab-ink)!important}
+.ws-tab.on .ws-i{color:var(--mt-tab-ink)!important}
+.ws-tab.on::after{left:0!important;right:0!important;bottom:-2px!important;height:4px!important}
+.wz-sub .sa{align-self:center}
+.subt.ctabs.wbs-with-actions{
+  flex-wrap:wrap!important;overflow:visible!important;padding-bottom:0!important;
+}
+.subt.ctabs.wbs-with-actions .wbs-actionbar{
+  align-self:center!important;margin-left:auto!important;position:relative;z-index:1;
+}
+#app .adp-nav>.subt{margin:0!important}
+#app .adp-nav>.subt a{min-height:40px!important}
+/* Overlay bantuan memakai style inject sendiri; aturan ini menjaga gaya tab konsisten. */
+.sk-overlay .sk-tabbar{border-bottom:2px solid var(--mt-tab-line)!important}
+.sk-overlay .sk-tabbar>.sk-tab{color:var(--mt-tab-muted)!important}
+.sk-overlay .sk-tabbar>.sk-tab[aria-selected="true"]{background:#fff!important;color:var(--mt-tab-ink)!important}
+@media(max-width:760px){
+ :is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar){gap:2px!important}
+ :is(.subt,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.wz-sub,.sk-tabbar)>:is(a,button,.porto-view-tab,.ws-tab,.cra-tab,.sk-tab){padding:8px 10px!important;font-size:11.5px!important}
+ .subt.ctabs.wbs-with-actions{overflow:visible!important}
+}
+
+/* Tab horizontal pada Dashboard CM terintegrasi (iframe same-origin).
+   Navigasi vertikal Activity Form, langkah wizard, serta tombol filter tetap
+   mempertahankan struktur karena bukan baris tab sekunder. */
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs){
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:stretch!important;gap:4px!important;min-height:46px!important;
+ width:100%!important;max-width:100%!important;margin:6px 0 12px!important;
+ padding:4px 4px 0!important;background:transparent!important;border:0!important;
+ border-bottom:2px solid #DCE3EF!important;border-radius:0!important;
+ box-shadow:none!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button){
+ position:relative!important;flex:0 0 auto!important;display:inline-flex!important;
+ align-items:center!important;justify-content:center!important;gap:7px!important;
+ min-width:0!important;min-height:40px!important;max-width:none!important;
+ margin:0!important;padding:8px 14px 9px!important;background:transparent!important;
+ border:1px solid transparent!important;border-radius:10px 10px 0 0!important;
+ border-bottom-width:1px!important;box-shadow:none!important;
+ color:#5F6B85!important;font-size:13px!important;font-weight:800!important;
+ line-height:1.35!important;white-space:nowrap!important;cursor:pointer;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button):not(.active):not(.on):hover{
+ color:#0B2447!important;background:#F3F7FD!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button):is(.active,.on){
+ color:#0B2447!important;background:#fff!important;border-color:#DCE3EF!important;
+ border-bottom-color:transparent!important;box-shadow:0 1px 2px rgba(11,31,69,.045)!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button):is(.active,.on)::after{
+ content:""!important;position:absolute!important;left:0!important;right:0!important;
+ bottom:-2px!important;height:4px!important;background:#FDB913!important;
+ pointer-events:none!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button):focus-visible{
+ outline:2px solid #1C67B4!important;outline-offset:-3px!important;
+}
+html.mt-ui-embedded .tabs .tab-btn .tab-icon{color:inherit!important}
+html.mt-ui-embedded :is(.tabs .count-badge,.cm-ap-cnt,.prio-tab-n){
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ background:#EEF1F6!important;color:#5F6B85!important;border-radius:999px!important;
+ padding:2px 8px!important;font-size:11px!important;font-weight:800!important;
+}
+html.mt-ui-embedded :is(.tabs .tab-btn.active .count-badge,.cm-ap-tabs button.on .cm-ap-cnt,.prio-subtabs .cm-survey-subtab.active .prio-tab-n){
+ background:#FDB913!important;color:#0B2447!important;
+}
+html.mt-ui-embedded .tabs-row .tabs{margin:0!important}
+html.mt-ui-embedded .cm-survey-subtabs>.cm-context-help{
+ align-self:center!important;min-height:32px!important;border-radius:50%!important;
+}
+@media(max-width:760px){
+ html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs)>:is(.tab-btn,.cm-survey-subtab,button){
+ padding:8px 10px!important;font-size:11.5px!important;
+ }
+}
+
+/* === Audit menyeluruh kepadatan & kestabilan tab — 2026-11-07 v4 ===
+   Satu ukuran tab, garis kuning 4px INSIDE button (tidak terpotong scrollbar),
+   tanpa perubahan dimensi saat status aktif berpindah. */
+#app .subt.ctabs,
+#app .subt.ctabs.wbs-with-actions{
+ display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;
+ align-items:stretch!important;gap:4px!important;
+ min-height:48px!important;height:48px!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ margin:6px 0 10px!important;padding:2px 4px 0!important;
+ background:transparent!important;border:0!important;
+ border-bottom:2px solid #DCE3EF!important;border-radius:0!important;
+ box-shadow:none!important;overflow-x:auto!important;overflow-y:hidden!important;
+ scrollbar-width:thin!important;
+}
+#app .subt.ctabs > a,
+#app .subt.ctabs.wbs-with-actions > a{
+ position:relative!important;display:inline-flex!important;align-items:center!important;
+ justify-content:center!important;flex:0 0 auto!important;
+ box-sizing:border-box!important;min-height:44px!important;height:44px!important;
+ margin:0!important;padding:7px 14px 8px!important;gap:7px!important;
+ border:1px solid transparent!important;border-radius:10px 10px 0 0!important;
+ background:transparent!important;box-shadow:none!important;
+ color:#5F6B85!important;font-family:inherit!important;
+ font-weight:800!important;font-size:13px!important;line-height:1.2!important;
+ white-space:nowrap!important;letter-spacing:0!important;
+}
+#app .subt.ctabs > a.on,
+#app .subt.ctabs.wbs-with-actions > a.on{
+ border-color:#DCE3EF!important;border-bottom-color:transparent!important;
+ background:#fff!important;color:#0B2447!important;
+ box-shadow:0 1px 2px rgba(11,31,69,.045)!important;
+}
+#app .subt.ctabs > a.on::after,
+#app .subt.ctabs.wbs-with-actions > a.on::after{
+ content:""!important;position:absolute!important;left:0!important;right:0!important;
+ bottom:0!important;height:4px!important;display:block!important;
+ background:#FDB913!important;border-radius:0!important;pointer-events:none!important;
+}
+#app .subt.ctabs > a .sb,
+#app .subt.ctabs.wbs-with-actions > a .sb{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;min-width:22px!important;height:22px!important;
+ margin:0 0 0 4px!important;padding:1px 8px!important;
+ border-radius:999px!important;background:#EEF1F6!important;color:#5F6B85!important;
+ font-family:inherit!important;font-size:11px!important;font-weight:800!important;
+ font-variant-numeric:tabular-nums!important;line-height:1!important;
+}
+#app .subt.ctabs > a.on .sb,
+#app .subt.ctabs.wbs-with-actions > a.on .sb{
+ background:#FDB913!important;color:#0B2447!important;
+}
+/* Wrapper identik untuk Perencanaan, Pelaksanaan, Pemantauan, dst.
+   Aksi tambahan WBS tidak lagi mengganti padding/struktur tab. */
+#app .mt-pmo-subtab-band{
+ box-sizing:border-box;display:flex;align-items:center;flex-wrap:nowrap;gap:10px;
+ width:100%;min-width:0;min-height:50px;margin:6px 0 10px;padding:0 4px;
+ border-bottom:2px solid #DCE3EF;background:transparent;
+}
+#app .mt-pmo-subtab-band > .subt.ctabs{
+ flex:1 1 auto!important;min-width:0!important;max-width:100%!important;width:auto!important;
+ min-height:48px!important;height:48px!important;
+ margin:0!important;padding:2px 0 0!important;
+ border:0!important;border-bottom:0!important;overflow-y:hidden!important;
+}
+#app .mt-pmo-subtab-band > .subt.ctabs > a{height:46px!important;min-height:46px!important}
+#app .mt-pmo-subtab-band > .subt.ctabs > a.on::after{bottom:0!important;height:4px!important}
+#app .mt-pmo-subtab-band > .wbs-actionbar{
+ flex:0 0 auto;align-self:center;margin:0!important;gap:7px!important;
+ min-width:0;display:flex;flex-wrap:nowrap;
+}
+#app .mt-pmo-subtab-band > .wbs-actionbar :is(.btn,.wbs-import,.wbs-more>summary){
+ height:33px!important;min-height:33px!important;font-size:11.5px!important;
+}
+#app .mt-pmo-subtab-band.mt-actions-only{justify-content:flex-end}
+#app .mt-pmo-subtab-band.mt-actions-only > .wbs-actionbar{margin-left:auto!important}
+/* CMO tab semula dibungkus card kosong; jadikan bar langsung, alat di kanan. */
+#app .mt-subtab-host.card{
+ display:flex!important;align-items:center!important;flex-direction:row!important;
+ flex-wrap:nowrap!important;gap:10px!important;
+ width:100%!important;min-width:0!important;min-height:48px!important;
+ margin:4px 0 8px!important;padding:0 4px!important;
+ border:0!important;border-bottom:2px solid #DCE3EF!important;
+ border-radius:0!important;background:transparent!important;box-shadow:none!important;
+ overflow:visible!important;
+}
+#app .mt-subtab-host > .subt{
+ box-sizing:border-box!important;display:flex!important;
+ flex:0 1 auto!important;width:max-content!important;max-width:100%!important;
+ min-width:0!important;min-height:46px!important;height:46px!important;
+ margin:0!important;padding:2px 0 0!important;border:0!important;
+ border-bottom:0!important;overflow-x:auto!important;overflow-y:hidden!important;
+ border-radius:0!important;gap:4px!important;
+}
+#app .mt-subtab-host > .subt > a{
+ box-sizing:border-box!important;min-height:44px!important;height:44px!important;
+ padding:8px 14px!important;white-space:nowrap!important;
+}
+#app .mt-subtab-host > .subt > a.on::after{
+ content:""!important;bottom:0!important;height:4px!important;
+}
+#app .mt-subtab-host:not(:has(.mt-subtab-utilities))>.subt{
+ flex:1 1 auto!important;width:100%!important;
+}
+#app .mt-subtab-utilities{
+ flex:0 1 380px;min-width:195px;max-width:min(420px,48%);margin-left:auto;
+ display:flex;align-items:center;justify-content:flex-end;gap:8px;
+ min-height:43px;padding:1px 0 3px;
+}
+#app .mt-subtab-utilities .tsearch{
+ flex:1 1 auto!important;max-width:360px!important;min-width:140px!important;
+ width:auto!important;margin:0!important;
+}
+#app .mt-subtab-utilities .tsearch input{
+ box-sizing:border-box;height:34px!important;min-height:34px!important;
+ width:100%!important;padding:0 11px!important;border-radius:9px!important;
+ background:#F9FBFE!important;font-size:12.5px!important;
+}
+#app .mt-subtab-utilities .ui-note-link{
+ flex:0 0 auto!important;margin:0!important;min-height:33px!important;
+ align-self:center!important;white-space:nowrap!important;
+}
+/* Semua toolbar tabel: pencarian tak melebar kosong hingga sepanjang layar. */
+#app .tbar{min-height:42px;gap:8px!important;padding:7px 12px!important;align-items:center}
+#app .tbar h3{flex:0 0 auto;margin-right:2px!important}
+#app .tbar .tsearch{
+ flex:0 1 320px!important;max-width:360px!important;min-width:150px!important;
+ margin-left:auto!important;
+}
+#app .tbar .tsearch input{height:34px!important}
+#app .tbar .ui-note-link{
+ margin:0 3px!important;flex:0 0 auto!important;
+ min-height:32px!important;white-space:nowrap!important;
+}
+#app .tbar .btn{flex:0 0 auto}
+#app .tbar:has(>h3):not(:has(>.tsearch)) .btn.dmenu{margin-left:auto}
+/* Jika catatan dipromosikan menjadi Info, bekasnya tidak menyisakan baris. */
+#app :is(.ui-note-inline):empty{display:none!important}
+#app .mt-subtab-host + .card{margin-top:0!important}
+@media(max-width:1130px){
+ #app .mt-subtab-host.card{flex-wrap:wrap!important}
+ #app .mt-subtab-host > .subt{flex:1 1 100%!important;width:100%!important}
+ #app .mt-subtab-utilities{flex:1 1 100%;max-width:100%;min-width:0;
+   justify-content:flex-end;margin-left:0}
+ #app .mt-subtab-utilities .tsearch{max-width:360px!important}
+}
+@media(max-width:840px){
+ #app .mt-pmo-subtab-band{flex-wrap:wrap}
+ #app .mt-pmo-subtab-band > .subt.ctabs{flex:1 1 100%!important;width:100%!important}
+ #app .mt-pmo-subtab-band > .wbs-actionbar{
+  flex:1 1 100%;justify-content:flex-end;flex-wrap:wrap;padding-bottom:5px
+ }
+ #app .subt.ctabs>a,#app .mt-subtab-host > .subt > a{
+  padding-left:10px!important;padding-right:10px!important;font-size:11.7px!important;
+ }
+}
+
+/* Tab sekunder Workspace Event Organizer di dashboard CMO. */
+html.mt-ui-embedded .eo-ws-nav{
+ display:flex!important;align-items:stretch!important;gap:4px!important;
+ padding:3px 8px 0!important;background:#fff!important;
+ border-bottom:2px solid #DCE3EF!important;border-radius:0!important;
+ overflow-x:auto!important;overflow-y:hidden!important;
+ scrollbar-width:thin;min-height:48px!important;
+}
+html.mt-ui-embedded .eo-ws-nav > .eo-ws-tab{
+ position:relative!important;display:inline-flex!important;flex:0 0 auto!important;
+ align-items:center!important;gap:7px!important;
+ box-sizing:border-box!important;min-height:43px!important;height:43px!important;
+ padding:7px 13px!important;background:transparent!important;
+ color:#5F6B85!important;border:1px solid transparent!important;
+ border-radius:10px 10px 0 0!important;box-shadow:none!important;
+ font-size:12px!important;font-weight:800!important;white-space:nowrap!important;
+}
+html.mt-ui-embedded .eo-ws-nav > .eo-ws-tab.active{
+ color:#0B2447!important;background:#fff!important;
+ border-color:#DCE3EF!important;border-bottom-color:transparent!important;
+}
+html.mt-ui-embedded .eo-ws-nav > .eo-ws-tab.active::after{
+ content:""!important;position:absolute!important;left:0!important;right:0!important;
+ bottom:0!important;height:4px!important;background:#FDB913!important;
+}
+html.mt-ui-embedded .eo-ws-nav > .eo-ws-tab.active .eo-ws-stepno{
+ background:#FDB913!important;color:#0B2447!important;
+}
+html.mt-ui-embedded .eo-ws-nav > .eo-ws-tab:not(.active) .eo-ws-stepno{
+ background:#EEF1F6!important;color:#5F6B85!important;
+}
+
+/* Native CRA & Pengelola: tab yang dibangun oleh JS terpisah. */
+#app :is(.cra2-tabs,.pg-tabs){
+ display:flex!important;align-items:stretch!important;flex-wrap:nowrap!important;
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-height:48px!important;gap:4px!important;margin:6px 0 11px!important;
+ padding:3px 4px 0!important;background:transparent!important;
+ border:0!important;border-bottom:2px solid #DCE3EF!important;
+ border-radius:0!important;box-shadow:none!important;
+ overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:thin!important;
+}
+#app :is(.cra2-tabs,.pg-tabs) > button{
+ position:relative!important;display:inline-flex!important;flex:0 0 auto!important;
+ align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;height:44px!important;min-height:44px!important;
+ gap:7px!important;margin:0!important;padding:8px 14px!important;
+ background:transparent!important;color:#5F6B85!important;
+ border:1px solid transparent!important;border-radius:10px 10px 0 0!important;
+ box-shadow:none!important;cursor:pointer!important;
+ font-family:inherit!important;font-size:13px!important;font-weight:800!important;
+ line-height:1.2!important;white-space:nowrap!important;
+}
+#app :is(.cra2-tabs,.pg-tabs) > button:is(.on,:hover):not(.on){
+ background:#F3F7FD!important;color:#0B2447!important;
+}
+#app :is(.cra2-tabs,.pg-tabs) > button.on{
+ background:#fff!important;color:#0B2447!important;
+ border-color:#DCE3EF!important;border-bottom-color:transparent!important;
+}
+#app :is(.cra2-tabs,.pg-tabs) > button.on::after{
+ content:""!important;position:absolute!important;left:0!important;right:0!important;
+ bottom:0!important;height:4px!important;background:#FDB913!important;
+ pointer-events:none!important;
+}
+@media(max-width:760px){
+ #app :is(.cra2-tabs,.pg-tabs)>button{font-size:11.5px!important;padding:8px 10px!important}
+}
+
+/* === v5: tab di DALAM menu lebih tipis daripada navigasi tahap ===
+   Dimensi fixed mencegah tab/garis kuning meloncat saat berpindah. */
+:root{--mt-inner-h:33px;--mt-inner-line:3px;--mt-inner-font:11.5px}
+#app :is(.subt,.subt.ctabs,.subt.ctabs.wbs-with-actions,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.cra2-tabs,.pg-tabs,.wz-sub){
+ box-sizing:border-box!important;min-height:37px!important;height:37px!important;
+ margin-top:3px!important;margin-bottom:7px!important;
+ padding:1px 3px 0!important;gap:3px!important;
+ border-bottom:1px solid #DCE3EF!important;
+}
+#app :is(.subt,.subt.ctabs,.subt.ctabs.wbs-with-actions,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.cra2-tabs,.pg-tabs,.wz-sub)>:is(a,button,.porto-view-tab,.ws-tab,.cra-tab){
+ box-sizing:border-box!important;height:35px!important;min-height:35px!important;
+ padding:5px 10px!important;gap:5px!important;
+ font-size:var(--mt-inner-font)!important;font-weight:750!important;
+ line-height:1.15!important;border-radius:7px 7px 0 0!important;
+}
+#app :is(.subt,.subt.ctabs,.subt.ctabs.wbs-with-actions,.ov-tabs,.porto-view-tabs,.ws-tabs,.hp-tabs,.chtabs,.cra-tabs,.cra2-tabs,.pg-tabs,.wz-sub)>:is(a,button,.porto-view-tab,.ws-tab,.cra-tab):is(.on,.active,[aria-selected="true"])::after{
+ bottom:0!important;height:var(--mt-inner-line)!important;
+}
+#app :is(.subt,.subt.ctabs,.wbs-with-actions) a .sb,
+#app :is(.ws-tab,.hp-tabs button) b{
+ box-sizing:border-box!important;min-width:19px!important;height:19px!important;
+ padding:1px 6px!important;margin-left:2px!important;
+ font-size:11px!important;line-height:1!important;
+}
+#app :is(.chtabs button i,.wz-sub button i){
+ flex:0 0 18px!important;width:18px!important;height:18px!important;
+ font-size:11px!important;
+}
+#app .chtabs{top:0!important}
+#app .chtabs button{min-height:35px!important}
+#app .chtabs button b{font-size:11.5px!important}
+#app .mt-pmo-subtab-band{
+ box-sizing:border-box!important;min-height:40px!important;height:40px!important;
+ margin:3px 0 7px!important;padding:0 3px!important;
+ border-bottom:1px solid #DCE3EF!important;gap:7px!important;
+}
+#app .mt-pmo-subtab-band > .subt.ctabs{
+ min-height:38px!important;height:38px!important;
+ margin:0!important;padding:1px 0 0!important;border:0!important;
+}
+#app .mt-pmo-subtab-band > .subt.ctabs>a{
+ min-height:37px!important;height:37px!important;
+ padding:5px 10px!important;
+}
+#app .mt-pmo-subtab-band > .subt.ctabs>a.on::after{
+ bottom:0!important;height:3px!important;
+}
+#app .mt-pmo-subtab-band>.wbs-actionbar{gap:5px!important}
+#app .mt-pmo-subtab-band>.wbs-actionbar :is(.btn,.wbs-import,.wbs-more>summary){
+ height:29px!important;min-height:29px!important;
+ padding:0 9px!important;font-size:11px!important;
+}
+#app .mt-subtab-host.card{
+ box-sizing:border-box!important;min-height:40px!important;height:auto!important;
+ margin:3px 0 7px!important;padding:0 3px!important;
+ gap:8px!important;border-bottom:1px solid #DCE3EF!important;
+}
+#app .mt-subtab-host>.subt{
+ min-height:38px!important;height:38px!important;
+ margin:0!important;padding:1px 0 0!important;border:0!important;
+}
+#app .mt-subtab-host>.subt>a{
+ min-height:37px!important;height:37px!important;
+ padding:5px 10px!important;
+}
+#app .mt-subtab-host>.subt>a.on::after{bottom:0!important;height:3px!important}
+#app .mt-subtab-utilities{min-height:36px!important;padding:0!important;gap:5px!important}
+#app .mt-subtab-utilities .tsearch input{height:29px!important;min-height:29px!important;font-size:11.5px!important}
+#app .mt-subtab-utilities .ui-note-link{min-height:29px!important;padding:2px 5px!important}
+#app .tbar{min-height:37px!important;padding:5px 10px!important;gap:6px!important}
+#app .tbar .tsearch input{height:29px!important;min-height:29px!important}
+#app .tbar .ui-note-link{min-height:29px!important}
+#app .tbar .btn{min-height:29px!important}
+#app .adp-nav>.subt{height:37px!important;min-height:37px!important}
+#app .adp-nav>.subt>a{height:35px!important;min-height:35px!important}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs,.eo-ws-nav){
+ box-sizing:border-box!important;min-height:37px!important;height:37px!important;
+ margin:3px 0 7px!important;padding:1px 3px 0!important;
+ gap:3px!important;border-bottom:1px solid #DCE3EF!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs,.eo-ws-nav)>:is(.tab-btn,.cm-survey-subtab,.eo-ws-tab,button){
+ box-sizing:border-box!important;height:35px!important;min-height:35px!important;
+ padding:5px 10px!important;gap:5px!important;
+ font-size:11.5px!important;line-height:1.15!important;
+ border-radius:7px 7px 0 0!important;
+}
+html.mt-ui-embedded :is(.tabs,.cm-survey-subtabs,.cm-ap-tabs,.prio-subtabs,.eo-ws-nav)>:is(.tab-btn,.cm-survey-subtab,.eo-ws-tab,button):is(.active,.on)::after{
+ height:3px!important;bottom:0!important;
+}
+html.mt-ui-embedded :is(.tabs .count-badge,.cm-ap-cnt,.prio-tab-n){
+ font-size:11px!important;padding:1px 6px!important;
+}
+@media(max-width:1130px){
+ #app .mt-subtab-host.card{height:auto!important}
+ #app .mt-subtab-utilities{min-height:31px!important;padding-bottom:3px!important}
+}
+@media(max-width:840px){
+ #app .mt-pmo-subtab-band{height:auto!important}
+ #app .mt-pmo-subtab-band>.wbs-actionbar{padding-bottom:4px}
+}
+
+
+/* Shared CM-reference density: Executive Dashboard / PM / CM / Project Selection.
+   All route switches retain exactly the same title, journey and filter header heights. */
+#app .vh{
+ box-sizing:border-box!important;min-height:53px!important;height:53px!important;
+ display:flex!important;align-items:center!important;gap:10px!important;
+ margin:0 0 6px!important;padding:0!important;
+}
+#app .vh .pic{width:42px!important;height:42px!important;min-width:42px!important;border-radius:11px!important}
+#app .vh h1{font-family:'Inter',sans-serif!important;font-size:19px!important;line-height:1.2!important;margin:0!important}
+#app .vh p{font-family:'Inter',sans-serif!important;font-size:11.7px!important;line-height:1.35!important;margin:3px 0 0!important}
+#app .cm-journey,
+#app .pm-stage-shell,
+#app .ps27 .ps27-stage{
+ box-sizing:border-box!important;min-height:55px!important;height:55px!important;
+ margin:6px 0 10px!important;padding:5px!important;gap:4px!important;
+ background:#f7f9fd!important;border:1px solid #d9e2ef!important;
+ border-radius:12px!important;box-shadow:none!important;
+ align-items:stretch!important;
+}
+#app .cm-journey{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important}
+#app .pm-stage-shell{display:flex!important;flex-wrap:nowrap!important;overflow:visible!important}
+#app .ptabs.pmo-journey,
+#app .ps27 .ps27-tabs{
+ display:flex!important;flex:1 1 auto!important;min-width:0!important;
+ min-height:43px!important;height:43px!important;align-items:stretch!important;
+ gap:4px!important;margin:0!important;padding:0!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ border-radius:0!important;overflow-x:auto!important;overflow-y:hidden!important;
+}
+#app .cm-journey>.cm-step,
+#app .ptabs.pmo-journey>a,
+#app .ps27 .ps27-tabs>button{
+ box-sizing:border-box!important;min-height:43px!important;height:43px!important;
+ padding:6px 10px!important;margin:0!important;border-radius:9px!important;
+ font-family:'Inter',sans-serif!important;font-size:11.8px!important;
+ font-weight:800!important;line-height:1.2!important;
+ transition:background .15s,color .15s!important;box-shadow:none!important;
+}
+#app .cm-journey>.cm-step.on,
+#app .ptabs.pmo-journey>a.on,
+#app .ps27 .ps27-tabs>button.on{background:#143966!important;color:#fff!important;box-shadow:none!important}
+#app .ptabs.pmo-journey>a>span,
+#app .ps27 .ps27-tabs>button>span{min-width:0!important;white-space:nowrap!important}
+#app .ptabs.pmo-journey>a>span>em,
+#app .ps27 .ps27-tabs>button em,
+#app .cm-step-number{width:22px!important;height:22px!important;min-width:22px!important;flex-basis:22px!important;font-size:11px!important}
+#app .pm-stage-shell>.pm-stage-tools{display:none!important} /* top-right "Aksi" dropdown removed */
+#app .flt.pmo-unified,#app .flt.cm-unified,
+#app .ps27 .ps27-filter.ps27-filter-panel{
+ box-sizing:border-box!important;margin:0 0 11px!important;border:1px solid #d7e3f0!important;
+ border-radius:12px!important;box-shadow:none!important;background:#edf3fb!important;
+}
+#app .flt.pmo-unified,#app .flt.cm-unified{grid-template-rows:48px auto!important}
+#app .flt.pmo-unified>.lp,#app .flt.cm-unified>.lp,
+#app .flt.pmo-unified .ftop,#app .flt.cm-unified .ftop{
+ box-sizing:border-box!important;min-height:48px!important;height:48px!important;
+}
+#app .flt.pmo-unified>.lp,#app .flt.cm-unified>.lp{padding:0 12px!important;gap:8px!important}
+#app .flt.pmo-unified .ftop,#app .flt.cm-unified .ftop{padding:0 10px 0 12px!important}
+#app .ps27 .ps27-filter-header{box-sizing:border-box!important;min-height:48px!important;height:48px!important}
+#app .ps27 .ps27-filter-titlebar{flex-basis:165px!important;padding:5px 11px!important}
+#app .ps27 .ps27-filter-active{padding:6px 11px!important}
+@media(max-width:950px){
+ #app .pm-stage-shell>.pmo-journey{scrollbar-width:thin!important}
+ #app .ps27 .ps27-stage{overflow:hidden!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .cm-journey>.cm-step,
+ #app .ptabs.pmo-journey>a,
+ #app .ps27 .ps27-tabs>button{transition:none!important}
+}
+
+
+/* Compact vertical rhythm and remove redundant top year selector.
+   Every operational module uses its own filter for year; header no longer occupies width. */
+#app .tsel:has(select#yr){display:none!important}
+#app .view{row-gap:6px!important}
+#app .view>.vh{margin-bottom:2px!important}
+#app .view>.cm-journey,
+#app .view>.pm-stage-shell,
+#app .view>.pswf .ps27-stage{margin-top:3px!important;margin-bottom:6px!important}
+#app .view>.flt,#app .view>.pswf .ps27-filter-panel{margin-top:0!important;margin-bottom:7px!important}
+#app .ps27 .ps27-stage{margin:3px 0 7px!important}
+#app .ps27 .ps27-filter.ps27-filter-panel{margin:0 0 7px!important}
+#app .psbank-subhead{margin-top:0!important}
+@media(max-width:900px){#app .view>.vh{min-height:50px!important}}
+
+
+/* v5 — shared cross-route geometry. CM is the reference. Both PM and Project
+   Selection use the identical title/journey/filter height, padding and rhythm. */
+#app .vh{
+ height:49px!important;min-height:49px!important;max-height:49px!important;
+ padding:0!important;margin:0 0 4px!important;gap:9px!important;
+ align-items:center!important;box-sizing:border-box!important;
+}
+#app .vh .pic{
+ width:39px!important;height:39px!important;min-width:39px!important;
+ min-height:39px!important;max-height:39px!important;border-radius:10px!important;
+}
+#app .vh h1{font-size:18px!important;line-height:1.2!important;margin:0!important}
+#app .vh p{font-size:11.5px!important;line-height:1.25!important;margin:2px 0 0!important}
+#app .pswf.ps27{
+ display:flex!important;flex-direction:column!important;gap:6px!important;
+ padding-top:0!important;margin-top:0!important;
+}
+#app .cm-journey,#app .pm-stage-shell,#app .ps27 .ps27-stage{
+ height:50px!important;min-height:50px!important;max-height:50px!important;
+ margin:0 0 6px!important;padding:4px!important;gap:4px!important;
+ box-sizing:border-box!important;border-radius:11px!important;
+ border:1px solid #d9e2ef!important;background:#f7f9fd!important;
+ box-shadow:none!important;align-items:stretch!important;
+}
+#app .ps27 .ps27-stage{margin:0!important}
+#app .ptabs.pmo-journey,#app .ps27 .ps27-tabs{
+ min-height:40px!important;height:40px!important;max-height:40px!important;
+ padding:0!important;margin:0!important;gap:4px!important;align-items:stretch!important;
+}
+#app .cm-journey>.cm-step,#app .ptabs.pmo-journey>a,#app .ps27 .ps27-tabs>button{
+ height:40px!important;min-height:40px!important;max-height:40px!important;
+ padding:5px 9px!important;margin:0!important;border-radius:8px!important;
+ font-size:11.7px!important;line-height:1.15!important;
+ transition:background-color .14s ease,color .14s ease!important;
+ transform:none!important;box-shadow:none!important;
+}
+#app .cm-journey>.cm-step.on,#app .ptabs.pmo-journey>a.on,#app .ps27 .ps27-tabs>button.on{
+ background:#143966!important;box-shadow:none!important;
+}
+#app .flt.pmo-unified,#app .flt.cm-unified,#app .ps27 .ps27-filter.ps27-filter-panel{
+ margin:0 0 6px!important;border-radius:11px!important;
+ border-color:#d7e3f0!important;box-shadow:none!important;
+}
+#app .ps27 .ps27-filter.ps27-filter-panel{margin:0!important}
+#app .flt.pmo-unified,#app .flt.cm-unified{grid-template-rows:44px auto!important}
+#app .flt.pmo-unified>.lp,#app .flt.cm-unified>.lp,
+#app .flt.pmo-unified .ftop,#app .flt.cm-unified .ftop{
+ height:44px!important;min-height:44px!important;max-height:44px!important;
+ padding-top:0!important;padding-bottom:0!important;
+}
+#app .ps27 .ps27-filter-header{
+ min-height:44px!important;height:44px!important;max-height:44px!important;
+ align-items:stretch!important;
+}
+#app .ps27 .ps27-filter-titlebar{
+ flex:0 0 165px!important;padding:3px 10px!important;
+}
+#app .ps27 .ps27-filter-active{padding:4px 10px!important}
+#app .ps27 .ps27-filter-ic{
+ width:32px!important;height:32px!important;min-width:32px!important;
+ border:1px solid rgba(253,185,19,.45)!important;background:rgba(253,185,19,.16)!important;color:#FDB913!important;
+}
+#app .ps27 .ps27-filter-ic svg{width:17px!important;height:17px!important}
+#app .ps27 .ps27-filter-expand{
+ width:32px!important;height:32px!important;min-width:32px!important;
+}
+#app .flt.pmo-unified>.lp,#app .flt.cm-unified>.lp{
+ width:165px!important;min-width:165px!important;
+ padding-left:10px!important;padding-right:10px!important;
+}
+#app .flt.pmo-unified .ftop,#app .flt.cm-unified .ftop{
+ padding-left:10px!important;padding-right:10px!important;
+}
+#app .view>.vh{margin-bottom:4px!important}
+#app .view>.cm-journey,#app .view>.pm-stage-shell,
+#app .view>.pswf .ps27-stage{margin-top:0!important;margin-bottom:6px!important}
+#app .view>.flt{margin-top:0!important;margin-bottom:6px!important}
+#app .view>.pswf .ps27-filter-panel{margin-top:0!important;margin-bottom:0!important}
+#app .psbank-subhead{
+ min-height:40px!important;margin:0 0 3px!important;gap:5px!important;
+}
+#app .psbank-subtabs button{
+ min-height:38px!important;padding:6px 11px!important;
+ font-size:11.8px!important;
+}
+@media(max-width:900px){
+ #app .vh{min-height:49px!important;height:49px!important}
+ #app .cm-journey,#app .pm-stage-shell,#app .ps27 .ps27-stage{overflow-x:auto!important;overflow-y:hidden!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #app .cm-journey>.cm-step,#app .ptabs.pmo-journey>a,#app .ps27 .ps27-tabs>button{transition:none!important}
+}
+
+
+/* PM navigation: distribute eight primary tabs over the full available row.
+   The previous flex:0 0 auto left a blank strip at the right. */
+#app .pm-stage-shell{width:100%!important;min-width:0!important}
+#app .pm-stage-shell>nav.ptabs.pmo-journey{
+ display:flex!important;flex:1 1 auto!important;flex-wrap:nowrap!important;
+ width:100%!important;min-width:0!important;max-width:none!important;
+ justify-content:stretch!important;align-items:stretch!important;
+ gap:4px!important;overflow-x:auto!important;overflow-y:hidden!important;
+ padding:0!important;margin:0!important;scrollbar-width:thin!important;
+}
+#app .pm-stage-shell>nav.ptabs.pmo-journey>a{
+ display:flex!important;flex:1 1 auto!important;justify-content:center!important;
+ align-items:center!important;min-width:max-content!important;
+ max-width:none!important;box-sizing:border-box!important;
+ margin:0!important;padding:0 8px!important;white-space:nowrap!important;
+ text-align:center!important;font-size:11.6px!important;gap:5px!important;
+}
+#app .pm-stage-shell>nav.ptabs.pmo-journey>a>span{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:6px!important;white-space:nowrap!important;
+}
+#app .pm-stage-shell>nav.ptabs.pmo-journey>a>b{flex:0 0 auto}
+@media(max-width:1190px){
+ #app .pm-stage-shell>nav.ptabs.pmo-journey>a{padding-inline:7px!important;font-size:11.1px!important}
+}
+
+/* Perencanaan proyek: aksi ikon konsisten dengan tabel modul, bukan tombol teks. */
+#app table.pdocs th:last-child{text-align:center!important;min-width:94px!important}
+#app table.pdocs td:last-child{text-align:center!important;min-width:94px!important}
+#app table.pdocs .pdocs-action-icon{width:34px;height:34px;min-width:34px;padding:0;border:1px solid #bed3ed;border-radius:9px;background:#f1f6ff;color:#265b93;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;vertical-align:middle}
+#app table.pdocs .pdocs-action-icon.edit{background:#fff9ed;border-color:#f1d7a3;color:#ba7712}
+#app table.pdocs .pdocs-action-icon:hover:not(:disabled){filter:brightness(.95)}
+#app table.pdocs .pdocs-action-icon:disabled{opacity:.4;cursor:not-allowed}
+#app table.pdocs .pdocs-action-icon:focus-visible{outline:2px solid #1765b4;outline-offset:2px}
+
+/* Angka jumlah pada tab/chip: label kecil bersudut (bukan lingkaran/pil) agar berbeda dari nomor urut tahap.
+   Tab aktif berlatar gelap → teks emas di atas latar transparan; tab aktif berlatar terang → teks gelap di atas emas muda. */
+#app :is(.subt.ctabs.wbs-with-actions > a .sb,.subt a .sb,.ws-tab b,.hp-tabs button b,.dx-tabs .dx-badge,.ws-bk-chip b){border-radius:6px!important;font-weight:800!important;letter-spacing:.02em}
+#app :is(.subt.ctabs.wbs-with-actions > a.on .ws-x,.ws-tab.on b,.hp-tabs button.on b,.ws-bk-chip.on b){background:rgba(255,255,255,.13)!important;color:#FFC22D!important;box-shadow:inset 0 0 0 1px rgba(255,194,45,.35)!important}
+#app :is(.subt.ctabs.wbs-with-actions > a.on .sb,.subt a.on .sb,.dx-tabs button.on .dx-badge){background:#FFF3CC!important;color:#7A5600!important;box-shadow:inset 0 0 0 1px rgba(253,185,19,.55)!important}
+
+/* ===== Bilah menu tahap seragam (patokan: Project Management / PMO) =====
+   Tinggi 50 px, padding 4, sudut 11, latar #F7F9FD; tiap tab 40 px dan melebar pro rata mengisi penuh bilah.
+   Berlaku untuk PMO, CMO, Project Selection, dan Aktivitas agar pindah menu tidak terasa bergeser. */
+#app #view :is(.pm-stage-shell,nav.cm-journey,nav.act-tabs){box-sizing:border-box!important;height:50px!important;min-height:50px!important;padding:4px!important;border:1px solid #D9E2EF!important;border-radius:11px!important;background:#F7F9FD!important;background-image:none!important;box-shadow:none!important;gap:4px!important;display:flex!important;align-items:stretch!important;overflow:hidden}
+#app #view :is(.pmo-journey,.ps27-tabs){flex:1 1 auto!important;gap:4px!important}
+#app #view :is(.pmo-journey > a,.ps27-tabs > button,nav.cm-journey > .cm-step,nav.act-tabs > a){flex:1 1 auto!important;min-width:0!important;height:40px!important;border-radius:8px!important;justify-content:center!important;font-size:13.5px!important;font-weight:800!important;white-space:nowrap}
+#app #view :is(.pmo-journey > a.on,.ps27-tabs > button.on,nav.cm-journey > .cm-step.on,nav.act-tabs > a.on){background:#143966!important;background-image:none!important;color:#fff!important;box-shadow:none!important}
+#app #view nav.act-tabs > a:not(.on):hover{background:#EEF2F8!important}
+#app #view nav.act-tabs{margin:0 0 6px!important}
+#app #view .cmx>nav.act-tabs{margin:10px 0 12px!important}
+
+/* Menu utama 13.5px; sub-menu (sub-tab) 12px dan lebih tipis. */
+#app .subt.ctabs a{font-size:12px!important;padding:6px 14px 7px!important}
