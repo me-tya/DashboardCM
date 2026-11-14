@@ -1,0 +1,60 @@
+name: Release DCM 35 one-line compact Squad toolbar
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-squad-one-row-release-35.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Confirm complete immutable ZIP prechange
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-35:refs/remotes/origin/backup/261114-DCM-35
+          git archive --format=zip --output=/tmp/261114-DCM-35.zip origin/backup/261114-DCM-35
+          unzip -t /tmp/261114-DCM-35.zip | tail -1
+      - name: Run visual coverage and existing feature regression tests
+        run: |
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+          node --check dcm-header-reference-30.js
+      - name: Attach compact toolbar stylesheet without touching HTML form or handlers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          original=p.read_text(encoding='utf8')
+          assert original.count('dcm-contact-toolbar-34.css?v=261114-34')==1, 'Existing Squad layout missing'
+          tag='<link rel="stylesheet" href="dcm-contact-toolbar-one-row-35.css?v=261114-35">'
+          assert tag not in original
+          head=original.lower().find('</head>')
+          body=original.lower().find('<body')
+          assert 0<head<body
+          updated=original[:head]+tag+'\n'+original[head:]
+          assert updated.replace(tag+'\n','',1)==original
+          assert updated.count(tag)==1
+          p.write_text(updated,encoding='utf8')
+          print('Only one stylesheet link added; app data, controls and JavaScript unchanged')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish Dashboard CM compact one-row Squad filter
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): keep Squad filters and actions in one compact 36px row"
+          git push origin HEAD:main
