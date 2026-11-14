@@ -1,0 +1,40 @@
+name: DCM 34 focused Squad render and style audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-contact-detail-audit-34.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect Squad markup, event handlers and responsive CSS
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          for label in ['function renderReviewDir(', 'function renderReview','class="review-dir"', 'class="review-hero"', 'class="review-toolbar"',
+                        '#reviewFeedback', '#reviewAdd', '#reviewReset', "getElementById('reviewReset')", 'reviewReset.onclick',
+                        '.review-toolbar{','.review-hero{','.rv-hero-actions{','.review-toolbar input{','.review-toolbar select{',
+                        'review-toolbar button', '@media(max-width:900px)']:
+            hits=list(re.finditer(re.escape(label),s))
+            print('\nTOKEN',label,'COUNT',len(hits))
+            for m in hits[-5:]:
+              print('LINE',s.count(chr(10),0,m.start())+1,'SNIP',s[max(0,m.start()-100):m.start()+920].replace(chr(10),' ')[:1020])
+          pos=s.index('class="review-dir"')
+          print('\nRENDER_TEMPLATE_FULL_BEGIN')
+          print(s[pos-240:pos+6800])
+          print('\nRENDER_TEMPLATE_FULL_END')
+          for marker in ['reviewFeedback','reviewAdd','reviewReset','reviewSignIn','reviewSearch']:
+            lines=[(i+1,ln[:500]) for i,ln in enumerate(s.splitlines()) if marker in ln and i>11000 and i<12000]
+            print('HANDLER',marker,'MATCHES',len(lines))
+            for l in lines[:5]:print(l)
+          print('\nCSS REVIEW SELECTORS')
+          lines=s.splitlines()
+          for i,l in enumerate(lines):
+            if i>11000:break
+            if any(t in l for t in ['.review-toolbar{','.review-hero{','.rv-hero-actions{','.review-dir{','.review-toolbar input{','.review-toolbar select{']):
+              print(i+1,l[:1400])
+          PY
