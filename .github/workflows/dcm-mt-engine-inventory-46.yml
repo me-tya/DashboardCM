@@ -1,0 +1,36 @@
+name: DCM46 MT engine integration inventory
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-engine-inventory-46.yml']
+permissions: {contents:read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+      - name: Print source engine integration and DCM bridge
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('/tmp/mt/mt-tim2.js').read_text('utf8')
+          q=Path('/tmp/mt/mt-tim.js').read_text('utf8')
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          d=Path('dcm-pusmantap-bridge.js').read_text('utf8')
+          h=Path('tim-pusmantap.html').read_text('utf8')
+          def show(label,text,substr,before=200,after=2800,n=2):
+            hits=list(re.finditer(re.escape(substr),text))
+            print('\n===',label,substr,'hits',len(hits))
+            for m in hits[:n]:print(text[max(0,m.start()-before):m.start()+after].replace('\n',' ')[:before+after])
+          for text,label in [(p,'mt2'),(q,'mt1')]:
+            for term in ['const ST=', 'const S=', 'function page(){','function rr(){','function handle(', 'function click(', 'function onClick(', 'document.addEventListener(', 'function role(){','function grp(){','function docGet(', 'function docMake(', 'function CW(', 'function AG(', 'function save(', 'function pubSync(', 'function pubData(', 'function placePop(', 'window.pAktTim=','function impChooser(', 'function impPegawai(', 'function impSquad(', 'function impDcm(', 'function impPengelola(', 'function vAgenda(', 'function vProfil(', 'function vTempat(', 'function vCuti(', 'function vHadir(', 'function vHighlight(']:
+              show(label,text,term,150,1550,1)
+          for term in ['const ME=', 'let ME=', 'function actGrp(', 'function actMaster(){','function actMasterSave(', 'function kpCfg(){','function kpPeople(){','function kpPersonSave(', 'function kpPersonDel(', 'function save(){', 'function actCanEdit', 'function today(', 'function oneCfgDocs(', 'function lsGet(', 'function lsSet(', 'function actRows(', 'function getOneOnOne(', 'function kpUnits(', 'function actVisible(', 'function actTglShort(', 'function actTgl(', 'function picShort(', 'function pAktTimU(']:
+            show('index',s,term,80,1300,1)
+          for term in ['function saveManual(', 'async function saveResourceLeave(', 'function snapshot(){', 'function people(){', 'function agenda(){','function saveResource(', 'function saveManual(', 'function initRemote()','window.addEventListener(', 'function gotoActivity(', 'async function saveManual(']:
+            show('bridge',d,term,90,3000,1)
+          for term in ["function mutate(", "async function mutate(", "function request(", "function render(){", "const TABS=", "let view=", "const SRC=", "function send("]:
+            show('iframe',h,term,70,1000,1)
+          PY
