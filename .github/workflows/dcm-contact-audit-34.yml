@@ -1,0 +1,40 @@
+name: DCM 34 full backup and Squad contact controls audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-contact-audit-34.yml']
+permissions: {contents: read}
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create exact complete original ZIP before modifying Squad
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-34:refs/remotes/origin/backup/261114-DCM-34
+          git archive --format=zip --output=/tmp/261114-DCM-34.zip origin/backup/261114-DCM-34
+          unzip -t /tmp/261114-DCM-34.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-34
+          path: /tmp/261114-DCM-34.zip
+          retention-days: 30
+      - name: Identify Squad banner, filters, Feedback, add and Reset
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text(encoding='utf8')
+          patterns=['Kontak PMO','Pembagian review','Tambah Kontak','Tambah kontak','Feedback','Semua PIC','Semua unit','context-section-head',
+             'context-section-actions','contact-filter','contact-search','contact-reset','resetContact','renderContact','contactSearch','cmContact',
+             'data-contact','btnContact','btnAddContact','btnReset','Cari semua field']
+          for pattern in patterns:
+            hits=list(re.finditer(re.escape(pattern),s,re.I))
+            print('\n=== PATTERN',pattern,'COUNT',len(hits),'===')
+            for m in hits[:8]:
+              print('LINE',s.count(chr(10),0,m.start())+1,'AT',m.start(),'SNIP',s[max(0,m.start()-450):m.start()+1000].replace(chr(10),' ')[:1450])
+          print('\n=== DOM panel starts ===')
+          for name in ['contact','resource']:
+            i=s.find('id="tab-'+name+'"')
+            print(name, 'at',i, s[max(0,i-200):i+1600].replace(chr(10),' '))
+          PY
