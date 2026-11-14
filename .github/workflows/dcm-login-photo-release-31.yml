@@ -1,0 +1,79 @@
+name: Release DCM 31 Google login profile avatar
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-login-photo-release-31.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable complete backup 261114-DCM-31
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-31:refs/remotes/origin/backup/261114-DCM-31
+          git archive --format=zip --output=/tmp/261114-DCM-31.zip origin/backup/261114-DCM-31
+          unzip -t /tmp/261114-DCM-31.zip | tail -1
+      - name: Add Google profile image to existing avatar renderer (no auth or menu changes)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          original=p.read_text(encoding='utf8')
+          old="const av=document.getElementById('userAvatar');if(av)av.textContent=cmInitials(p.name);"
+          assert original.count(old)==1, ('Original avatar renderer changed unexpectedly',original.count(old))
+          replacement=r"""const av=document.getElementById('userAvatar');if(av){
+            const initials=cmInitials(p.name),user=window.fbAuth?.currentUser;
+            const urls=(p.kind==='google'&&user&&!user.isAnonymous)
+              ? [user.photoURL,...(Array.isArray(user.providerData)?user.providerData.map(prov=>prov?.photoURL):[])]
+              : [];
+            const photo=urls.find(url=>typeof url==='string'&&/^https:\/\//i.test(url.trim()));
+            const source=photo?photo.trim():'',existing=av.querySelector('img.dcm-login-avatar-photo');
+            if(!source||av.dataset.photoFailed===source){
+              if(existing||av.textContent!==initials)av.textContent=initials;
+            }else if(!existing||existing.src!==source){
+              av.textContent=initials;
+              const img=document.createElement('img');
+              img.className='dcm-login-avatar-photo';
+              img.alt='';
+              img.referrerPolicy='no-referrer';
+              img.decoding='async';
+              img.onerror=()=>{if(img.parentNode===av){av.dataset.photoFailed=source;av.textContent=initials;}};
+              img.src=source;
+              av.replaceChildren(img);
+            }
+          }"""
+          result=original.replace(old,replacement,1)
+          assert result.replace(replacement,old,1)==original,'Unexpected application edit'
+          css='<link rel="stylesheet" href="dcm-login-photo-31.css?v=261114-31">'
+          assert 'dcm-header-reference-30.css?v=261114-30' in result
+          assert css not in result
+          head=result.lower().find('</head>')
+          assert 0<head<result.lower().find('<body')
+          result=result[:head]+css+'\n'+result[head:]
+          assert result.count(css)==1
+          p.write_text(result,encoding='utf8')
+          print('PASS: photo URL reads logged-in Google/Firebase profile only; no permissions/data/storage changes')
+          PY
+      - name: Verify avatar logic and existing Dashboard CM behavior
+        run: |
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-header-reference-30.js
+          node --check dcm-guide-header.js
+          git diff --check
+          git diff --stat
+      - name: Publish minimal avatar update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): show logged-in Google profile photo in header avatar with initials fallback"
+          git push origin HEAD:main
