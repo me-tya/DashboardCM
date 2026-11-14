@@ -1,0 +1,31 @@
+name: DCM 46 MT Original OCR Dependencies
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-ocr-deps-46.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          a=s.index('const KQ_ESELON1=')
+          b=s.index('/* ---------- Tim PMO & CMO Unit ---------- */',a)
+          c=s.index('ACT.kuDel=',b)
+          d=s.index('function kuForm(',c)
+          print('=== PREFIX BEFORE ORIGINAL KQ ===',s[a-3200:a])
+          print('=== KQ CONTENT TAIL ===',s[b-2700:b+100])
+          print('=== CONTACT PAST FORM AFTER ===',s[d+21000:d+24600])
+          for k in ['KQ_SRC','kqWorker','kqProgress','chLib','kqParseProfile','kuForm','kuResize','kqAvatarRender','kqDataUrl','kqLoadImage','kpPersonSave','KP_PERAN','kpPeople','KP_OFF_ALASAN','KP_TIM0','oneCfgDocs','confirmDel']:
+            before=s.rfind(k,0,a)
+            inside=s.find(k,a,b)
+            after=s.find(k,b)
+            print('REF',k,'before',before,'inside',inside,'after',after)
+          print('MT contact editor source bytes',len(s[c:]))
+          print('=== Contact first 5000 ===',s[c:c+5000])
+          PY
