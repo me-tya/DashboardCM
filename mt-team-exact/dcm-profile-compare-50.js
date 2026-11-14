@@ -113,7 +113,7 @@ function open(){
    html+='<div class="cmp-row"><label>'+label+'</label>'+valueBtn(k,'dcm',left,side,!chosen)+valueBtn(k,'mt',right,side,!chosen||empty(right))+'</div>';
   }
   const val=state.choices[i]||'skip';
-  const idx=/^existing:\\d+$/.test(val)?+val.slice(9):-1;
+  const idx=/^existing:\d+$/.test(val)?+val.slice(9):-1;
   const manualMatch=idx>=0&&!analysis.candidates.includes(idx);
   html+='</div><div class="cmp-hint"><div>'+
    '<label><input id="cmp-contacts" type="checkbox" '+(state.contacts?'checked':'')+'> Sertakan kontak PMO/CMO Unit (hanya lengkapi yang aman)</label>'+
@@ -163,7 +163,7 @@ function open(){
   const includeTeams=Object.entries(state.structure).some(([i,row])=>state.choices[i]!=='skip'&&Object.values(row).includes('mt'))||state.contacts;
   const manualTargets={};
   for(const [i,val] of Object.entries(state.choices)){
-   if(!/^existing:\\d+$/.test(val))continue;
+   if(!/^existing:\d+$/.test(val))continue;
    const idx=+val.slice(9),a=api.analyze(get().profiles[+i],roster());
    if(!a.candidates.includes(idx)){
     if(!state.manualApproved[i])throw Error('Konfirmasikan pencocokan manual: '+get().profiles[+i].n);
