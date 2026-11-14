@@ -1,0 +1,62 @@
+name: DCM 46 Extract Exact MT Host OCR and Unit Contact Helpers
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-exact-helper-release-46.yml']
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify complete original DCM backup
+        run: |
+          git fetch origin backup/261114-DCM-46
+          git archive --format=zip --output=/tmp/261114-DCM-46.zip FETCH_HEAD
+          unzip -t /tmp/261114-DCM-46.zip | tail -1
+      - name: Get pinned upstream source and AST parser
+        run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt-upstream
+          git -C /tmp/mt-upstream fetch --depth=1 origin 2c2077757cac1215db74804f80078888ea1e7b46
+          git -C /tmp/mt-upstream checkout -q 2c2077757cac1215db74804f80078888ea1e7b46
+          npm install --no-save --silent acorn@8
+      - name: Extract exact upstream declarations, without rewriting their contents
+        run: |
+          cat > /tmp/extract-46.cjs <<'JS'
+          const fs=require('node:fs'),acorn=require(process.cwd()+'/node_modules/acorn');
+          const html=fs.readFileSync('/tmp/mt-upstream/index.html','utf8');
+          const chunks=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script\s*>/gi)].map(x=>x[1]);
+          const src=chunks.find(x=>x.includes('function kqRunOcr('));
+          if(!src)throw Error('Original MT OCR script not found');
+          const ast=acorn.parse(src,{ecmaVersion:'latest',allowReturnOutsideFunction:true});
+          const fnNames=['chLib','kqSuggestUnit','kqJabFull','kqParseProfile','kqCropAvatar','kqAvatarRender','kqAdjUI','kqAdjBind','kqLoadImage','kqDataUrl','kqWorkerGet','kqRunOcr','kpOn','kpTgl','kpOffTxt','kpOffLbl','kpHistBtn','kpHistCls','kpHistSep','kuResize','kuForm','kpAv'];
+          const varNames=['KP_PERAN','KP_TIM0','KQ_ESELON1','KQ_SRC','kqWorker','kqProgress','KP_OFF_ALASAN','kpAv','kpIni','kpWa','kpPeranPills'];
+          const actNames=['kpHist','kpTimAdd','kpUnits','kuDel','kuEdit','kuAdd'];
+          let selected=[];
+          for(const x of ast.body){
+            if(x.type==='FunctionDeclaration'&&fnNames.includes(x.id?.name))selected.push({name:x.id.name,s:src.slice(x.start,x.end),start:x.start});
+            if(x.type==='VariableDeclaration'&&x.declarations.some(y=>varNames.includes(y.id?.name)))selected.push({name:x.declarations.map(y=>y.id?.name).join(','),s:src.slice(x.start,x.end),start:x.start});
+            if(x.type==='ExpressionStatement'&&x.expression.type==='AssignmentExpression'&&x.expression.left.type==='MemberExpression'&&x.expression.left.object.name==='ACT'&&actNames.includes(x.expression.left.property.name))selected.push({name:'ACT.'+x.expression.left.property.name,s:src.slice(x.start,x.end),start:x.start});
+          }
+          for(const name of [...fnNames.filter(x=>x!=='kpAv'),...actNames.map(x=>'ACT.'+x),'KQ_ESELON1','KP_PERAN']){
+            if(!selected.some(x=>x.name.split(',').includes(name)||x.name===name))throw Error('Missing original '+name);
+          }
+          selected.sort((a,b)=>a.start-b.start);
+          const unique=new Set();selected=selected.filter(x=>{if(unique.has(x.start))return false;unique.add(x.start);return true});
+          const out='/* Exact original MT common helpers extracted by top-level AST spans from commit 2c2077757cac1215db74804f80078888ea1e7b46. Never hand-modify these snippets. */\n'+selected.map(x=>'\n/* '+x.name+' */\n'+x.s+'\n').join('');
+          fs.writeFileSync('mt-team-exact/source/mt-original-host-helpers-46.js',out);
+          console.log('ORIGINAL FUNCTION/DECLARATION COUNT',selected.length);
+          console.log('ORIGINAL DECLARATIONS',selected.map(x=>x.name));
+          JS
+          node /tmp/extract-46.cjs
+          node --check mt-team-exact/source/mt-original-host-helpers-46.js
+      - name: Commit original source exact function extractions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mt-team-exact/source/mt-original-host-helpers-46.js
+          git commit -m "port(dcm): reuse verbatim MT original OCR and PMO/CMO contact CRUD helpers"
+          git push origin HEAD:main
