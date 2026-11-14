@@ -1,0 +1,27 @@
+name: DCM 46 Browser Test MT Team Exact Source
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-parity-test-46.yml']
+permissions: {contents: read}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify original source syntax and adapter syntax
+        run: |
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check mt-team-exact/source/mt-tim.js
+          node --check mt-team-exact/source/mt-tim2.js
+          node --check dcm-pusmantap-bridge.js
+          test -s mt-team-exact/source/mt-base-styles.css
+          test -s mt-team-exact/source/mt-ui-tabs-unified.css
+      - name: Install test-only JSDOM
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund jsdom@26
+      - name: Test original MT module with real-shaped DCM Activity + resources
+        run: node tests/dcm-mt-team-parity-46.test.cjs
+      - name: Verify existing live DCM UI remains unchanged while parity is tested
+        run: |
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
