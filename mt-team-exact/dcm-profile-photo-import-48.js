@@ -105,26 +105,30 @@ function merged(dst,src,allowed){
  return dst;
 }
 function keepUniqueValues(a,b){return [...new Set([...(Array.isArray(a)?a:[]),...(Array.isArray(b)?b:[])])]}
-function prepare(parsed,choices,live,docs,ui,includeStructure){
+function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
  const draft=copied(docs),master=draft.find(x=>x.id==='cfg-master');
  if(!master||!master.master||!Array.isArray(master.master.pic))throw Error('Master pegawai belum siap. Muat ulang halaman terlebih dahulu.');
  const roster=master.master.pic,used=new Set(),mapped=new Map();
  const rosterIdentity=list=>JSON.stringify(list.map(x=>[normName(x.n),N(x.nip),normName(x.nl)]));
- if(rosterIdentity(roster)!==rosterIdentity(live))throw Error('Daftar pegawai telah berubah sejak pratinjau. Buka kembali impor dan tinjau pencocokan.');
+ if(options.allowSnapshotRoster){
+  if(options.baselineRoster && JSON.stringify(live)!==options.baselineRoster)throw Error('Data pegawai berubah setelah pratinjau. Pilih ulang sebelum simpan.');
+  master.master.pic=copied(live);
+ }else if(rosterIdentity(roster)!==rosterIdentity(live))throw Error('Daftar pegawai telah berubah sejak pratinjau. Buka kembali impor dan tinjau pencocokan.');
+ const targetRoster=master.master.pic;
 
  const summary={updated:0,new:0,skipped:0,photosAdded:0,contactsAdded:0,contactsUpdated:0,contactsSkipped:0,conflicts:0};
  const selected=[];
  for(let i=0;i<parsed.profiles.length;i++){
-  const source=parsed.profiles[i],choice=choices[i]||'skip',state=analyze(source,roster);
+  const source=parsed.profiles[i],choice=choices[i]||'skip',state=analyze(source,targetRoster);
   if(choice==='skip'){summary.skipped++;continue}
   let target=null;
   if(choice==='add'){
    if(state.kind!=='new')throw Error('Profil '+source.n+' mungkin sudah ada. Tidak boleh membuat duplikat; tinjau pencocokannya.');
-   if(roster.some(x=>personKey(x)===personKey(source)||normName(x.n)===normName(source.n)))
+   if(targetRoster.some(x=>personKey(x)===personKey(source)||normName(x.n)===normName(source.n)))
     throw Error('Pegawai '+source.n+' sudah ada dalam daftar tujuan.');
-   target={n:source.n};roster.push(target);summary.new++;
+   target={n:source.n};targetRoster.push(target);summary.new++;
   }else if(/^existing:\d+$/.test(choice)){
-   const idx=+choice.slice('existing:'.length),existing=roster[idx];
+   const idx=+choice.slice('existing:'.length),existing=targetRoster[idx];
    if(!existing||idx>=live.length)throw Error('Tujuan '+source.n+' berubah; ulangi pratinjau.');
    if(state.kind==='conflict')throw Error('NIP berbeda untuk '+source.n+'. Perbaiki identitas sebelum impor.');
    const allowed=new Set(state.candidates);
@@ -133,12 +137,23 @@ function prepare(parsed,choices,live,docs,ui,includeStructure){
     throw Error('NIP sumber berbeda dengan tujuan untuk '+source.n+'.');
    target=existing;summary.updated++;
   }else throw Error('Pilihan impor tidak dikenal.');
-  const targetKey=personKey(target);
+  const targetKey=targetRoster.indexOf(target);
   if(used.has(targetKey))throw Error('Lebih dari satu baris mengarah ke '+target.n+'. Pilih satu saja agar tidak terjadi duplikasi.');
   used.add(targetKey);
   const before=!!target.foto;
-  merged(target,source,fields);
+  const fieldDecision=options.fieldChoices?.[i];
+  if(fieldDecision){
+   for(const key of fields){
+    if(fieldDecision[key]!=='mt')continue;
+    const value=source[key];
+    if(isEmpty(value))continue;
+    if(key==='nip'&&N(target.nip)&&N(target.nip)!==N(value))throw Error('NIP berbeda untuk '+source.n+'. Tidak dapat ditimpa.');
+    target[key]=copied(value);
+   }
+  }else merged(target,source,fields);
   if(!before&&target.foto)summary.photosAdded++;
+  if(before&&target.foto!==source.foto&&source.foto&&fieldDecision?.foto==='mt')summary.photosReplaced=(summary.photosReplaced||0)+1;
+  if(fieldDecision)summary.fieldsFromMT=(summary.fieldsFromMT||0)+Object.entries(fieldDecision).filter(([key,v])=>v==='mt'&&fields.includes(key)&&!isEmpty(source[key])).length;
   mapped.set(normName(source.n),target.n);
   selected.push({source,target});
  }
