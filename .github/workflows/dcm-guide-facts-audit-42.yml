@@ -1,0 +1,35 @@
+name: DCM 42 Semantic Guide and Snapshot Fact Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-guide-facts-audit-42.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract manual topics, CRA semantics and snapshot persistence facts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          def chunk(marker,end,n=15000):
+            a=s.find(marker);b=s.find(end,a+len(marker)) if a>=0 else -1
+            print('\nCHUNK',marker,'START',a,'END',b,'SIZE',b-a)
+            if a>=0:print(s[a:b if 0<b<a+n else a+n][:n])
+          chunk('const CM_USER_MANUAL_ARTICLES=[','const CM_MANUAL_FUNCTIONS=',17000)
+          chunk('const CM_MANUAL_FUNCTIONS=','CM_USER_MANUAL_ARTICLES.forEach',26000)
+          chunk('const CM_MANUAL_FEATURE_MAP=','const CM_MANUAL_REQUIRED_ARTICLES=',7000)
+          for k in ['function prioMakeSnapshot(', 'function prioAutoSnapshot(', 'function prioSnapCompare(', 'function prioPersist(', 'function prioSnapBarHtml(', 'function prioSnapDelta(', 'const CM_SURVEY_QUESTION_BANK=', 'function cmSurveyReadinessGate(']:
+            i=s.find(k)
+            print('\n== FACT',k,'index',i)
+            if i>=0:print(s[i:i+2100])
+          for k in ['id:"survey"',"'cra-create'","'cra-share-qr'","'cra-analytics'","'cra-action-plan'","'cra-rounds-version'","'cra-question-bank'"]:
+            i=s.find(k,s.find('const CM_USER_MANUAL_ARTICLES=['))
+            print('\nMANUAL KEY',k,i,s[max(0,i-140):i+1600].replace('\n',' ')[:1700] if i>=0 else '')
+          print('\n== USER GUIDES TABS ==')
+          for m in re.finditer(r'\{id:\s*[\x27"]([a-z][a-z0-9-]+)[\x27"]\s*,category:',s):
+            print('ARTICLE',m.group(1),s[m.start():m.start()+360].replace('\n',' ')[:360])
+          PY
