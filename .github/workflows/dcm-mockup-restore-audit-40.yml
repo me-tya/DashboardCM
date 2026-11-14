@@ -1,0 +1,42 @@
+name: DCM-40 Original Mockup Restoration Audit + ZIP
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mockup-restore-audit-40.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive complete untouched prechange repository
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-40:refs/remotes/origin/backup/261114-DCM-40
+          git archive --format=zip --output=/tmp/261114-DCM-40.zip origin/backup/261114-DCM-40
+          unzip -t /tmp/261114-DCM-40.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-40
+          path: /tmp/261114-DCM-40.zip
+          retention-days: 30
+      - name: Print exact Prioritas DOM, events, and layout rules
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          a=s.index('function renderPriority(){')
+          b=s.index('/* ---------- Form proyek ---------- */',a)
+          part=s[a:b]
+          print('=== COMPLETE RENDER PRIORITY ===')
+          print(part[:26500])
+          print('=== PRIORITAS STYLES ===')
+          for term in ['.prio-page{','.prio-hero{','.prio-hero h','.prio-hero-actions{','.prio-kpis{','.prio-kpi{','.prio-kpi b{','.prio-kpi.k-','.prio-scopebar{','.prio-scope-note{','.prio-toolbar{','.prio-list{','.prio-subtabs{','.prio-scope{']:
+            print('TERM',term)
+            for m in list(re.finditer(re.escape(term),s))[-5:]:
+              print('  ',s.count('\n',0,m.start())+1,s[m.start():m.start()+850].replace('\n',' ')[:850])
+          for p in ['dcm-knowledge-priority-compact-37.css','dcm-priority-justify-subtabs-38.css']:
+            print('=== EXTERNAL',p)
+            txt=Path(p).read_text('utf8')
+            print(txt[:10500])
+          PY
