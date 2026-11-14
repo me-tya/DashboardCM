@@ -2,7 +2,9 @@ name: Release DCM 36 Insight checkbox like Modul Transformasi
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-insight-checkbox-release-36.yml']
+    paths:
+      - '.github/workflows/dcm-insight-checkbox-release-36.yml'
+      - 'tests/dcm-insight-checkbox-36.test.cjs'
 permissions: {contents: write}
 jobs:
   release:
