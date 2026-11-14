@@ -1,0 +1,38 @@
+name: DCM 37 targeted code detail audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-priority-knowledge-detail-37.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          print("=== PRIORITY RENDER SUMMARY / EVENTS ===")
+          ls=s.splitlines()
+          for i in range(16700,16955):
+            if i<len(ls):print(f"{i+1}: {ls[i][:2000]}")
+          print("=== PRIORITY STATE / DETAIL FUNCTIONS ===")
+          for word in ['const prioUi','let prioUi','function prioRender','function renderPriority',
+                       'function prioOpen','function prioShow','function prioDetail',
+                       "data-prio-filter","data-prio-project","prio-view-detail","prio-open",
+                       'function prioScopeCompute','function prioApply','function prioRows']:
+            matches=[m.start() for m in re.finditer(re.escape(word),s)]
+            print('TERM',word,'count',len(matches))
+            for pos in matches[:4]:
+              print(s[max(0,pos-220):pos+920].replace('\n',' ')[:1140])
+          print("=== CSS ===")
+          for word in ['.prio-kpis{','.prio-kpi{','.prio-wrap{','.prio-toolbar{','.prio-scope-note{',
+                       '.cm-ref-v2{','.cm-ref-head{','.cm-ref-body{','.cm-ref-v2.collapsed{',
+                       '.kb-group{','.kb-grid{','.kb-category-list{','.kb-category-tile{',
+                       '.kb-group-head{','.kb-category-row{','#tab-knowledge']:
+            matches=[m.start() for m in re.finditer(re.escape(word),s)]
+            print('STYLE',word,'count',len(matches))
+            for pos in matches[-4:]:print(s[pos:pos+850].replace('\n',' ')[:850])
+          PY
