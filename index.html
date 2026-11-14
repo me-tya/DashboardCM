@@ -2892,6 +2892,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <link rel="stylesheet" href="dcm-contact-toolbar-34.css?v=261114-34">
 <link rel="stylesheet" href="dcm-contact-toolbar-one-row-35.css?v=261114-35">
 <link rel="stylesheet" href="dcm-insight-checkbox-36.css?v=261114-36">
+<link rel="stylesheet" href="dcm-knowledge-priority-compact-37.css?v=261114-37">
 </head>
 <body>
 
@@ -16770,7 +16771,13 @@ function renderPriority(){
  const sorts=[['score',uiText('Score','Skor')+' ↓'],['golive','Go-live'],['name',uiText('Name','Nama')]];
  const nInc=rows.filter(r=>prioIncomplete(r.p).length).length;
  let body='';
- if(tab==='projects')body=`${prioScopeBarHtml()}<p class="prio-scope-note">${escapeHtml(prioScopeNote(rows))}</p><div class="prio-kpis"><div class="prio-kpi"><b>${rows.length}</b><small>${prioUi.scope.type==='km'?uiText('Ministry-level projects','Proyek tingkat Kementerian'):uiText('Projects ranked','Proyek diranking')}</small></div><div class="prio-kpi k-high"><b>${cnt.high}</b><small>${uiText('High priority','Prioritas Tinggi')} <em>≥70</em></small></div><div class="prio-kpi k-mid"><b>${cnt.mid}</b><small>${uiText('Medium','Prioritas Sedang')} <em>40–69</em></small></div><div class="prio-kpi k-low"><b>${cnt.low}</b><small>${uiText('Low','Prioritas Rendah')} <em>&lt;40</em></small></div><div class="prio-kpi k-top"><small>${uiText('Top priority','Prioritas teratas')}</small><b class="prio-top-name">${top?escapeHtml(top.p.singkatan||top.p.nama):'—'}</b>${top?`<small>${uiText('score','skor')} ${prioFmt(top.score,1)}</small>`:''}</div></div>
+ if(tab==='projects')body=`${prioScopeBarHtml()}<p class="prio-scope-note">${escapeHtml(prioScopeNote(rows))}</p><div class="prio-kpis" aria-label="${uiText('Project priority summary','Ringkasan prioritas proyek')}">
+  <button type="button" class="prio-kpi" data-prio-kpi="all" aria-pressed="${prioUi.filter==='all'}" title="${uiText('View all ranked projects','Lihat seluruh proyek yang diranking')}"><b>${rows.length}</b><small>${prioUi.scope.type==='km'?uiText('Ministry-level projects','Proyek tingkat Kementerian'):uiText('Projects ranked','Proyek diranking')}</small></button>
+  <button type="button" class="prio-kpi k-high" data-prio-kpi="high" aria-pressed="${prioUi.filter==='high'}" title="${uiText('View high-priority projects','Lihat proyek prioritas tinggi')}"><b>${cnt.high}</b><small>${uiText('High priority','Prioritas Tinggi')} <em>≥70</em></small></button>
+  <button type="button" class="prio-kpi k-mid" data-prio-kpi="mid" aria-pressed="${prioUi.filter==='mid'}" title="${uiText('View medium-priority projects','Lihat proyek prioritas sedang')}"><b>${cnt.mid}</b><small>${uiText('Medium','Prioritas Sedang')} <em>40–69</em></small></button>
+  <button type="button" class="prio-kpi k-low" data-prio-kpi="low" aria-pressed="${prioUi.filter==='low'}" title="${uiText('View low-priority projects','Lihat proyek prioritas rendah')}"><b>${cnt.low}</b><small>${uiText('Low','Prioritas Rendah')} <em>&lt;40</em></small></button>
+  <button type="button" class="prio-kpi k-top" data-prio-kpi="top" aria-pressed="false" title="${uiText('Open highest-ranked project details','Buka rincian proyek prioritas teratas')}" ${top?'':'disabled'}><small>${uiText('Top priority','Prioritas teratas')}</small><b class="prio-top-name">${top?escapeHtml(top.p.singkatan||top.p.nama):'—'}</b>${top?'<small>'+uiText('score','skor')+' '+prioFmt(top.score,1)+'</small>':''}</button>
+</div>
   ${rows.length?`<div class="prio-toolbar"><input type="search" id="prioQ" class="prio-search" placeholder="${uiText('Search project, unit, PIC…','Cari proyek, unit, PIC…')}" value="${escapeHtml(prioUi.q)}"><div class="prio-chips">${chips.map(([k,l])=>`<button type="button" class="prio-chip${prioUi.filter===k?' on':''}" data-prio-filter="${k}">${escapeHtml(l)}</button>`).join('')}</div><span class="prio-sp"></span><div class="prio-seg">${sorts.map(([k,l])=>`<button type="button" class="${prioUi.sort===k?'on':''}" data-prio-sort="${k}">${escapeHtml(l)}</button>`).join('')}</div><div class="prio-seg"><button type="button" class="${prioUi.view!=='quad'?'on':''}" data-prio-view="list">☰ ${uiText('List','Daftar')}</button><button type="button" class="${prioUi.view==='quad'?'on':''}" data-prio-view="quad">◫ ${uiText('Quadrant','Kuadran')}</button></div></div>${prioSnapBarHtml(can)}`:''}${prioUi.scope.type==='km'&&rows.length?prioCapacityHtml(rows):''}
   ${nInc?`<div class="prio-warn-bar">⚠ ${uiText(`${nInc} project(s) have incomplete data and cannot pass the Ministry threshold automatically yet (missing CRA/POSTER/user count uses a neutral value of 3). Open Details to see what is missing.`,`${nInc} proyek datanya belum lengkap sehingga belum dapat lolos otomatis ke level Kementerian (CRA/POSTER/jumlah pengguna yang kosong memakai nilai netral 3). Buka Rincian untuk melihat yang kurang.`)}</div>`:''}
   <section class="prio-list"><div class="prio-list-head${prioUi.sel.size?' has-bulk':''}">${can&&prioState.projects.length?`<label class="prio-selall"><input type="checkbox" id="prioSelAll"> ${uiText('Select all','Pilih semua')}</label>`:''}<h3>${uiText('Priority ranking','Peringkat prioritas')}</h3>${can&&prioUi.sel.size?`<div class="prio-bulk"><b>${prioUi.sel.size} ${uiText('selected','dipilih')}</b><button type="button" class="btn btn-outline btn-sm" id="prioSelClear">${uiText('Clear','Batal pilih')}</button><button type="button" class="btn btn-outline btn-sm" data-bulk-km="ajukan">🏛 ${uiText('Nominate','Ajukan ke Kementerian')}</button><button type="button" class="btn btn-outline btn-sm" data-bulk-km="tahan">${uiText('Hold','Tahan')}</button><button type="button" class="btn btn-outline btn-sm" data-bulk-km="auto">${uiText('Automatic','Otomatis')}</button><button type="button" class="btn btn-sm prio-bulk-del" id="prioBulkDel">${iconTrash()} ${uiText('Delete selected','Hapus terpilih')}</button></div>`:`<span>${uiText(`Bars C1–C${PRIO_CRITERIA.length} = utility per criterion`,`Batang C1–C${PRIO_CRITERIA.length} = utility per kriteria`)}</span>`}</div><div id="prioListBody">${prioUi.view==='quad'&&rows.length?prioQuadrantHtml(prioFilteredRows(rows)):prioListHtml(rows,can)}</div>${otherHtml}</section>`;
@@ -16787,6 +16794,29 @@ function renderPriority(){
  el.querySelector('#prioToggleDone')?.addEventListener('click',()=>{prioUi.showDone=!prioUi.showDone;renderPriority();});
  el.querySelectorAll('[data-prio-tab]').forEach(b=>b.onclick=()=>{prioUi.tab=b.dataset.prioTab;prioLsSet('cmPrioTab',prioUi.tab);renderPriority();});
  el.querySelectorAll('[data-prio-filter]').forEach(b=>b.onclick=()=>{prioUi.filter=b.dataset.prioFilter;renderPriority();});
+  // KPI cards re-use the same filters and read-only per-project details.
+  el.querySelectorAll('[data-prio-kpi]').forEach(card=>card.addEventListener('click',()=>{
+    const kind=card.dataset.prioKpi;
+    if(!['all','high','mid','low','top'].includes(kind))return;
+    const topId=kind==='top'&&top?top.p.id:'';
+    prioUi.q='';
+    prioUi.filter=['high','mid','low'].includes(kind)?kind:'all';
+    prioUi.view='list';
+    prioLsSet('cmPrioView','list');
+    if(topId)prioUi.open.add(topId);
+    renderPriority();
+    requestAnimationFrame(()=>{
+      const current=document.getElementById('tab-priority');
+      if(!current)return;
+      const topRow=topId?[...current.querySelectorAll('[data-prio-id]')].find(row=>row.dataset.prioId===topId):null;
+      const target=topRow||current.querySelector('#prioListBody')||current.querySelector('.prio-list');
+      if(target&&typeof target.scrollIntoView==='function'){
+        const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
+      }
+    });
+  }));
+
  el.querySelectorAll('[data-prio-sort]').forEach(b=>b.onclick=()=>{prioUi.sort=b.dataset.prioSort;renderPriority();});
  const q=el.querySelector('#prioQ');if(q)q.addEventListener('input',()=>{prioUi.q=q.value;const lb=el.querySelector('#prioListBody');if(lb){lb.innerHTML=prioUi.view==='quad'?prioQuadrantHtml(prioFilteredRows(prioScopeCompute().rows)):prioListHtml(prioScopeCompute().rows,cmCanMutate());prioBindRows(lb);prioSyncSelAll(el);}});
  prioBindRows(el);
