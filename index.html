@@ -2891,6 +2891,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <link rel="stylesheet" href="dcm-primary-nav-justify-33.css?v=261114-33">
 <link rel="stylesheet" href="dcm-contact-toolbar-34.css?v=261114-34">
 <link rel="stylesheet" href="dcm-contact-toolbar-one-row-35.css?v=261114-35">
+<link rel="stylesheet" href="dcm-insight-checkbox-36.css?v=261114-36">
 </head>
 <body>
 
@@ -8837,16 +8838,36 @@ function cmNarrBox(key,id,content=''){
   const closed=!!cmNarrState()[key],ic='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 7h14M5 12h14M5 17h9"/></svg>';
   return `<div class="narr-wrap${closed?' closed':''}" data-narr-key="${key}"><button type="button" class="narr-head" aria-expanded="${closed?'false':'true'}" title="${uiText('Show / hide chart explanation','Tampilkan / sembunyikan penjelasan grafik')}"><span class="narr-ic">${ic}</span><b>${uiText('Chart explanation','Penjelasan grafik')}</b><small class="narr-peek"></small><span class="narr-tg" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z" fill="currentColor"/></svg></span></button><div class="chart-narr"${id?` id="${id}"`:''}>${content}</div></div>`;
 }
-function cmNarrToolbar(){return `<div class="narr-all"><div class="narr-head"><h3>${uiText('Activity Insight','Insight Activity')}</h3><p>${uiText('Monthly patterns, status distribution, and service vs non-service focus.','Pola bulanan, distribusi status, dan fokus layanan vs non-layanan.')}</p></div><div class="narr-btns" role="group" aria-label="${uiText('Chart explanations','Penjelasan grafik')}"><button type="button" data-narr-all="open">${uiText('Show all explanations','Tampilkan semua penjelasan')}</button><button type="button" data-narr-all="close">${uiText('Hide all','Sembunyikan semua')}</button></div></div>`;}
+function cmNarrToolbar(){return `<div class="narr-all"><div class="narr-head"><h3>${uiText('Activity Insight','Insight Activity')}</h3><p>${uiText('Monthly patterns, status distribution, and service vs non-service focus.','Pola bulanan, distribusi status, dan fokus layanan vs non-layanan.')}</p></div><label class="cm-narr-all-check"><input type="checkbox" data-narr-toggle-all aria-label="${uiText('Show all explanations','Tampilkan semua penjelasan')}"><span>${uiText('Show all explanations','Tampilkan semua penjelasan')}</span></label></div>`;}
 function cmNarrPeek(w){const t=(w.querySelector('.chart-narr')?.textContent||'').trim(),first=(t.split(/(?<=\.)\s/)[0]||'').replace(/[.\s]+$/,'');const pk=w.querySelector('.narr-peek');if(pk)pk.textContent=first?`— ${first}…`:'';}
 function cmNarrApply(w,closed){w.classList.toggle('closed',closed);w.querySelector('.narr-head')?.setAttribute('aria-expanded',closed?'false':'true');cmNarrPeek(w);}
 function cmNarrSync(root){(root||document).querySelectorAll('.narr-wrap').forEach(w=>cmNarrApply(w,!!cmNarrState()[w.dataset.narrKey]));cmNarrSyncAllBtns(root);}
-function cmNarrSyncAllBtns(root){const scope=(root&&root.closest?root.closest('.tab-panel'):null)||root||document;scope.querySelectorAll?.('.narr-all').forEach(bar=>{const panel=bar.closest('.tab-panel')||document,ws=[...panel.querySelectorAll('.narr-wrap')].filter(w=>w.querySelector('.chart-narr')?.textContent.trim()),open=ws.filter(w=>!w.classList.contains('closed')).length;bar.querySelector('[data-narr-all="open"]')?.classList.toggle('on',ws.length&&open===ws.length);bar.querySelector('[data-narr-all="close"]')?.classList.toggle('on',ws.length&&open===0);});}
+function cmNarrSyncAllBtns(root){
+  const scope=(root&&root.closest?root.closest('.tab-panel'):null)||root||document;
+  scope.querySelectorAll?.('.narr-all').forEach(bar=>{
+    const panel=bar.closest('.tab-panel')||document;
+    const ws=[...panel.querySelectorAll('.narr-wrap')].filter(w=>w.querySelector('.chart-narr')?.textContent.trim());
+    const open=ws.filter(w=>!w.classList.contains('closed')).length;
+    const checkbox=bar.querySelector('[data-narr-toggle-all]');
+    if(!checkbox)return;
+    checkbox.checked=ws.length>0&&open===ws.length;
+    checkbox.indeterminate=open>0&&open<ws.length;
+  });
+}
 document.addEventListener('click',e=>{
   const head=e.target.closest('.narr-head');
   if(head){const w=head.closest('.narr-wrap');if(!w)return;const closed=!w.classList.contains('closed'),st=cmNarrState();if(closed)st[w.dataset.narrKey]=1;else delete st[w.dataset.narrKey];cmNarrSave(st);cmNarrApply(w,closed);cmNarrSyncAllBtns(w);return;}
-  const all=e.target.closest('[data-narr-all]');
-  if(all){const closed=all.dataset.narrAll==='close',panel=all.closest('.tab-panel')||document,st=cmNarrState();panel.querySelectorAll('.narr-wrap').forEach(w=>{if(closed)st[w.dataset.narrKey]=1;else delete st[w.dataset.narrKey];cmNarrApply(w,closed);});cmNarrSave(st);cmNarrSyncAllBtns(all);}
+});
+document.addEventListener('change',e=>{
+  const checkbox=e.target.closest?.('[data-narr-toggle-all]');
+  if(!checkbox)return;
+  const closed=!checkbox.checked,panel=checkbox.closest('.tab-panel')||document,st=cmNarrState();
+  panel.querySelectorAll('.narr-wrap').forEach(w=>{
+    if(closed)st[w.dataset.narrKey]=1;else delete st[w.dataset.narrKey];
+    cmNarrApply(w,closed);
+  });
+  cmNarrSave(st);
+  cmNarrSyncAllBtns(checkbox);
 });
 function cmRenderOverviewNarratives(items){
   const lang=currentLang==='en'?'en':'id',set=(id,txt)=>{const el=document.getElementById(id);if(el)el.innerHTML=cmRptMd(txt||'');};
@@ -19221,7 +19242,7 @@ Object.assign(CM_USER_MANUAL_ARTICLES.find(a=>a.id==='whats-new'),{title:{en:"Wh
     title:{en:'Reading and Hiding Chart Explanations',id:'Membaca dan Menyembunyikan Penjelasan Grafik'},
     summary:{en:'Every chart on Overview and CRA Analytics has a written explanation that updates with the filters. Each explanation can be shown or hidden on its own.',id:'Setiap grafik di Overview dan Analytics CRA memiliki penjelasan tertulis yang ikut berubah sesuai filter. Setiap penjelasan dapat ditampilkan atau disembunyikan sendiri-sendiri.'},
     location:{en:'Overview > bar "Chart explanation" below every chart; CRA > Analytics and Compare',id:'Overview > bilah "Penjelasan grafik" di bawah setiap grafik; CRA > Analytics dan Compare'},
-    steps:{en:['Read the explanation below a chart: it states the peak, the largest share, comparisons, and points that need attention.','Click the gold round button on the "Chart explanation" bar to hide or show that explanation only.','When hidden, the bar still shows the first sentence as a preview.','Use "Show all explanations" or "Hide all" above the charts to change every explanation at once.'],id:['Baca penjelasan di bawah grafik: berisi puncak, porsi terbesar, perbandingan, dan hal yang perlu diperhatikan.','Klik tombol bulat emas pada bilah "Penjelasan grafik" untuk menyembunyikan atau menampilkan penjelasan grafik itu saja.','Saat disembunyikan, bilah tetap menampilkan kalimat pertama sebagai cuplikan.','Gunakan "Tampilkan semua penjelasan" atau "Sembunyikan semua" di atas grafik untuk mengubah seluruh penjelasan sekaligus.']},
+    steps:{en:['Read the explanation below a chart: it states the peak, the largest share, comparisons, and points that need attention.','Click the gold round button on the "Chart explanation" bar to hide or show that explanation only.','When hidden, the bar still shows the first sentence as a preview.','Check "Show all explanations" above the charts to open every explanation, or uncheck to hide them all.'],id:['Baca penjelasan di bawah grafik: berisi puncak, porsi terbesar, perbandingan, dan hal yang perlu diperhatikan.','Klik tombol bulat emas pada bilah "Penjelasan grafik" untuk menyembunyikan atau menampilkan penjelasan grafik itu saja.','Saat disembunyikan, bilah tetap menampilkan kalimat pertama sebagai cuplikan.','Centang "Tampilkan semua penjelasan" di atas grafik untuk membuka semuanya, atau hilangkan centang untuk menyembunyikannya.']},
     outcome:{en:'Your show/hide choice is remembered by the browser and kept when filters, language, or the page change.',id:'Pilihan tampil/sembunyi tersimpan di browser dan tetap berlaku saat filter, bahasa, atau halaman berganti.'},
     keywords:['penjelasan grafik','narasi','chart explanation','hide','show','sembunyikan','tampilkan','grafik']});
 
