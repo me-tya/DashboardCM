@@ -1,0 +1,40 @@
+name: DCM 28 full backup and header vertical layout audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-vertical-audit-28.yml']
+permissions:
+  contents: read
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create exact prechange full ZIP backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-28:refs/remotes/origin/backup/261114-DCM-28
+          git archive --format=zip --output=/tmp/261114-DCM-28.zip origin/backup/261114-DCM-28
+          unzip -t /tmp/261114-DCM-28.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-28
+          path: /tmp/261114-DCM-28.zip
+          retention-days: 30
+      - name: Inspect actual header geometry and CSS precedence
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          for i,line in enumerate(s.splitlines()):
+           if i<260 and any(x in line for x in ['.topbar{','.brand{','.brand-mark{','.brand-text{','.topbar-actions{','@media']):
+            print('CSS-INDEX',i+1,line[:1800])
+           if 2921<=i+1<=2960:print('HTML-INDEX',i+1,line[:1300])
+          for p in ['dcm-approved-navigation.css','dcm-cra-compact-27.css','dcm-header-mt-ghost-26.css']:
+           content=Path(p).read_text('utf8')
+           for m in list(re.finditer(re.escape('#appHeader.topbar{'),content)):
+            print('OVERRIDE',p,content[m.start():m.start()+360])
+          print('LINKS')
+          for item in re.findall(r'<link rel="stylesheet" href="([^"]+)"',s):
+           if item.startswith('dcm-'):print(item)
+          PY
