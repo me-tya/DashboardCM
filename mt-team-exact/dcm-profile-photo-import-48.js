@@ -109,6 +109,9 @@ function prepare(parsed,choices,live,docs,ui,includeStructure){
  const draft=copied(docs),master=draft.find(x=>x.id==='cfg-master');
  if(!master||!master.master||!Array.isArray(master.master.pic))throw Error('Master pegawai belum siap. Muat ulang halaman terlebih dahulu.');
  const roster=master.master.pic,used=new Set(),mapped=new Map();
+ const rosterIdentity=list=>JSON.stringify(list.map(x=>[normName(x.n),N(x.nip),normName(x.nl)]));
+ if(rosterIdentity(roster)!==rosterIdentity(live))throw Error('Daftar pegawai telah berubah sejak pratinjau. Buka kembali impor dan tinjau pencocokan.');
+
  const summary={updated:0,new:0,skipped:0,photosAdded:0,contactsAdded:0,contactsUpdated:0,contactsSkipped:0,conflicts:0};
  const selected=[];
  for(let i=0;i<parsed.profiles.length;i++){
