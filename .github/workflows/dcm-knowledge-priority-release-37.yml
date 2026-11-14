@@ -1,0 +1,102 @@
+name: Release DCM 37 compact Knowledge and clickable Priority cards
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-knowledge-priority-release-37.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Validate complete prechange ZIP backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-37:refs/remotes/origin/backup/261114-DCM-37
+          git archive --format=zip --output=/tmp/261114-DCM-37.zip origin/backup/261114-DCM-37
+          unzip -t /tmp/261114-DCM-37.zip | tail -1
+          test -s /tmp/261114-DCM-37.zip
+      - name: Turn five existing priority KPI cards into read-only drilldowns
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          source=p.read_text('utf8')
+          a=source.index('function renderPriority(){')
+          b=source.index('/* ---------- Form proyek ---------- */',a)
+          body=source[a:b]
+          c=body.index('<div class="prio-kpis">')
+          d=body.index('</div>\n   ${rows.length?',c)+len('</div>')
+          original_cards=body[c:d]
+          assert original_cards.count('class="prio-kpi')==5,('Expected five KPIs',original_cards.count('class="prio-kpi'))
+          assert 'const top=rows[0]' in body and 'const cnt={high:0,mid:0,low:0}' in body
+          cards='''<div class="prio-kpis" aria-label="${uiText('Project priority summary','Ringkasan prioritas proyek')}">
+            <button type="button" class="prio-kpi" data-prio-kpi="all" aria-pressed="${prioUi.filter==='all'}" title="${uiText('View all ranked projects','Lihat seluruh proyek yang diranking')}"><b>${rows.length}</b><small>${prioUi.scope.type==='km'?uiText('Ministry-level projects','Proyek tingkat Kementerian'):uiText('Projects ranked','Proyek diranking')}</small></button>
+            <button type="button" class="prio-kpi k-high" data-prio-kpi="high" aria-pressed="${prioUi.filter==='high'}" title="${uiText('View high-priority project details','Lihat rincian proyek prioritas tinggi')}"><b>${cnt.high}</b><small>${uiText('High priority','Prioritas Tinggi')} <em>≥70</em></small></button>
+            <button type="button" class="prio-kpi k-mid" data-prio-kpi="mid" aria-pressed="${prioUi.filter==='mid'}" title="${uiText('View medium-priority project details','Lihat rincian proyek prioritas sedang')}"><b>${cnt.mid}</b><small>${uiText('Medium','Prioritas Sedang')} <em>40–69</em></small></button>
+            <button type="button" class="prio-kpi k-low" data-prio-kpi="low" aria-pressed="${prioUi.filter==='low'}" title="${uiText('View low-priority project details','Lihat rincian proyek prioritas rendah')}"><b>${cnt.low}</b><small>${uiText('Low','Prioritas Rendah')} <em>&lt;40</em></small></button>
+            <button type="button" class="prio-kpi k-top" data-prio-kpi="top" aria-pressed="false" title="${uiText('Open top-ranked project details','Buka rincian proyek dengan prioritas tertinggi')}" ${top?'':'disabled'}><small>${uiText('Top priority','Prioritas teratas')}</small><b class="prio-top-name">${top?escapeHtml(top.p.singkatan||top.p.nama):'—'}</b>${top?'<small>'+uiText('score','skor')+' '+prioFmt(top.score,1)+'</small>':''}</button>
+          </div>'''
+          body=body[:c]+cards+body[d:]
+          anchor="  el.querySelectorAll('[data-prio-filter]').forEach(b=>b.onclick=()=>{prioUi.filter=b.dataset.prioFilter;renderPriority();});"
+          assert body.count(anchor)==1,'Original priority filter handler must remain unchanged'
+          callback='''  // Summary cards drill down using the same filtered, read-only project list.
+          el.querySelectorAll('[data-prio-kpi]').forEach(card=>card.addEventListener('click',()=>{
+            const kind=card.dataset.prioKpi;
+            if(!['all','high','mid','low','top'].includes(kind))return;
+            const topId=kind==='top'&&top?top.p.id:'';
+            prioUi.q='';
+            prioUi.filter=['high','mid','low'].includes(kind)?kind:'all';
+            prioUi.view='list';
+            prioLsSet('cmPrioView','list');
+            if(topId)prioUi.open.add(topId);
+            renderPriority();
+            requestAnimationFrame(()=>{
+              const current=document.getElementById('tab-priority');
+              if(!current)return;
+              const topRow=topId?[...current.querySelectorAll('[data-prio-id]')].find(row=>row.dataset.prioId===topId):null;
+              const target=topRow||current.querySelector('#prioListBody')||current.querySelector('.prio-list');
+              if(target&&typeof target.scrollIntoView==='function'){
+                const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                target.scrollIntoView({behavior:reduced?'auto':'smooth',block:'start'});
+              }
+            });
+          }));
+'''
+          body=body.replace(anchor,anchor+'\n'+callback,1)
+          assert body.count("data-prio-kpi=")==5 and body.count("el.querySelectorAll('[data-prio-kpi]')")==1
+          s=source[:a]+body+source[b:]
+          link='<link rel="stylesheet" href="dcm-knowledge-priority-compact-37.css?v=261114-37">'
+          assert link not in s
+          h=s.lower().find('</head>')
+          assert 0<h<s.lower().find('<body')
+          s=s[:h]+link+'\n'+s[h:]
+          assert s.count(link)==1
+          p.write_text(s,'utf8')
+          print('PASS: existing priority calculations, filters, read-only detail and permissions reused; 5 cards and scoped compact CSS.')
+          PY
+      - name: Check KPI routing and existing application regressions
+        run: |
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish compact layout and KPI drilldowns
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): compact Knowledge/Priority spacing and make all five priority cards drill down"
+          git push origin HEAD:main
