@@ -5,7 +5,7 @@ const dom=new JSDOM('<!doctype html><html><head></head><body><div id="frame"><if
 const w=dom.window.document.querySelector('iframe').contentWindow;
 const photo='data:image/png;base64,AAAA';
 const workers=Array.from({length:25},(_,i)=>({n:'Pegawai Sumber '+String(i+1),nip:'1985'+String(i+1).padStart(2,'0')+'0120100110'+String(i).padStart(2,'0'),jab:'Jabatan MT '+i,foto:photo}));
-const contacts=Array.from({length:8},(_,i)=>({id:'cfg-kp-source-'+i,kind:'cfg',kp:{nama:'PIC Unit '+i,unit:'Unit '+i,peran:[i%3===0?'pmo':i%3===1?'cmo':'pemilikProbis'],foto:photo}}));
+const contacts=Array.from({length:50},(_,i)=>({id:'cfg-kp-source-'+i,kind:'cfg',kp:{nama:'PIC Unit '+i,unit:'Unit '+i,peran:[i%3===0?'pmo':i%3===1?'cmo':'pemilikProbis'],foto:i<48?photo:''}}));
 const mtKp={tims:['Tim DCS','Tim CM'],pt:{'Pegawai Sumber 1':'Tim CM'},ptx:{'Pegawai Sumber 2':['Tim DCS']},str:{kapus:'Pegawai Sumber 3'},stp:{},asg:{DJPb:['Pegawai Sumber 1']},rl:{'Pegawai Sumber 1':['PMO']},prog:{},tem:{}};
 const exported={kind:'mt-tim-pusmantap-profiles',oneonone:[{id:'cfg-master',kind:'cfg',master:{pic:workers}},{id:'cfg-kp',kind:'cfg',kp:mtKp},...contacts]};
 const oldDocs=[{id:'cfg-master',kind:'cfg',master:{pic:[{n:'Pegawai Palsu DCM',nip:'3578092603890003',jab:'Tidak benar'}]}},{id:'cfg-kp',kind:'cfg',kp:{pt:{'Pegawai Palsu DCM':'Tim CM'},tims:['Tim CM']}},{id:'cfg-kp-old',kind:'cfg',kp:{nama:'Kontak Salah',unit:'Unit lama'}},{id:'cfg-agpim',kind:'cfg',agpim:{a:1}}];
@@ -17,11 +17,11 @@ for(const f of ['mt-team-exact/dcm-profile-photo-import-48.js','mt-team-exact/dc
 const api=w.MT_PROFILE_IMPORT;
 const parsed=api.parse(exported);
 const direct=await w.MT_IMPORT_ALL.prepare(parsed,oldDocs,{});
-assert.equal(direct.summary.profiles,25);assert.equal(direct.summary.contacts,8);
+assert.equal(direct.summary.profiles,25);assert.equal(direct.summary.contacts,50);assert.equal(direct.summary.contactPhotos,48);
 assert.equal(direct.docs.find(d=>d.id==='cfg-kp').kp.pt['Pegawai Sumber 1'],'Tim CM');
 assert.equal(direct.docs.find(d=>d.id==='cfg-kp').kp.str.kapus,'Pegawai Sumber 3');
 assert.equal(direct.docs.find(d=>d.id==='cfg-kp').kp.asg.DJPb[0],'Pegawai Sumber 1');
-assert.equal(direct.docs.filter(d=>d.id.startsWith('cfg-kp-')).length,8);
+assert.equal(direct.docs.filter(d=>d.id.startsWith('cfg-kp-')).length,50);
 assert(direct.docs.some(d=>d.id==='cfg-agpim'), 'unrelated settings are retained');
 assert(!direct.docs.some(d=>d.id==='cfg-kp-old'), 'old contacts must be replaced');
 assert(!direct.docs.find(d=>d.id==='cfg-master').master.pic.some(p=>p.n==='Pegawai Palsu DCM'));
@@ -46,7 +46,7 @@ assert(dom.window.document.querySelector('#cmp-panel').textContent.includes('25'
 next.click();await new Promise(r=>setTimeout(r,40));
 assert(sent,'commit must happen on confirmation');
 assert.equal(sent.docs.find(d=>d.id==='cfg-master').master.pic.length,25);
-assert.equal(sent.docs.filter(d=>d.id.startsWith('cfg-kp-')).length,8);
+assert.equal(sent.docs.filter(d=>d.id.startsWith('cfg-kp-')).length,50);
 assert(sent.ui.mtProfilesAuthoritative);
 assert.equal(sent.docs.find(d=>d.id==='cfg-master').master.pic[0].foto,photo);
 assert(!dom.window.document.querySelector('.cmp50'));
