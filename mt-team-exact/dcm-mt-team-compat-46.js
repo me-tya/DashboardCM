@@ -138,6 +138,7 @@ function render(){
    }
   }
   else if(bar)bar.hidden=true;
+  if(app&&window.DCM_PROFILE_INDIVIDUAL_56)window.DCM_PROFILE_INDIVIDUAL_56.enhance(app,bar);
   document.getElementById('mt-error').hidden=true;
   mtResize();
  }catch(e){
