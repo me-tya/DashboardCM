@@ -13,7 +13,7 @@ assert(snap.includes('Bukan backup aplikasi dan tidak mengubah proyek'));
 assert(app.includes('function prioSnapData(){const {rows}=prioCompute({normMode:'));
 assert(app.includes('function prioMakeSnapshot(label,type)'));
 assert(app.includes("prioState.snapshots=(prioState.snapshots||[]).concat([sn]).slice(-40)"),'Real 40-item snapshot retention remains');
-assert(priority.includes('class="prio-filter-panel"'));
+assert(priority.includes('class="prio-filter-panel'), 'Original Opsi 1 filter panel retained, with optional collapsed-state class');
 assert(priority.includes('class="prio-filter-head"'));
 assert(priority.includes('class="prio-toolbar"'));
 assert(priority.includes('class="prio-snapbar"')||priority.includes('prioSnapBarHtml(can)'));
