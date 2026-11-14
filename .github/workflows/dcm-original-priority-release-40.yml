@@ -1,0 +1,51 @@
+name: DCM 40 Restore Approved Prioritas Proyek Mockup
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-original-priority-release-40.yml'
+      - 'scripts/dcm_original_priority_mockup_40.py'
+      - 'tests/dcm-original-priority-mockup-40.test.cjs'
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify untouched backup ZIP created first
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-40:refs/remotes/origin/backup/261114-DCM-40
+          git archive --format=zip --output=/tmp/261114-DCM-40.zip origin/backup/261114-DCM-40
+          unzip -t /tmp/261114-DCM-40.zip | tail -1
+      - name: Restore page hierarchy from user-approved mockup
+        run: |
+          python3 -m py_compile scripts/dcm_original_priority_mockup_40.py
+          python3 scripts/dcm_original_priority_mockup_40.py
+      - name: Verify mockup layout, all live KPI links, and old application
+        run: |
+          node tests/dcm-original-priority-mockup-40.test.cjs
+          node tests/dcm-priority-subtabs-38.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish original Prioritas mockup without unrelated edits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): restore approved Prioritas mockup title navy KPI stage submenu and filter hierarchy"
+          git push origin HEAD:main
