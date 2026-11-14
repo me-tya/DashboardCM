@@ -16790,8 +16790,8 @@ function renderPriority(){
  else body=prioReferenceTabHtml(can,rows);
  el.innerHTML=`<div class="prio-page">
   <div class="prio-hero"><div class="prio-title-group"><h2>${uiText('Project Prioritization','Prioritas Proyek')}</h2><p>${uiText('Ranking of transformation projects based on criteria, weights, and benefit indicators.','Pemeringkatan proyek transformasi berdasarkan kriteria, bobot, dan indikator manfaat.')}</p></div><div class="prio-hero-actions">${can?`<button class="btn btn-gold btn-sm" id="prioAdd">+ ${uiText('Add Project','Tambah Proyek')}</button>`:''}<button class="btn btn-outline btn-sm prio-btn-light" id="prioExport" ${prioState.projects.length?'':'disabled'}>${iconDownload()} Excel</button><button class="btn btn-outline btn-sm prio-btn-light" id="prioReport" ${prioState.projects.length?'':'disabled'}>📄 ${uiText('Report','Laporan')}</button></div></div>
-  ${tab==='projects'?`<section class="prio-kpi-stage" aria-label="${uiText('Project priority at a glance','Ringkasan prioritas proyek')}">${prioKpisHtml}</section>`:''}
   <div class="cm-survey-subtabs prio-subtabs" role="tablist">${tabs.map(([k,l,n])=>`<button type="button" role="tab" aria-selected="${tab===k}" class="cm-survey-subtab ${tab===k?'active':''}" data-prio-tab="${k}">${l}${n!==null?` <em class="prio-tab-n">${n}</em>`:''}${k!=='projects'&&prioUi.wEdit&&prioDraftDirty()?' <i class="prio-tab-dot" title="'+uiText('Unsaved weights','Bobot belum disimpan')+'"></i>':''}</button>`).join('')}</div>
+  ${tab==='projects'?`<section class="prio-kpi-stage" aria-label="${uiText('Project priority at a glance','Ringkasan prioritas proyek')}">${prioKpisHtml}</section>`:''}
   ${body}</div>`;
  el.querySelector('#prioAdd')?.addEventListener('click',()=>prioOpenForm(''));
  el.querySelector('#prioExport')?.addEventListener('click',prioExportExcel);
