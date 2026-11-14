@@ -1,0 +1,70 @@
+name: DCM 46 Activate Exact MT Tim Pusmantap
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-activate-46.yml']
+permissions:
+  contents: write
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable prechange full backup 261114-DCM-46
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-46:refs/remotes/origin/backup/261114-DCM-46
+          git archive --format=zip --output=/tmp/261114-DCM-46.zip origin/backup/261114-DCM-46
+          unzip -t /tmp/261114-DCM-46.zip | tail -1
+          test -s /tmp/261114-DCM-46.zip
+      - name: Verify original MT source files unmodified and exact
+        run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt-upstream
+          for path in mt-tim.js mt-tim2.js mt-libur.js mt-foto-frame.js mt-dcm-squad-import.js ui-tabs-unified.css; do
+            if test "$path" = "ui-tabs-unified.css"; then
+              cmp "/tmp/mt-upstream/$path" mt-team-exact/source/mt-ui-tabs-unified.css
+            else
+              cmp "/tmp/mt-upstream/$path" "mt-team-exact/source/$path"
+            fi
+          done
+          test -s mt-team-exact/source/mt-original-host-helpers-46.js
+          test -s mt-team-exact/source/mt-base-styles.css
+      - name: Replace only Tim Pusmantap iframe to original MT module
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text('utf8')
+          old='src="tim-pusmantap.html?embedded=1&amp;v=20261114-22"'
+          new='src="tim-pusmantap-mt.html?embedded=1&amp;v=20261114-46"'
+          assert s.count(old)==1, 'Existing iframe not found exactly once'
+          assert s.count(new)==0, 'Already activated'
+          after=s.replace(old,new,1)
+          assert after.replace(new,old,1)==s, 'Change limited to iframe source'
+          p.write_text(after,'utf8')
+          print('PASS: only Tim Pusmantap iframe URL changed to verbatim MT feature renderer')
+          PY
+      - name: Prove original browser modules, DCM handlers, and other menus unchanged
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-priority-spacing-45.test.cjs
+          node tests/dcm-priority-density-secondary-navy-44.test.cjs
+          node tests/dcm-priority-collapsible-filter-43.test.cjs
+          node tests/dcm-option1-guide-42.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          git diff --check
+          git diff --stat
+      - name: Publish exact MT Tim module inside Dashboard CM
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): activate verbatim Modul Transformasi Aktivitas Tim Pusmantap source"
+          git push origin HEAD:main
