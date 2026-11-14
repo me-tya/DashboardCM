@@ -1,0 +1,24 @@
+name: DCM 53 Full Prechange Repository Archive
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-53.yml']
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Export exact snapshot before DCM 53 changes
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-53:refs/remotes/origin/backup/261115-DCM-53
+          git archive --format=zip --output=261115-DCM-53.zip origin/backup/261115-DCM-53
+          unzip -t 261115-DCM-53.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-53
+          path: 261115-DCM-53.zip
+          retention-days: 90
