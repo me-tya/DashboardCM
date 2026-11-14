@@ -1,0 +1,36 @@
+name: DCM 46 MT Data Contract Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-data-contract-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          t=Path('/tmp/mt/mt-tim2.js').read_text('utf8')
+          i=Path('/tmp/mt/index.html').read_text('utf8')
+          m=Path('/tmp/mt/mt-tim.js').read_text('utf8')
+          keys=['function build(', 'function agendaOn(', 'function actParticipants(', 'function code(', 'function agFilter(', 'function pubBuild(', 'function save(', 'function rr(', 'function seg(', 'function onClick(', 'function onChange(', 'function onInput(', 'function teamOf(', 'function kpCfg(', 'function actMaster(', 'function kpPeople(', 'function actMasterSave(', 'function kpPersonSave(', 'function actRows(', 'function modal(', 'function toast(']
+          for k in keys:
+            for label,s in [('T2',t),('MT_INDEX',i),('TIM',m)]:
+              idx=s.find(k)
+              if idx>=0:
+                print('\nMARK',label,k,'AT',idx,'FRAGMENT')
+                print(s[idx:idx+(2600 if label=='T2' else 1250)].replace('\n',' '))
+          print('\n== MT T2 S STATE FIELDS ==')
+          for k in re.findall(r'\bS\.([A-Za-z_][A-Za-z0-9_]*)',t):
+            pass
+          print(sorted(set(re.findall(r'\bS\.([A-Za-z_][A-Za-z0-9_]*)',t))))
+          print('\n== MT T2 EXTRA FREE SYMBOLS (approx) ==')
+          known=['esc','ME','S','ACT_HDR','actMaster','actMasterSave','actCanEdit','actRows','actStamp','kpCfg','kpPeople','kpPersonSave','kpUnitList','kpOn','kpOffLbl','kpHistSep','kpPersonDelete','kpTimAdd','kpTimDel','T','TODAY','UNITS','render','save','toast','log','modal','kpTimAdd','formatTgl','docGet','fbReady','FB','kuResize','kqLoadImage','kqParseProfile','dcmSquadRead','pAktTimU','pAktTim','kpCfgSave','kpPeopleSave','KQ','kqRunOcr']
+          for k in known:
+            cnt=len(re.findall(r'\b'+re.escape(k)+r'\b',t))
+            if cnt:print(k,cnt)
+          PY
