@@ -1,0 +1,22 @@
+name: DCM 45 Full Prechange Backup
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-45.yml']
+permissions: {contents: read}
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive unmodified DCM-45 source
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-45:refs/remotes/origin/backup/261114-DCM-45
+          git archive --format=zip --output=/tmp/261114-DCM-45.zip origin/backup/261114-DCM-45
+          unzip -t /tmp/261114-DCM-45.zip | tail -1
+          test -s /tmp/261114-DCM-45.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-45
+          path: /tmp/261114-DCM-45.zip
+          retention-days: 30
