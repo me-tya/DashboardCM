@@ -39,7 +39,7 @@ function open(){
  // In the iframe, position:fixed centers below the visible scroll area and leaves
  // only a grey overlay on screen.
  let hostDocument=document;
- try{if(window.parent&&window.parent!==window&&window.parent.location.origin===location.origin)hostDocument=window.parent.document}catch(e){}
+ try{if(window.parent&&window.parent!==window&&window.parent.document)hostDocument=window.parent.document}catch(e){}
  if(hostDocument!==document&&!hostDocument.getElementById('dcm-profile-compare-style-51')){
   const stylesheet=hostDocument.createElement('link');
   stylesheet.id='dcm-profile-compare-style-51';stylesheet.rel='stylesheet';
@@ -48,13 +48,13 @@ function open(){
  }
  const wrap=hostDocument.createElement('div');wrap.className='ov cmp50';
  wrap.innerHTML='<div class="md" role="dialog" aria-modal="true" aria-label="Bandingkan data Dashboard CM dan Modul Transformasi">'+
- '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>NIP, foto &amp; profil Modul Transformasi menjadi acuan utama</small></div><div class="cmp-upload-actions"><button type="button" id="cmp-all-mt" disabled title="Gunakan data Modul Transformasi untuk pegawai cocok dan tambah yang benar-benar baru; nama mirip tetap ditinjau">Gunakan data MT untuk semua</button><input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi"></div></header>'+
+ '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>NIP, foto &amp; profil Modul Transformasi menjadi acuan utama</small></div><div class="cmp-upload-actions"><input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi"></div></header>'+
  '<main class="cmp-main"><aside class="cmp-aside"><div id="cmp-stats">Pilih JSON Modul Transformasi.</div><input id="cmp-search" placeholder="Cari nama / NIP…" disabled><div id="cmp-people"></div></aside>'+
  '<section id="cmp-panel" class="cmp-panel"><p class="cmp-placeholder">Belum ada profil untuk dibandingkan.</p></section></main>'+
- '<footer class="cmp-footer"><span id="cmp-footer-text">Belum ada perubahan.</span><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
+ '<footer class="cmp-footer"><div class="cmp-footer-options"><label class="cmp-all-label"><input type="checkbox" id="cmp-replace-all" disabled> <b>Impor semua &amp; timpa data Tim Pusmantap dari Modul Transformasi</b></label><span id="cmp-footer-text">Belum ada perubahan.</span></div><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
  hostDocument.body.appendChild(wrap);
  const $=s=>wrap.querySelector(s);
- const state={active:0,choices:{},fields:{},structure:{},manualApproved:{},contacts:false,stage:1,baseline:''};
+ const state={active:0,choices:{},fields:{},structure:{},manualApproved:{},contacts:false,replaceAll:false,stage:1,baseline:''};
  const get=()=>wrap._data,roster=()=>w.actMaster().pic,close=()=>{wrap.remove();};
  $('#cmp-cancel').onclick=()=>state.stage===2?back():close();
  wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
@@ -74,11 +74,11 @@ function open(){
   if(!get())return;
   const q=T($('#cmp-search').value).toLowerCase(),c=counts();
   $('#cmp-stats').textContent=get().profiles.length+' profil · '+c.update+' diperbarui · '+c.new+' baru · '+c.skip+' dilewati';
-  $('#cmp-footer-text').textContent=c.update+' profil diperbarui · '+c.new+' baru · '+c.skip+' tidak diproses';
-  $('#cmp-save').disabled=!(c.update+c.new);
+  $('#cmp-footer-text').textContent=state.replaceAll?'Seluruh profil, foto, pemetaan dan kontak PMO/CMO/Pemilik Probis diganti dari JSON.':c.update+' profil diperbarui · '+c.new+' baru · '+c.skip+' tidak diproses';
+  $('#cmp-save').disabled=!state.replaceAll&&!(c.update+c.new);
   $('#cmp-people').innerHTML=get().profiles.map((p,i)=>{
    if(q&&!p.n.toLowerCase().includes(q)&&!T(p.nip).includes(q))return '';
-   const status=state.choices[i]==='skip'?STATUS[api.analyze(p,roster()).kind]:state.choices[i]==='add'?'Baru (dipilih)':'Akan diperbarui';
+   const status=state.replaceAll?'Ikuti Modul Transformasi':state.choices[i]==='skip'?STATUS[api.analyze(p,roster()).kind]:state.choices[i]==='add'?'Baru (dipilih)':'Akan diperbarui';
    return '<button data-cmp-person="'+i+'" class="cmp-person'+(i===state.active?' active':'')+'"><b>'+esc(p.n)+'</b><small>'+esc(p.nip||'NIP kosong')+'</small><span class="cmp-pill">'+esc(status)+'</span></button>';
   }).join('');
  }
@@ -159,15 +159,10 @@ function open(){
   if(e.target.id==='cmp-contacts')state.contacts=e.target.checked;
   if(e.target.id==='cmp-manual-check')state.manualApproved[state.active]=e.target.checked;
  });
- $('#cmp-all-mt').onclick=()=>{
-  if(!get())return;
-  get().profiles.forEach((p,i)=>{
-   const result=api.analyze(p,roster());
-   state.choices[i]=result.kind==='update'?'existing:'+result.index:result.kind==='new'?'add':'skip';
-   delete state.fields[i];delete state.structure[i];state.manualApproved[i]=false;
-  });
+ $('#cmp-replace-all').onchange=e=>{
+  state.replaceAll=!!e.target.checked;
+  $('#cmp-panel').classList.toggle('cmp-readonly',state.replaceAll);
   rerender();
-  w.toast('Data Modul Transformasi dipilih untuk profil yang cocok dan yang benar-benar baru. Nama mirip / konflik tetap perlu diperiksa.');
  };
  $('#cmp-search').oninput=renderList;
  $('#cmp-file').onchange=async e=>{
@@ -176,12 +171,12 @@ function open(){
   try{
    if(f.size>15*1024*1024)throw Error('File melebihi 15 MB.');
    const data=api.parse(JSON.parse(await f.text()));wrap._data=data;
-   state.active=0;state.stage=1;state.choices={};state.fields={};state.structure={};state.manualApproved={};state.contacts=false;
+   state.active=0;state.stage=1;state.choices={};state.fields={};state.structure={};state.manualApproved={};state.contacts=false;state.replaceAll=false;$('#cmp-replace-all').checked=false;
    state.baseline=JSON.stringify(roster());
-   $('#cmp-all-mt').disabled=false;
+   $('#cmp-replace-all').disabled=!data.sourceDocs?.some(d=>d.id==='cfg-kp');
    data.profiles.forEach((p,i)=>{const a=api.analyze(p,roster());state.choices[i]=a.kind==='update'?'existing:'+a.index:'skip'});
    $('#cmp-search').disabled=false;rerender();
-  }catch(err){$('#cmp-stats').textContent='JSON tidak terbaca';$('#cmp-panel').textContent='Gagal membaca data: '+(err.message||err)}
+  }catch(err){$('#cmp-replace-all').disabled=true;$('#cmp-stats').textContent='JSON tidak terbaca';$('#cmp-panel').textContent='Gagal membaca data: '+(err.message||err)}
  };
  function argumentsFor(){
   const includeTeams=Object.entries(state.structure).some(([i,row])=>state.choices[i]!=='skip'&&Object.values(row).includes('mt'))||state.contacts;
@@ -206,9 +201,24 @@ function open(){
   try{
    if(JSON.stringify(roster())!==state.baseline)throw Error('Data tujuan berubah; ulangi pemeriksaan.');
    const data=copy(get());
-   for(const [i,v] of Object.entries(state.choices))if(v!=='skip'&&state.fields[i]?.foto==='mt'&&data.profiles[i].foto)data.profiles[i].foto=await compact(data.profiles[i].foto);
-   const result=preflight(data);wrap._pending={data,result};state.stage=2;
+   if(!state.replaceAll)for(const [i,v] of Object.entries(state.choices))if(v!=='skip'&&state.fields[i]?.foto==='mt'&&data.profiles[i].foto)data.profiles[i].foto=await compact(data.profiles[i].foto);
+   const result=state.replaceAll
+    ? await w.MT_IMPORT_ALL.prepare(data,w.S.oneonone,w.S.ui)
+    : preflight(data);
+   wrap._pending={data,result,replaceAll:state.replaceAll};state.stage=2;
    const c=result.summary;
+   if(state.replaceAll){
+    $('#cmp-panel').innerHTML='<section class="cmp-review"><h3>Konfirmasi impor semua dari Modul Transformasi</h3>'+
+     '<p>Data Tim Pusmantap di Dashboard CM akan diganti seluruhnya sesuai file JSON. Tidak perlu memilih pegawai satu per satu.</p>'+
+     '<div class="cmp-metrics"><div><b>'+c.profiles+'</b><span>Profil sumber</span></div>'+
+     '<div><b>'+c.photos+'</b><span>Foto pegawai</span></div><div><b>'+c.contacts+'</b><span>Kontak PMO/CMO/Pemilik Probis</span></div>'+
+     '<div><b>'+c.teams+'</b><span>Tim dari MT</span></div></div>'+
+     '<p>Profil lama Dashboard CM: '+c.previousProfiles+' → '+c.profiles+'. Pemetaan unit ('+c.unitAssignments+') dan seluruh data penugasan mengikuti Modul Transformasi.</p>'+
+     '<p><b>Hanya Tim Pusmantap yang ditimpa.</b> Agenda dan menu Dashboard CM lainnya tetap.</p>'+
+     '<div class="cmp-review-note">Data akan disimpan setelah klik Konfirmasi &amp; Simpan dan diverifikasi oleh Firebase.</div></section>';
+    $('#cmp-save').textContent='Konfirmasi & Simpan';$('#cmp-cancel').textContent='Kembali';$('#cmp-save').disabled=false;
+    return;
+   }
    $('#cmp-panel').innerHTML='<section class="cmp-review"><h3>Konfirmasi hasil pilihan</h3><p>Belum ada perubahan yang disimpan. Periksa jumlah berikut:</p>'+
     '<div class="cmp-metrics"><div><b>'+c.updated+'</b><span>Profil diperbarui</span></div><div><b>'+c.new+'</b><span>Pegawai baru</span></div>'+
     '<div><b>'+c.skipped+'</b><span>Dilewati</span></div><div><b>'+c.photosAdded+'</b><span>Foto ditambahkan</span></div></div>'+
@@ -225,10 +235,12 @@ function open(){
   try{
    if(!w.actCanEdit())throw Error('Hak edit sudah berubah.');
    if(JSON.stringify(roster())!==state.baseline)throw Error('Data berubah setelah pratinjau.');
-   const now=preflight(wrap._pending.data);
+   const now=wrap._pending.replaceAll
+    ? await w.MT_IMPORT_ALL.prepare(wrap._pending.data,w.S.oneonone,w.S.ui)
+    : preflight(wrap._pending.data);
    if(JSON.stringify(now.docs)!==JSON.stringify(wrap._pending.result.docs))throw Error('Hasil berbeda. Periksa ulang.');
    if(typeof w.mtImportCommit!=='function')throw Error('Penghubung Firebase belum siap.');
-   await w.mtImportCommit(now.docs);w.toast('Data pilihan berhasil disimpan ke Dashboard CM.');close();
+   await w.mtImportCommit(now.docs,now.ui);w.toast('Data Tim Pusmantap dari Modul Transformasi berhasil disimpan.');close();
   }catch(err){w.toast('Tidak berhasil disimpan: '+(err.message||err));$('#cmp-save').disabled=false;$('#cmp-save').textContent='Coba simpan'}
  }
  $('#cmp-save').onclick=()=>state.stage===1?review():commit();
