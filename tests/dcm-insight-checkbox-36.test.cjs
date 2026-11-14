@@ -29,7 +29,7 @@ let wraps;
 const checkbox={
   checked:false,indeterminate:false,
   matches(selector){return selector==='[data-narr-toggle-all]'},
-  closest(selector){return selector==='.tab-panel'?panel:null}
+  closest(selector){return selector==='[data-narr-toggle-all]'?this:selector==='.tab-panel'?panel:null}
 };
 const bar={
   closest(selector){return selector==='.tab-panel'?panel:null},
