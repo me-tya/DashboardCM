@@ -1,0 +1,42 @@
+name: DCM 46 Exact Tim Pusmantap Compatibility Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-deep-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          a=Path('/tmp/mt/mt-tim2.js').read_text('utf8')
+          b=Path('/tmp/mt/mt-tim.js').read_text('utf8')
+          ix=Path('/tmp/mt/index.html').read_text('utf8')
+          for label,s in [('t2',a),('tim',b)]:
+            print('\n==',label,'HEAD FIRST 9000==')
+            print(s[:9000])
+            print('\n==',label,'DEPENDENCY/FUNC REFERENCE COUNT==')
+            for w in ['docGet','docMake','docPut','save','log','ACT_HDR','actMaster','actMasterSave','actRows','kpCfg','kpPeople','kpPersonSave','S.ui','S.oneonone','ME','FB','TODAY','render','toast','modal','grp','actCanEdit','pAktTim','place','today','setTimeout','document.addEventListener','addEventListener','window.addEventListener','data-act','data-t']:
+              print(w,len(re.findall(re.escape(w),s)))
+          print('\n== TIM2 MAIN PAGE FUNCTION FIRST 6500==')
+          pos=a.index('function page()')
+          print(a[pos:pos+6500])
+          print('\n== TIM2 EVENT WIRING / CLICK HANDLERS==')
+          for key in ['function bind(', 'function onclick(', 'function click(', 'function handle(', 'document.addEventListener(', 'window.addEventListener(', 'data-t2', "data-act='", "data-act=",'function action(', 'function dispatch(', 'function init(', 'function t2Act(', 'function act(']:
+            matches=[m.start() for m in re.finditer(re.escape(key),a)]
+            print('\nKEY',key,len(matches))
+            for pos in matches[:4]:print('AT',pos,a[max(0,pos-90):pos+720].replace('\n',' ')[:800])
+          print('\n== MT INDEX EVENT ROUTING==')
+          for k in ['case \'t2','case "t2','data-t2','data-thl','data-tsetc','data-tpum','data-tp','data-tm','window.MT_T2.page','pAktTim=']:
+            match=[m.start() for m in re.finditer(re.escape(k),ix)]
+            print('KEY',k,'N',len(match))
+            for pos in match[:2]:print(ix[max(0,pos-200):pos+500].replace('\n',' '))
+          print('\n== TIM2 ROOT CSS==')
+          for key in ['const css=', 'const css =', 't2-style', '.t2{', '#t2{']:
+            i=a.find(key);print(key,i,a[i:i+680] if i>=0 else '')
+          PY
