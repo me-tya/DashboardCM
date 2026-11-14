@@ -18,7 +18,10 @@ assert(css.includes('grid-template-columns:repeat(4,minmax(0,1fr))!important'),'
 assert(css.includes('justify-content:stretch!important'),'All tabs justified across parent');
 assert(css.includes('width:100%!important'),'Submenu stretches to full width');
 assert(css.includes('min-height:44px!important'),'Identical button height');
-assert(css.includes('background:linear-gradient(135deg,#17457E,#0C2859)!important'),'Active tab navy as mockup');
+assert(css.includes('background:#102F65!important'),'Selected card has solid navy background');
+assert(css.includes('background:#F1F5FC!important'),'Inactive cards each have a distinct soft-blue background');
+assert(css.includes('border:1px solid #D2DEED!important'),'Inactive cards have individual borders');
+assert(css.includes('gap:9px!important'),'Card tiles have visible consistent spacing');
 assert(css.includes('color:#FFFFFF!important'),'Active tab label white');
 assert(css.includes('grid-template-columns:repeat(4,minmax(205px,1fr))!important'),'Narrow viewport keeps four equal widths with scroll');
 assert(css.includes('overflow-x:auto!important'),'Narrow viewport scrolls instead of wrapping');
