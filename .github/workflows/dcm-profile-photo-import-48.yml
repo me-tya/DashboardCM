@@ -38,7 +38,7 @@ jobs:
           assert.equal(result.profiles[0].foto,'data:image/png;base64,AAAA');
           assert.equal(result.profiles[0].jab,'Analis');
           assert.equal(result.kp.pt['Contoh Pegawai'],'Tim CM');
-          assert.equal(importer.match(result.profiles,[{n:'Contoh Pegawai',nip:'198501012010011001'}]).n,'Contoh Pegawai');
+          assert.equal(importer.match(result.profiles[0],[{n:'Contoh Pegawai',nip:'198501012010011001'}]).n,'Contoh Pegawai');
           const html=fs.readFileSync('tim-pusmantap-mt.html','utf8');
           assert(html.includes('dcm-profile-photo-import-48.js')&&html.includes('mt-import-profiles'));
           assert(!fs.readFileSync('mt-team-exact/dcm-mt-team-compat-46.js','utf8').includes("startsWith('image/')(file.type"));
