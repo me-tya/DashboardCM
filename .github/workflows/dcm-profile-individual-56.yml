@@ -1,0 +1,63 @@
+name: DCM 56 Profile Individual Layout Validation and Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-profile-individual-56.yml'
+      - 'tests/dcm-profile-individual-layout-56.test.cjs'
+      - 'mt-team-exact/dcm-profile-individual-56.js'
+      - 'mt-team-exact/dcm-profile-individual-56.css'
+permissions:
+  contents: write
+jobs:
+  validate-and-activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Check prechange repository archive
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-56:refs/remotes/origin/backup/261115-DCM-56
+          git archive --format=zip --output=/tmp/261115-DCM-56.zip origin/backup/261115-DCM-56
+          unzip -t /tmp/261115-DCM-56.zip | tail -1
+      - name: Static code validation
+        run: |
+          node --check mt-team-exact/dcm-profile-individual-56.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check mt-team-exact/dcm-profile-unit-toolbar-55.js
+          git diff --check
+      - name: Verify layout and original MT functional controls
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-profile-individual-layout-56.test.cjs
+          node tests/dcm-profile-unit-toolbar-55.test.cjs
+          node tests/dcm-profile-individual-54.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+      - name: Refresh only Tim Pusmantap iframe scripts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tim-pusmantap-mt.html')
+          s=p.read_text('utf8')
+          old='dcm-mt-team-compat-46.js?v=261115-55'
+          new='dcm-mt-team-compat-46.js?v=261115-56'
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new,1),'utf8')
+          p=Path('index.html')
+          s=p.read_text('utf8')
+          old='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-55'
+          new='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-56'
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new,1),'utf8')
+          print('PASS: only Tim Pusmantap iframe/compat cache URLs changed')
+          PY
+          git diff --check
+      - name: Publish passing change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "style(dcm): activate aligned import and horizontal individual profile filters v56"
+          git push origin HEAD:main
