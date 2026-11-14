@@ -1,0 +1,17 @@
+/* DCM 261114-31: authenticated user's profile photo inside the existing header avatar.
+   Keep size, shape, position and account menu exactly as in DCM-30. */
+#appHeader #dcmRefAvatarTrigger #userAvatar{
+  overflow:hidden!important;
+}
+#appHeader #dcmRefAvatarTrigger #userAvatar .dcm-login-avatar-photo{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:100%!important;
+  min-height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:50%!important;
+  border:0!important;
+  box-shadow:none!important;
+}
