@@ -1,0 +1,60 @@
+name: Release DCM 28 symmetric header padding
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-symmetric-release-28.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Check original full repository ZIP backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-28:refs/remotes/origin/backup/261114-DCM-28
+          git archive --format=zip --output=/tmp/261114-DCM-28.zip origin/backup/261114-DCM-28
+          unzip -t /tmp/261114-DCM-28.zip | tail -1
+      - name: Verify CSS-only padding changes and previous behavior
+        run: |
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+          python3 - <<'PY'
+          from pathlib import Path
+          old=Path('dcm-cra-compact-27.css').read_text('utf8')
+          assert 'min-height:70px!important' in old
+          assert 'grid-template-rows:auto!important' in old
+          assert 'padding:6px 22px!important' in old
+          assert 'padding:6px 14px!important' in old
+          assert 'padding:6px 12px!important' in old
+          assert 'padding:5px 22px 8px!important' not in old
+          assert old.count('{')==old.count('}')
+          print('PASS symmetric header padding desktop/tablet/mobile and no extra minimum grid track')
+          PY
+      - name: Invalidate existing CSS cache only, do not change layout or JS
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          original=p.read_text('utf8')
+          old='dcm-cra-compact-27.css?v=261114-27'
+          new='dcm-cra-compact-27.css?v=261114-28'
+          assert original.count(old)==1,(old,original.count(old))
+          assert new not in original
+          changed=original.replace(old,new,1)
+          assert changed.replace(new,old,1)==original
+          p.write_text(changed,encoding='utf8')
+          PY
+          git diff --check
+      - name: Publish only cache version for updated header CSS
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): publish balanced top-bottom Dashboard CM header padding"
+          git push origin HEAD:main
