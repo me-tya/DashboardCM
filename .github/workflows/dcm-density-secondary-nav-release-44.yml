@@ -1,0 +1,71 @@
+name: Release DCM 44 Compact Prioritas and Consistent Navy Submenus
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-density-secondary-nav-release-44.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable full DCM-44 ZIP backup before any application edit
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-44:refs/remotes/origin/backup/261114-DCM-44
+          git archive --format=zip --output=/tmp/261114-DCM-44.zip origin/backup/261114-DCM-44
+          unzip -t /tmp/261114-DCM-44.zip | tail -1
+          test -s /tmp/261114-DCM-44.zip
+      - name: Load scoped layout and active-tab CSS only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          app=Path('index.html')
+          tp=Path('tim-pusmantap.html')
+          a=app.read_text('utf8')
+          t=tp.read_text('utf8')
+          old='dcm-priority-collapsible-filter-43.css?v=261114-43'
+          orig='dcm-navigation-pusmantap-all-25.css?v=261114-25'
+          assert a.count(old)==1 and t.count(orig)==1,'Previous approved styles must remain'
+          tags=['<link rel="stylesheet" href="dcm-priority-density-44.css?v=261114-44">',
+                '<link rel="stylesheet" href="dcm-secondary-navy-44.css?v=261114-44">']
+          embedded='<link rel="stylesheet" href="dcm-pusmantap-secondary-navy-44.css?v=261114-44">'
+          assert all(x not in a for x in tags) and embedded not in t
+          ah=a.lower().find('</head>');th=t.lower().find('</head>')
+          assert ah>0 and th>0
+          a2=a[:ah]+'\n'.join(tags)+'\n'+a[ah:]
+          t2=t[:th]+embedded+'\n'+t[th:]
+          assert a2.replace('\n'.join(tags)+'\n','',1)==a
+          assert t2.replace(embedded+'\n','',1)==t
+          app.write_text(a2,'utf8')
+          tp.write_text(t2,'utf8')
+          print('PASS: exactly two main stylesheets and one embedded Pusmantap stylesheet linked. Original DOM, data and JavaScript unchanged.')
+          PY
+      - name: Check visual geometry, submenu states and existing business features
+        run: |
+          node tests/dcm-priority-density-secondary-navy-44.test.cjs
+          node tests/dcm-priority-collapsible-filter-43.test.cjs
+          node tests/dcm-option1-guide-42.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish small scoped CSS changes to existing GitHub Pages application
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap.html
+          git commit -m "style(dcm): compact Prioritas cards and align active submenus to navy"
+          git push origin HEAD:main
