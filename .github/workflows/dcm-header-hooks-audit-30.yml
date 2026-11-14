@@ -22,7 +22,7 @@ jobs:
             matches=[m.start() for m in re.finditer(re.escape(name),s)]
             print('===',name,'hits',len(matches),'===')
             for i in matches[:6]:print('ENTRY',s[max(0,i-300):i+1250].replace(chr(10),' ')[:1550])
-          for marker in ['const pill=document.getElementById(\\'userPill\\')','const badge=document.getElementById(\\'cmRoleBadge\\')','function cmOpenUserManual','cmManualArticleForContext(']:
+          for marker in ["const pill=document.getElementById(", "const badge=document.getElementById(", "function cmOpenUserManual", "cmManualArticleForContext("]:
             hits=[m.start() for m in re.finditer(re.escape(marker),s)]
             print('=== CODE BLOCK',marker,'hits',len(hits))
             for i in hits[-3:]:print('CODE',s[max(0,i-160):i+3200].replace(chr(10),' ')[:3400])
