@@ -1,0 +1,58 @@
+name: DCM 55 Validate and Activate Team Unit Search Toolbar
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-profile-unit-55.yml'
+      - 'tests/dcm-profile-unit-toolbar-55.test.cjs'
+      - 'mt-team-exact/dcm-profile-unit-toolbar-55.js'
+      - 'mt-team-exact/dcm-profile-unit-toolbar-55.css'
+permissions:
+  contents: write
+jobs:
+  validate-and-activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify full prechange backup branch
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-55:refs/remotes/origin/backup/261115-DCM-55
+          git archive --format=zip --output=/tmp/261115-DCM-55.zip origin/backup/261115-DCM-55
+          unzip -t /tmp/261115-DCM-55.zip | tail -1
+      - name: Validate scripts and combined filters
+        run: |
+          node --check mt-team-exact/dcm-profile-unit-toolbar-55.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-profile-unit-toolbar-55.test.cjs
+          node tests/dcm-profile-individual-54.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+      - name: Activate new Tim Pusmantap filter bundle without touching original MT source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          frame=Path('tim-pusmantap-mt.html')
+          f=frame.read_text('utf-8')
+          old='dcm-mt-team-compat-46.js?v=261115-54'
+          new='dcm-mt-team-compat-46.js?v=261115-55'
+          assert f.count(old)==1 and new not in f
+          frame.write_text(f.replace(old,new,1),'utf-8')
+          index=Path('index.html')
+          s=index.read_text('utf-8')
+          old='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-54'
+          new='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-55'
+          assert s.count(old)==1 and new not in s
+          index.write_text(s.replace(old,new,1),'utf-8')
+          print('PASS: filtered profile bundle cache refresh only')
+          PY
+          git diff --check
+      - name: Deploy passing toolbar changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "feat(dcm): activate consolidated mode team and search toolbar v55"
+          git push origin HEAD:main
