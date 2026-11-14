@@ -1,0 +1,22 @@
+name: DCM 35 full backup before compact Squad toolbar
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-squad-backup-35.yml']
+permissions: {contents: read}
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create original full ZIP from immutable prechange branch
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-35:refs/remotes/origin/backup/261114-DCM-35
+          git archive --format=zip --output=/tmp/261114-DCM-35.zip origin/backup/261114-DCM-35
+          unzip -t /tmp/261114-DCM-35.zip | tail -1
+          test -s /tmp/261114-DCM-35.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-35
+          path: /tmp/261114-DCM-35.zip
+          retention-days: 30
