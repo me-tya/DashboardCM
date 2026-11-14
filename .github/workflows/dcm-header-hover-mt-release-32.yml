@@ -1,0 +1,59 @@
+name: Release DCM 32 header hover colors from Modul Transformasi
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-hover-mt-release-32.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify complete untouched DCM-32 backup before changes
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-32:refs/remotes/origin/backup/261114-DCM-32
+          git archive --format=zip --output=/tmp/261114-DCM-32.zip origin/backup/261114-DCM-32
+          unzip -t /tmp/261114-DCM-32.zip | tail -1
+          test -s /tmp/261114-DCM-32.zip
+      - name: Compare exact Modul Transformasi hover tokens and smoke-test existing features
+        run: |
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-header-reference-30.js
+          node --check dcm-guide-header.js
+      - name: Enable hover stylesheet without changing HTML controls, data or handlers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          assert s.count('dcm-header-reference-30.css?v=261114-30')==1
+          assert s.count('dcm-login-photo-31.css?v=261114-31')==1
+          tag='<link rel="stylesheet" href="dcm-header-hover-mt-32.css?v=261114-32">'
+          assert tag not in s
+          head=s.lower().find('</head>')
+          body=s.lower().find('<body')
+          assert head>0 and body>head
+          result=s[:head]+tag+'\n'+s[head:]
+          assert result.replace(tag+'\n','',1)==s
+          assert result.count(tag)==1
+          p.write_text(result,encoding='utf8')
+          print('PASS one hover-only stylesheet attached. Previous UI logic unchanged.')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Commit and publish MT-parity header hover
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): match MT hover white/navy help-book gold/navy bell and transparent Guide"
+          git push origin HEAD:main
