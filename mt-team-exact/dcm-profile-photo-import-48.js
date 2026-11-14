@@ -91,6 +91,15 @@ function analyze(p,roster){
  if(conflict.length)return {kind:'conflict',reason:'Nama sama tetapi NIP berbeda: jangan timpa sebelum data diperbaiki',candidates:sameName};
  if(sameName.length===1)return {kind:'update',index:sameName[0],reason:'Nama lengkap sama',candidates:sameName};
  if(sameName.length>1)return {kind:'review',reason:'Nama cocok pada beberapa pegawai',candidates:sameName};
+ // Unique abbreviation of the same full name, such as "Dessy Monica" vs
+ // "Dessy Monica Wirsal". Do not equate mere spelling similarity.
+ const abbreviations=roster.map((x,i)=>{
+  const a=normName(p.nl||p.n),b=normName(x.nl||x.n),short=a.length<b.length?a:b,long=a.length<b.length?b:a;
+  const valid=short.split(' ').length>=2&&long.startsWith(short+' ')&&!N(x.nip)||false;
+  return valid?i:-1;
+ }).filter(i=>i>=0);
+ if(abbreviations.length===1)return {kind:'update',index:abbreviations[0],reason:'Nama lengkap / singkatan cocok unik',candidates:abbreviations};
+ if(abbreviations.length>1)return {kind:'review',reason:'Beberapa nama singkat cocok. Periksa manual.',candidates:abbreviations};
  const close=roster.map((x,i)=>names(x).some(z=>all.some(v=>similar(v,z)))?i:-1).filter(i=>i>=0);
  if(close.length)return {kind:'review',reason:'Nama mirip / kemungkinan orang yang sama',candidates:close};
  return {kind:'new',reason:'Belum ditemukan pada daftar pegawai',candidates:[]};
