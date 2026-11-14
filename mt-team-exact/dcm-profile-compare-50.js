@@ -4,7 +4,8 @@
 const api=w.MT_PROFILE_IMPORT;if(!api||api.openSideBySide)return;
 const T=x=>String(x==null?'':x).trim(),esc=x=>w.esc(T(x)),empty=x=>x==null||x===''||Array.isArray(x)&&!x.length;
 const copy=x=>JSON.parse(JSON.stringify(x));
-const FIELDS=[['n','Nama lengkap'],['nip','NIP'],['foto','Foto profil'],['nk','Nama panggilan'],['nl','Nama lengkap lainnya'],['jab','Jabatan'],['pang','Pangkat / golongan'],['org','Unit organisasi'],['unitAsal','Unit asal'],['peran','Peran'],['emailK','Email kantor'],['emailP','Email pribadi'],['hp','Nomor HP'],['keahlian','Keahlian'],['jenis','Jenis pegawai'],['jenisSementara','Jenis penugasan'],['penugasan','Penugasan'],['penMulai','Mulai penugasan'],['penSelesai','Selesai penugasan'],['status','Status kerja'],['statusKerja','Kehadiran'],['statusMulai','Status mulai'],['statusSelesai','Status selesai'],['catatanStatus','Catatan status'],['alasanOff','Alasan nonaktif'],['jenisCuti','Jenis cuti'],['wfhDays','Jadwal WFH'],['cuti','Rencana cuti'],['rangkap','Rangkap tugas']];
+const validNip=x=>/^\d{18}$/.test(T(x).replace(/\D/g,''))?T(x).replace(/\D/g,''):'';
+const FIELDS=[['n','Nama lengkap'],['nip','NIP (18 digit)'],['nik','NIK (16 digit)'],['foto','Foto profil'],['nk','Nama panggilan'],['nl','Nama lengkap lainnya'],['jab','Jabatan'],['pang','Pangkat / golongan'],['org','Unit organisasi'],['unitAsal','Unit asal'],['peran','Peran'],['emailK','Email kantor'],['emailP','Email pribadi'],['hp','Nomor HP'],['keahlian','Keahlian'],['jenis','Jenis pegawai'],['jenisSementara','Jenis penugasan'],['penugasan','Penugasan'],['penMulai','Mulai penugasan'],['penSelesai','Selesai penugasan'],['status','Status kerja'],['statusKerja','Kehadiran'],['statusMulai','Status mulai'],['statusSelesai','Status selesai'],['catatanStatus','Catatan status'],['alasanOff','Alasan nonaktif'],['jenisCuti','Jenis cuti'],['wfhDays','Jadwal WFH'],['cuti','Rencana cuti'],['rangkap','Rangkap tugas']];
 const STRUCT=[['pt','Tim utama'],['ptx','Tim tambahan'],['asg','Unit dampingan']];
 const STATUS={update:'Cocok',review:'Perlu verifikasi',conflict:'Konflik NIP',new:'Belum terdaftar'};
 const photo=x=>/^(?:data:image\/(?:png|jpe?g|webp);base64,|https:\/\/)/i.test(T(x))?T(x):'';
@@ -47,7 +48,7 @@ function open(){
  }
  const wrap=hostDocument.createElement('div');wrap.className='ov cmp50';
  wrap.innerHTML='<div class="md" role="dialog" aria-modal="true" aria-label="Bandingkan data Dashboard CM dan Modul Transformasi">'+
- '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>Pilih sumber data per pegawai dan per kolom</small></div><input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi"></header>'+
+ '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>NIP, foto &amp; profil Modul Transformasi menjadi acuan utama</small></div><div class="cmp-upload-actions"><button type="button" id="cmp-all-mt" disabled title="Gunakan data Modul Transformasi untuk pegawai cocok dan tambah yang benar-benar baru; nama mirip tetap ditinjau">Gunakan data MT untuk semua</button><input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi"></div></header>'+
  '<main class="cmp-main"><aside class="cmp-aside"><div id="cmp-stats">Pilih JSON Modul Transformasi.</div><input id="cmp-search" placeholder="Cari nama / NIP…" disabled><div id="cmp-people"></div></aside>'+
  '<section id="cmp-panel" class="cmp-panel"><p class="cmp-placeholder">Belum ada profil untuk dibandingkan.</p></section></main>'+
  '<footer class="cmp-footer"><span id="cmp-footer-text">Belum ada perubahan.</span><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
@@ -61,7 +62,7 @@ function open(){
  function existing(i){const v=state.choices[i];return /^existing:\d+$/.test(v||'')?roster()[+v.slice(9)]||null:null}
  function initChoices(i){
   const src=get().profiles[i],dst=existing(i),a=teams(src,dst,w.kpCfg(),get().kp);
-  if(!state.fields[i])state.fields[i]=Object.fromEntries(FIELDS.slice(1).map(([k])=>[k,empty(dst?.[k])&&!empty(src[k])?'mt':'dcm']));
+  if(!state.fields[i])state.fields[i]=Object.fromEntries(FIELDS.slice(1).map(([k])=>[k,!empty(src[k])?'mt':'dcm']));
   if(!state.structure[i])state.structure[i]=Object.fromEntries(STRUCT.map(([k])=>[k,empty(a[k][0])&&!empty(a[k][1])?'mt':'dcm']));
  }
  function counts(){
@@ -86,7 +87,7 @@ function open(){
   let out='<option value="skip"'+(current==='skip'?' selected':'')+'>Lewati pegawai ini</option>';
   for(const idx of a.candidates){
    const target=roster()[idx];
-   if(!target||a.kind==='conflict'||p.nip&&target.nip&&p.nip!==target.nip)continue;
+   if(!target||a.kind==='conflict'||validNip(p.nip)&&validNip(target.nip)&&validNip(p.nip)!==validNip(target.nip))continue;
    out+='<option value="existing:'+idx+'"'+(current==='existing:'+idx?' selected':'')+'>Perbarui '+esc(target.n)+(target.nip?' ('+esc(target.nip)+')':'')+'</option>';
   }
   if(a.kind!=='conflict'){
@@ -94,7 +95,7 @@ function open(){
    for(let idx=0;idx<roster().length;idx++){
     if(excluded.has(idx))continue;
     const target=roster()[idx];
-    if(!target||p.nip&&target.nip&&p.nip!==target.nip)continue;
+    if(!target||validNip(p.nip)&&validNip(target.nip)&&validNip(p.nip)!==validNip(target.nip))continue;
     out+='<option value="existing:'+idx+'"'+(current==='existing:'+idx?' selected':'')+'>Cocokkan manual: '+esc(target.n)+(target.nip?' ('+esc(target.nip)+')':'')+'</option>';
    }
   }
@@ -112,8 +113,8 @@ function open(){
    '<div class="cmp-toolbar"><span>Klik nilai yang ingin dipakai</span><button data-cmp-bulk="dcm">Semua Dashboard CM</button><button data-cmp-bulk="fill">Isi yang kosong</button><button data-cmp-bulk="mt">Semua Modul Transformasi</button></div>'+
    '<div class="cmp-rows"><div class="cmp-row cmp-sticky"><strong>Data profil</strong><b>Dashboard CM (saat ini)</b><b>Modul Transformasi (JSON)</b></div>';
   for(const [k,label] of FIELDS){
-   const left=k==='n'?dst?.n:dst?.[k],right=k==='n'?p.n:p[k],side=state.fields[i][k]||'dcm';
-   const conflict=k==='nip'&&!empty(left)&&!empty(right)&&T(left)!==T(right);
+   const left=k==='n'?dst?.n:k==='nik'?(dst?.nik||(/^[0-9]{16}$/.test(T(dst?.nip))?dst.nip:'')):k==='nip'&&!validNip(dst?.nip)?'':dst?.[k],right=k==='n'?p.n:p[k],side=state.fields[i][k]||'dcm';
+   const conflict=k==='nip'&&!!validNip(left)&&!!validNip(right)&&validNip(left)!==validNip(right);
    html+='<div class="cmp-row"><label>'+label+(conflict?' ⚠':'')+'</label>'+
      (k==='n'?'<div class="cmp-fixed">'+present(k,left)+'</div><div class="cmp-fixed">'+present(k,right)+'</div>':
      valueBtn(k,'dcm',left,side,!chosen)+valueBtn(k,'mt',right,side,!chosen||empty(right)||conflict))+'</div>';
@@ -131,7 +132,7 @@ function open(){
    '<label><input id="cmp-contacts" type="checkbox" '+(state.contacts?'checked':'')+'> Sertakan kontak PMO/CMO Unit (hanya lengkapi yang aman)</label>'+
    (manualMatch?'<label style="margin-left:12px;color:#8c5c14"><input id="cmp-manual-check" type="checkbox" '+(state.manualApproved[i]?'checked':'')+'> Saya pastikan kedua profil ini orang yang sama</label>':'')+
    '</div>'+
-   '<span>'+(analysis.kind==='review'?'Nama mirip: periksa pegawai tujuan secara manual.':analysis.kind==='conflict'?'NIP berbeda: tidak boleh digabung.':
+   '<span>'+(analysis.kind==='review'?'Nama mirip: periksa pegawai tujuan secara manual.':analysis.kind==='conflict'?'NIP resmi 18 digit berbeda: perlu verifikasi.':
     analysis.kind==='new'?'Belum ada pasangan yakin. Pilih Tambah Baru hanya jika memang belum terdaftar.':
     'Data tidak berubah sampai kamu mengonfirmasi penyimpanan.')+'</span></div>';
   $('#cmp-panel').innerHTML=html;
@@ -148,7 +149,7 @@ function open(){
   const bulk=e.target.closest('[data-cmp-bulk]');if(bulk){
    const mode=bulk.dataset.cmpBulk,p=get().profiles[state.active],dst=existing(state.active),result=state.fields[state.active];
    for(const [k] of FIELDS.slice(1)){
-    const conflict=k==='nip'&&dst?.nip&&p.nip&&dst.nip!==p.nip;
+    const conflict=k==='nip'&&validNip(dst?.nip)&&validNip(p.nip)&&validNip(dst.nip)!==validNip(p.nip);
     result[k]=mode==='dcm'?'dcm':mode==='fill'?empty(dst?.[k])&&!empty(p[k])?'mt':'dcm':!empty(p[k])&&!conflict?'mt':'dcm';
    }renderPerson();
   }
@@ -158,6 +159,16 @@ function open(){
   if(e.target.id==='cmp-contacts')state.contacts=e.target.checked;
   if(e.target.id==='cmp-manual-check')state.manualApproved[state.active]=e.target.checked;
  });
+ $('#cmp-all-mt').onclick=()=>{
+  if(!get())return;
+  get().profiles.forEach((p,i)=>{
+   const result=api.analyze(p,roster());
+   state.choices[i]=result.kind==='update'?'existing:'+result.index:result.kind==='new'?'add':'skip';
+   delete state.fields[i];delete state.structure[i];state.manualApproved[i]=false;
+  });
+  rerender();
+  w.toast('Data Modul Transformasi dipilih untuk profil yang cocok dan yang benar-benar baru. Nama mirip / konflik tetap perlu diperiksa.');
+ };
  $('#cmp-search').oninput=renderList;
  $('#cmp-file').onchange=async e=>{
   const f=e.target.files?.[0];if(!f)return;
@@ -167,6 +178,7 @@ function open(){
    const data=api.parse(JSON.parse(await f.text()));wrap._data=data;
    state.active=0;state.stage=1;state.choices={};state.fields={};state.structure={};state.manualApproved={};state.contacts=false;
    state.baseline=JSON.stringify(roster());
+   $('#cmp-all-mt').disabled=false;
    data.profiles.forEach((p,i)=>{const a=api.analyze(p,roster());state.choices[i]=a.kind==='update'?'existing:'+a.index:'skip'});
    $('#cmp-search').disabled=false;rerender();
   }catch(err){$('#cmp-stats').textContent='JSON tidak terbaca';$('#cmp-panel').textContent='Gagal membaca data: '+(err.message||err)}
