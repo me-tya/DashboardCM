@@ -1,0 +1,48 @@
+name: DCM 38 full ZIP backup and Prioritas submenu audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-priority-subtabs-audit-38.yml'
+permissions:
+  contents: read
+jobs:
+  backup-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Make entire prechange repository ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-38:refs/remotes/origin/backup/261114-DCM-38
+          git archive --format=zip --output=/tmp/261114-DCM-38.zip origin/backup/261114-DCM-38
+          unzip -t /tmp/261114-DCM-38.zip | tail -1
+          test -s /tmp/261114-DCM-38.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-38
+          path: /tmp/261114-DCM-38.zip
+          retention-days: 30
+      - name: Read exactly Prioritas submenu markup and competing CSS
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          begin=s.find('function renderPriority(){')
+          end=s.find('/* ---------- Form proyek ---------- */',begin)
+          body=s[begin:end]
+          for term in ['class="cm-survey-subtabs prio-subtabs"','class="prio-subtabs"','class="cm-survey-subtab"','data-prio-tab','Monev Indikator','Referensi & Formula','Kriteria & Bobot']:
+            hits=list(re.finditer(re.escape(term),body,re.I))
+            print('MARKUP',term,'count',len(hits))
+            for h in hits[:3]:print('SNIP',body[max(0,h.start()-250):h.start()+1200].replace('\n',' ')[:1450])
+          for selector in ['.prio-subtabs','.cm-survey-subtabs','.cm-survey-subtab','.prio-tab','.prio-hero']:
+            print('CSS',selector)
+            for m in list(re.finditer(re.escape(selector),s))[-9:]:
+              x=s[m.start():m.start()+650]
+              if '{' in x and x.find('{')<160:print('SNIP',x.replace('\n',' ')[:650])
+          for p in ['dcm-knowledge-priority-compact-37.css','dcm-navigation-all-menus-25.css','dcm-approved-navigation.css']:
+            css=Path(p).read_text('utf8')
+            for m in list(re.finditer('prio-subtabs',css)):
+              print('EXTERNAL',p,css[max(0,m.start()-140):m.start()+410].replace('\n',' '))
+          print('LINKS',re.findall(r'<link rel="stylesheet" href="(dcm-[^"]+)"',s)[-12:])
+          PY
