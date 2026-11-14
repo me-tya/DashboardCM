@@ -1,0 +1,52 @@
+name: DCM 44 Full Backup and Submenu Style Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-submenu-audit-44.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify complete pre-change ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-44:refs/remotes/origin/backup/261114-DCM-44
+          git archive --format=zip --output=/tmp/261114-DCM-44.zip origin/backup/261114-DCM-44
+          unzip -t /tmp/261114-DCM-44.zip | tail -1
+          test -s /tmp/261114-DCM-44.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-44
+          path: /tmp/261114-DCM-44.zip
+          retention-days: 30
+      - name: Audit all 9 menu subnavigation selectors, active styling and sizes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,collections
+          s=Path('index.html').read_text('utf8')
+          print('INDEX CHARS',len(s))
+          classes=collections.Counter()
+          for m in re.finditer(r'class=(["\x27])(.+?)\1',s):
+            for c in m.group(2).split():
+              if re.search(r'tab|subnav|nav-|segment|switcher|filter|prio-kpi',c,re.I):
+                classes[c]+=1
+          print('\n=== TAB RELATED CLASSES TOP 125 ===')
+          for k,v in classes.most_common(125):print(k,v)
+          terms=['cm-survey-subtabs','cm-survey-subtab','prio-subtabs','tab-analytics','tab-table','tab-tasks','tab-calendar','tab-knowledge','tab-survey','tab-contact','tab-resource','tab-pusmantap','data-subtab','data-prio-tab','data-cm-tab','active-subtab','data-contact-tab','data-knowledge-tab','class="nav-tabs','class="subtabs','class="tabs','subnav','subtab']
+          for key in terms:
+            matches=list(re.finditer(re.escape(key),s,re.I))
+            print('\n=== TERM',key,'COUNT',len(matches),'===')
+            for m in matches[-7:]:
+              segment=s[max(0,m.start()-210):m.start()+500]
+              print('LINE',s.count('\n',0,m.start())+1,'SNIP',segment.replace('\n',' ')[:720])
+          print('\n=== EXTERNAL CSS ===')
+          links=re.findall(r'<link[^>]+href="([^"]+\.css[^"]*)"',s)
+          for l in links[-60:]:print('LINK',l)
+          print('\n=== PRIORITY COMPACT CSS RULES ===')
+          txt=Path('dcm-priority-original-mockup-40.css').read_text('utf8')
+          for tok in ['.prio-page{','.prio-kpi-stage{','.prio-kpi-stage > .prio-kpis{','.prio-kpis > button.prio-kpi{','.prio-page > .prio-hero{','.cm-survey-subtabs.prio-subtabs{']:
+            for m in list(re.finditer(re.escape(tok),txt))[:3]:
+              print('PRIORITY',tok,txt[m.start():m.start()+800].replace('\n',' '))
+          PY
