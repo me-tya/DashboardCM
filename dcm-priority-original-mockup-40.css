@@ -41,7 +41,7 @@
   border-radius:2px;
   background:#D7AE42;
 }
-#tab-priority .prio-page > .prio-hero > .prio-title-group{
+#tab-priority .prio-page > .prio-hero > div.prio-title-group:first-child:has(h2){
   display:flex!important;
   flex:1 1 430px!important;
   flex-direction:column!important;
