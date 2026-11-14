@@ -1,0 +1,22 @@
+name: DCM 46 Prechange Full ZIP Backup
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-46.yml']
+permissions: {contents: read}
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive entire DCM repository before MT parity update
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-46:refs/remotes/origin/backup/261114-DCM-46
+          git archive --format=zip --output=/tmp/261114-DCM-46.zip origin/backup/261114-DCM-46
+          unzip -t /tmp/261114-DCM-46.zip | tail -1
+          test -s /tmp/261114-DCM-46.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-46
+          path: /tmp/261114-DCM-46.zip
+          retention-days: 30
