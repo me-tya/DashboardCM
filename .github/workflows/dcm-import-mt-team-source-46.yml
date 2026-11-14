@@ -1,0 +1,41 @@
+name: Import verbatim MT Tim Pusmantap source into Dashboard CM
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-import-mt-team-source-46.yml']
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Check backup branch exists and provides full unchanged archive
+        run: |
+          git fetch origin backup/261114-DCM-46
+          git archive --format=zip --output=/tmp/261114-DCM-46.zip FETCH_HEAD
+          unzip -t /tmp/261114-DCM-46.zip | tail -1
+      - name: Fetch exact MT version and copy without editing any source
+        run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt-upstream
+          git -C /tmp/mt-upstream fetch --depth 1 origin 2c2077757cac1215db74804f80078888ea1e7b46
+          git -C /tmp/mt-upstream checkout -q 2c2077757cac1215db74804f80078888ea1e7b46
+          mkdir -p mt-team-exact/source
+          cp /tmp/mt-upstream/mt-tim.js mt-team-exact/source/mt-tim.js
+          cp /tmp/mt-upstream/mt-tim2.js mt-team-exact/source/mt-tim2.js
+          cp /tmp/mt-upstream/mt-libur.js mt-team-exact/source/mt-libur.js
+          cp /tmp/mt-upstream/mt-foto-frame.js mt-team-exact/source/mt-foto-frame.js
+          cp /tmp/mt-upstream/mt-dcm-squad-import.js mt-team-exact/source/mt-dcm-squad-import.js
+          for f in mt-tim.js mt-tim2.js mt-libur.js mt-foto-frame.js mt-dcm-squad-import.js; do
+            cmp "/tmp/mt-upstream/$f" "mt-team-exact/source/$f"
+            node --check "mt-team-exact/source/$f"
+          done
+          echo "Verified 5 original MT source files byte-for-byte unchanged."
+          sha256sum mt-team-exact/source/*.js
+          git add mt-team-exact/source
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "port(dcm): vendor exact unmodified MT Tim Pusmantap feature modules"
+          git push origin HEAD:main
