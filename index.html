@@ -2886,6 +2886,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <link rel="stylesheet" href="dcm-cra-compact-27.css?v=261114-28">
 <link rel="stylesheet" href="dcm-brand-vertical-center-29.css?v=261114-29">
 <link rel="stylesheet" href="dcm-header-reference-30.css?v=261114-30">
+<link rel="stylesheet" href="dcm-login-photo-31.css?v=261114-31">
 </head>
 <body>
 
@@ -5639,7 +5640,27 @@ function cmUpdateUserPill(){
   if(!pill)return;
   pill.classList.toggle('hidden',!active||!p);loginBtn?.classList.toggle('hidden',active);
   if(!p||!active)return;
-  const av=document.getElementById('userAvatar');if(av)av.textContent=cmInitials(p.name);
+  const av=document.getElementById('userAvatar');if(av){
+  const initials=cmInitials(p.name),user=window.fbAuth?.currentUser;
+  const urls=(p.kind==='google'&&user&&!user.isAnonymous)
+    ? [user.photoURL,...(Array.isArray(user.providerData)?user.providerData.map(prov=>prov?.photoURL):[])]
+    : [];
+  const photo=urls.find(url=>typeof url==='string'&&/^https:\/\//i.test(url.trim()));
+  const source=photo?photo.trim():'',existing=av.querySelector('img.dcm-login-avatar-photo');
+  if(!source||av.dataset.photoFailed===source){
+    if(existing||av.textContent!==initials)av.textContent=initials;
+  }else if(!existing||existing.src!==source){
+    av.textContent=initials;
+    const img=document.createElement('img');
+    img.className='dcm-login-avatar-photo';
+    img.alt='';
+    img.referrerPolicy='no-referrer';
+    img.decoding='async';
+    img.onerror=()=>{if(img.parentNode===av){av.dataset.photoFailed=source;av.textContent=initials;}};
+    img.src=source;
+    av.replaceChildren(img);
+  }
+}
   const nm=document.getElementById('userName');if(nm){nm.textContent=p.name;nm.title=p.kind==='guest'?`${p.name} · ${p.email}${p.unit?' · '+(p.unit==='EKSTERNAL'?(p.instansi||'Eksternal'):cmUnitByCode(p.unit)?.short||p.unit):''}`:`${p.name} · ${p.email}`;}
   const lo=document.getElementById('btnLogout');if(lo){lo.title=uiText('Sign out','Keluar');}
 }
