@@ -1,0 +1,38 @@
+name: DCM 30 account, manual and role function audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-hooks-audit-30.yml']
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          js=Path('dcm-guide-header.js').read_text('utf8')
+          for name in ['cmOpenUserManual','cmManualArticleForContext','cmOpenGlobalHelp','cmOpenHelp',
+                       'cmOpenUserGuide','cmUnitByCode','cmAuthProfile','cmCurrentUser',
+                       'function cmRenderAuthPill','function cmRefreshAuthPill','function cmSyncAuth',
+                       'function cmRoleLabel','function cmApplyAccessRole','function cmSetAccessRole',
+                       'function cmSetRole','btnGlobalHelp']:
+            matches=[m.start() for m in re.finditer(re.escape(name),s)]
+            print('===',name,'hits',len(matches),'===')
+            for i in matches[:6]:print('ENTRY',s[max(0,i-300):i+1250].replace(chr(10),' ')[:1550])
+          for marker in ['const pill=document.getElementById(\\'userPill\\')','const badge=document.getElementById(\\'cmRoleBadge\\')','function cmOpenUserManual','cmManualArticleForContext(']:
+            hits=[m.start() for m in re.finditer(re.escape(marker),s)]
+            print('=== CODE BLOCK',marker,'hits',len(hits))
+            for i in hits[-3:]:print('CODE',s[max(0,i-160):i+3200].replace(chr(10),' ')[:3400])
+          print('=== SCROLLABLE JS CSS tail ===')
+          for item in ['#authPill','#userPill','#btnLangToggle','#btnAccessAdmin','.cm-user-av','.cm-role-badge']:
+            matches=[m.start() for m in re.finditer(re.escape(item),Path('dcm-header-mt-ghost-26.css').read_text('utf8'))]
+            print('HEADER CSS',item,len(matches))
+          print('=== JS ROLE LABEL CONTEXT ===')
+          for term in ['cmRoleLabel(role)',"profile.unit","p.unit","p.instansi","btnGoogleLogin",'cmRoleLabel(r)']:
+            hits=list(re.finditer(re.escape(term),s))
+            print(term,len(hits))
+            for m in hits[-3:]:print(s[max(0,m.start()-180):m.start()+370].replace(chr(10),' ')[:550])
+          PY
