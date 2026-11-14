@@ -48,6 +48,20 @@ function actMaster(){
  if(!Array.isArray(d.master.unit))d.master.unit=[];
  return d.master
 }
+/* Exact original Modul Transformasi name-shortening helpers. Required by
+ * mt-tim.js when a unit is assigned to multiple PMO/CMO people. */
+function picAutoShort(n){
+ const w=String(n||'').trim().split(/\s+/).filter(Boolean);
+ if(w.length<3)return w.join(' ');
+ const L=w.map(x=>x.replace(/[^\p{L}]/gu,'').length);
+ const mx=Math.max(...L),c=L.map((l,i)=>l===mx?i:-1).filter(i=>i>=0),i=c.length>1?c[1]:c[0];
+ w[i]=w[i].charAt(0).toUpperCase()+'.';return w.join(' ');
+}
+function picShort(n,M){
+ const p=((M||actMaster()).pic||[]).find(x=>x.n===n);
+ const c=p&&String(p.sing||'').trim();
+ return c||picAutoShort(n);
+}
 function actMasterSave(obj){oneDoc('cfg-master','master',{}).master=obj;save()}
 function kpCfg(){
  const k=oneDoc('cfg-kp','kp',{}).kp;
