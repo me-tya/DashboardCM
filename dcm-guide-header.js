@@ -10,33 +10,56 @@
   var mutedTitles=new Map();
   try{enabled=localStorage.getItem(KEY)!=='off'}catch(e){enabled=true}
 
+  /* Guide copy audited against actual Dashboard CM functionality (DCM-42).
+     Every entry states the mechanism and a limitation; none is a menu tautology. */
   var TABS={
-    analytics:['Menyajikan ringkasan, indikator, grafik dan analisis seluruh agenda CM.','Angka mengikuti data dan filter yang tersedia pada dashboard.'],
-    table:['Mengelola daftar agenda dan aktivitas CM beserta rincian, dokumen dan tindak lanjut.','Perubahan atau penghapusan aktivitas mengikuti hak akses pengguna.'],
-    tasks:['Memantau penugasan, pembagian pekerjaan, progres dan tenggat kegiatan.','Pastikan penanggung jawab serta tenggat telah diverifikasi.'],
-    calendar:['Melihat jadwal agenda menurut tanggal agar benturan waktu mudah diketahui.','Jadwal mengikuti tanggal yang diisi pada masing-masing aktivitas.'],
-    kanban:['Memantau aktivitas menurut kelompok status pada papan kerja.','Perubahan status harus sesuai realisasi pekerjaan.'],
-    matrix:['Membandingkan agenda dan progres melalui tampilan matriks.','Hasil mengikuti data yang tersimpan dan parameter yang dipilih.'],
-    knowledge:['Menyimpan dan menemukan materi, referensi dan pengetahuan kerja tim CM.','Perhatikan klasifikasi informasi serta izin akses sebelum membagikan materi.'],
-    survey:['Menyusun dan memantau Change Readiness Assessment (CRA).','Interpretasi hasil asesmen perlu mempertimbangkan cakupan responden dan bukti pendukung.'],
-    priority:['Menilai dan memetakan prioritas pendampingan manajemen perubahan.','Hasil penilaian mengikuti kriteria, data dan justifikasi yang diisi.'],
-    contact:['Mengelola informasi Squad Team dan jejaring kerja yang mendukung aktivitas.','Periksa ketepatan data kontak sebelum digunakan atau dibagikan.'],
-    resource:['Melihat personel Tim CM, peran dan kapasitas penugasan.','Informasi personel tidak otomatis mengubah surat keputusan atau penugasan resmi.']
+    analytics:['Menghitung KPI aktivitas dan grafik tren, status, layanan serta unit dari catatan Activity yang lolos filter aktif. Klik KPI/grafik untuk menelusuri dasar angkanya.','KPI hanya mencerminkan Activity yang tersimpan dan sesuai periode/filter; angka bukan perkiraan aktivitas mendatang.'],
+    table:['Mencatat agenda perubahan, PIC, status, notula, undangan, surat tugas, materi, dokumentasi dan tindak lanjut. Pencarian serta filter bekerja pada daftar Activity yang sama.','Tambah, ubah, hapus dan pengelolaan lampiran memerlukan hak akses. Riwayat audit tidak menggantikan dokumen penugasan resmi.'],
+    tasks:['Mengelompokkan tugas dan penanggung jawab sehingga progres, tenggat serta tindak lanjut pekerjaan CM dapat dipantau.','Penugasan mengikuti data yang diisi dan hak akses; informasi pada dashboard bukan pengganti penugasan formal.'],
+    calendar:['Menyusun Activity berdasarkan tanggal dan jam untuk melihat agenda harian/bulanan serta kemungkinan benturan jadwal.','Ketepatan kalender bergantung pada tanggal dan waktu Activity; kalender tidak otomatis mengonfirmasi kehadiran peserta.'],
+    kanban:['Mengelompokkan Activity yang sama ke kolom-kolom status agar pekerjaan tertunda, berjalan dan selesai mudah dibandingkan.','Pemindahan status harus mencerminkan realisasi; Workboard bukan basis data terpisah dari Activity.'],
+    matrix:['Menghitung distribusi Activity dalam matriks menurut dimensi, periode dan filter yang dipilih; intensitas warna menggambarkan jumlah kegiatan.','Sel yang lebih gelap berarti aktivitas lebih banyak, bukan otomatis lebih efektif atau lebih penting.'],
+    knowledge:['Mengindeks materi strategi, tautan komunikasi, notula Activity, User Manual dan dokumen CM Reference Library untuk dicari dan digunakan sebagai rujukan.','Teks yang dapat dicari bergantung pada ekstraksi dokumen; periksa relevansi, versi, klasifikasi informasi dan hak akses sebelum memakai hasilnya.'],
+    survey:['Change Readiness Assessment (CRA) mengukur kesiapan menerima perubahan melalui survei sesuai peran dan dimensi, kemudian mengolah skor, critical gate, gap, alasan nilai rendah dan rencana tindak lanjut.','CRA menunjukkan persepsi responden pada waktu ukur; hasil bergantung pada keterwakilan dan kecukupan sampel serta tidak otomatis membuktikan adopsi atau persetujuan implementasi.'],
+    priority:['Menghitung skor pemeringkatan proyek transformasi dari kriteria berbobot dan data manfaat/kesiapan; scope membatasi proyek pembanding, sedangkan snapshot merekam peringkat untuk perbandingan waktu.','Skor menggunakan data dan bobot tersimpan; CRA/POSTER/jumlah pengguna yang kosong dapat diberi nilai netral. Hasil ranking bukan otomatis keputusan penetapan proyek Kementerian.'],
+    contact:['Mencari PIC PMO/CMO dan anggota Squad menurut unit, peran serta kontak; Feedback menandai data yang belum lengkap untuk diperbaiki.','Kontak yang tercatat perlu divalidasi oleh unit; pembaruan direktori tidak otomatis mengubah SK atau struktur formal.'],
+    resource:['Menghitung ketersediaan Tim CM dari profil, jadwal WFH/WFO, cuti dan periode penugasan, sekaligus mengelola peran serta kapasitas personel.','Status yang terlihat mengikuti jadwal/rencana tersimpan dan tanggal berjalan; bukan persetujuan cuti atau pengganti data kepegawaian resmi.'],
+    pusmantap:['Menampilkan direktori pegawai Pusmantap, struktur dan penempatan tim untuk memudahkan identifikasi personel serta koordinasi lintas tim.','Penempatan yang tercatat di aplikasi merupakan referensi kerja dan tidak mengubah keputusan penugasan atau struktur organisasi resmi.']
   };
   var ACTIONS={
-    btnImport:['Mengimpor aktivitas dari berkas Excel sesuai format yang didukung.','Periksa isi dan kemungkinan data duplikat sebelum mengonfirmasi impor.'],
-    btnExport:['Mengunduh data aktivitas menjadi berkas Excel.','Data yang terunduh mengikuti hak akses dan kondisi saat ekspor.'],
-    btnBackupAll:['Mengunduh cadangan data aplikasi, termasuk aktivitas dan data pendukung.','Simpan berkas cadangan di lokasi aman dan jangan dibagikan sembarangan.'],
-    btnRestoreAll:['Memulihkan data aplikasi dari berkas backup.','Verifikasi berkas sebelum pemulihan karena data saat ini dapat terdampak.'],
-    btnReminderCenter:['Membuka pusat notifikasi dan pengingat.','Pengingat mengikuti pengaturan dan data yang tersedia.'],
-    btnLangToggle:['Mengganti bahasa tampilan Indonesia atau Inggris.','Perubahan bahasa tidak mengubah data yang telah tersimpan.'],
-    btnGoogleLogin:['Masuk menggunakan akun Google yang diizinkan.','Akses fitur ditentukan oleh peran pengguna.'],
-    btnLogout:['Keluar dari akun dashboard yang aktif.','Pastikan perubahan data telah tersimpan sebelum keluar.'],
-    btnAccessAdmin:['Membuka pengaturan dan pengelolaan akses pengguna.','Hanya pengguna berwenang yang dapat mengubah konfigurasi dan hak akses.'],
-    cmContextHelp:['Membuka panduan penggunaan dashboard.','Panduan menjelaskan alur fitur tetapi tidak mengubah data.'],
-    btnAdd:['Menambahkan aktivitas CM baru pada daftar agenda.','Lengkapi informasi wajib dan bukti dukung sesuai kebutuhan.'],
-    btnFilterToggle:['Menampilkan atau menyembunyikan filter lanjutan.','Filter hanya mengubah tampilan, bukan menghapus data.'],
-    btnClearSearch:['Menghapus kata pencarian saat ini.','Data dan filter lainnya tetap tersimpan.']
+    btnImport:['Membaca berkas impor, memetakan kolom dan memasukkan Activity setelah proses validasi yang tersedia.','Periksa format, kelengkapan serta duplikasi; berkas impor tidak otomatis menjadi dokumen dinas yang sah.'],
+    btnExport:['Menyusun berkas Excel dari dataset Activity dan filter yang sedang dipilih.','Isi ekspor adalah salinan pada saat tombol ditekan dan tidak ikut memperbarui saat sumber berubah.'],
+    btnBackupAll:['Mengekspor cadangan data Dashboard CM untuk dipulihkan pada saat diperlukan.','Backup berbeda dari snapshot prioritas; simpan berkas dengan aman karena dapat berisi data internal dan lampiran.'],
+    btnRestoreAll:['Membaca berkas cadangan dan mengembalikan data ke penyimpanan aplikasi setelah tahapan konfirmasi.','Restore berpotensi mengubah data yang ada; cek sumber, versi, cakupan dan hak akses sebelum menjalankannya.'],
+    btnReminderCenter:['Mengumpulkan pemberitahuan dan pengingat berbasis data serta tanggal jatuh tempo di dashboard.','Notifikasi hanya mengikuti reminder dan aktivitas yang sudah tercatat; tidak menggantikan pemberitahuan resmi.'],
+    btnLangToggle:['Mengubah label antarmuka Indonesia/Inggris tanpa memodifikasi isi record.','Teks yang diketik pengguna dan lampiran tidak otomatis diterjemahkan.'],
+    btnGoogleLogin:['Memverifikasi akun Google untuk menentukan peran dan kewenangan akses Dashboard CM.','Berhasil login tidak selalu berarti berhak mengedit; izin tetap mengikuti konfigurasi peran.'],
+    btnLogout:['Mengakhiri sesi pengguna yang aktif pada aplikasi.','Pastikan setiap perubahan telah tersimpan dan sinkron sebelum keluar.'],
+    btnAccessAdmin:['Mengelola konfigurasi pengguna, peran dan data referensi sesuai hak yang diberikan.','Pengaturan sensitif hanya tersedia untuk peran yang berwenang dan tidak menggantikan administrasi resmi.'],
+    cmContextHelp:['Membuka artikel User Manual yang dipetakan ke menu/submenu aktif, beserta cara pakai dan batasannya.','Bantuan adalah dokumentasi; tidak menyimpan ataupun mengubah record.'],
+    btnAdd:['Membuat record Activity baru dengan informasi agenda, PIC, jadwal serta dokumen pendukung.','Field wajib dan hak akses harus dipenuhi sebelum data bisa disimpan.'],
+    btnFilterToggle:['Membuka panel filter tambahan untuk membatasi data yang sedang dibaca.','Filter hanya mengubah hasil tampilan, bukan menghapus record sumber.'],
+    btnClearSearch:['Mengosongkan istilah pencarian untuk memperluas hasil yang terlihat.','Filter lain tetap berlaku sampai diubah atau di-reset secara terpisah.'],
+    prioSnapSave:['Menyimpan skor, peringkat, kategori prioritas, status tingkat Kementerian dan nama seluruh proyek terhitung pada waktu itu agar bisa dibandingkan nanti.','Snapshot adalah rekaman perbandingan, bukan backup atau persetujuan proyek; hanya pengguna berhak edit yang dapat menyimpan, maksimal 40 snapshot terbaru.'],
+    prioSnapRen:['Mengganti nama snapshot historis yang dipilih agar periode/peristiwa mudah dikenali.','Mengubah label tidak menghitung ulang skor pada snapshot lama.'],
+    prioSnapDel:['Menghapus snapshot perbandingan yang dipilih dari daftar riwayat.','Penghapusan snapshot tidak menghapus proyek atau hasil pemeringkatan saat ini.']
+  };
+  var PRIORITY_SUBTABS={
+    projects:['Mengurutkan proyek berstatus Usulan/Berjalan menurut skor prioritas, memperlihatkan kartu KPI, filter scope, dan rincian penilaian tiap proyek.','Nilai tergantung kriteria/bobot dan kelengkapan data; proyek Selesai/Ditunda tidak masuk ranking aktif.'],
+    criteria:['Menentukan bobot dan rubrik kriteria penilaian yang dipakai menghitung skor prioritas proyek, termasuk riwayat perubahan bobot.','Mengubah bobot memengaruhi hasil penghitungan berikutnya; gunakan justifikasi serta periksa dampaknya terhadap keterbandingan.'],
+    monev:['Mencatat capaian indikator dan manfaat proyek per periode untuk membandingkan target dengan realisasi.','Data manfaat harus diperbarui; tampilan Monev tidak otomatis memvalidasi manfaat di luar bukti yang dimasukkan.'],
+    reference:['Menampilkan referensi dan rumus penilaian yang mendasari skor kriteria, manfaat dan risiko proyek.','Perubahan teks/rubrik oleh pengguna berwenang perlu divalidasi sebelum dipakai sebagai acuan bersama.']
+  };
+  var PRIORITY_SCOPE={
+    all:['Membandingkan semua proyek berstatus Usulan atau Berjalan dalam pemeringkatan yang sama.','Skor dan jumlah tidak meliputi proyek Selesai/ditunda.'],
+    km:['Membatasi daftar ke proyek yang lolos ambang program dengan data lengkap atau yang diajukan secara manual ke tingkat Kementerian.','Status tingkat Kementerian bukan persetujuan otomatis; data tidak lengkap dapat menghambat kelulusan otomatis.']
+  };
+  var PRIORITY_KPIS={
+    all:['Menampilkan seluruh proyek aktif yang masuk penghitungan peringkat sesuai lingkup saat ini.','Klik hanya mengubah filter daftar; tidak mengubah status atau skor proyek.'],
+    high:['Menyaring proyek dengan skor prioritas tinggi (sekurang-kurangnya 70).','Skor dihitung dari data dan bobot tersimpan; jangan menafsirkan P1 sebagai persetujuan proyek.'],
+    mid:['Menyaring proyek pada rentang prioritas sedang (40 sampai 69).','Rentang mengikuti aturan penilaian aktif, bukan tingkat kesiapan adopsi yang dijamin.'],
+    low:['Menyaring proyek dengan skor prioritas rendah (di bawah 40).','Skor rendah adalah bahan pertimbangan pendampingan, bukan perintah otomatis membatalkan proyek.'],
+    top:['Membuka rincian proyek dengan skor tertinggi di lingkup ranking yang dipilih.','Peringkat teratas dapat berubah jika data, scope atau bobot penilaian berubah.']
   };
   var SELECTOR=[
     '#tabNav button','#appHeader .topbar-actions button',
@@ -61,17 +84,34 @@
     return el;
   }
   function guideOf(el,label){
-    if(el.hasAttribute('data-tab')&&TABS[el.dataset.tab])return TABS[el.dataset.tab];
+    var k=el.dataset||{},s=String(label||'').trim(),title=el.getAttribute('title')||mutedTitles.get(el)||'';
+    if(el.hasAttribute('data-tab')&&TABS[k.tab])return TABS[k.tab];
     if(el.id&&ACTIONS[el.id])return ACTIONS[el.id];
-    var title=el.getAttribute('title')||mutedTitles.get(el)||'';
-    if(title&&title!==label)return [title,'Gunakan fitur sesuai peran dan periksa data sebelum menyimpan perubahan.'];
-    var isNav=!!el.closest('nav,[role="tablist"]')||el.hasAttribute('role')&&el.getAttribute('role')==='tab';
-    if(isNav)return ['Membuka bagian '+label+' pada halaman aktif.','Berpindah menu tidak mengubah data yang telah disimpan.'];
-    if(/hapus|delete|remove/i.test(label))return ['Menghapus item yang dipilih.','Periksa kembali item sebelum menyetujui penghapusan.'];
-    if(/simpan|save|submit|kirim/i.test(label))return ['Menyimpan informasi yang telah diisi.','Periksa kelengkapan dan ketepatan isian sebelum menyimpan.'];
-    if(/unduh|download|ekspor|export/i.test(label))return ['Mengunduh informasi yang tersedia dari fitur ini.','Perhatikan kerahasiaan berkas hasil unduhan.'];
-    if(/ubah|edit|kelola/i.test(label))return ['Membuka pengubahan atau pengelolaan '+label+'.','Perubahan hanya berlaku sesuai hak akses.'];
-    return ['Membuka atau menjalankan fitur '+label+'.','Ikuti petunjuk pada formulir dan pastikan data yang digunakan benar.'];
+    if(k.prioTab&&PRIORITY_SUBTABS[k.prioTab])return PRIORITY_SUBTABS[k.prioTab];
+    if(k.prioKpi&&PRIORITY_KPIS[k.prioKpi])return PRIORITY_KPIS[k.prioKpi];
+    if(k.scope&&PRIORITY_SCOPE[k.scope])return PRIORITY_SCOPE[k.scope];
+    if(k.prioFilter)return ['Membatasi proyek yang terlihat pada daftar menurut status atau kelompok prioritas '+s+'.','Filter dapat dikombinasikan dengan scope dan pencarian; tidak mengubah skor atau menghapus data proyek.'];
+    if(k.prioSort)return ['Mengubah urutan proyek yang ditampilkan menurut '+s+' tanpa menghitung ulang data penilaian.','Urutan yang terlihat dapat berbeda dari peringkat berbasis skor ketika pemilahan diganti.'];
+    if(k.prioView)return ['Mengalihkan data proyek yang sama antara daftar detail dan kuadran skor dibanding perkiraan beban pendampingan.','Kuadran merupakan alat bantu visual; bukan keputusan alokasi personel otomatis.'];
+    if(el.closest('#tab-priority .prio-scope-sel'))return ['Membatasi pemeringkatan ke UE I, program berkelanjutan atau tema yang dipilih.','Hanya proyek dalam lingkup tersebut yang diperbandingkan; mengubah scope tidak mengedit proyek.'];
+    if(/snapshot/i.test(s))return ACTIONS.prioSnapSave;
+    if(/tambah survei|buat survei|add survey/i.test(s))return ['Membentuk survei CRA dengan sistem/perubahan, peran responden, dimensi, pertanyaan dan periode pengukuran yang dipilih.','Setelah respons masuk struktur pertanyaan terkunci; buat versi baru untuk mengubah instrumen.'];
+    if(/survei aktif|active survey/i.test(s))return ['Menampilkan survei yang bisa dibagikan melalui satu tautan atau QR kepada responden lintas peran.','Responden memilih perannya dalam wizard; akses pengelolaan survei tetap dibatasi login/peran.'];
+    if(/analytics|analitik/i.test(s)&&el.closest('#tab-survey'))return ['Mengolah skor CRA per dimensi/role, readiness gate, coverage dan alasan jawaban rendah untuk mencari kebutuhan intervensi.','Nilai tidak representatif bila sampel tidak memadai; peran dengan sampel terlalu kecil tidak ditampilkan sebagai skor rinci.'];
+    if(/action plan|rencana tindak lanjut/i.test(s))return ['Mengubah gap CRA dan critical gate menjadi usulan tindakan dengan PIC, target dan keputusan tindak lanjuti atau tolak.','Tindakan yang disetujui dapat ditautkan ke Activity; penutupan rencana memerlukan penyelesaian aksi.'];
+    if(/bandingkan round|compare rounds/i.test(s))return ['Membandingkan skor CRA antar putaran pengukuran dalam rangkaian perubahan yang sama.','Perbandingan memerlukan instrumen dan populasi yang sebanding; versi historis tidak boleh ditimpa.'];
+    if(/bank pertanyaan|question bank/i.test(s))return ['Mengelola pertanyaan umum dan khusus peran sebagai sumber untuk survei CRA baru, termasuk import/export berbasis ID.','Perubahan bank tidak menulis ulang pertanyaan yang sudah tersimpan pada survei lama.'];
+    if(/feedback/i.test(s)&&el.closest('#tab-contact'))return ['Menghitung kekurangan profil PIC PMO/CMO dan catatan umpan balik per unit, lalu menautkan ke record yang perlu diperbaiki.','Indikator kekurangan mengikuti data direktori; penanda bukan verifikasi otomatis identitas atau jabatan.'];
+    if(/tambah kontak|add contact/i.test(s))return ['Menambahkan PIC PMO/CMO dengan nama, unit, kontak dan peran agar bisa ditemukan oleh tim.','Data baru harus diperiksa dan memerlukan izin edit; tidak otomatis membuat penugasan dinas.'];
+    if(/reset/i.test(s))return ['Mengembalikan kontrol filter pada bagian ini ke nilai default sehingga hasil pencarian lebih lengkap.','Reset filter tidak menghapus record, tetapi bisa menghilangkan pilihan filter yang sedang dipakai.'];
+    if(title&&title!==s&&title.length>12)return [title,'Hasil tindakan mengikuti data aktif, hak akses, dan validasi yang berlaku pada fitur tersebut.'];
+    if(/hapus|delete|remove/i.test(s))return ['Menghapus record yang dipilih dari penyimpanan setelah konfirmasi.','Tinjau item dengan benar; penghapusan dapat menghilangkan relasi atau lampiran terkait.'];
+    if(/simpan|save|kirim|submit/i.test(s))return ['Memvalidasi isian dan menyimpan perubahan ke record yang sedang dikerjakan.','Periksa field wajib, izin edit, dan indikator sinkronisasi sebelum meninggalkan halaman.'];
+    if(/unduh|download|ekspor|export/i.test(s))return ['Menghasilkan berkas dari informasi yang tersedia pada fitur dan pilihan saat ini.','Hasil unduhan adalah salinan pada waktu ekspor dan harus dijaga kerahasiaannya.'];
+    if(/ubah|edit|kelola/i.test(s))return ['Membuka isian record terpilih agar informasi dan dokumen pendukung dapat diperbarui.','Hak edit dibatasi peran; perubahan record tidak otomatis mengesahkan dokumen resmi.'];
+    /* Never generate tautological pseudo-help ("this menu opens this menu").
+       Controls not yet mapped retain their native title and manual entry. */
+    return null;
   }
   function ensureTooltip(){
     if(tooltip)return tooltip;
@@ -108,6 +148,7 @@
     if(!enabled||!el||!el.isConnected)return;
     hide();
     var spec=guideOf(el,labelOf(el));
+    if(!spec)return;
     var tip=ensureTooltip();
     active=el;
     oldTitle=el.hasAttribute('title')?el.getAttribute('title'):null;
