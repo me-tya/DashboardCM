@@ -1,0 +1,38 @@
+name: DCM-43 Immutable Full Backup and Filter Toggle Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-filter-collapse-audit-43.yml']
+permissions: {contents: read}
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZIP full repository exactly before UI change
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-43:refs/remotes/origin/backup/261114-DCM-43
+          git archive --format=zip --output=/tmp/261114-DCM-43.zip origin/backup/261114-DCM-43
+          unzip -t /tmp/261114-DCM-43.zip | tail -1
+          test -s /tmp/261114-DCM-43.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-43
+          path: /tmp/261114-DCM-43.zip
+          retention-days: 30
+      - name: Print precise filter state and renderer anchors
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text('utf8')
+          a=s.index('function renderPriority(){')
+          b=s.index('/* ---------- Form proyek ---------- */',a)
+          part=s[a:b]
+          for key in ["let body='';","if(tab==='projects')body=", "el.querySelector('#prioCmpSnap')","el.querySelector('#prioSnapSave')","const cnt={high:0,mid:0,low:0}","const chips="]:
+            p=part.find(key)
+            print('\nRENDER ANCHOR',key,'count',part.count(key),'pos',p)
+            if p>=0:print(part[p:p+2000].replace('\n',' '))
+          for key in ["let prioUi=","const prioUi=", "filter:'all'","filter:'semua'","sort:'score'","sort:'skor'","function prioLsGet(","dcm-priority-filter-option1-42.css"]:
+            p=s.find(key)
+            print('\nGLOBAL',key,'pos',p,'sample',s[p-50:p+680].replace('\n',' ') if p>=0 else '')
+          PY
