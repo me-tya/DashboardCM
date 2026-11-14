@@ -1,0 +1,14 @@
+name: DCM 37 validate release workflow syntax
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-knowledge-priority-syntax-37.yml']
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse YAML and run actionlint
+        run: |
+          ruby -ryaml -e 'puts YAML.load_file(ARGV[0]).keys.inspect' .github/workflows/dcm-knowledge-priority-release-37.yml
+          go run github.com/rhysd/actionlint/cmd/actionlint@latest -color .github/workflows/dcm-knowledge-priority-release-37.yml
