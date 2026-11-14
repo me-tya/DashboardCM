@@ -139,6 +139,7 @@ function mtMemberFromSnapshot(r){
 }
 function mtLoadSnapshot(m){
  if(!m||m.source!==MT_SOURCE||m.type!=='snapshot')return;
+ document.getElementById('mt-import-bar').hidden=!m.canEdit;
  __mtData=m; TODAY=/^\d{4}-\d{2}-\d{2}$/.test(m.today)?m.today:TODAY;
  ME={role:/superadmin|admin/i.test(mtTxt(m.role))?'SA':(m.canEdit?'PMOK':'KAPUS'),email:mtTxt(m.email)||'dcm',nama:mtTxt(m.user)||'Dashboard CM'};
  const oldUi=S.ui||{},stored=m.manual?.mtState||{};
