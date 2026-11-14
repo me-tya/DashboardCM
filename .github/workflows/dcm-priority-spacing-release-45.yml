@@ -1,0 +1,57 @@
+name: Release DCM 45 Equal Tighter Prioritas Submenu Gaps
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-priority-spacing-release-45.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable DCM-45 full pre-change ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-45:refs/remotes/origin/backup/261114-DCM-45
+          git archive --format=zip --output=/tmp/261114-DCM-45.zip origin/backup/261114-DCM-45
+          unzip -t /tmp/261114-DCM-45.zip | tail -1
+          test -s /tmp/261114-DCM-45.zip
+      - name: Add only a scoped Prioritas spacing stylesheet
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          src=p.read_text('utf8')
+          ref='dcm-priority-density-44.css?v=261114-44'
+          new='<link rel="stylesheet" href="dcm-priority-spacing-45.css?v=261114-45">'
+          assert src.count(ref)==1
+          assert new not in src
+          head=src.lower().find('</head>')
+          assert head>0
+          result=src[:head]+new+'\n'+src[head:]
+          assert result.replace(new+'\n','',1)==src,'Only one link must change'
+          p.write_text(result,'utf8')
+          print('PASS: one CSS link; no JavaScript, markup, data, colors or card sizes changed')
+          PY
+      - name: Validate exact layout and previous features
+        run: |
+          node tests/dcm-priority-spacing-45.test.cjs
+          node tests/dcm-priority-density-secondary-navy-44.test.cjs
+          node tests/dcm-priority-collapsible-filter-43.test.cjs
+          node tests/dcm-option1-guide-42.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish narrower equal padding to Dashboard CM
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): make spacing above and below Prioritas submenu equal and compact"
+          git push origin HEAD:main
