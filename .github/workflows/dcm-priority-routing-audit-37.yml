@@ -1,0 +1,32 @@
+name: DCM 37 inspect exact priority card routing and layout
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-priority-routing-audit-37.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          keys=['function prioListHtml(','function prioFilteredRows(','function prioBindRows(','function prioQuadrantHtml(',
+                'function prioRowHtml(','data-prio-detail','data-prio-expand','prioUi.open.has','prioUi.open.add',
+                '.prio-page{','.prio-hero{','.prio-hero-actions{','.prio-subtabs{','.prio-kpis{',
+                '.prio-list-head{','.knowledge-group{','.knowledge-group h3{','.kb-category-row{',
+                '.cm-notula-knowledge-v2{','.cm-ref-v2.collapsed{']
+          for key in keys:
+            hits=list(re.finditer(re.escape(key),s))
+            print('\n==',key,'hits',len(hits))
+            for m in hits[:5]:print(s[max(0,m.start()-90):m.start()+1900].replace('\n',' ')[:2000])
+          print('\n== PRIORITY CSS OVERRIDES IN EXTERNAL CSS ==')
+          for name in ['dcm-navigation-all-menus-25.css','dcm-approved-navigation.css','dcm-primary-nav-justify-33.css']:
+            txt=Path(name).read_text('utf8')
+            for term in ['#tab-priority','.prio-hero','.prio-page','.prio-kpi','.cm-ref-v2','.knowledge-group']:
+              hits=list(re.finditer(re.escape(term),txt))
+              for m in hits[:5]:print(name,term,txt[max(0,m.start()-90):m.start()+480].replace('\n',' '))
+          PY
