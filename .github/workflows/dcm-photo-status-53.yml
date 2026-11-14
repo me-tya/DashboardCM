@@ -1,0 +1,73 @@
+name: DCM 53 Verify Profile Photos and Firebase Import Feedback
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-photo-status-53.yml']
+permissions:
+  contents: write
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify exact pre-change snapshot
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-53:refs/remotes/origin/backup/261115-DCM-53
+          git archive --format=zip --output=/tmp/261115-DCM-53.zip origin/backup/261115-DCM-53
+          unzip -t /tmp/261115-DCM-53.zip | tail -1
+      - name: Validate JavaScript & migration safety
+        run: |
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check mt-team-exact/dcm-import-all-52.js
+          node --check mt-team-exact/dcm-profile-compare-50.js
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+          node tests/dcm-profile-compare-50.test.cjs
+      - name: Simulate real browser and failed/successful Firebase saves
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-import-all-52.test.cjs
+          node tests/dcm-import-visible-error-53.test.cjs
+          node tests/dcm-import-modal-nik-51.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Enable refreshed scripts only in Tim Pusmantap
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          f=Path('tim-pusmantap-mt.html')
+          s=f.read_text('utf-8')
+          subs={
+            'dcm-profile-compare-50.js?v=261114-52':'dcm-profile-compare-50.js?v=261115-53',
+            'dcm-profile-compare-50.css?v=261114-52':'dcm-profile-compare-50.css?v=261115-53',
+            'dcm-profile-photo-import-48.js?v=261114-52':'dcm-profile-photo-import-48.js?v=261115-53',
+            'dcm-mt-team-compat-46.js?v=261114-52':'dcm-mt-team-compat-46.js?v=261115-53',
+            'dcm-import-all-52.js?v=261114-52':'dcm-import-all-52.js?v=261115-53'
+          }
+          for a,b in subs.items():
+            assert s.count(a)==1,(a,s.count(a))
+            s=s.replace(a,b)
+          f.write_text(s,'utf-8')
+          f=Path('index.html');s=f.read_text('utf-8')
+          subs={
+            'tim-pusmantap-mt.html?embedded=1&amp;v=20261114-52':'tim-pusmantap-mt.html?embedded=1&amp;v=20261115-53',
+            'dcm-pusmantap-bridge.js?v=20261114-52':'dcm-pusmantap-bridge.js?v=20261115-53'
+          }
+          for a,b in subs.items():
+            assert s.count(a)==1,(a,s.count(a))
+            s=s.replace(a,b)
+          f.write_text(s,'utf-8')
+          print('PASS: version bump isolated to Tim Pusmantap')
+          PY
+          git diff --check
+      - name: Commit release and deploy Pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tim-pusmantap-mt.html index.html
+          git commit -m "fix(dcm): show authoritative profile photo sync status and visible Firebase errors"
+          git push origin HEAD:main
