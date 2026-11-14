@@ -1,0 +1,30 @@
+name: DCM 46 Discover free globals of exact MT Team modules
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-free-globals-46.yml']
+permissions: {contents: read}
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          npm --silent install --no-save eslint@9
+          printf "Files exactly copied from MT; list global identifiers needed by their host.\n"
+          node - <<'JS'
+          const {ESLint}=require('eslint');
+          (async()=>{
+            const lint=new ESLint({overrideConfigFile:true,overrideConfig:[{languageOptions:{ecmaVersion:2022,sourceType:'script',globals:{window:'readonly',document:'readonly',console:'readonly',localStorage:'readonly',navigator:'readonly',setTimeout:'readonly',clearTimeout:'readonly',setInterval:'readonly',clearInterval:'readonly',Date:'readonly',Math:'readonly',String:'readonly',Number:'readonly',Object:'readonly',Array:'readonly',JSON:'readonly',Promise:'readonly',RegExp:'readonly',Error:'readonly',Set:'readonly',Map:'readonly',Intl:'readonly',URL:'readonly',URLSearchParams:'readonly',Blob:'readonly',FileReader:'readonly',File:'readonly',Image:'readonly',MutationObserver:'readonly',ResizeObserver:'readonly',CSS:'readonly',HTMLElement:'readonly',XMLHttpRequest:'readonly',fetch:'readonly',location:'readonly',alert:'readonly',confirm:'readonly',atob:'readonly',btoa:'readonly'}},rules:{'no-undef':'error'}}]});
+            for(const file of ['mt-team-exact/source/mt-tim.js','mt-team-exact/source/mt-tim2.js']){
+              const result=(await lint.lintFiles(file))[0];
+              const m=new Map();
+              for(const x of result.messages.filter(x=>x.ruleId==='no-undef')){
+                const name=(x.message.match(/^'([^']+)'/)||[])[1]||x.message;
+                m.set(name,(m.get(name)||0)+1);
+              }
+              console.log('FILE',file);
+              console.log('UNDECLARED_HOST_GLOBALS',JSON.stringify([...m.entries()].sort((a,b)=>b[1]-a[1])));
+            }
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
