@@ -1,0 +1,59 @@
+name: DCM 42 Complete Backup and Feature/Guide Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-feature-guide-audit-42.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive untouched complete DCM source
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-42:refs/remotes/origin/backup/261114-DCM-42
+          git archive --format=zip --output=/tmp/261114-DCM-42.zip origin/backup/261114-DCM-42
+          unzip -t /tmp/261114-DCM-42.zip | tail -1
+          test -s /tmp/261114-DCM-42.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-42
+          path: /tmp/261114-DCM-42.zip
+          retention-days: 30
+      - name: Audit Priority scope/snapshot and application guide documentation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          guide=Path('dcm-guide-header.js').read_text('utf8')
+          f=s.index('function renderPriority(){')
+          stop=s.index('/* ---------- Form proyek ---------- */',f)
+          render=s[f:stop]
+          print('== PRIORITY RENDER RELEVANT ==')
+          for key in ['function prioScopeBarHtml(', 'function prioSnapBarHtml(', 'function prioCapacityHtml(', 'function prioOpenSnapshot(', 'function prioSaveSnapshot(', 'function prioSnapshot(']:
+            positions=[m.start() for m in re.finditer(re.escape(key),s)]
+            print('FUNC',key,'count',len(positions))
+            for pos in positions[:3]:print('BLOCK',s[pos:pos+3500])
+          for key in ['prioSnapBarHtml(can)', 'prioSnap', 'Simpan snapshot','Save snapshot','prioSave','btnSnapshot','saveSnapshot','snapshot']:
+            positions=[m.start() for m in re.finditer(re.escape(key),render,re.I)]
+            print('RENDER',key,'count',len(positions))
+            for pos in positions[:6]:print('SNIP',render[max(0,pos-390):pos+1050].replace('\n',' ')[:1440])
+          print('== PRIORITY CONTROLS HTML ==')
+          for key in ['function prioScopeBarHtml(', 'function prioToolbarHtml(', 'function prioSnapBarHtml(']:
+            pos=s.find(key)
+            if pos>=0:print('FUNCTION',key,s[pos:pos+5200])
+          print('== MANUAL/GUIDE DEFINITIONS ==')
+          for key in ['function cmOpenContextHelp','function cmOpenUserManual','function cmHelp','function help','const MANUAL','var MANUAL','const HELP','const GUIDE','guideSections','manualSections','getting-started','CRA','Change Readiness Assessment','prio-snapshot']:
+            positions=[m.start() for m in re.finditer(re.escape(key),s,re.I)]
+            print('DOC',key,'count',len(positions))
+            for pos in positions[:8]:print('DOCSNIP',s[max(0,pos-450):pos+1100].replace('\n',' ')[:1550])
+          print('== MENU NAMES ==')
+          names=re.findall(r'<button[^>]*data-tab="([^"]+)"[^>]*>.*?</button>',s,re.S)
+          print('MAIN MENU',names[:35])
+          print('== GUIDE GENERIC ==')
+          a=guide.index('var TABS=')
+          b=guide.index('var SELECTOR=',a)
+          print(guide[a:b][:9000])
+          PY
