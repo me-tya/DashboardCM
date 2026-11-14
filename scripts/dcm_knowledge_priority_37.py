@@ -8,7 +8,9 @@ start = src.index("function renderPriority(){")
 end = src.index("/* ---------- Form proyek ---------- */", start)
 render = src[start:end]
 a = render.index('<div class="prio-kpis">')
-b = render.index('</div>\n   ${rows.length?', a) + len("</div>")
+next_section = render.index('${rows.length?', a)
+b = render.rfind('</div>', a, next_section) + len('</div>')
+assert b > a, 'Priority scorecard container end missing'
 old_cards = render[a:b]
 assert old_cards.count('class="prio-kpi') == 5, "The five original KPI cards must be present"
 assert "const top=rows[0]" in render and "const cnt={high:0,mid:0,low:0}" in render
