@@ -1,0 +1,49 @@
+name: DCM-46 full backup and exact Modul Transformasi Tim source audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve exact full DCM state BEFORE replacement
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-46:refs/remotes/origin/backup/261114-DCM-46
+          git archive --format=zip --output=/tmp/261114-DCM-46.zip origin/backup/261114-DCM-46
+          unzip -t /tmp/261114-DCM-46.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-46
+          path: /tmp/261114-DCM-46.zip
+          retention-days: 30
+      - name: Fetch untouched Module Transformasi source and inspect actual dependencies
+        run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt-source
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          x=Path('/tmp/mt-source/index.html').read_text('utf8')
+          t=Path('/tmp/mt-source/mt-tim2.js').read_text('utf8')
+          b=Path('/tmp/mt-source/mt-tim.js').read_text('utf8')
+          d=Path('index.html').read_text('utf8')
+          print('SOURCE SHA',__import__('subprocess').check_output(['git','-C','/tmp/mt-source','rev-parse','HEAD'],text=True).strip())
+          print('SOURCE FILES LENGTHS',len(x),len(t),len(b))
+          for k in ['mt-tim2.js','mt-tim.js','pAktTim','function actMaster(', 'function kpCfg(', 'function kpPeople(', 'function actCanEdit(', 'function actMasterSave(', 'function actStore(', 'function actSave(', 'function actStamp(', 'function actTglShort(', 'function actSaveDoc(', 'let S=', 'const S=', 'var S=', 'function render(', 'const TODAY=', 'function getDoc(', 'function actList(', 'function actActivities(']:
+            m=list(re.finditer(re.escape(k),x))
+            print('MT_INDEX_TERM',k,'COUNT',len(m))
+            for v in m[:3]:print('MT_INDEX_HIT',x[max(0,v.start()-220):v.start()+1100].replace('\n',' ')[:1300])
+          for k in ['const SEGS=', 'function page(){', 'function grp()', 'function rr()', 'function impChooser(', 'function savePic(', 'function build()', 'function CW(', 'function AG(', 'const ST=', 'let ST=', 'const S=', 'window.MT_T2=', 'document.addEventListener(', 'function onClick(', 'function pubSync(']:
+            m=list(re.finditer(re.escape(k),t))
+            print('TIM2_TERM',k,'COUNT',len(m))
+            for v in m[:2]:print('TIM2_HIT',t[max(0,v.start()-200):v.start()+2300].replace('\n',' ')[:2500])
+          print('MT TEAM GLOBAL INVOCATION COUNTS')
+          for k in ['S.','kpCfg(','kpSave(','kpPeople(','actMaster(','actMasterSave(','actCanEdit(','actStamp(','docGet(','actTglShort(','toast(','toastT(','role(','today(','pAktTimU(','lsGet(','lsSet(','actSave(','actMasterSave(','actActivities(','MT_TIM','T().','esc(','picShort(','fileToDataUrl(']:
+            print('GLOBAL',k,t.count(k),b.count(k))
+          for k in ['cmTpFrame','tim-pusmantap.html','dcm-pusmantap-bridge.js','function renderPusmantap']:
+            m=list(re.finditer(re.escape(k),d))
+            print('DCM_TERM',k,'COUNT',len(m))
+            for v in m[:3]:print('DCM_HIT',d[max(0,v.start()-350):v.start()+900].replace('\n',' ')[:1250])
+          PY
