@@ -1,0 +1,67 @@
+name: Release DCM 42 Filter Opsi 1 and Full Guide Accuracy
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-filter-guide-release-42.yml'
+      - 'scripts/dcm_filter_guide_42.py'
+      - 'tests/dcm-option1-guide-42.test.cjs'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify full untouched DCM-42 ZIP before changes
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-42:refs/remotes/origin/backup/261114-DCM-42
+          git archive --format=zip --output=/tmp/261114-DCM-42.zip origin/backup/261114-DCM-42
+          unzip -t /tmp/261114-DCM-42.zip | tail -1
+          test -s /tmp/261114-DCM-42.zip
+      - name: Apply selected Opsi 1, Snapshot help and User Manual coverage
+        run: |
+          python3 -m py_compile scripts/dcm_filter_guide_42.py
+          python3 scripts/dcm_filter_guide_42.py
+      - name: Verify Guide syntax, original functions and all prior releases
+        run: |
+          node --check dcm-guide-header.js
+          node tests/dcm-option1-guide-42.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile
+          html=Path('index.html').read_text('utf8')
+          inline=re.findall(r'<script\b(.*?)>(.*?)</script\s*>',html,re.S|re.I)
+          n=0
+          for attrs,script in inline:
+            if 'src=' in attrs or not script.strip():continue
+            if 'type=' in attrs and not re.search(r'type=["\x27](?:text/javascript|module)',attrs,re.I):continue
+            n+=1
+            tmp=Path(tempfile.gettempdir())/('dcm42-inline-'+str(n)+'.js')
+            tmp.write_text(script,'utf8')
+            proc=subprocess.run(['node','--check',str(tmp)],capture_output=True,text=True)
+            assert proc.returncode==0,('Inline Javascript syntax invalid',n,proc.stderr[:1200])
+          print('PASS syntax for',n,'original/patched inline JavaScript scripts')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish only selected ranking layout and substantive Guide content
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): implement chosen Filter Opsi 1, Snapshot help and comprehensive Guide/manual semantics"
+          git push origin HEAD:main
