@@ -1,0 +1,39 @@
+name: DCM 36 narrow insight implementation audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-insight-detail-36.yml']
+jobs:
+  details:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          a=s.index('/* ---------- Penjelasan grafik: buka/tutup per grafik ---------- */')
+          b=s.index("document.addEventListener('click',e=>{",a)
+          print('== FUNCTIONS ==\n'+s[a:b+100][:9000])
+          print('== EVENTS ==\n'+s[b:b+3100])
+          print('== NARR CSS ==')
+          for term in ['.narr-all{','.narr-btns{','.narr-btns button','.narr-btns .on','.narr-head{','.narr-wrap.closed','.narr-all .narr-head']:
+            matches=list(re.finditer(re.escape(term),s))
+            print('TERM',term,'count',len(matches))
+            for m in matches[-5:]:print('CSS',s[m.start():m.start()+680].replace('\n',' ')[:680])
+          print('== TOOLBAR USAGE ==')
+          for m in list(re.finditer('cmNarrToolbar\\(',s))[:12]:print('USE',s.count('\n',0,m.start())+1,s[max(0,m.start()-180):m.start()+280].replace('\n',' '))
+          PY
+      - name: Read exact MT checkbox styling
+        run: |
+          git clone --depth 1 --quiet https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          for term in ['.ak-ins-all{','.ak-ins-all input','.ak-ins{','.ak-ins-t{']:
+            matches=list(re.finditer(re.escape(term),s))
+            print('MT CSS',term,len(matches))
+            for m in matches[-3:]:print(s[m.start():m.start()+950].replace('\n',' ')[:950])
+          PY
