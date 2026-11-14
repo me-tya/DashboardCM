@@ -1,0 +1,47 @@
+name: DCM 46 Extract Exact Modul Transformasi Base Theme
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-base-theme-46.yml']
+permissions: {contents: write}
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Clone exact upstream MT revision
+        run: git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt-original
+      - name: Vendor exact original CSS without redesign
+        run: |
+          python3 - <<'PY'
+          import re,hashlib
+          from pathlib import Path
+          original=Path('/tmp/mt-original/index.html').read_text('utf8')
+          styles=re.findall(r'<style(?:\s+[^>]*)?>(.*?)</style\s*>',original,re.I|re.S)
+          assert len(styles)>5,len(styles)
+          out=Path('mt-team-exact/source/mt-base-styles.css')
+          assert not out.exists()
+          out.write_text('/* Verbatim concatenation of source MT inline style elements. No changes. */\n'+'\n'.join(styles),'utf8')
+          import shutil
+          tabs=Path('mt-team-exact/source/mt-ui-tabs-unified.css')
+          shutil.copy2('/tmp/mt-original/ui-tabs-unified.css',tabs)
+          print('PASS: MT base CSS',len(styles),'blocks',out.stat().st_size,'bytes')
+          for name in ['mt-tim.js','mt-tim2.js','mt-foto-frame.js','mt-libur.js','mt-dcm-squad-import.js']:
+            a=Path('/tmp/mt-original')/name
+            b=Path('mt-team-exact/source')/name
+            assert a.read_bytes()==b.read_bytes(),'Upstream MT source modified: '+name
+            print('EXACT',name,hashlib.sha256(a.read_bytes()).hexdigest())
+          PY
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check mt-team-exact/source/mt-tim.js
+          node --check mt-team-exact/source/mt-tim2.js
+          git diff --check
+      - name: Commit only verbatim upstream base stylesheets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mt-team-exact/source/mt-base-styles.css mt-team-exact/source/mt-ui-tabs-unified.css
+          git commit -m "port(dcm): vendor exact MT base theme for faithful Tim Pusmantap rendering"
+          git push origin HEAD:main
