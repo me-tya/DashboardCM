@@ -23,7 +23,13 @@ function people(){
   jenis:clean(r.jenisPegawai||r.jenisKepegawaian||r.jenis||r.penugasan||'Pegawai'),
   wfhDays:Array.isArray(r.wfhDays)?r.wfhDays:[],leavePlans:Array.isArray(r.rencanaCuti)?r.rencanaCuti:[],
   status:clean(r.status),statusMulai:clean(r.statusMulai),statusSelesai:clean(r.statusSelesai),
-  jenisCuti:clean(r.jenisCuti),source:'cm-team'
+  jenisCuti:clean(r.jenisCuti),foto:clean(r.foto||r.photo||r.fotoProfil||r.avatar),
+  hp:clean(r.hp||r.noHp||r.telepon),emailK:clean(r.emailK||r.emailKemenkeu||r.email),
+  emailP:clean(r.emailP||r.emailPribadi),nk:clean(r.nk||r.namaPanggilan),
+  nl:clean(r.nl||r.namaLengkap),org:clean(r.org||r.organisasi),
+  pang:clean(r.pang||r.pangkat),keahlian:clean(r.keahlian),
+  penMulai:clean(r.penMulai),penSelesai:clean(r.penSelesai),
+  catatanStatus:clean(r.catatanStatus),alasanOff:clean(r.alasanOff),source:'cm-team'
  }));
 }
 function agenda(){
@@ -38,7 +44,7 @@ function agenda(){
 }
 function snapshot(){
  return {source:SOURCE,type:'snapshot',today:day(),canEdit:own(),
-  activities:agenda(),resources:people(),manual:{...manual,mtState},
+  activities:agenda(),resources:people(),manual:{...manual,members:manual.members.map(p=>({...p,photo:p.foto||p.photo||'',foto:p.foto||p.photo||''})),mtState},
   user:typeof getCurrentUserName==='function'?getCurrentUserName():'',
   email:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'',
   role:typeof cmGetAccessRole==='function'?cmGetAccessRole():'guest'};
