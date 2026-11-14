@@ -1,0 +1,23 @@
+name: DCM 55 Full Prechange ZIP
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-55.yml']
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Export exact original repository before DCM 55
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-55:refs/remotes/origin/backup/261115-DCM-55
+          git archive --format=zip --output=261115-DCM-55.zip origin/backup/261115-DCM-55
+          unzip -t 261115-DCM-55.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-55
+          path: 261115-DCM-55.zip
+          retention-days: 90
