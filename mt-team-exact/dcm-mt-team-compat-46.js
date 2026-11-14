@@ -10,6 +10,7 @@ var UNITS=[];
 var FB=null;
 var ACT={};
 var __mtData=null,__mtReady=false,__mtSaveTimer=null,__mtId=0,__mtLocalState={};
+const __mtImportPending=new Map();
 const MT_SOURCE='dcm-tim-pusmantap';
 const MT_TEAMS=['Tim DCS','Tim DOA','Tim SPP','Tim SSB','Tim CM'];
 const MT_STR={'Kepala Pusat':'kapus','Kepala Bidang Program dan Manajemen Pengetahuan':'kabid','Kepala Subbidang Program dan Sistem Kerja':'psk','Kepala Subbagian Tata Usaha':'tu','Kepala Subbidang Manajemen Pengetahuan':'mp'};
@@ -119,6 +120,20 @@ function save(){
   __mtSend('mutation',{action:'mt-state-sync',data:{docs,ui:S.ui}});
  },180)
 }
+function mtImportCommit(docs){
+ if(!actCanEdit())return Promise.reject(Error('Hak edit sudah tidak tersedia.'));
+ if(!Array.isArray(docs)||!docs.some(x=>x.id==='cfg-master'))return Promise.reject(Error('Dokumen profil tidak valid.'));
+ const payload={docs:mtCopy(docs),ui:mtCopy(S.ui)};
+ if(JSON.stringify(payload).length>800000)return Promise.reject(Error('Data melebihi batas aman Firebase.'));
+ clearTimeout(__mtSaveTimer);
+ return new Promise((resolve,reject)=>{
+  const requestId='mt-import-'+uid();
+  const timeout=setTimeout(()=>{__mtImportPending.delete(requestId);reject(Error('Konfirmasi penyimpanan tidak diterima. Muat ulang untuk memeriksa data sebelum mengulangi.'))},25000);
+  __mtImportPending.set(requestId,{resolve,reject,timeout,docs:mtCopy(docs)});
+  __mtSend('mutation',{action:'mt-state-sync',requestId,data:payload});
+ });
+}
+window.mtImportCommit=mtImportCommit;
 function __mtSend(type,rest){if(window.self!==window.top)window.parent.postMessage({source:MT_SOURCE,type,...rest},location.origin)}
 function mtMemberFromSnapshot(r){
  const job=mtTxt(r.job||r.jabatan),name=mtTxt(r.name||r.nama);
@@ -171,6 +186,13 @@ window.addEventListener('message',ev=>{
  if(ev.origin!==location.origin||ev.source!==window.parent)return;
  if(ev.data?.source!==MT_SOURCE)return;
  if(ev.data.type==='snapshot')mtLoadSnapshot(ev.data);
+ if(ev.data.type==='mutation-result'&&__mtImportPending.has(ev.data.requestId)){
+  const pending=__mtImportPending.get(ev.data.requestId);
+  __mtImportPending.delete(ev.data.requestId);clearTimeout(pending.timeout);
+  if(ev.data.ok){S.oneonone=pending.docs;render();pending.resolve(ev.data.stats||{})}
+  else pending.reject(Error(mtTxt(ev.data.error)||'Firebase menolak perubahan'));
+  return;
+ }
  if(ev.data.type==='mutation-result'&&!ev.data.ok){
   toast('Perubahan belum tersimpan: '+mtTxt(ev.data.error));
   __mtSend('ready',{});
