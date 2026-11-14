@@ -70,18 +70,8 @@ function kpTimAdd(){
   k.tims.push(n);save();render();return true;
  },{size:'sm'})
 }
-function modal(title,body,submit,action,options){
- const veil=document.createElement('div');veil.className='ov mt-compat-modal';
- veil.innerHTML='<div class="md" role="dialog" aria-modal="true"><div class="mdh"><h3>'+esc(title)+'</h3><button type="button" class="mt-close" aria-label="Tutup">×</button></div><div class="mdb">'+body+'</div><div class="mdf"><button type="button" class="mt-cancel btn">Batal</button><button type="button" class="mt-submit btn pri">'+esc(submit||'Simpan')+'</button></div></div>';
- document.body.appendChild(veil);
- function close(){veil.remove()}
- veil.querySelector('.mt-close').onclick=close;veil.querySelector('.mt-cancel').onclick=close;
- veil.querySelector('.mt-submit').onclick=()=>{
-  try{const r=action?.(veil);if(r!==false)close()}
-  catch(e){toast(e.message||String(e))}
- };
- return veil
-}
+function modal(title,body,ok,onOk,o={}){const ov=document.createElement('div');ov.className='ov';ov.innerHTML=`<div class="md ${o.size||''}" role="dialog" aria-modal="true" aria-label="${esc(title.replace(/<[^>]+>/g,''))}"><h3>${title}</h3><div class="bd">${body}</div><div class="ft">${o.extra||''}<button class="btn" data-x>${o.cancel||'Batal'}</button>${ok?`<button class="btn ${o.danger?'dng':'pri'}" data-ok>${ok}</button>`:''}</div></div>`;document.body.appendChild(ov);const close=()=>ov.remove();ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-x]'))close();const ex=e.target.closest('[data-mx]');if(ex&&o.onExtra){if(o.onExtra(ex.dataset.mx,ov)!==false)close()}if(e.target.closest('[data-ok]')){if(onOk&&onOk(ov)===false)return;close()}});const f=ov.querySelector('input:not([disabled]):not([type=checkbox]),select,textarea');f&&f.focus();return ov}
+function confirmDel(what,fn,o){o=o||{};modal(o.delHead||'Hapus data?',o.delMsg?o.delMsg(what):`<p style="margin:0">Data <b>${esc(what)}</b> akan dihapus dan tercatat di log aktivitas.</p>`,o.delBtn||'Hapus',()=>{fn()},{danger:true,size:'sm'})}
 function kuResize(file){return Promise.resolve('')}
 function render(){
  if(!__mtReady||!__mtData)return;
@@ -123,7 +113,7 @@ function mtMemberFromSnapshot(r){
 function mtLoadSnapshot(m){
  if(!m||m.source!==MT_SOURCE||m.type!=='snapshot')return;
  __mtData=m; TODAY=/^\d{4}-\d{2}-\d{2}$/.test(m.today)?m.today:TODAY;
- ME={role:'PMOK',email:mtTxt(m.email)||'dcm',nama:mtTxt(m.user)||'Dashboard CM'};
+ ME={role:/superadmin|admin/i.test(mtTxt(m.role))?'SA':(m.canEdit?'PMOK':'KAPUS'),email:mtTxt(m.email)||'dcm',nama:mtTxt(m.user)||'Dashboard CM'};
  const oldUi=S.ui||{},stored=m.manual?.mtState||{};
  S.ui={...(stored.ui||{}),...oldUi};
  const docs=Array.isArray(stored.docs)?mtCopy(stored.docs).filter(x=>x&&typeof x.id==='string'):[];
@@ -159,20 +149,8 @@ window.addEventListener('message',ev=>{
  }
 });
 window.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelector('.mt-compat-modal')?.remove()});
-document.addEventListener('click',e=>{
- const el=e.target.closest('#mt-app [data-act]');if(!el)return;
- const act=el.dataset.act;
- if(act==='tmAdd')window.MT_TIM?.form();
- else if(act==='tmEdit')window.MT_TIM?.form(el.dataset.v);
- else if(act==='tmUnits')window.MT_TIM?.unitsForm(el.dataset.v);
- else if(act==='tmSel'){S.ui.tmSel=el.dataset.v;render()}
- else if(act==='tmTeam'){S.ui.tmTeam=el.dataset.v;render()}
- else if(act==='tmView'){S.ui.tmView=el.dataset.v;render()}
- else if(act==='kpTimAdd')kpTimAdd();
- else if(act==='oneAdd')__mtSend('goto-activity',{id:''});
- else if(act==='oneEdit'||act==='oneUndPv')__mtSend('goto-activity',{id:el.dataset.v||el.dataset.id||''});
- else if(act==='tmDel'||act==='kuDel'){toast('Periksa profil sebelum menghapus data.')}
-});
+document.addEventListener('click',e=>{const el=e.target.closest('#mt-app [data-act]');if(!el)return;const action=el.dataset.act;if(action==='oneAdd'){__mtSend('goto-activity',{id:''});return}if(action==='oneEdit'||action==='oneUndPv'){__mtSend('goto-activity',{id:el.dataset.v||el.dataset.id||''});return}const fn=ACT[action];if(typeof fn==='function'){try{fn(el)}catch(err){console.error('[MT original dispatcher]',err);toast(err.message||String(err))}}});
+ACT.calOpen=el=>__mtSend('goto-activity',{id:el?.dataset?.id||''});
 window.mtTeamReady=function(){
  __mtReady=!!(window.MT_TIM&&window.MT_T2);
  if(!__mtReady){document.getElementById('mt-error').hidden=false;return}
