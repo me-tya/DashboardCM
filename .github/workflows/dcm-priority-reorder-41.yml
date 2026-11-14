@@ -1,0 +1,90 @@
+name: DCM 41 Prioritas Submenus Before KPI Cards
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-priority-reorder-41.yml'
+permissions:
+  contents: write
+jobs:
+  reorder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Create complete pre-change ZIP from locked snapshot
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-41:refs/remotes/origin/backup/261114-DCM-41
+          git archive --format=zip --output=/tmp/261114-DCM-41.zip origin/backup/261114-DCM-41
+          unzip -t /tmp/261114-DCM-41.zip | tail -1
+          test -s /tmp/261114-DCM-41.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-41
+          path: /tmp/261114-DCM-41.zip
+          retention-days: 30
+      - name: Move only submenu above the project-only KPI stage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          original=p.read_text(encoding='utf8')
+          a=original.index('function renderPriority(){')
+          b=original.index('/* ---------- Form proyek ---------- */',a)
+          part=original[a:b]
+          html_start=part.index('el.innerHTML=',part.index("let body='';"))
+          stage_start=part.index("\n  ${tab==='projects'?",html_start)
+          tab_start=part.index('\n  <div class="cm-survey-subtabs prio-subtabs"',stage_start)
+          stage=part[stage_start:tab_start]
+          assert stage.count('class="prio-kpi-stage"')==1
+          assert stage.count("tab==='projects'")==1,'KPI must remain project-tab-only'
+          assert 'prioKpisHtml' in stage,'Live KPI data must be preserved'
+          reordered=part[:stage_start]+part[tab_start:]
+          end_tabs=reordered.index('\n  ${body}</div>',reordered.index('class="cm-survey-subtabs prio-subtabs"',html_start))
+          reordered=reordered[:end_tabs]+stage+reordered[end_tabs:]
+          assert reordered.count('class="prio-kpi-stage"')==1
+          assert reordered.index('class="cm-survey-subtabs prio-subtabs"')<reordered.index('class="prio-kpi-stage"')<reordered.index('${body}</div>')
+          assert reordered.replace(stage,'',1)==part.replace(stage,'',1),'No other elements changed'
+          updated=original[:a]+reordered+original[b:]
+          assert updated.count('dcm-priority-original-mockup-40.css?v=261114-40')==1
+          assert updated.count('data-prio-kpi=')==original.count('data-prio-kpi=')
+          assert updated.count('data-prio-tab=')==original.count('data-prio-tab=')
+          assert updated.count('class="prio-filter-panel"')==original.count('class="prio-filter-panel"')
+          p.write_text(updated,encoding='utf8')
+          print('PASS: submenu above KPI for Proyek; filters, title, live KPI values and callbacks unchanged')
+          PY
+      - name: Verify prior behaviors and restricted diff
+        run: |
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text('utf8')
+          start=s.index('function renderPriority(){')
+          part=s[start:s.index('/* ---------- Form proyek ---------- */',start)]
+          assert part.index('class="cm-survey-subtabs prio-subtabs"')<part.index('class="prio-kpi-stage"')
+          assert part.index('class="prio-kpi-stage"')<part.index('${body}</div>')
+          assert part.count('class="prio-kpi-stage"')==1
+          assert part.count('class="prio-filter-panel"')==1
+          assert part.count('data-prio-kpi=')==5
+          print('PASS navigation -> KPI -> filter/list; no duplicated actions')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish only Prioritas section order
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): place Prioritas subtabs above project-only KPI summary"
+          git push origin HEAD:main
