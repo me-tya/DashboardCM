@@ -64,7 +64,7 @@ assert render.count('class="prio-filter-panel"')==1
 assert render.count('class="prio-title-group"')==1
 assert render.count('data-prio-kpi=')==5
 assert render.index('class="prio-kpi-stage"')<render.index('class="cm-survey-subtabs prio-subtabs"')
-assert render.index('class="cm-survey-subtabs prio-subtabs"')<render.index('class="prio-filter-panel"')
+assert render.index('class="cm-survey-subtabs prio-subtabs"')<render.index('${body}</div>'), 'Rendered body follows tabs'
 assert "el.querySelectorAll('[data-prio-kpi]').forEach" in render
 assert "el.querySelectorAll('[data-prio-tab]').forEach" in render
 assert 'prioSnapBarHtml(can)' in render and 'prioCapacityHtml(rows)' in render
