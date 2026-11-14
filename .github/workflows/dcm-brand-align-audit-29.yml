@@ -1,0 +1,44 @@
+name: DCM 29 backup and inspect brand vertical alignment
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-brand-align-audit-29.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive untouched repository before header adjustment
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-29:refs/remotes/origin/backup/261114-DCM-29
+          git archive --format=zip --output=/tmp/261114-DCM-29.zip origin/backup/261114-DCM-29
+          unzip -t /tmp/261114-DCM-29.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-29
+          path: /tmp/261114-DCM-29.zip
+          retention-days: 30
+      - name: Inspect layout of brand and right header actions
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf8')
+          print('=== HEADER CSS SOURCE index first 300 lines ===')
+          for i,line in enumerate(s.splitlines()[:305]):
+            if 221<=i+1<=258:print(i+1,line[:1500])
+          print('=== EXACT TOPBAR/BRAND SELECTORS ===')
+          for regex in [
+            r'(?<![\w-])\.topbar\s*\{',r'(?<![\w-])\.brand\s*\{',
+            r'(?<![\w-])\.brand-text\s*\{',r'\.brand-mark\s*\{',
+            r'\.cm-title-row\s*\{',r'\.topbar-actions\s*\{',
+            r'#appHeader[^\{]{0,90}\{'
+          ]:
+            print('MATCHES',regex)
+            for m in list(re.finditer(regex,s))[-12:]:
+              print(' ',s.count(chr(10),0,m.start())+1,s[m.start():m.start()+430].replace(chr(10),' '))
+          print('=== LAST CSS LINKS ===')
+          for m in re.finditer(r'<link[^>]+href="([^"]+\.css[^"]*)"',s):
+            print(m.group(1))
+          PY
