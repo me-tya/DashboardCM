@@ -1,0 +1,23 @@
+name: DCM 56 Full Prechange ZIP
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-56.yml']
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Export repository as it existed before DCM 56 changes
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-56:refs/remotes/origin/backup/261115-DCM-56
+          git archive --format=zip --output=261115-DCM-56.zip origin/backup/261115-DCM-56
+          unzip -t 261115-DCM-56.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-56
+          path: 261115-DCM-56.zip
+          retention-days: 90
