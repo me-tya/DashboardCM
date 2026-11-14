@@ -1,0 +1,30 @@
+/*
+ * DCM 261114-44 • Tim Pusmantap secondary tab state.
+ * The directory is hosted inside an iframe, so a scoped stylesheet is linked
+ * from tim-pusmantap.html to match the main Dashboard CM / Prioritas.
+ */
+body.cm-embedded .tp-live .seg.tabs2 [data-view].on,
+body.cm-embedded .tp-live .seg.tabs2 [data-view][aria-selected="true"]{
+  background:linear-gradient(135deg,#17477E,#0E3066)!important;
+  color:#FFFFFF!important;
+  border:0!important;
+  box-shadow:0 2px 5px rgba(11,42,91,.16)!important;
+  font-weight:750!important;
+  border-radius:9px!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view].on svg,
+body.cm-embedded .tp-live .seg.tabs2 [data-view][aria-selected="true"] svg,
+body.cm-embedded .tp-live .seg.tabs2 [data-view].on .i{
+  color:#FFFFFF!important;
+  stroke:currentColor!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view]:not(.on):not([aria-selected="true"]):hover{
+  background:#E8EFFA!important;
+  color:#173A74!important;
+}
+body.cm-embedded .tp-live .seg.tabs2 [data-view]:focus-visible{
+  outline:2px solid #D4AF43!important;
+  outline-offset:2px!important;
+}
+/* Retain equal-width, sizes, and scrolling behavior from the approved
+ * dcm-navigation-pusmantap-all-25.css stylesheet. */
