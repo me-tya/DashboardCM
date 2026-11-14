@@ -1,0 +1,53 @@
+name: DCM 36 full backup and insight checkbox audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-insight-audit-36.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create full prechange zip from backup branch
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-36:refs/remotes/origin/backup/261114-DCM-36
+          git archive --format=zip --output=/tmp/261114-DCM-36.zip origin/backup/261114-DCM-36
+          unzip -t /tmp/261114-DCM-36.zip | tail -1
+          test -s /tmp/261114-DCM-36.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-36
+          path: /tmp/261114-DCM-36.zip
+          retention-days: 30
+      - name: Inspect Dashboard CM insight rendering and controls
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          needles=['Tampilkan semua penjelasan','Sembunyikan semua','Show all explanations','Hide all','Insight Activity','Insight Aktivitas','showAllExplanations','toggleAllExplanation','allExplanations','explainAll','insightExplain','explanation','cmInsight','insight-help']
+          for needle in needles:
+            hits=list(re.finditer(re.escape(needle),s,re.I))
+            print('\n===',needle,len(hits),'===')
+            for m in hits[:8]:print('LINE',s.count('\n',0,m.start())+1,'SNIP',s[max(0,m.start()-420):m.start()+850].replace('\n',' ')[:1270])
+          print('\n=== FORM MARKUP NEAR TOGGLES ===')
+          for needle in ['Tampilkan semua penjelasan','Sembunyikan semua','Show all explanations']:
+            for m in list(re.finditer(re.escape(needle),s,re.I))[:3]:
+              print('CONTEXT',s[max(0,m.start()-1600):m.start()+1800].replace('\n',' ')[:3400])
+          PY
+      - name: Inspect the approved Modul Transformasi checkbox model
+        run: |
+          git clone --depth 1 --quiet https://github.com/me-tya/modultransformasi.git /tmp/modultransformasi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for p in [Path('/tmp/modultransformasi/index.html'),Path('/tmp/modultransformasi/dashboard-cm-shared.html'),Path('/tmp/modultransformasi/index2.html')]:
+            if not p.exists():continue
+            s=p.read_text('utf8',errors='replace')
+            print('\n=== FILE',p.name,'===')
+            for n in ['Tampilkan semua penjelasan','Sembunyikan semua','insightExplain','showAllExplanation','insight-toggle','Insight Aktivitas','Tampilkan semua','tampilkanSemuaPenjelasan']:
+              matches=list(re.finditer(re.escape(n),s,re.I))
+              print('TOKEN',n,'TOTAL',len(matches))
+              for m in matches[:6]:print('LINE',s.count('\n',0,m.start())+1,'SNIP',s[max(0,m.start()-560):m.start()+1200].replace('\n',' ')[:1760])
+          PY
