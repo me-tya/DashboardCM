@@ -132,7 +132,9 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
    if(!existing||idx>=live.length)throw Error('Tujuan '+source.n+' berubah; ulangi pratinjau.');
    if(state.kind==='conflict')throw Error('NIP berbeda untuk '+source.n+'. Perbaiki identitas sebelum impor.');
    const allowed=new Set(state.candidates);
-   if(!allowed.has(idx))throw Error('Pemetaan '+source.n+' tidak lagi valid.');
+   const manual=options.manualTargets?.[i]===idx;
+   if(!allowed.has(idx)&&!manual)throw Error('Pemetaan '+source.n+' tidak lagi valid.');
+   if(state.kind==='conflict')throw Error('NIP berbeda untuk '+source.n+'. Perbaiki identitas.');
    if(N(source.nip)&&N(existing.nip)&&N(source.nip)!==N(existing.nip))
     throw Error('NIP sumber berbeda dengan tujuan untuk '+source.n+'.');
    target=existing;summary.updated++;
