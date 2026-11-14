@@ -1,0 +1,24 @@
+name: DCM 51 Immutable Before Fix ZIP
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-51.yml']
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Snapshot pre-fix repository exactly
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-51:refs/remotes/origin/backup/261114-DCM-51
+          git archive --format=zip --output=261114-DCM-51.zip origin/backup/261114-DCM-51
+          unzip -t 261114-DCM-51.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-51
+          path: 261114-DCM-51.zip
+          retention-days: 90
