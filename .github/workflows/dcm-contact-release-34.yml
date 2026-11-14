@@ -1,0 +1,95 @@
+name: Release DCM 34 Squad toolbar layout and reset icon
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-contact-release-34.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Confirm complete original ZIP and restore branch
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-34:refs/remotes/origin/backup/261114-DCM-34
+          git archive --format=zip --output=/tmp/261114-DCM-34.zip origin/backup/261114-DCM-34
+          unzip -t /tmp/261114-DCM-34.zip | tail -1
+          test -s /tmp/261114-DCM-34.zip
+      - name: Surgically remove Squad hero and relocate original action buttons
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          old=p.read_text(encoding='utf8')
+          f=old.index('function renderReviewDirectory(){')
+          end=old.index('\nfunction reviewOpenPicEditor(){',f)
+          original=old[f:end]
+          tick=chr(96)
+          dollar=chr(36)
+          begin='el.innerHTML='+tick+'<section class="review-dir">'
+          st=original.index(begin)
+          toolbar_begin=original.index('<div class="review-toolbar">',st)
+          hero=original[st:toolbar_begin]
+          assert hero.count('class="review-hero"')==1
+          assert hero.count('class="rv-hero-actions"')==1
+          assert hero.strip().endswith('</div></div>')
+          action_open='<div class="rv-hero-actions">'
+          action_start=hero.index(action_open)
+          action_end=hero.rfind('</div></div>')
+          actions=hero[action_start+len(action_open):action_end]
+          assert actions.count('id="reviewFeedback"')==1
+          assert actions.count('id="reviewAdd"')==1
+          assert actions.count('id="reviewSignIn"')==1
+          assert actions.index('id="reviewFeedback"')<actions.index('id="reviewAdd"')
+          toolbar_end=original.index('</div>\n<div class="review-layout">',toolbar_begin)
+          bar=original[toolbar_begin:toolbar_end]
+          reset_old='<button class="btn btn-outline btn-sm" id="reviewReset">'+dollar+"{uiText('Reset','Reset')}"+'</button>'
+          reset_new='<button type="button" class="btn btn-outline btn-sm rv-reset-icon" id="reviewReset" title="'+dollar+"{uiText('Reset filters','Reset filter')}"+'" aria-label="'+dollar+"{uiText('Reset filters','Reset filter')}"+'"></button>'
+          assert bar.count(reset_old)==1,'Legacy Reset button no longer matches'
+          bar=bar.replace(reset_old,reset_new,1)
+          revised=original[:st]+begin+bar+action_open+actions+'</div>'+original[toolbar_end:]
+          assert revised.count('class="review-hero"')==0
+          assert revised.count('class="review-toolbar"')==1
+          assert revised.count('id="reviewReset"')==1
+          assert revised.count('id="reviewFeedback"')==1
+          assert revised.count('id="reviewAdd"')==1
+          assert revised.count('id="reviewSignIn"')==1
+          hooks=original[original.index("el.querySelector('#reviewFeedback')?.addEventListener"):]
+          assert revised[revised.index("el.querySelector('#reviewFeedback')?.addEventListener"):]==hooks,'Action handlers must remain unchanged'
+          updated=old[:f]+revised+old[end:]
+          css='<link rel="stylesheet" href="dcm-contact-toolbar-34.css?v=261114-34">'
+          assert css not in updated
+          assert 'dcm-primary-nav-justify-33.css?v=261114-33' in updated
+          h=updated.lower().find('</head>')
+          body=updated.lower().find('<body')
+          assert 0<h<body
+          updated=updated[:h]+css+'\n'+updated[h:]
+          assert updated.count(css)==1
+          p.write_text(updated,encoding='utf8')
+          print('PASS: navy hero removed, Feedback and Add relocated, Reset icon accessible, all original callbacks untouched')
+          PY
+      - name: Test all core menus, Squad permissions and original buttons
+        run: |
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+          node --check dcm-header-reference-30.js
+          git diff --check
+          git diff --stat
+      - name: Publish only Squad contact layout correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): remove Squad navy header, move Feedback and Add to filters, use Reset icon"
+          git push origin HEAD:main
