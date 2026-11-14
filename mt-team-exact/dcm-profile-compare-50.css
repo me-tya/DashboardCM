@@ -1,3 +1,6 @@
+/* DCM51: dialog belongs to the actual browser viewport, not the iframe height. */
+body > .cmp50.ov{position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100vw!important;height:100dvh!important;margin:0!important;padding:10px!important;box-sizing:border-box!important;overflow:auto!important;background:rgba(8,28,62,.52)!important;z-index:2147483000!important}
+body > .cmp50.ov > .md{flex:0 1 min(1220px,98vw)!important;position:relative!important;margin:0 auto!important;box-sizing:border-box!important;max-height:min(810px,94dvh)!important;min-height:320px!important;overflow:hidden!important;box-shadow:0 18px 55px rgba(4,19,48,.35)!important}
 
 .cmp50.ov{z-index:10000!important;display:flex;align-items:center;justify-content:center;padding:10px;font-family:Inter,Arial,sans-serif}
 .cmp50>.md{width:min(1220px,98vw);height:min(810px,94vh);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;border-radius:12px;background:#fff}
