@@ -130,7 +130,7 @@ function mtImportCommit(docs){
   const requestId='mt-import-'+uid();
   const timeout=setTimeout(()=>{__mtImportPending.delete(requestId);reject(Error('Konfirmasi penyimpanan tidak diterima. Muat ulang untuk memeriksa data sebelum mengulangi.'))},25000);
   __mtImportPending.set(requestId,{resolve,reject,timeout,docs:mtCopy(docs)});
-  __mtSend('mutation',{action:'mt-state-sync',requestId,data:payload});
+  __mtSend('mutation',{action:'mt-state-sync',requestId,data:payload,expectedState:mtCopy(__mtData?.manual?.mtState||{docs:[],ui:{}})});
  });
 }
 window.mtImportCommit=mtImportCommit;
