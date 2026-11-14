@@ -8,9 +8,18 @@ start = src.index("function renderPriority(){")
 end = src.index("/* ---------- Form proyek ---------- */", start)
 render = src[start:end]
 a = render.index('<div class="prio-kpis">')
-next_section = render.index('${rows.length?', a)
-b = render.rfind('</div>', a, next_section) + len('</div>')
-assert b > a, 'Priority scorecard container end missing'
+# Match the closing tag for the KPI grid structurally. Dynamic template strings
+# may contain other occurrences of rows.length before the grid ends.
+import re
+b = None
+depth = 0
+for match in re.finditer(r'</?div\\b[^>]*>', render[a:]):
+    tag = match.group(0)
+    depth += -1 if tag.startswith('</') else 1
+    if depth == 0:
+        b = a + match.end()
+        break
+assert b is not None and b > a, 'Priority KPI grid closing tag not found'
 old_cards = render[a:b]
 assert old_cards.count('class="prio-kpi') == 5, "The five original KPI cards must be present"
 assert "const top=rows[0]" in render and "const cnt={high:0,mid:0,low:0}" in render
