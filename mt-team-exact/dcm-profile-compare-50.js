@@ -42,7 +42,7 @@ function open(){
  '<footer class="cmp-footer"><span id="cmp-footer-text">Belum ada perubahan.</span><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
  document.body.appendChild(wrap);
  const $=s=>wrap.querySelector(s);
- const state={active:0,choices:{},fields:{},structure:{},contacts:false,stage:1,baseline:''};
+ const state={active:0,choices:{},fields:{},structure:{},manualApproved:{},contacts:false,stage:1,baseline:''};
  const get=()=>wrap._data,roster=()=>w.actMaster().pic,close=()=>wrap.remove();
  $('#cmp-cancel').onclick=()=>state.stage===2?back():close();
  wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
@@ -77,6 +77,15 @@ function open(){
    if(!target||a.kind==='conflict'||p.nip&&target.nip&&p.nip!==target.nip)continue;
    out+='<option value="existing:'+idx+'"'+(current==='existing:'+idx?' selected':'')+'>Perbarui '+esc(target.n)+(target.nip?' ('+esc(target.nip)+')':'')+'</option>';
   }
+  if(a.kind!=='conflict'){
+   const c=new Set(a.candidates),excluded=c;
+   for(let idx=0;idx<roster().length;idx++){
+    if(excluded.has(idx))continue;
+    const target=roster()[idx];
+    if(!target||p.nip&&target.nip&&p.nip!==target.nip)continue;
+    out+='<option value="existing:'+idx+'"'+(current==='existing:'+idx?' selected':'')+'>Cocokkan manual: '+esc(target.n)+(target.nip?' ('+esc(target.nip)+')':'')+'</option>';
+   }
+  }
   if(a.kind==='new')out+='<option value="add"'+(current==='add'?' selected':'')+'>Tambah pegawai baru (manual)</option>';
   return out;
  }
@@ -103,14 +112,20 @@ function open(){
    const [left,right]=pair[k],side=state.structure[i][k];
    html+='<div class="cmp-row"><label>'+label+'</label>'+valueBtn(k,'dcm',left,side,!chosen)+valueBtn(k,'mt',right,side,!chosen||empty(right))+'</div>';
   }
-  html+='</div><div class="cmp-hint"><label><input id="cmp-contacts" type="checkbox" '+(state.contacts?'checked':'')+'> Sertakan kontak PMO/CMO Unit (hanya lengkapi yang aman)</label>'+
+  const val=state.choices[i]||'skip';
+  const idx=/^existing:\\d+$/.test(val)?+val.slice(9):-1;
+  const manualMatch=idx>=0&&!analysis.candidates.includes(idx);
+  html+='</div><div class="cmp-hint"><div>'+
+   '<label><input id="cmp-contacts" type="checkbox" '+(state.contacts?'checked':'')+'> Sertakan kontak PMO/CMO Unit (hanya lengkapi yang aman)</label>'+
+   (manualMatch?'<label style="margin-left:12px;color:#8c5c14"><input id="cmp-manual-check" type="checkbox" '+(state.manualApproved[i]?'checked':'')+'> Saya pastikan kedua profil ini orang yang sama</label>':'')+
+   '</div>'+
    '<span>'+(analysis.kind==='review'?'Nama mirip: periksa pegawai tujuan secara manual.':analysis.kind==='conflict'?'NIP berbeda: tidak boleh digabung.':
     analysis.kind==='new'?'Belum ada pasangan yakin. Pilih Tambah Baru hanya jika memang belum terdaftar.':
     'Data tidak berubah sampai kamu mengonfirmasi penyimpanan.')+'</span></div>';
   $('#cmp-panel').innerHTML=html;
  }
  function rerender(){renderList();renderPerson()}
- function selectTarget(i,val){state.choices[i]=val;delete state.fields[i];delete state.structure[i];rerender()}
+ function selectTarget(i,val){state.choices[i]=val;state.manualApproved[i]=false;delete state.fields[i];delete state.structure[i];rerender()}
  wrap.addEventListener('click',e=>{
   const item=e.target.closest('[data-cmp-person]');if(item){state.active=+item.dataset.cmpPerson;rerender();return}
   const field=e.target.closest('[data-cmp-key]');if(field&&!field.disabled){
@@ -129,6 +144,7 @@ function open(){
  wrap.addEventListener('change',e=>{
   if(e.target.id==='cmp-target')selectTarget(state.active,e.target.value);
   if(e.target.id==='cmp-contacts')state.contacts=e.target.checked;
+  if(e.target.id==='cmp-manual-check')state.manualApproved[state.active]=e.target.checked;
  });
  $('#cmp-search').oninput=renderList;
  $('#cmp-file').onchange=async e=>{
@@ -137,7 +153,7 @@ function open(){
   try{
    if(f.size>15*1024*1024)throw Error('File melebihi 15 MB.');
    const data=api.parse(JSON.parse(await f.text()));wrap._data=data;
-   state.active=0;state.stage=1;state.choices={};state.fields={};state.structure={};state.contacts=false;
+   state.active=0;state.stage=1;state.choices={};state.fields={};state.structure={};state.manualApproved={};state.contacts=false;
    state.baseline=JSON.stringify(roster());
    data.profiles.forEach((p,i)=>{const a=api.analyze(p,roster());state.choices[i]=a.kind==='update'?'existing:'+a.index:'skip'});
    $('#cmp-search').disabled=false;rerender();
@@ -145,7 +161,16 @@ function open(){
  };
  function argumentsFor(){
   const includeTeams=Object.entries(state.structure).some(([i,row])=>state.choices[i]!=='skip'&&Object.values(row).includes('mt'))||state.contacts;
-  return {includeTeams,opts:{allowSnapshotRoster:true,baselineRoster:state.baseline,fieldChoices:state.fields,structureChoices:state.structure,importContacts:state.contacts}};
+  const manualTargets={};
+  for(const [i,val] of Object.entries(state.choices)){
+   if(!/^existing:\\d+$/.test(val))continue;
+   const idx=+val.slice(9),a=api.analyze(get().profiles[+i],roster());
+   if(!a.candidates.includes(idx)){
+    if(!state.manualApproved[i])throw Error('Konfirmasikan pencocokan manual: '+get().profiles[+i].n);
+    manualTargets[i]=idx;
+   }
+  }
+  return {includeTeams,opts:{allowSnapshotRoster:true,baselineRoster:state.baseline,fieldChoices:state.fields,structureChoices:state.structure,importContacts:state.contacts,manualTargets}};
  }
  function preflight(data){
   const cfg=argumentsFor();
