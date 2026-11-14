@@ -47,9 +47,11 @@ assert.match(root.innerHTML,/Survei Aktif<span class="cm-cra-tab-count">5<\/span
 logged=false;ctx.run();
 assert(root.innerHTML.includes('Login admin diperlukan'),'Guest login note retained');
 assert(!root.innerHTML.includes('cm-cra-tab-count'),'No restricted data shown on public guest login');
-for(const needle of ['#appHeader.topbar','min-height:84px!important','padding:5px 22px 8px!important',
+for(const needle of ['#appHeader.topbar','min-height:70px!important','grid-template-rows:auto!important','padding:6px 22px!important',
 'height:45px!important','height:36px!important','#tab-survey .cm-survey-subtabs .cm-cra-tab-count',
 '#tab-survey .cm-survey-subtabs #cmCraContextHelp'])assert(css.includes(needle),needle);
+for(const pad of ['padding:6px 22px!important','padding:6px 14px!important','padding:6px 12px!important'])assert(css.includes(pad),'Asymmetric header padding on breakpoint '+pad);
+assert(!css.includes('grid-template-rows:minmax(61px,auto)'),'Old grid track must not force extra space');
 assert.equal((css.match(/{/g)||[]).length,(css.match(/}/g)||[]).length,'Balanced CSS');
 const old=fs.readFileSync('dcm-approved-navigation.css','utf8');
 assert(old.includes('#dcm-activity-view-tabs'),'Agenda original tab styles preserved');
