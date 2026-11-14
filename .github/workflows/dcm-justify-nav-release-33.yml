@@ -1,0 +1,60 @@
+name: Release DCM 33 justified wider primary menu
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-justify-nav-release-33.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify exact unchanged full 261114-DCM-33 ZIP backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-33:refs/remotes/origin/backup/261114-DCM-33
+          git archive --format=zip --output=/tmp/261114-DCM-33.zip origin/backup/261114-DCM-33
+          unzip -t /tmp/261114-DCM-33.zip | tail -1
+          test -s /tmp/261114-DCM-33.zip
+      - name: Verify 9 menus, permissions and existing features
+        run: |
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+          node --check dcm-header-reference-30.js
+      - name: Attach navigation CSS only; preserve markup and handlers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          original=p.read_text(encoding='utf8')
+          tag='<link rel="stylesheet" href="dcm-primary-nav-justify-33.css?v=261114-33">'
+          assert tag not in original
+          assert original.count('dcm-header-hover-mt-32.css?v=261114-32')==1
+          assert original.count('dcm-approved-navigation.css?v=261114-24')==1
+          head=original.lower().find('</head>')
+          body=original.lower().find('<body')
+          assert 0<head<body
+          updated=original[:head]+tag+'\n'+original[head:]
+          assert updated.replace(tag+'\n','',1)==original
+          assert updated.count(tag)==1
+          p.write_text(updated,encoding='utf8')
+          print('PASS CSS linked, original navigation markup, Firebase and JS untouched')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish proportional, justified primary navigation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): justify nine main nav cards equally and hide duplicate nav help"
+          git push origin HEAD:main
