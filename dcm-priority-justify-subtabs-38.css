@@ -1,91 +1,107 @@
 /*
- * Dashboard CM 261114-DCM-38
- * ONLY Prioritas second-level navigation, matching the approved mockup.
- * Four tabs: Proyek | Kriteria & Bobot | Monev Indikator & Manfaat |
- * Referensi & Formula. Exactly four equal-width cells, justified.
- * No data, card, filter, header, other-menu or event-handler changes.
+ * Dashboard CM / DCM-39
+ * UI-only correction to the four Prioritas submenu cards.
+ * All four have equal widths and their own backgrounds / borders.
+ * Selected card: solid navy, white text, gold badge.
+ * Other cards: distinct soft-blue surface with subtle border.
+ * No JavaScript, permissions, handlers, other menu, filters, or KPI changes.
  */
 #tab-priority .cm-survey-subtabs.prio-subtabs{
   box-sizing:border-box!important;
   display:grid!important;
   grid-template-columns:repeat(4,minmax(0,1fr))!important;
   grid-template-rows:1fr!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
   justify-content:stretch!important;
   justify-items:stretch!important;
   align-items:stretch!important;
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  gap:7px!important;
+  gap:9px!important;
   padding:5px!important;
   margin:0 0 4px!important;
-  min-height:54px!important;
-  background:#F4F7FC!important;
-  border:1px solid #DAE4F2!important;
+  min-height:56px!important;
+  background:#FFFFFF!important;
+  border:1px solid #E5EBF5!important;
   border-radius:13px!important;
+  box-shadow:none!important;
   overflow-x:auto!important;
   overflow-y:hidden!important;
 }
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab{
   box-sizing:border-box!important;
   display:flex!important;
+  flex:initial!important;
   align-items:center!important;
   justify-content:center!important;
-  flex:initial!important;
   width:100%!important;
   min-width:0!important;
   max-width:100%!important;
   min-height:44px!important;
   height:44px!important;
   margin:0!important;
-  padding:6px 10px!important;
+  padding:7px 9px!important;
   gap:8px!important;
-  border:0!important;
-  border-radius:10px!important;
-  background:transparent!important;
-  color:#425B82!important;
-  box-shadow:none!important;
+  border:1px solid #D2DEED!important;
+  border-radius:11px!important;
+  background:#F1F5FC!important;
+  color:#24436F!important;
+  box-shadow:0 1px 3px rgba(16,46,98,.06)!important;
   font:700 12.5px/1.2 Inter,Arial,sans-serif!important;
   text-align:center!important;
   white-space:nowrap!important;
+  transform:none!important;
+  transition:background-color .14s ease,border-color .14s ease,color .14s ease!important;
+  cursor:pointer!important;
 }
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active,
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"]{
-  background:linear-gradient(135deg,#17457E,#0C2859)!important;
+  background:#102F65!important;
+  border:1px solid #102F65!important;
   color:#FFFFFF!important;
-  box-shadow:0 2px 6px rgba(13,41,89,.16)!important;
+  box-shadow:0 2px 7px rgba(16,47,101,.18)!important;
 }
-#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab:not(.active):hover{
-  background:#E9F0FA!important;
-  color:#17396C!important;
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab:not(.active):not([aria-selected="true"]):hover{
+  background:#E3ECF9!important;
+  border-color:#B9CBE4!important;
+  color:#153B73!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active:hover,
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"]:hover{
+  background:#102F65!important;
+  color:#FFFFFF!important;
 }
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab:focus-visible{
-  outline:2px solid #CBAB43!important;
+  outline:2px solid #E5B443!important;
   outline-offset:2px!important;
 }
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab .prio-tab-n{
   display:inline-flex!important;
+  flex:0 0 auto!important;
   align-items:center!important;
   justify-content:center!important;
-  flex:0 0 auto!important;
   min-width:22px!important;
   padding:2px 7px!important;
   margin:0!important;
   border-radius:999px!important;
-  background:#DFE8F6!important;
+  background:#DEE8F7!important;
   color:#24436F!important;
   font:800 11px/1.1 Inter,Arial,sans-serif!important;
 }
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active .prio-tab-n,
 #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"] .prio-tab-n{
-  background:#F7D778!important;
-  color:#183B69!important;
+  background:#F5CD5C!important;
+  color:#17375E!important;
 }
-/* Keep four equally sized tabs on smaller screens, scroll horizontally
-   instead of squeezing just the longer tab. */
+/* Keep the four cards equal; on a narrow screen scroll the submenu only. */
 @media(max-width:920px){
   #tab-priority .cm-survey-subtabs.prio-subtabs{
     grid-template-columns:repeat(4,minmax(205px,1fr))!important;
     scrollbar-width:thin;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab{
+    transition:none!important;
   }
 }
