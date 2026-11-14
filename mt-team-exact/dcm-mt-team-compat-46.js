@@ -119,6 +119,7 @@ function render(){
   const bar=document.getElementById('mt-import-bar');
   if(bar&&bar.parentElement!==document.body)document.body.insertBefore(bar,app);
   if(app)app.innerHTML=out;
+  if(app&&window.MT_PROFILE_UNIT_TOOLBAR)window.MT_PROFILE_UNIT_TOOLBAR.enhance(app);
   const profileTabs=app?.querySelector('.t-pvw');
   if(profileTabs&&bar){profileTabs.insertAdjacentElement('afterend',bar);bar.hidden=!actCanEdit();
    const status=document.getElementById('mt-import-state');
