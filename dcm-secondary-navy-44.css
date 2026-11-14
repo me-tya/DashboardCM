@@ -1,0 +1,63 @@
+/*
+ * DCM 261114-44 — one active-submenu language throughout Dashboard CM.
+ * Reuse the selected Prioritas navy/white state; inactive tabs remain light.
+ * Navigation ONLY: Agenda contextual views, CRA, Settings, schedule requests.
+ * Do not recolor filters/chips, action buttons, primary top nav, or charts.
+ */
+:root{
+  --dcm-44-subnav-active-start:#17477E;
+  --dcm-44-subnav-active-end:#0E3066;
+  --dcm-44-subnav-accent:#F6D773;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active,
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab.active,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab].on,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab][aria-selected="true"],
+.cm-ap-tabs [data-sr-tab].on{
+  background:linear-gradient(135deg,var(--dcm-44-subnav-active-start),var(--dcm-44-subnav-active-end))!important;
+  color:#FFFFFF!important;
+  border:0!important;
+  border-bottom:0!important;
+  border-radius:9px!important;
+  box-shadow:0 2px 5px rgba(11,42,91,.16)!important;
+  font-weight:750!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active svg,
+#dcm-activity-view-tabs .dcm-activity-view-btn.active i,
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab.active svg,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab].on svg,
+.cm-ap-tabs [data-sr-tab].on svg{
+  color:#FFFFFF!important;
+  stroke:currentColor!important;
+}
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab.active .cm-cra-tab-count,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab].on .cm-ap-cnt,
+.cm-ap-tabs [data-sr-tab].on .cm-ap-cnt{
+  color:#16375D!important;
+  background:var(--dcm-44-subnav-accent)!important;
+  border-radius:999px!important;
+  font-weight:800!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn:not(.active):hover,
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab:not(.active):hover,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab]:not(.on):not([aria-selected="true"]):hover,
+.cm-ap-tabs [data-sr-tab]:not(.on):hover{
+  background:#E8EFFA!important;
+  color:#173A74!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn.active:hover,
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab.active:hover,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab].on:hover,
+.cm-ap-tabs [data-sr-tab].on:hover{
+  color:#FFFFFF!important;
+  background:linear-gradient(135deg,#17477E,#0E3066)!important;
+}
+#dcm-activity-view-tabs .dcm-activity-view-btn:focus-visible,
+#tab-survey .cm-survey-shell > .cm-survey-subtabs > button.cm-survey-subtab:focus-visible,
+#cmAccessPanel .cm-ap-tabs [data-ap-tab]:focus-visible,
+.cm-ap-tabs [data-sr-tab]:focus-visible{
+  outline:2px solid #D4AF43!important;
+  outline-offset:2px!important;
+}
+/* Keep the original dimensions, tab order and equal-width/scroll rules.
+ * Only state colors and small accents change, preventing header shifts. */
