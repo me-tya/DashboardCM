@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tim Pusmantap · Modul Transformasi (sumber asli)</title>
+<link rel="stylesheet" href="mt-team-exact/source/mt-base-styles.css?v=261114-46">
+<link rel="stylesheet" href="mt-team-exact/source/mt-ui-tabs-unified.css?v=261114-46">
+<style>
+/* Only isolate the existing MT component inside the DCM iframe.
+   All feature markup, components, state transitions and theme come verbatim
+   from mt-tim.js and mt-tim2.js, not a DCM-specific redesign. */
+html,body{margin:0;min-width:0}
+body{background:transparent;font-family:Inter,Arial,sans-serif}
+#mt-app{min-width:0}
+#mt-app .t2{width:100%;max-width:100%}
+#mt-toast{position:fixed;right:16px;bottom:16px;z-index:2000;padding:10px 15px;background:#102E5E;color:#fff;border-radius:10px;box-shadow:0 3px 14px #001b4b22}
+#mt-error{padding:12px 16px;background:#FFF0ED;color:#8B301E;border:1px solid #DDA69C;border-radius:9px}
+#mt-toast[hidden],#mt-error[hidden]{display:none}
+.mt-compat-modal{position:fixed;inset:0;background:#001a4185;display:grid;place-items:center;z-index:8000}
+.mt-compat-modal .md{display:flex;flex-direction:column;width:min(720px,95vw);max-height:92vh;overflow:hidden;background:white;border-radius:12px;box-shadow:0 15px 45px #00153955}
+.mt-compat-modal .mdh,.mt-compat-modal .mdf{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px}
+.mt-compat-modal .mdh{border-bottom:1px solid #DBE4F0}.mt-compat-modal .mdh h3{margin:0}
+.mt-compat-modal .mdb{overflow:auto;padding:15px;flex:1}
+.mt-compat-modal .mdf{border-top:1px solid #DBE4F0;justify-content:flex-end}
+.mt-compat-modal .mt-close{border:0;background:transparent;font-size:22px;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="mt-error" hidden></div>
+<div id="mt-app"></div>
+<div id="mt-toast" role="status" aria-live="polite" hidden></div>
+<script src="mt-team-exact/dcm-mt-team-compat-46.js?v=261114-46"></script>
+<script src="mt-team-exact/source/mt-libur.js?v=261114-46"></script>
+<script src="mt-team-exact/source/mt-dcm-squad-import.js?v=261114-46"></script>
+<script src="mt-team-exact/source/mt-tim.js?v=261114-46"></script>
+<script src="mt-team-exact/source/mt-tim2.js?v=261114-46"></script>
+<script src="mt-team-exact/source/mt-foto-frame.js?v=261114-46"></script>
+<script>window.mtTeamReady()</script>
+</body>
+</html>
