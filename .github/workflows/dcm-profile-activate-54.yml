@@ -1,0 +1,53 @@
+name: DCM 54 Activate Individual Profile Render Fix
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-profile-activate-54.yml']
+permissions:
+  contents: write
+jobs:
+  validate-and-activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify original prechange backup and helper
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-54:refs/remotes/origin/backup/261115-DCM-54
+          git archive --format=zip -o /tmp/261115-DCM-54.zip origin/backup/261115-DCM-54
+          unzip -t /tmp/261115-DCM-54.zip | tail -1
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          grep -q 'function picShort(n,M)' mt-team-exact/dcm-mt-team-compat-46.js
+      - name: Run shared-unit individual tab and original-MT parity regression
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-profile-individual-54.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+      - name: Refresh only Tim Pusmantap scripts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          frame=Path('tim-pusmantap-mt.html')
+          current=frame.read_text('utf8')
+          a='dcm-mt-team-compat-46.js?v=261115-53'
+          b='dcm-mt-team-compat-46.js?v=261115-54'
+          assert current.count(a)==1 and b not in current
+          frame.write_text(current.replace(a,b,1),'utf8')
+          index=Path('index.html')
+          html=index.read_text('utf8')
+          a='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-53'
+          b='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-54'
+          assert html.count(a)==1 and b not in html
+          index.write_text(html.replace(a,b,1),'utf8')
+          print('PASS: only iframe and compatibility cache URL updated; source MT design unchanged')
+          PY
+          git diff --check
+      - name: Deploy profile render fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "fix(dcm): activate original MT profile short-name helper v54"
+          git push origin HEAD:main
