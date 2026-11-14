@@ -262,7 +262,7 @@ function open(){
    wrap._parsed=parsed;preview(parsed);
   }catch(err){area.textContent='Tidak dapat membaca file: '+(err.message||err)}
  };
- button.onclick=async()=>{
+ const startReview=async()=>{
   if(!wrap._parsed)return;
   const back=$('#mt-profile-back'),review=$('#mt-profile-review');
   if(review){review.remove();if(back)back.remove();button.textContent='Tinjau sebelum simpan';refreshCounts();return}
@@ -280,7 +280,7 @@ function open(){
     '<div>'+c.contactsUpdated+' kontak dilengkapi · '+c.contactsAdded+' kontak baru · '+c.contactsSkipped+' kontak ditahan</div>'+
     '<div class="t-xs">Data lama yang terisi tetap. File diproses di perangkat ini. Penyimpanan ke Firebase dilakukan setelah konfirmasi.</div>';
    area.appendChild(summary);
-   const b=document.createElement('button');b.id='mt-profile-back';b.className='btn';b.textContent='Kembali';b.onclick=()=>{summary.remove();b.remove();button.textContent='Tinjau sebelum simpan';button.disabled=false};
+   const b=document.createElement('button');b.id='mt-profile-back';b.className='btn';b.textContent='Kembali';b.onclick=()=>{summary.remove();b.remove();button.textContent='Tinjau sebelum simpan';button.disabled=false;button.onclick=startReview};
    button.parentElement.insertBefore(b,button);
    button.textContent='Konfirmasi dan simpan';
    button.disabled=false;
@@ -298,6 +298,7 @@ function open(){
    };
   }catch(err){button.disabled=false;button.textContent='Tinjau sebelum simpan';w.toast('Impor dibatalkan: '+(err.message||err))}
  };
+ button.onclick=startReview;
 }
 w.MT_PROFILE_IMPORT={open,parse,match,analyze,prepare};
 })(window);
