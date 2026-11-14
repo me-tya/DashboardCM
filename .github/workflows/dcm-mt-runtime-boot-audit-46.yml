@@ -1,0 +1,26 @@
+name: DCM 46 inspect MT runtime boot for safe isolated iframe
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-runtime-boot-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          keys=["const FB=", "let FB=", "var FB=", "const ME=", "let ME=", "var ME=", "let VIEW=", "const VIEW=", "var VIEW=", "let S=", "var S=", "S=load()", "load()", "initFirebase", "initFB", "onAuthStateChanged", "FB.on=", "FB.ready=", "function actCanEdit", "const actCanEdit", "function modal(", "function renderLogin(", "function save()", "document.addEventListener('click'", "window.addEventListener('load'", "localStorage.getItem(KEY", "function actRows()", "function pAkt()"]
+          for k in keys:
+            hits=list(re.finditer(re.escape(k),s))
+            print("\nTERM",k,"COUNT",len(hits))
+            for m in hits[:3]:
+              print("SNIP",s[max(0,m.start()-350):m.start()+1350].replace('\n',' ')[:1700])
+          print('\nLAST 9K OF INDEX',s[-9000:])
+          print('\nEXTERNAL SCRIPTS', re.findall(r'<script[^>]+src=["\x27]([^"\x27]+)',s)[-65:])
+          PY
