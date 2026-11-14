@@ -2,7 +2,7 @@ name: DCM 46 Browser Test MT Team Exact Source
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-mt-team-parity-test-46.yml']
+    paths: ['.github/workflows/dcm-mt-team-parity-test-46.yml', 'tim-pusmantap-mt.html', 'mt-team-exact/**', 'tests/dcm-mt-team-parity-46.test.cjs']
 permissions: {contents: read}
 jobs:
   test:
@@ -14,6 +14,7 @@ jobs:
           node --check mt-team-exact/dcm-mt-team-compat-46.js
           node --check mt-team-exact/source/mt-tim.js
           node --check mt-team-exact/source/mt-tim2.js
+          node --check mt-team-exact/source/mt-original-host-helpers-46.js
           node --check dcm-pusmantap-bridge.js
           test -s mt-team-exact/source/mt-base-styles.css
           test -s mt-team-exact/source/mt-ui-tabs-unified.css
