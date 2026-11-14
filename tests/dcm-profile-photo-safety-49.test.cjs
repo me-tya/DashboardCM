@@ -70,5 +70,5 @@ assert(ui.includes('Perlu verifikasi')&&ui.includes('Belum terdaftar')&&ui.inclu
 assert(ui.includes("button.onclick=startReview"));
 assert(ui.includes('await w.mtImportCommit(now.docs)'),'must wait for server confirmation');
 const shell=fs.readFileSync('mt-team-exact/dcm-mt-team-compat-46.js','utf8');
-assert(shell.includes('function mtImportCommit(docs)')&&shell.includes('__mtImportPending.has(ev.data.requestId)'));
+assert(shell.includes('function mtImportCommit(docs,overrideUi)')&&shell.includes('__mtImportPending.has(ev.data.requestId)'));
 console.log('PASS: safe NIP/name matching, review-only variants, no duplicate insert, preflight nonmutation, photos, contacts, team mapping, acknowledgement.');
