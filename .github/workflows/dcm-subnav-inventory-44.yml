@@ -1,0 +1,41 @@
+name: DCM 44 Deep Subnavigation Inventory
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-subnav-inventory-44.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inventory functional submenus and active styles, excluding ordinary filters
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for fp in ['index.html','tim-pusmantap.html']:
+            if not Path(fp).exists():continue
+            s=Path(fp).read_text('utf8')
+            print('\n=== SOURCE',fp,'LEN',len(s),'===')
+            for term in ['cm-ap-tabs','af-tabs','af-tab','eo-ws-tab','cm-survey-subtabs','data-cm-subtab','cm-reminder-segment','role="tablist"','aria-selected=','tablist','subtab','tim-nav','tp-tab','cm-resource-tabs','review-tabs','resource-tabs','content-tabs','knowledge-tabs','cm-knowledge-tabs','prio-subtabs']:
+              hits=list(re.finditer(re.escape(term),s,re.I))
+              print('\nTERM',term,'COUNT',len(hits))
+              for m in hits[-5:]:
+                line=s.count('\n',0,m.start())+1
+                print('LINE',line,'SNIP',s[max(0,m.start()-220):m.start()+720].replace('\n',' ')[:920])
+            for m in re.finditer(r'<(?:div|nav|section|ul)\b[^>]*class="([^"]*(?:tab|nav|segment)[^"]*)"[^>]*>',s,re.I):
+              if any(x in m.group(1) for x in ['tab-panel','tabs-row','tabNav','tab-icon','tab-btn','tab-analytics']):continue
+              print('NAVGROUP',s.count('\n',0,m.start())+1,m.group(0)[:260])
+          print('\n=== CSS NAVIGATION FILES ===')
+          for name in ['dcm-navigation-all-menus-25.css','dcm-approved-navigation.css','dcm-cra-compact-27.css','dcm-priority-original-mockup-40.css','dcm-knowledge-priority-compact-37.css']:
+            p=Path(name)
+            if not p.exists():continue
+            t=p.read_text('utf8')
+            print('\nFILE',name,'LEN',len(t))
+            for term in ['.cm-survey-subtab.active','.cm-ap-tabs','.af-tab','.eo-ws-tab','.active','.prio-subtabs']:
+              matches=list(re.finditer(re.escape(term),t))
+              print('SELECTOR',term,len(matches))
+              for m in matches[-3:]:
+                print('RULE',t[max(0,m.start()-60):m.start()+500].replace('\n',' ')[:560])
+          PY
