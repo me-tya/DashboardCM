@@ -34,18 +34,30 @@ function compact(url){return new Promise(resolve=>{
 })}
 function open(){
  if(!w.actCanEdit())return w.toast('Hak akses impor tidak tersedia.');
- const wrap=document.createElement('div');wrap.className='ov cmp50';
+ // Attach the dialog to the *parent* viewport, not the very tall embedded iframe.
+ // In the iframe, position:fixed centers below the visible scroll area and leaves
+ // only a grey overlay on screen.
+ let hostDocument=document;
+ try{if(window.parent&&window.parent!==window&&window.parent.location.origin===location.origin)hostDocument=window.parent.document}catch(e){}
+ if(hostDocument!==document&&!hostDocument.getElementById('dcm-profile-compare-style-51')){
+  const stylesheet=hostDocument.createElement('link');
+  stylesheet.id='dcm-profile-compare-style-51';stylesheet.rel='stylesheet';
+  stylesheet.href='mt-team-exact/dcm-profile-compare-50.css?v=261114-51';
+  hostDocument.head.appendChild(stylesheet);
+ }
+ const wrap=hostDocument.createElement('div');wrap.className='ov cmp50';
  wrap.innerHTML='<div class="md" role="dialog" aria-modal="true" aria-label="Bandingkan data Dashboard CM dan Modul Transformasi">'+
  '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>Pilih sumber data per pegawai dan per kolom</small></div><input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi"></header>'+
  '<main class="cmp-main"><aside class="cmp-aside"><div id="cmp-stats">Pilih JSON Modul Transformasi.</div><input id="cmp-search" placeholder="Cari nama / NIP…" disabled><div id="cmp-people"></div></aside>'+
  '<section id="cmp-panel" class="cmp-panel"><p class="cmp-placeholder">Belum ada profil untuk dibandingkan.</p></section></main>'+
  '<footer class="cmp-footer"><span id="cmp-footer-text">Belum ada perubahan.</span><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
- document.body.appendChild(wrap);
+ hostDocument.body.appendChild(wrap);
  const $=s=>wrap.querySelector(s);
  const state={active:0,choices:{},fields:{},structure:{},manualApproved:{},contacts:false,stage:1,baseline:''};
- const get=()=>wrap._data,roster=()=>w.actMaster().pic,close=()=>wrap.remove();
+ const get=()=>wrap._data,roster=()=>w.actMaster().pic,close=()=>{wrap.remove();};
  $('#cmp-cancel').onclick=()=>state.stage===2?back():close();
  wrap.addEventListener('click',e=>{if(e.target===wrap)close()});
+ wrap.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();close()}});
  function existing(i){const v=state.choices[i];return /^existing:\d+$/.test(v||'')?roster()[+v.slice(9)]||null:null}
  function initChoices(i){
   const src=get().profiles[i],dst=existing(i),a=teams(src,dst,w.kpCfg(),get().kp);
