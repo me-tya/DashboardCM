@@ -1,0 +1,69 @@
+name: DCM 50 Side by Side Import Validation and Activation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-profile-compare-50.yml']
+permissions:
+  contents: write
+jobs:
+  test-and-activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+      - name: Verify preupdate complete ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-50:refs/remotes/origin/backup/261114-DCM-50
+          git archive --format=zip -o /tmp/261114-DCM-50.zip origin/backup/261114-DCM-50
+          unzip -t /tmp/261114-DCM-50.zip | tail -1
+      - name: Validate scripts and safeguards
+        run: |
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-profile-compare-50.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+          node tests/dcm-profile-compare-50.test.cjs
+      - name: Simulate browser and regression
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-profile-compare-ui-50.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Activate refreshed embedded scripts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          frame=Path('tim-pusmantap-mt.html')
+          f=frame.read_text('utf8')
+          items={
+           'dcm-mt-team-compat-46.js?v=261114-49':'dcm-mt-team-compat-46.js?v=261114-50',
+           'dcm-profile-photo-import-48.js?v=261114-49':'dcm-profile-photo-import-48.js?v=261114-50'
+          }
+          for old,new in items.items():
+            assert f.count(old)==1
+            f=f.replace(old,new)
+          frame.write_text(f,'utf8')
+          p=Path('index.html')
+          s=p.read_text('utf8')
+          old='src="tim-pusmantap-mt.html?embedded=1&amp;v=20261114-49"'
+          new='src="tim-pusmantap-mt.html?embedded=1&amp;v=20261114-50"'
+          assert s.count(old)==1
+          s=s.replace(old,new)
+          oldb='src="dcm-pusmantap-bridge.js?v=20261114-22"'
+          newb='src="dcm-pusmantap-bridge.js?v=20261114-50"'
+          assert s.count(oldb)==1
+          s=s.replace(oldb,newb)
+          p.write_text(s,'utf8')
+          print('PASS: side by side iframe, source scripts, bridge all cache-refreshed')
+          PY
+          git diff --check
+      - name: Publish tested comparison UI
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "feat(dcm): activate side-by-side choose-data import v50"
+          git push origin HEAD:main
