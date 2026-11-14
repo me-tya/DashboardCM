@@ -23,7 +23,7 @@ assert(render.includes("prioUi.view='list'"),'Card click forces read-only list m
 assert(render.includes("prioUi.q=''"),'Search query reset reveals filtered results');
 assert(render.includes("scrollIntoView("),'Card click navigates to project list/details');
 assert(render.includes("kind==='top'&&top?top.p.id:''"),'Uses actual top project ID');
-assert(render.includes("data-prio-detail"),'Original per-project read-only details remain');
+assert(html.includes('data-prio-detail')&&html.includes("function prioBindRows("),'Original per-project read-only details remain');
 for(const selector of [
  '#tab-knowledge .kb-category-row',
  '#tab-knowledge .knowledge-group',
