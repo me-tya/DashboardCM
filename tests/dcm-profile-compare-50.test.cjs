@@ -54,7 +54,7 @@ const keep=api.prepare(input,choices,live,docs,{},false,{allowSnapshotRoster:tru
 assert.equal(keep.docs.find(x=>x.id==='cfg-master').master.pic[0].foto,'oldphoto.jpg');
 assert.throws(()=>api.prepare(input,choices,[{n:'Changed',nip:'198512152010122001'},...live.slice(1)],docs,{},false,options),/berubah/);
 assert.equal(api.analyze(input.profiles[1],live).kind,'review','name variants require review');
-assert.throws(()=>api.prepare(input,{1:'existing:1'},live,docs,{},false,{allowSnapshotRoster:true,baselineRoster:baseline,fieldChoices:{},structureChoices:{}}),/tidak lagi valid/);
+assert.throws(()=>api.prepare(input,{1:'existing:2'},live,docs,{},false,{allowSnapshotRoster:true,baselineRoster:baseline,fieldChoices:{},structureChoices:{}}),/tidak lagi valid/);
 const manual={allowSnapshotRoster:true,baselineRoster:baseline,fieldChoices:{1:{foto:'mt'}},structureChoices:{},manualTargets:{1:1}};
 const m=api.prepare(input,{1:'existing:1'},live,docs,{},false,manual);
 assert.equal(m.docs.find(x=>x.id==='cfg-master').master.pic.length,3);
