@@ -1,0 +1,61 @@
+/*
+ * Dashboard CM 261114-DCM-32
+ * Header hover color parity with Modul Transformasi "mt-header-ghost.css".
+ * Changes ONLY hover/focus colors for help, manual, notification and Guide.
+ * Keep original dimensions, placement, actions, click handlers and avatar menu.
+ *
+ * MT reference:
+ * - Help and book: white #FFFFFF background, navy #102C4E icon
+ * - Bell: gold #FDB913 background, navy #102C4E icon
+ * - Guide: transparent background, white #FFFFFF text
+ */
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:hover,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:focus-visible{
+  background:#FFFFFF!important;
+  color:#102C4E!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:hover svg,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:focus-visible svg,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:hover svg *,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon:focus-visible svg *{
+  color:#102C4E!important;
+  stroke:#102C4E!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:hover,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:focus-visible,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter.has-notifications:hover{
+  background:#FDB913!important;
+  color:#102C4E!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:hover svg,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:focus-visible svg,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:hover svg *,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:focus-visible svg *{
+  color:#102C4E!important;
+  fill:#102C4E!important;
+  stroke:#102C4E!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:hover .cm-reminder-badge:not(.hidden),
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:focus-visible .cm-reminder-badge:not(.hidden){
+  border-color:#FDB913!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle:hover,
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle:focus-visible{
+  background:transparent!important;
+  color:#FFFFFF!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #appHeader .topbar-actions.dcm-reference-toolbar-30 .dcm-ref-icon,
+  #appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter{
+    transition:none!important;
+  }
+}
