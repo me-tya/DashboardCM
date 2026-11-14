@@ -246,6 +246,12 @@ function open(){
    const ack=await w.mtImportCommit(now.docs,now.ui);
    const count=now.docs.find(d=>d.id==='cfg-master')?.master?.pic?.length||0;
    if(ack&&Number.isInteger(ack.profiles)&&ack.profiles!==count)throw Error('Jumlah profil hasil Firebase tidak sesuai.');
+   if(wrap._pending.replaceAll&&ack){
+    const expect=wrap._pending.result.summary;
+    if(Number.isInteger(ack.photos)&&ack.photos!==expect.photos)throw Error('Jumlah foto yang diterima Firebase berbeda dari sumber.');
+    if(Number.isInteger(ack.contacts)&&ack.contacts!==expect.contacts)throw Error('Jumlah kontak yang diterima Firebase berbeda dari sumber.');
+    if(ack.authoritative===false)throw Error('Firebase tidak mencatat Modul Transformasi sebagai sumber profil utama.');
+   }
    close();
   }catch(err){showError('Data BELUM tersimpan di Firebase: '+(err.message||err));$('#cmp-save').disabled=false;$('#cmp-save').textContent='Coba simpan'}
  }
