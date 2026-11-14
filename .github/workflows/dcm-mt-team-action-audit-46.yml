@@ -1,0 +1,26 @@
+name: DCM 46 Original MT Action Handler Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-team-action-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          for term in ['ACT.tmDel=','ACT.kuDel=','ACT.kpTimAdd=','ACT.tmAdd=','ACT.tmEdit=','ACT.tmUnits=','ACT.oneEdit=','ACT.oneUndPv=','ACT.tmKontak=','ACT.tmView=','ACT.tmSel=','ACT.tmTeam=','ACT.kuEdit=','ACT.kpTimDel=','ACT.kpTimRen=','ACT.kpTimAdd=']:
+            i=s.find(term)
+            print('ACTION',term,'POS',i)
+            if i>=0:print(s[i:i+1600].replace('\n',' '))
+          for term in ['function kqRunOcr(', 'async function kqRunOcr(', 'function kqParseProfile(', 'function kqLoadImage(', 'async function kqLoadImage(', 'function kqDataUrl(', 'function kqSuggestUnit(', 'function kqAvatarRender(', 'function kuResize(']:
+            i=s.find(term)
+            print('OCR',term,i)
+            if i>=0:print(s[i:i+750].replace('\n',' '))
+          PY
