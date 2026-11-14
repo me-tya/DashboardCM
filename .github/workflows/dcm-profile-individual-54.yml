@@ -1,0 +1,32 @@
+name: DCM 54 Individual Profile Regression & Backup
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-profile-individual-54.yml'
+      - 'tests/dcm-profile-individual-54.test.cjs'
+      - 'mt-team-exact/source/mt-tim.js'
+      - 'mt-team-exact/source/mt-tim2.js'
+      - 'mt-team-exact/dcm-mt-team-compat-46.js'
+permissions:
+  contents: read
+jobs:
+  individual-profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Archive exact before-change repository
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-54:refs/remotes/origin/backup/261115-DCM-54
+          git archive --format=zip --output=261115-DCM-54.zip origin/backup/261115-DCM-54
+          unzip -t 261115-DCM-54.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-54
+          path: 261115-DCM-54.zip
+          retention-days: 90
+      - name: Validate original UI with imported profiles and contact photos
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-profile-individual-54.test.cjs
