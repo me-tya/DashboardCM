@@ -63,3 +63,9 @@ body > .cmp50.ov > .md{flex:0 1 min(1220px,98vw)!important;position:relative!imp
 .cmp50 .cmp-metrics span{font-size:11px;color:#66768d}
 .cmp50 .cmp-review-note{background:#fff9e8;border:1px solid #e4d39f;border-radius:8px;padding:10px}
 @media(max-width:750px){.cmp50 .cmp-aside{width:160px;flex-basis:160px}.cmp50 .cmp-row{grid-template-columns:minmax(88px,.45fr) minmax(0,1fr) minmax(0,1fr);gap:4px}.cmp50 .cmp-choice{padding:5px;font-size:11px}.cmp50 .cmp-header{flex-wrap:wrap}.cmp50 #cmp-target{max-width:100%;min-width:180px}.cmp50 .cmp-person-header{flex-wrap:wrap}}
+
+.cmp50 .cmp-upload-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.cmp50 .cmp-upload-actions button{background:#10356d;color:#fff;border:1px solid #10356d;border-radius:7px;padding:8px 10px;font:700 11px Inter,Arial,sans-serif;cursor:pointer;white-space:nowrap}
+.cmp50 .cmp-upload-actions button:disabled{opacity:.45;cursor:not-allowed}
+.cmp50 .cmp-upload-actions button:hover:not(:disabled){background:#174880}
+@media(max-width:760px){.cmp50 .cmp-upload-actions{justify-content:flex-start}.cmp50 .cmp-upload-actions input{max-width:160px}}
