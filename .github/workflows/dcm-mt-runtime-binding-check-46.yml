@@ -1,0 +1,27 @@
+name: DCM 46 Verify original MT globals for isolated team embedding
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-runtime-binding-check-46.yml']
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone -q --depth 1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          for key in ['S','ME','KEY','FIREBASE_CONFIG']:
+            print('\nSYMBOL',key)
+            patt=r'(?:const|let|var)\s+'+key+r'\s*(?:=|;)' 
+            for m in list(re.finditer(patt,s))[:5]:
+              print('DECL',s[m.start():m.start()+420].replace('\n',' '))
+          print('BOOT TAIL',s[-1100:])
+          for key in ['function actNm(', 'const actNm=', 'function actRows()', 'const actRows=', 'function actCanEdit(', 'const actCanEdit=', 'function sess(', 'const sess=', 'function kpCfg()', 'function render(){']:
+            i=s.find(key)
+            print('ANCHOR',key,'FOUND',i>=0,'SNIP',s[i:i+800].replace('\n',' ') if i>=0 else '')
+          PY
