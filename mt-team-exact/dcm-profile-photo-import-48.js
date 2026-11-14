@@ -220,10 +220,20 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
     same[0].kp.peran=keepUniqueValues(same[0].kp.peran,c.peran);
     summary.contactsUpdated++;continue;
    }
-   const docId='cfg-kp-DCM49-'+String(contacts.length).padStart(3,'0')+'-'+Math.random().toString(36).slice(2,8);
+   const stableHash=[...name+'|'+unit+'|'+id].reduce((h,ch)=>Math.imul(h,31)+ch.charCodeAt(0)>>>0,2166136261).toString(36);
+   const docId='cfg-kp-DCM50-'+stableHash;
    const doc={id:docId,kind:'cfg',tahun:0,tw:0,kp:c};
    draft.push(doc);contacts.push(doc);summary.contactsAdded++;
   }
+ }
+ const seenNips=new Map();
+ for(const p of targetRoster){
+  const n=N(p.nip);if(!n)continue;
+  if(seenNips.has(n)){
+   const oldA=live.filter(x=>N(x.nip)===n).length;
+   const newA=targetRoster.filter(x=>N(x.nip)===n).length;
+   if(newA>oldA)throw Error('NIP '+n+' menjadi duplikat setelah pemilihan data. Batalkan atau cocokkan pegawai yang benar.');
+  }else seenNips.set(n,p.n);
  }
  const exportDocs=draft.filter(d=>d&&d.id&&/^(cfg-master|cfg-kp|cfg-tim|cfg-agpim|cfg-kp-[\w-]+|pub-tim)$/.test(d.id));
  const raw=JSON.stringify({docs:exportDocs,ui:ui||{}});
