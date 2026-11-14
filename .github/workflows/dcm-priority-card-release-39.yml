@@ -1,0 +1,50 @@
+name: DCM 39 publish exact four Prioritas cards
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-priority-card-release-39.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Confirm full prechange backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-39:refs/remotes/origin/backup/261114-DCM-39
+          git archive --format=zip --output=/tmp/261114-DCM-39.zip origin/backup/261114-DCM-39
+          unzip -t /tmp/261114-DCM-39.zip | tail -1
+      - name: Verify card appearance and existing navigation behavior
+        run: |
+          node tests/dcm-priority-subtabs-38.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+      - name: Bust CSS cache without changing the application structure
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          before='dcm-priority-justify-subtabs-38.css?v=261114-38'
+          after='dcm-priority-justify-subtabs-38.css?v=261114-39'
+          assert s.count(before)==1,('Original Prioritas stylesheet link missing or duplicated',s.count(before))
+          assert after not in s
+          updated=s.replace(before,after,1)
+          assert updated.replace(after,before,1)==s
+          p.write_text(updated,encoding='utf8')
+          print('PASS only cache-bust URL changed; four tab markup, scripts and rest of app intact')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish corrected navy and soft-blue card navigation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): refresh solid navy active and independent four Prioritas tab cards"
+          git push origin HEAD:main
