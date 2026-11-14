@@ -1,0 +1,25 @@
+name: DCM 46 Original Contact/OCR Dependency Extraction Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-host-helper-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone -q --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          tokens=["ACT.kpTimAdd=","ACT.kpUnits=","const KQ_ESELON1=","const KP_TIM0=","const KP_PERAN=","const KQ_SRC=","let kqWorker=","let kqProgress=","function kqProgress(","const kqProgress=","function kqLoadImage(","function kqDataUrl(","function kqRunOcr(","function kuForm(","function kuResize(","ACT.kuDel=","ACT.kuEdit=","ACT.kuAdd=","function kpHistBtn(","function kpHistCls(","function kpHistSep(","function kpOffLbl(","function kpOn(","const kpOn=","function pAktTimU(","const ACT_PUSAT=","function kpUnitList(","function kqCropAvatar(","function chLib("]
+          for tok in tokens:
+            off=s.find(tok)
+            print("TOKEN",tok,off)
+            if off>=0:print("SEGMENT",s[off:off+550].replace('\n',' '))
+          print("CONTEXT BEFORE CONTACT",s[s.index("ACT.kuDel=")-150:s.index("ACT.kuDel=")+200])
+          print("REGION LENGTH",s.index("ACT.kuDel=")-s.index("const KQ_ESELON1="))
+          print("HISTORY SECTION",s[s.index("const KP_PERAN="):s.index("const KP_PERAN=")+1600])
+          PY
