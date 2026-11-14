@@ -1,0 +1,43 @@
+name: DCM 31 backup and logged-in avatar source audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-login-photo-audit-31.yml']
+permissions: {contents: read}
+jobs:
+  backup-and-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact complete repository backup before any app changes
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-31:refs/remotes/origin/backup/261114-DCM-31
+          git archive --format=zip --output=/tmp/261114-DCM-31.zip origin/backup/261114-DCM-31
+          unzip -t /tmp/261114-DCM-31.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-31
+          path: /tmp/261114-DCM-31.zip
+          retention-days: 30
+      - name: Identify current Google profile/avatar bindings
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          for needle in ['function cmCurrentPerson()', 'function cmUpdateUserPill()', 
+                         'function cmInitials(', 'function cmEntryOnAuth(', 'function cmAuth',
+                         'photoURL','providerData','profilePicture','avatarUrl',
+                         'userAvatar','onAuthStateChanged','cmUpdateUserPill()',
+                         'dcm-header-reference-30.js']:
+            occurrences=[m.start() for m in re.finditer(re.escape(needle),s)]
+            print('\n=== TOKEN',needle,'COUNT',len(occurrences),'===')
+            for i in occurrences[:9]:
+              chunk=s[max(0,i-300):i+1400]
+              print('LINE',s.count(chr(10),0,i)+1,'EXCERPT',chunk.replace(chr(10),' ')[:1700])
+          print('\n=== HEADER AVATAR CSS ===')
+          c=Path('dcm-header-reference-30.css').read_text('utf8')
+          for marker in ['#dcmRefAvatarTrigger #userAvatar','#dcmRefAvatarTrigger::after']:
+            i=c.find(marker)
+            print(marker, c[i:i+650])
+          PY
