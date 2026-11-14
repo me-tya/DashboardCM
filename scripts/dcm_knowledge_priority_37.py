@@ -13,7 +13,7 @@ a = render.index('<div class="prio-kpis">')
 import re
 b = None
 depth = 0
-for match in re.finditer(r'</?div\\b[^>]*>', render[a:]):
+for match in re.finditer(r'</?div\b[^>]*>', render[a:]):
     tag = match.group(0)
     depth += -1 if tag.startswith('</') else 1
     if depth == 0:
