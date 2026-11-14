@@ -1,0 +1,28 @@
+name: DCM 46 Source Span Boundaries
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-span-boundary-46.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          start=s.index('ACT.kuDel=')
+          end=s.index('/* Impor data aktivitas dari backup Dashboard CM',start)
+          print('CONTACT RANGE',start,end,'LEN',end-start)
+          print('CONTACT END CHARS',s[end-5400:end])
+          print('CONTACT ACTIONS',[(m.group(1),m.start()+start) for m in re.finditer(r'ACT\.([A-Za-z0-9_]+)\s*=',s[start:end])])
+          print('CONTACT TOPLEVEL FUNCTIONS',[(m.group(1),m.start()+start) for m in re.finditer(r'function\s+([A-Za-z0-9_]+)\s*\(',s[start:end])])
+          print('OCR PREFIX consts',s[s.index('const KQ_ESELON1='):s.index('const KQ_ESELON1=')+400])
+          for key in ['const KP_PERAN=','let KP_PERAN=','const chLib=','function chLib(','async function chLib(','function confirmDel(','const KQ_OFF','function kqWorkerGet(']:
+            i=s.find(key)
+            print('FIND',key,i,s[i:i+1100] if i>=0 else '')
+          PY
