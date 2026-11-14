@@ -48,15 +48,15 @@ async function prepare(parsed,currentDocs,currentUI){
  const base=old.filter(d=>!teamId(d.id)).map(clone);
  const fresh=clone(source);
  for(const d of fresh){
-  if(d.id==='cfg-master')for(const p of d.master.pic)if(p.foto)p.foto=await resizePhoto(p.foto);
-  else if(/^cfg-kp-/.test(d.id)&&d.kp?.foto)d.kp.foto=await resizePhoto(d.kp.foto);
+  if(d.id==='cfg-master'){for(const p of d.master.pic)if(p.foto)p.foto=await resizePhoto(p.foto)}
+  else if(/^cfg-kp-/.test(d.id)&&d.kp?.foto){d.kp.foto=await resizePhoto(d.kp.foto)}
  }
  const docs=[...base,...fresh],ui={...(currentUI||{}),mtProfilesAuthoritative:true};
  const amount=()=>JSON.stringify({docs,ui}).length;
  if(amount()>795000){
   for(const d of fresh){
-   if(d.id==='cfg-master')for(const p of d.master.pic)if(p.foto)p.foto=await resizePhoto(p.foto,96,.56);
-   else if(/^cfg-kp-/.test(d.id)&&d.kp?.foto)d.kp.foto=await resizePhoto(d.kp.foto,96,.56);
+   if(d.id==='cfg-master'){for(const p of d.master.pic)if(p.foto)p.foto=await resizePhoto(p.foto,96,.56)}
+   else if(/^cfg-kp-/.test(d.id)&&d.kp?.foto){d.kp.foto=await resizePhoto(d.kp.foto,96,.56)}
   }
  }
  if(amount()>795000)throw Error('File foto terlalu besar untuk penyimpanan Dashboard CM ('+Math.ceil(amount()/1024)+' KB). Data belum disimpan.');
