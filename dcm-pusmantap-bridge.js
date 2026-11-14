@@ -11,6 +11,7 @@ let manual=empty(), subscribed=false, unload=null, lastSignature='';
 const frame=()=>document.getElementById('cmTpFrame');
 const day=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const clean=x=>String(x==null?'':x).trim().slice(0,500);
+const photo=x=>{const v=String(x==null?'':x).trim();return /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+$/i.test(v)&&v.length<=500000?v:((/^https:\/\//i.test(v)&&v.length<=2000)?v:'')};
 const fold=x=>clean(x).toLocaleLowerCase('id-ID');
 const validDate=x=>/^\d{4}-\d{2}-\d{2}$/.test(x);
 const STRUCTURAL_ROLES=['Kepala Pusat','Kepala Bidang Program dan Manajemen Pengetahuan','Kepala Subbidang Program dan Sistem Kerja','Kepala Subbagian Tata Usaha','Kepala Subbidang Manajemen Pengetahuan'];
@@ -23,7 +24,7 @@ function people(){
   jenis:clean(r.jenisPegawai||r.jenisKepegawaian||r.jenis||r.penugasan||'Pegawai'),
   wfhDays:Array.isArray(r.wfhDays)?r.wfhDays:[],leavePlans:Array.isArray(r.rencanaCuti)?r.rencanaCuti:[],
   status:clean(r.status),statusMulai:clean(r.statusMulai),statusSelesai:clean(r.statusSelesai),
-  jenisCuti:clean(r.jenisCuti),foto:clean(r.foto||r.photo||r.fotoProfil||r.avatar),
+  jenisCuti:clean(r.jenisCuti),foto:photo(r.foto||r.photo||r.fotoProfil||r.avatar),
   hp:clean(r.hp||r.noHp||r.telepon),emailK:clean(r.emailK||r.emailKemenkeu||r.email),
   emailP:clean(r.emailP||r.emailPribadi),nk:clean(r.nk||r.namaPanggilan),
   nl:clean(r.nl||r.namaLengkap),org:clean(r.org||r.organisasi),
@@ -44,7 +45,7 @@ function agenda(){
 }
 function snapshot(){
  return {source:SOURCE,type:'snapshot',today:day(),canEdit:own(),
-  activities:agenda(),resources:people(),manual:{...manual,members:manual.members.map(p=>({...p,photo:p.foto||p.photo||'',foto:p.foto||p.photo||''})),mtState},
+  activities:agenda(),resources:people(),manual:{...manual,members:manual.members.map(p=>({...p,photo:photo(p.foto||p.photo),foto:photo(p.foto||p.photo)})),mtState},
   user:typeof getCurrentUserName==='function'?getCurrentUserName():'',
   email:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'',
   role:typeof cmGetAccessRole==='function'?cmGetAccessRole():'guest'};
