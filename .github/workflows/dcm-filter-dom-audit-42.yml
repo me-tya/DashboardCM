@@ -1,0 +1,30 @@
+name: DCM 42 Exact Filter Toolbar DOM Check
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-filter-dom-audit-42.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          a=s.index('function renderPriority(){')
+          b=s.index('/* ---------- Form proyek ---------- */',a)
+          part=s[a:b]
+          for token in ['class="prio-filter-panel"','class="prio-toolbar"','class="prio-chips"','class="prio-seg"','class="prio-sort"','class="prio-list"']:
+            for m in list(re.finditer(re.escape(token),part))[:2]:
+              print('\nMARKUP',token,'AT',m.start(),'TEXT',part[max(0,m.start()-350):m.start()+2600].replace('\n',' '))
+          for token in ['function prioSnapData(', 'function prioPersist(', 'const CM_MANUAL_FEATURE_MAP=', 'CM_USER_MANUAL_ARTICLES.forEach(a=>{if(CM_MANUAL_FUNCTIONS']:
+            i=s.find(token)
+            print('\nFACT',token,'AT',i,'TEXT',s[i:i+1700].replace('\n',' '))
+          for term in ['.prio-toolbar{','.prio-snapbar{','.prio-scope{','.prio-warn-bar{']:
+            matches=list(re.finditer(re.escape(term),s))
+            print('\nSTYLE',term,'COUNT',len(matches))
+            for m in matches[-2:]:print('CSS',s[m.start():m.start()+1100].replace('\n',' '))
+          PY
