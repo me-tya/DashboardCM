@@ -1,0 +1,242 @@
+/*
+ * DCM 261114-43 — compact, collapsible Filter Peringkat.
+ * Reuses approved Opsi 1 theme. Only visual spacing + hide/show presentation;
+ * no global navigation, scoring, snapshot, or access changes.
+ */
+#tab-priority .prio-filter-panel{
+  box-sizing:border-box!important;
+  gap:7px!important;
+  padding:0 9px 9px!important;
+  margin:0!important;
+  border-radius:13px!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  min-height:46px!important;
+  height:auto!important;
+  gap:10px!important;
+  margin:0 -9px 1px!important;
+  padding:7px 13px!important;
+  border-radius:12px 12px 0 0!important;
+  cursor:pointer!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-head-icon{
+  width:27px!important;
+  height:27px!important;
+  flex:0 0 27px!important;
+  font-size:16px!important;
+  border-radius:7px!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head strong{
+  font:800 15px/1.15 Inter,Arial,sans-serif!important;
+  white-space:nowrap!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-hint{
+  min-width:0!important;
+  flex:1 1 auto!important;
+  padding-left:12px!important;
+  color:#D9E5FA!important;
+  font:500 11px/1.2 Inter,Arial,sans-serif!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-active-chip,
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-warning-chip{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  min-height:24px!important;
+  height:24px!important;
+  padding:0 8px!important;
+  margin:0!important;
+  border-radius:999px!important;
+  white-space:nowrap!important;
+  font:700 10.5px/1.15 Inter,Arial,sans-serif!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-active-chip{
+  color:#16346C!important;
+  background:#DBE8FE!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-warning-chip{
+  background:#FFF2CB!important;
+  color:#75510B!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 auto!important;
+  gap:8px!important;
+  min-height:30px!important;
+  height:30px!important;
+  margin:0 0 0 auto!important;
+  padding:0 11px!important;
+  border:1px solid rgba(240,207,126,.55)!important;
+  border-radius:8px!important;
+  background:rgba(255,255,255,.13)!important;
+  color:#FFFFFF!important;
+  box-shadow:none!important;
+  cursor:pointer!important;
+  font:700 11.5px/1 Inter,Arial,sans-serif!important;
+  white-space:nowrap!important;
+  transition:background-color .14s ease!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle:hover{
+  background:rgba(255,255,255,.25)!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle:focus-visible{
+  outline:2px solid #F4CD72!important;
+  outline-offset:2px!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle svg{
+  width:15px!important;
+  height:15px!important;
+  display:block!important;
+  transition:transform .15s ease!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle[aria-expanded="true"] svg{
+  transform:rotate(180deg)!important;
+}
+/* Closed by default: compact one-line navy bar and clear active-filter badges.
+   All ranking controls remain in the DOM, with their original event handlers. */
+#tab-priority .prio-filter-panel.is-collapsed{
+  gap:0!important;
+  padding:0!important;
+  border-radius:13px!important;
+  overflow:hidden!important;
+}
+#tab-priority .prio-filter-panel.is-collapsed > .prio-filter-head{
+  margin:0!important;
+  min-height:46px!important;
+  padding:7px 13px!important;
+  border-radius:12px!important;
+}
+#tab-priority .prio-filter-panel.is-collapsed > :not(.prio-filter-head){
+  display:none!important;
+}
+/* Opened filter: reduce vertical waste in every row. */
+#tab-priority .prio-filter-panel > .prio-scope{
+  box-sizing:border-box!important;
+  min-height:47px!important;
+  padding:6px 8px!important;
+  gap:6px!important;
+  margin:0!important;
+  border-radius:10px!important;
+}
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-l{
+  min-width:135px!important;
+  margin-right:4px!important;
+  font:800 11.5px/1.1 Inter,Arial,sans-serif!important;
+}
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-b,
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-sel{
+  min-height:31px!important;
+  height:31px!important;
+  border-radius:8px!important;
+  font-size:11.5px!important;
+}
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-b{
+  padding:4px 10px!important;
+}
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-sel{
+  padding:2px 4px 2px 8px!important;
+}
+#tab-priority .prio-filter-panel > .prio-scope .prio-scope-sel select{
+  height:25px!important;
+  min-height:25px!important;
+  padding:1px 7px!important;
+  font-size:11.5px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar{
+  box-sizing:border-box!important;
+  min-height:44px!important;
+  gap:7px!important;
+  margin:0!important;
+  padding:6px 8px!important;
+  border-radius:10px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar #prioQ.prio-search{
+  min-height:31px!important;
+  height:31px!important;
+  padding:0 10px!important;
+  font-size:11.5px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar > .prio-chips{
+  gap:4px!important;
+  padding:0 6px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar .prio-chip{
+  min-height:30px!important;
+  height:30px!important;
+  padding:0 8px!important;
+  font-size:11px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar > .prio-seg{
+  min-height:31px!important;
+  height:31px!important;
+  border-radius:8px!important;
+}
+#tab-priority .prio-filter-panel > .prio-toolbar > .prio-seg button{
+  padding:0 8px!important;
+  font-size:11px!important;
+}
+#tab-priority .prio-filter-panel > .prio-snapbar{
+  min-height:41px!important;
+  height:auto!important;
+  padding:5px 9px!important;
+  gap:7px!important;
+  margin:0!important;
+  border-radius:10px!important;
+}
+#tab-priority .prio-filter-panel > .prio-snapbar label{
+  gap:8px!important;
+  font-size:11.5px!important;
+}
+#tab-priority .prio-filter-panel > .prio-snapbar select{
+  min-height:30px!important;
+  height:30px!important;
+  font-size:11.5px!important;
+  padding:3px 8px!important;
+}
+#tab-priority .prio-filter-panel > .prio-snapbar #prioSnapSave{
+  min-height:30px!important;
+  height:30px!important;
+  padding:0 9px!important;
+  font-size:11.5px!important;
+}
+#tab-priority .prio-filter-panel .prio-snapshot-help > summary{
+  width:27px!important;
+  height:27px!important;
+  font-size:14px!important;
+}
+#tab-priority .prio-filter-panel > .prio-warn-bar{
+  padding:7px 10px!important;
+  font-size:11px!important;
+  line-height:1.3!important;
+  border-radius:9px!important;
+}
+@media(max-width:1150px){
+  #tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-hint{display:none!important}
+  #tab-priority .prio-filter-panel > .prio-filter-head strong{flex:1 1 auto!important}
+}
+@media(max-width:650px){
+  #tab-priority .prio-filter-panel > .prio-filter-head{
+    flex-wrap:wrap!important;
+    row-gap:6px!important;
+    min-height:46px!important;
+  }
+  #tab-priority .prio-filter-panel > .prio-filter-head .prio-filter-head-icon{display:none!important}
+  #tab-priority .prio-filter-panel > .prio-filter-head strong{font-size:14px!important}
+  #tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle{margin-left:auto!important}
+  #tab-priority .prio-filter-panel > .prio-snapbar select{min-width:160px!important;max-width:100%!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle,
+  #tab-priority .prio-filter-panel > .prio-filter-head #prioFilterToggle svg{transition:none!important}
+}
