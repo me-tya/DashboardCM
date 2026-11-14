@@ -1,0 +1,149 @@
+/*
+ * Dashboard CM • 261114-DCM-35
+ * Tim Squad / Kontak PMO & CMO: ONE compact row at every width.
+ * Override the old wrap-at-1350px rule; never change button IDs or handlers.
+ *
+ * Search | PIC | Unit | Reset icon | Feedback | Tambah Kontak
+ */
+#tab-contact .review-dir{
+  margin-bottom:14px!important;
+}
+#tab-contact .review-dir > .review-toolbar{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:minmax(225px,1fr) minmax(130px,160px) minmax(120px,145px) 34px max-content!important;
+  grid-auto-flow:row!important;
+  align-items:center!important;
+  justify-content:stretch!important;
+  column-gap:7px!important;
+  row-gap:0!important;
+  gap:0 7px!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  min-height:36px!important;
+  padding:0!important;
+  margin:0 0 8px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:thin;
+  scrollbar-color:#CAD5E6 transparent;
+}
+#tab-contact .review-toolbar > #reviewSearch{
+  grid-column:1!important;
+  grid-row:1!important;
+  flex:none!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:36px!important;
+  min-height:36px!important;
+  padding:0 10px!important;
+  border-radius:8px!important;
+  font:500 12px/1.2 Inter,Arial,sans-serif!important;
+}
+#tab-contact .review-toolbar > #reviewPicFilter{
+  grid-column:2!important;
+  grid-row:1!important;
+}
+#tab-contact .review-toolbar > #reviewUnitFilter{
+  grid-column:3!important;
+  grid-row:1!important;
+}
+#tab-contact .review-toolbar > #reviewPicFilter,
+#tab-contact .review-toolbar > #reviewUnitFilter{
+  box-sizing:border-box!important;
+  flex:none!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  height:36px!important;
+  min-height:36px!important;
+  padding:0 9px!important;
+  border-radius:8px!important;
+  font:500 12px/1.2 Inter,Arial,sans-serif!important;
+  text-overflow:ellipsis!important;
+}
+#tab-contact .review-toolbar > #reviewReset{
+  grid-column:4!important;
+  grid-row:1!important;
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:36px!important;
+  min-height:36px!important;
+  padding:0!important;
+  margin:0!important;
+  border-radius:8px!important;
+}
+#tab-contact .review-toolbar > #reviewReset::before{
+  width:16px!important;
+  height:16px!important;
+  flex:0 0 16px!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions{
+  grid-column:5!important;
+  grid-row:1!important;
+  display:flex!important;
+  flex:none!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  justify-self:end!important;
+  gap:7px!important;
+  width:max-content!important;
+  min-width:0!important;
+  height:36px!important;
+  margin:0!important;
+  padding:0!important;
+  white-space:nowrap!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions > button{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:5px!important;
+  width:auto!important;
+  min-width:0!important;
+  height:36px!important;
+  min-height:36px!important;
+  margin:0!important;
+  padding:0 10px!important;
+  border-radius:8px!important;
+  white-space:nowrap!important;
+  font:650 12px/1.1 Inter,Arial,sans-serif!important;
+}
+#tab-contact .review-toolbar > .rv-hero-actions .cm-fb-count{
+  flex:0 0 auto;
+}
+/* One row even at laptop widths. Scroll just this bar if genuinely too narrow. */
+@media(max-width:1060px){
+  #tab-contact .review-dir > .review-toolbar{
+    grid-template-columns:220px 136px 128px 34px max-content!important;
+  }
+}
+@media(max-width:650px){
+  #tab-contact .review-dir > .review-toolbar{
+    grid-template-columns:200px 125px 116px 34px max-content!important;
+    gap:0 6px!important;
+    min-height:34px!important;
+    margin-bottom:7px!important;
+  }
+  #tab-contact .review-toolbar > #reviewSearch,
+  #tab-contact .review-toolbar > #reviewPicFilter,
+  #tab-contact .review-toolbar > #reviewUnitFilter,
+  #tab-contact .review-toolbar > #reviewReset,
+  #tab-contact .review-toolbar > .rv-hero-actions,
+  #tab-contact .review-toolbar > .rv-hero-actions > button{
+    height:34px!important;
+    min-height:34px!important;
+  }
+}
