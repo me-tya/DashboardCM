@@ -1,0 +1,74 @@
+name: Release DCM 30 exact header reference style
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-reference-release-30.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Confirm immutable full ZIP backup 261114-DCM-30
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-30:refs/remotes/origin/backup/261114-DCM-30
+          git archive --format=zip --output=/tmp/261114-DCM-30.zip origin/backup/261114-DCM-30
+          unzip -t /tmp/261114-DCM-30.zip | tail -1
+      - name: Test toolbar behavior, old app permissions, and JavaScript syntax
+        run: |
+          node --check dcm-header-reference-30.js
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('dcm-header-reference-30.js').read_text(encoding='utf8')
+          c=Path('dcm-header-reference-30.css').read_text(encoding='utf8')
+          i=Path('index.html').read_text(encoding='utf8')
+          assert c.count('{')==c.count('}')
+          for x in ['dcmRefStatus','dcmRefHelp','dcmRefBook','btnReminderCenter','cmGuideToggle','authPill']:
+            assert x in s,x
+          for x in ['btnLangToggle','btnAccessAdmin','btnLogout','userAvatar','userName','cmRoleBadge']:
+            assert x in s and 'id="'+x+'"' in i,x
+          assert 'cmOpenContextHelp' in s and 'cmOpenUserManual' in s
+          assert 'dcm-guide-header.js' in i
+          assert 'dcm-brand-vertical-center-29.css?v=261114-29' in i
+          assert i.lower().count('</body>')>=1
+          print('PASS: account status and all existing actions preserved; header brand styling untouched')
+          PY
+      - name: Insert stylesheet and component after existing scripts without altering forms
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          css='<link rel="stylesheet" href="dcm-header-reference-30.css?v=261114-30">'
+          js='<script src="dcm-header-reference-30.js?v=261114-30"></script>'
+          assert css not in s and js not in s
+          head=s.lower().find('</head>')
+          assert head>0 and head<s.lower().find('<body'), 'Real head not found'
+          body=s.lower().rfind('</body>')
+          assert body>head and body>len(s)*.8,'Final closing body tag not found'
+          out=s[:head]+css+'\n'+s[head:]
+          body=out.lower().rfind('</body>')
+          out=out[:body]+js+'\n'+out[body:]
+          assert out.replace(css+'\n','',1).replace(js+'\n','',1)==s
+          assert out.count(css)==1 and out.count(js)==1
+          p.write_text(out,encoding='utf8')
+          print('PASS only two resource links inserted; original application DOM untouched')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish reference header UI
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): match Modul Transformasi reference status help book bell Guide avatar order"
+          git push origin HEAD:main
