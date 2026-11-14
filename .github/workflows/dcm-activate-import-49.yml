@@ -1,0 +1,57 @@
+name: DCM 49 Activate Duplicate-Safe Profile Import
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-activate-import-49.yml']
+permissions:
+  contents: write
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify exact full prechange backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-49:refs/remotes/origin/backup/261114-DCM-49
+          git archive --format=zip --output=/tmp/261114-DCM-49.zip origin/backup/261114-DCM-49
+          unzip -t /tmp/261114-DCM-49.zip | tail -1
+      - name: Validate hardened importer and compatibility JS
+        run: |
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-mt-team-parity-46.test.cjs
+      - name: Bump only iframe and imported script caches
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          index=Path('index.html'); s=index.read_text('utf8')
+          old='src="tim-pusmantap-mt.html?embedded=1&amp;v=20261114-46"'
+          new='src="tim-pusmantap-mt.html?embedded=1&amp;v=20261114-49"'
+          assert s.count(old)==1 and s.count(new)==0
+          out=s.replace(old,new,1)
+          assert out.replace(new,old,1)==s
+          index.write_text(out,'utf8')
+          frame=Path('tim-pusmantap-mt.html'); f=frame.read_text('utf8')
+          changes={
+            'dcm-mt-team-compat-46.js?v=261114-46':'dcm-mt-team-compat-46.js?v=261114-49',
+            'dcm-profile-photo-import-48.js?v=261114-48':'dcm-profile-photo-import-48.js?v=261114-49'
+          }
+          for prior,updated in changes.items():
+            assert f.count(prior)==1 and f.count(updated)==0,prior
+            f=f.replace(prior,updated,1)
+          frame.write_text(f,'utf8')
+          print('PASS: Dashboard CM iframe and importer refresh, other menus unchanged')
+          PY
+          git diff --check
+      - name: Publish corrected import
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "fix(dcm): activate v49 duplicate-safe profile photo import"
+          git push origin HEAD:main
