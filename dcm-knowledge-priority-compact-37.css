@@ -1,0 +1,159 @@
+/*
+ * Dashboard CM 261114-DCM-37
+ * Compact spacing in Knowledge and Priority without changing menu hierarchy.
+ * Priority scorecards become keyboard-accessible drill-down buttons.
+ * Scope: only #tab-knowledge and #tab-priority.
+ */
+#tab-knowledge .kb-category-row{
+  margin-bottom:12px!important;
+  gap:9px!important;
+}
+#tab-knowledge .kb-category-tile{
+  padding:10px 12px!important;
+  gap:6px!important;
+}
+#tab-knowledge .knowledge-group{
+  margin-top:0!important;
+  margin-bottom:12px!important;
+}
+#tab-knowledge .knowledge-group:last-child{margin-bottom:0!important}
+#tab-knowledge .cm-ref-v2{
+  margin:8px 0 10px!important;
+  padding:12px 14px!important;
+  border-radius:14px!important;
+}
+#tab-knowledge .cm-ref-v2.collapsed{
+  padding:10px 14px!important;
+  margin:8px 0 10px!important;
+}
+#tab-knowledge .cm-ref-v2 .cm-ref-head{
+  align-items:center!important;
+  margin-bottom:9px!important;
+  gap:10px!important;
+}
+#tab-knowledge .cm-ref-v2.collapsed .cm-ref-head{
+  margin-bottom:0!important;
+}
+#tab-knowledge .cm-ref-head h3{
+  margin:2px 0 0!important;
+  line-height:1.25!important;
+}
+#tab-knowledge .cm-ref-head-actions{gap:7px!important}
+#tab-knowledge .cm-ref-head-actions .cm-ref-collapse{
+  width:32px!important;height:32px!important;min-width:32px!important;
+  transform:none!important;
+}
+#tab-knowledge .cm-ref-head-actions .cm-ref-collapse:hover{
+  background:#FFF0C4!important;
+}
+#tab-knowledge .cm-ref-body .cm-ref-stats{margin:6px 0 9px!important}
+
+/* Prioritas: slim header-only command strip and reduce excessive vertical gaps. */
+#tab-priority .prio-page{
+  gap:7px!important;
+}
+#tab-priority .prio-page > .prio-hero{
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+  gap:6px!important;
+}
+#tab-priority .prio-hero-actions{
+  gap:7px!important;
+  margin:0 0 0 auto!important;
+}
+#tab-priority .prio-hero-actions > button{
+  min-height:36px!important;
+  height:36px!important;
+  padding:0 12px!important;
+  border-radius:9px!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs{
+  margin-top:0!important;
+  margin-bottom:4px!important;
+  min-height:42px!important;
+  padding:3px!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > .cm-survey-subtab{
+  min-height:34px!important;
+  padding:6px!important;
+}
+#tab-priority .prio-scope-note{
+  margin:-2px 0 1px!important;
+  line-height:1.35!important;
+}
+#tab-priority .prio-kpis{gap:8px!important}
+#tab-priority .prio-toolbar{gap:7px!important}
+#tab-priority .prio-list{padding:9px!important;gap:7px!important}
+
+/* Full-card click target. All five cards have identical visual/keyboard treatment. */
+#tab-priority .prio-kpis > button.prio-kpi{
+  box-sizing:border-box!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:2px!important;
+  min-width:0!important;
+  min-height:90px!important;
+  padding:9px 12px!important;
+  margin:0!important;
+  font-family:'Inter',sans-serif!important;
+  text-align:left!important;
+  cursor:pointer!important;
+  position:relative!important;
+  transition:box-shadow .16s ease,transform .16s ease,border-color .16s ease!important;
+}
+#tab-priority .prio-kpis > button.prio-kpi:hover{
+  transform:translateY(-1px)!important;
+  box-shadow:0 4px 14px rgba(18,39,90,.11)!important;
+  border-color:#B6C6DE!important;
+}
+#tab-priority .prio-kpis > button.prio-kpi:focus-visible{
+  outline:2px solid #1B4D95!important;
+  outline-offset:2px!important;
+}
+#tab-priority .prio-kpis > button.prio-kpi[aria-pressed="true"]{
+  background:#F1F6FD!important;
+  box-shadow:inset 0 0 0 1px #B9CDE8!important;
+}
+#tab-priority .prio-kpis > button.prio-kpi.k-high{border-top-color:#C0392B!important}
+#tab-priority .prio-kpis > button.prio-kpi.k-mid{border-top-color:#C9A84C!important}
+#tab-priority .prio-kpis > button.prio-kpi.k-low{border-top-color:#5B8DD6!important}
+#tab-priority .prio-kpis > button.prio-kpi.k-top{border-top-color:#1B3A73!important}
+#tab-priority .prio-kpis > button.prio-kpi .prio-top-name{
+  display:block!important;
+  max-width:100%!important;
+}
+#tab-priority .prio-kpis > button.prio-kpi::after{
+  content:'›';
+  position:absolute;
+  right:10px;
+  top:7px;
+  color:#8496B1;
+  font:700 16px/1 'Inter',sans-serif;
+  opacity:.65;
+}
+#tab-priority .prio-kpis > button.prio-kpi:hover::after,
+#tab-priority .prio-kpis > button.prio-kpi:focus-visible::after{
+  color:#1B3A73;opacity:1;
+}
+#tab-priority #prioListBody,
+#tab-priority .prio-row{scroll-margin-top:150px}
+@media(max-width:760px){
+  #tab-knowledge .cm-ref-v2{padding:10px 12px!important}
+  #tab-knowledge .cm-ref-v2.collapsed{padding:9px 12px!important}
+  #tab-knowledge .cm-ref-v2 .cm-ref-head{gap:7px!important}
+  #tab-priority .prio-kpis > button.prio-kpi{
+    min-height:80px!important;
+    padding:8px 10px!important;
+  }
+  #tab-priority .prio-hero-actions{flex-wrap:wrap!important}
+}
+@media(prefers-reduced-motion:reduce){
+  #tab-priority .prio-kpis > button.prio-kpi{transition:none!important}
+  #tab-priority .prio-kpis > button.prio-kpi:hover{transform:none!important}
+}
