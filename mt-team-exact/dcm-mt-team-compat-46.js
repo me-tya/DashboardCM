@@ -106,7 +106,22 @@ function render(){
   if(bar&&bar.parentElement!==document.body)document.body.insertBefore(bar,app);
   if(app)app.innerHTML=out;
   const profileTabs=app?.querySelector('.t-pvw');
-  if(profileTabs&&bar){profileTabs.insertAdjacentElement('afterend',bar);bar.hidden=!actCanEdit()}
+  if(profileTabs&&bar){profileTabs.insertAdjacentElement('afterend',bar);bar.hidden=!actCanEdit();
+   const status=document.getElementById('mt-import-state');
+   if(status){
+    const docs=Array.isArray(S.oneonone)?S.oneonone:[];
+    const people=docs.find(d=>d.id==='cfg-master')?.master?.pic||[];
+    const contacts=docs.filter(d=>/^cfg-kp-/.test(d.id||''));
+    if(S.ui.mtProfilesAuthoritative){
+     const photos=people.filter(p=>!!p.foto).length;
+     status.textContent=people.length+' profil · '+photos+' foto · '+contacts.length+' kontak unit tersimpan dari Modul Transformasi';
+     status.classList.remove('is-pending');
+    }else{
+     status.textContent='Data lama Dashboard CM masih ditampilkan ('+people.length+' profil). Foto Modul Transformasi belum diimpor.';
+     status.classList.add('is-pending');
+    }
+   }
+  }
   else if(bar)bar.hidden=true;
   document.getElementById('mt-error').hidden=true;
   mtResize();
