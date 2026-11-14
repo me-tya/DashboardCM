@@ -1,0 +1,48 @@
+name: DCM 30 prechange full ZIP and exact toolbar audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-header-reference-audit-30.yml']
+permissions: {contents: read}
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive exact full repository before touching UI
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-30:refs/remotes/origin/backup/261114-DCM-30
+          git archive --format=zip --output=/tmp/261114-DCM-30.zip origin/backup/261114-DCM-30
+          unzip -t /tmp/261114-DCM-30.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-30
+          path: /tmp/261114-DCM-30.zip
+          retention-days: 30
+      - name: Inspect complete header DOM & interaction handlers
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          lines=s.splitlines()
+          for a,b in [(2920,3025),(20665,20717)]:
+            print('=== INDEX LINES',a,b)
+            for i in range(a-1,min(b,len(lines))):print(i+1,lines[i][:2100])
+          print('=== HEADER REFERENCE ACTIONS ===')
+          keys=['btnGlobalHelp','btnUserManual','btnManual','btnReminderCenter','btnLangToggle','cmRoleBadge','userPill','userName','btnAccessAdmin','btnLogout','cmGuideToggle','btnGoogleLogin']
+          for key in keys:
+            hits=[(i+1,x[:1000]) for i,x in enumerate(lines) if key in x]
+            print('ID',key,'count',len(hits),'samples',hits[:10])
+          print('=== CURRENT AUTH ROLE JS ===')
+          for key in ['function updateAuthUI(','function renderAuth','function updateUser',
+                     'function getRole','function refreshUser','cmRoleBadge.textContent',
+                     "getElementById('cmRoleBadge')",'userName.textContent','userAvatar.textContent']:
+            hits=[m.start() for m in re.finditer(re.escape(key),s)]
+            print('TERM',key,len(hits))
+            for i in hits[:4]:print('CONTEXT',s[max(0,i-180):i+660].replace(chr(10),' ')[:840])
+          print('=== CURRENT HEADER CONFIG / HELP BINDINGS ===')
+          for key in ['btnGlobalHelp','btnUserManual','btnManual','btnReminderCenter']:
+            for m in list(re.finditer(re.escape(key),s))[-5:]:
+              print('ACTION',key,s[max(0,m.start()-210):m.start()+540].replace(chr(10),' ')[:750])
+          PY
