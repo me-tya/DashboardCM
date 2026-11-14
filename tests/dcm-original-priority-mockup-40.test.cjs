@@ -15,14 +15,10 @@ for(const [needle,count] of [
  const n=render.split(needle).length-1;
  assert.equal(n,count,needle+' count mismatch');
 }
-const order=[
- 'class="prio-hero"',
- 'class="prio-kpi-stage"',
- 'class="cm-survey-subtabs prio-subtabs"',
- 'class="prio-filter-panel"',
- 'class="prio-list"'
-];
-for(let i=1;i<order.length;i++)assert(render.indexOf(order[i-1])<render.indexOf(order[i]),'Wrong mockup order '+order[i-1]+' -> '+order[i]);
+assert(render.indexOf('class="prio-hero"')<render.indexOf('class="prio-kpi-stage"'),'Header before KPI panel');
+assert(render.indexOf('class="prio-kpi-stage"')<render.indexOf('class="cm-survey-subtabs prio-subtabs"'),'KPI before submenu');
+assert(render.indexOf('class="cm-survey-subtabs prio-subtabs"')<render.indexOf('${body}</div>'),'Filter/list body rendered after submenu');
+assert(render.indexOf('class="prio-filter-panel"')<render.indexOf('class="prio-list"'),'Filter before ranking within project body');
 assert(render.includes("uiText('Project Prioritization','Prioritas Proyek')"));
 assert(render.includes("Pemeringkatan proyek transformasi berdasarkan kriteria, bobot, dan indikator manfaat."));
 assert(render.includes("uiText('Ranking Filters','Filter Peringkat')"));
