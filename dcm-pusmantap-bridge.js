@@ -80,7 +80,7 @@ async function initMtRemote(){
   },e=>console.warn('[Tim Pusmantap MT] Firebase read unavailable',e));
  }catch(e){console.warn('[Tim Pusmantap MT] Firebase listener failed',e)}
 }
-async function saveMtState(input){
+async function saveMtState(input,expected){
  if(!own())throw Error('Tidak memiliki akses untuk mengubah Tim Pusmantap');
  if(!window.fbRunTransaction||!window.fbDb)throw Error('Firebase belum siap');
  const value=normalMt(input||{});
@@ -95,7 +95,12 @@ async function saveMtState(input){
  if(serialized.length>840000)throw Error('Data Tim Pusmantap melebihi kapasitas dokumen; periksa ukuran foto');
  const ref=window.fbDoc(window.fbDb,'dashboard',DOC_MT);
  await window.fbRunTransaction(window.fbDb,async tx=>{
-  await tx.get(ref);
+  const snap=await tx.get(ref);
+  if(expected){
+   let latest=normalMt({});
+   if(snap.exists()){try{latest=normalMt(JSON.parse(snap.data().value||'{}'));}catch(e){throw Error('Data server tidak dapat diperiksa. Impor dibatalkan.');}}
+   if(JSON.stringify(latest)!==JSON.stringify(normalMt(expected)))throw Error('Data Tim Pusmantap berubah di Firebase. Muat ulang dan tinjau perbandingan lagi sebelum mengimpor.');
+  }
   tx.set(ref,{value:serialized,updatedAt:new Date().toISOString(),
               updatedBy:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():''});
  });
@@ -270,7 +275,7 @@ window.addEventListener('message',async ev=>{
  try{
   const act=clean(m.action),d=m.data||{};
   let stats={};
-  if(act==='mt-state-sync')stats=await saveMtState(d);
+  if(act==='mt-state-sync')stats=await saveMtState(d,m.expectedState);
   else if((act==='leave-save'||act==='leave-delete')&&state.resources.some(r=>fold(r.nama)===fold(d.name)))await saveResourceLeave(act,d);
   else stats=await saveManual(act,d);
   frame()?.contentWindow?.postMessage({source:SOURCE,type:'mutation-result',requestId:m.requestId,ok:true,stats},location.origin);
