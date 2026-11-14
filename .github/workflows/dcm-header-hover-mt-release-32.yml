@@ -2,7 +2,9 @@ name: Release DCM 32 header hover colors from Modul Transformasi
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-header-hover-mt-release-32.yml']
+    paths:
+      - '.github/workflows/dcm-header-hover-mt-release-32.yml'
+      - 'tests/dcm-header-hover-mt-32.test.cjs'
 permissions:
   contents: write
 jobs:
