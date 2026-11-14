@@ -4,6 +4,8 @@
 (function(){
 'use strict';
 const SOURCE='dcm-tim-pusmantap', KEY='dcm_tim_pusmantap_manual_v1';
+const KEY_MT='dcm_tim_pusmantap_mt_v1',DOC_MT='dcm_tim_pusmantap_mt';
+let mtState={docs:[],ui:{}},mtSubscribed=false,mtUnsubscribe=null;
 const empty=()=>({members:[],teams:{},structural:{},attendance:{},leaves:[]});
 let manual=empty(), subscribed=false, unload=null, lastSignature='';
 const frame=()=>document.getElementById('cmTpFrame');
@@ -36,7 +38,10 @@ function agenda(){
 }
 function snapshot(){
  return {source:SOURCE,type:'snapshot',today:day(),canEdit:own(),
-  activities:agenda(),resources:people(),manual,role:typeof cmGetAccessRole==='function'?cmGetAccessRole():'guest'};
+  activities:agenda(),resources:people(),manual:{...manual,mtState},
+  user:typeof getCurrentUserName==='function'?getCurrentUserName():'',
+  email:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():'',
+  role:typeof cmGetAccessRole==='function'?cmGetAccessRole():'guest'};
 }
 function send(force){
  const f=frame();if(!f||!f.contentWindow)return;
@@ -46,6 +51,53 @@ function send(force){
  f.contentWindow.postMessage(data,location.origin);
 }
 window.cmTpLiveSend=()=>send(false);
+function normalMt(x){
+ if(!x||typeof x!=='object')return {docs:[],ui:{}};
+ return {docs:Array.isArray(x.docs)?x.docs.filter(d=>d&&typeof d==='object'&&typeof d.id==='string'):[],
+         ui:x.ui&&typeof x.ui==='object'&&!Array.isArray(x.ui)?x.ui:{}};
+}
+async function initMtRemote(){
+ if(mtSubscribed)return;mtSubscribed=true;
+ try{mtState=normalMt(JSON.parse(localStorage.getItem(KEY_MT)||'{}'))}catch(e){mtState=normalMt({})}
+ send(true);
+ if(typeof waitForFirebaseAuthReady==='function')await waitForFirebaseAuthReady();
+ if(!isLoggedIn()||!window.fbDb||!window.fbOnSnapshot)return;
+ try{
+  if(mtUnsubscribe){mtUnsubscribe();mtUnsubscribe=null;}
+  mtUnsubscribe=window.fbOnSnapshot(window.fbDoc(window.fbDb,'dashboard',DOC_MT),snap=>{
+   let value=normalMt({});
+   if(snap.exists()){try{value=normalMt(JSON.parse(snap.data().value||'{}'));}catch(e){}}
+   mtState=value;
+   try{localStorage.setItem(KEY_MT,JSON.stringify(value))}catch(e){}
+   send(true);
+  },e=>console.warn('[Tim Pusmantap MT] Firebase read unavailable',e));
+ }catch(e){console.warn('[Tim Pusmantap MT] Firebase listener failed',e)}
+}
+async function saveMtState(input){
+ if(!own())throw Error('Tidak memiliki akses untuk mengubah Tim Pusmantap');
+ if(!window.fbRunTransaction||!window.fbDb)throw Error('Firebase belum siap');
+ const value=normalMt(input||{});
+ if(value.docs.length>600)throw Error('Terlalu banyak dokumen Tim Pusmantap');
+ const allowed=/^(?:cfg-master|cfg-kp|cfg-tim|cfg-agpim|cfg-kp-[A-Za-z0-9_-]+|pub-tim)$/;
+ const ids=new Set();
+ for(const d of value.docs){
+  if(!allowed.test(d.id)||ids.has(d.id))throw Error('Dokumen Tim Pusmantap tidak valid');
+  ids.add(d.id);
+ }
+ const serialized=JSON.stringify(value);
+ if(serialized.length>840000)throw Error('Data Tim Pusmantap melebihi kapasitas dokumen; periksa ukuran foto');
+ const ref=window.fbDoc(window.fbDb,'dashboard',DOC_MT);
+ await window.fbRunTransaction(window.fbDb,async tx=>{
+  await tx.get(ref);
+  tx.set(ref,{value:serialized,updatedAt:new Date().toISOString(),
+              updatedBy:typeof getCurrentUserEmail==='function'?getCurrentUserEmail():''});
+ });
+ mtState=value;
+ try{localStorage.setItem(KEY_MT,serialized)}catch(e){}
+ send(true);
+ return {updated:value.docs.length};
+}
+
 async function initRemote(){
  if(subscribed)return;subscribed=true;
  try{manual=normal(JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){manual=empty();}
@@ -211,7 +263,8 @@ window.addEventListener('message',async ev=>{
  try{
   const act=clean(m.action),d=m.data||{};
   let stats={};
-  if((act==='leave-save'||act==='leave-delete')&&state.resources.some(r=>fold(r.nama)===fold(d.name)))await saveResourceLeave(act,d);
+  if(act==='mt-state-sync')stats=await saveMtState(d);
+  else if((act==='leave-save'||act==='leave-delete')&&state.resources.some(r=>fold(r.nama)===fold(d.name)))await saveResourceLeave(act,d);
   else stats=await saveManual(act,d);
   frame()?.contentWindow?.postMessage({source:SOURCE,type:'mutation-result',requestId:m.requestId,ok:true,stats},location.origin);
  }catch(e){
@@ -219,6 +272,7 @@ window.addEventListener('message',async ev=>{
  }
 });
 const init=()=>{
+ initMtRemote();
  const f=frame();
  f?.addEventListener('load',()=>{lastSignature='';send(true);});
  initRemote();
