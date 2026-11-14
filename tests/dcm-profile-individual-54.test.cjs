@@ -29,6 +29,8 @@ class Loader extends ResourceLoader{
  const contacts=Array.from({length:50},(_,i)=>({id:'cfg-kp-abc'+i,kind:'cfg',kp:{nama:'Sample Contact '+i,unit:'Unit '+i,peran:[i%2?'pmo':'cmo'],foto:i<48?pic:'',nip:'19850901201601'+String(1000+i)}}));
  const k={tims:['Tim CM','Tim DCS','Tim SPP','Tim SSB','Tim DOA'],pt:{},ptx:{},asg:{},rl:{},str:{},stp:{},prog:{},tem:{},alias:{},fbox:{}};
  persons.forEach((p,i)=>{k.pt[p.n]=k.tims[i%5];k.asg['Unit '+i]=[p.n]});
+ // Regression: shared-unit detail invokes original global picShort().
+ k.asg['Unit 0']=[persons[0].n,persons[1].n];
  const snapshot={source:'dcm-tim-pusmantap',type:'snapshot',today:'2026-11-15',canEdit:true,resources:[],activities:[],manual:{members:[],teams:{},structural:{},mtState:{docs:[{id:'cfg-master',kind:'cfg',master:{pic:persons}},{id:'cfg-kp',kind:'cfg',kp:k},...contacts],ui:{mtProfilesAuthoritative:true,t2v:'profil',t2pv:'orang'}}},role:'superadmin',user:'Test',email:'test@example.test'};
  w.dispatchEvent(new w.MessageEvent('message',{source:w.parent,origin:w.location.origin,data:snapshot}));
  await new Promise(res=>setTimeout(res,150));
@@ -37,6 +39,7 @@ class Loader extends ResourceLoader{
  console.log('RESULT '+JSON.stringify(result));
  console.log('RENDER_ERRORS '+JSON.stringify(errors));
  if(result.profileMissing)throw Error('Individual tab renderer fails with 25 imported profiles. '+errors.join(' | ').slice(0,1400));
+ assert.equal(typeof w.picShort,'function','Original MT picShort must be available');
  assert(app.querySelectorAll('.tm-p').length>0,'Expected original individual profile cards');
  assert(app.querySelectorAll('img.tm-av').length>0,'Expected photos');
  dom.window.close();console.log('PASS individual profile tab renders 25 persons and photos');
