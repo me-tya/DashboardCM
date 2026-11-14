@@ -1,0 +1,43 @@
+name: DCM 37 full backup and Priority / Knowledge code audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-priority-knowledge-audit-37.yml']
+permissions: {contents: read}
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create full untouched ZIP backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-37:refs/remotes/origin/backup/261114-DCM-37
+          git archive --format=zip --output=/tmp/261114-DCM-37.zip origin/backup/261114-DCM-37
+          unzip -t /tmp/261114-DCM-37.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-37
+          path: /tmp/261114-DCM-37.zip
+          retention-days: 30
+      - name: Identify Prioritas cards, detail handlers, and Knowledge spacing
+        run: |
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          s=Path('index.html').read_text('utf8')
+          patterns=['Proyek diranking','Prioritas Tinggi','Prioritas Sedang','Prioritas Rendah','Prioritas teratas',
+                    'Kontak PMO','Upload Dokumen','Notula Activity','CM Reference Library',
+                    'Materials & Strategy','ACTIVITY KNOWLEDGE','AI KNOWLEDGE CORPUS',
+                    'data-priority','priority-kpi','priority-card','prio-card','prioKpi',
+                    'score-card','ranking-card','renderPriority','renderKnowledge',
+                    'Prioritas teratas','Skor ↓','Skor &','Daftar','Kuadran','prioritas']
+          for pat in patterns:
+            hits=[m.start() for m in re.finditer(re.escape(pat),s,re.I)]
+            print('\n== PATTERN',pat,'COUNT',len(hits),'LINES',[s.count('\n',0,i)+1 for i in hits[:25]])
+            for i in hits[:5]:print('  CONTEXT',s[max(0,i-340):i+650].replace('\n',' ')[:990])
+          print('== PRIORITY RELEVANT DOM OR HANDLERS ==')
+          lines=s.splitlines()
+          for i,l in enumerate(lines):
+            if re.search(r'priority|prio|ranking|rank-card|knowledge|kb-section|kb-head|kb-panel',l,re.I) and (('function ' in l or 'addEventListener' in l or 'onclick' in l or 'class="' in l or l.lstrip().startswith('.'))):
+              if 0<i<15000:print(i+1,l[:1000])
+          PY
