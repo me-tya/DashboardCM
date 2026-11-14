@@ -1,0 +1,361 @@
+/* Dashboard CM · 261114-DCM-30
+ * Toolbar reference: status · help · manual · bell · Guide · avatar.
+ * No changes to the logo/title, data, permissions or original click handlers.
+ */
+#appHeader .topbar-actions.dcm-reference-toolbar-30{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  align-self:end!important;
+  gap:8px!important;
+  min-height:46px!important;
+  max-width:100%!important;
+  width:max-content!important;
+  flex-wrap:nowrap!important;
+  overflow:visible!important;
+  padding:0!important;
+  margin:0!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 > .topbar-divider{
+  display:none!important;
+}
+#appHeader #dcmRefStatus{
+  display:flex;align-items:center;justify-content:flex-start;gap:6px;
+  flex:0 0 auto;min-width:0;height:38px;
+  color:#E7EDF7;white-space:nowrap;
+  font:650 14px/1.2 Inter,Arial,sans-serif;
+}
+#appHeader #dcmRefStatus #storagePill{
+  width:18px!important;min-width:18px!important;height:26px!important;
+  margin:0 1px 0 0!important;
+  cursor:help;
+}
+#appHeader #dcmRefStatus #storagePill .dot{
+  width:10px!important;height:10px!important;
+  border-radius:50%;
+  background:#21C67B!important;
+  box-shadow:0 0 0 4px rgba(33,198,123,.15)!important;
+}
+#appHeader #dcmRefStatus #storagePill .dot.saving{
+  background:#E7BD51!important;
+  box-shadow:0 0 0 4px rgba(231,189,81,.16)!important;
+}
+#appHeader #dcmRefRole{
+  display:inline-block;
+  color:#E7EDF7;
+  font-weight:650;
+  text-transform:none;
+}
+#appHeader #dcmRefOrg{
+  color:#FFC334;
+  font-weight:750;
+  max-width:240px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#appHeader #dcmRefStatus .dcm-ref-middle{color:#A3B2C9;margin:0 -2px}
+#appHeader .dcm-ref-divider{
+  display:block!important;
+  flex:0 0 1px!important;
+  width:1px!important;
+  min-width:1px!important;
+  height:30px!important;
+  align-self:center!important;
+  background:rgba(190,206,230,.24)!important;
+  margin:0 6px!important;
+  pointer-events:none;
+}
+#appHeader .topbar-actions .dcm-ref-icon{
+  box-sizing:border-box!important;
+  flex:0 0 34px!important;
+  width:34px!important;
+  min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  border:0!important;
+  border-radius:8px!important;
+  color:#D5E0EF!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  cursor:pointer;
+  transition:color .15s ease,background-color .15s ease!important;
+}
+#appHeader .topbar-actions .dcm-ref-icon svg{
+  width:22px!important;height:22px!important;
+  fill:none!important;stroke:currentColor!important;
+  stroke-width:1.8!important;
+}
+#appHeader .topbar-actions .dcm-ref-icon:hover,
+#appHeader .topbar-actions .dcm-ref-icon:focus-visible{
+  color:#FFFFFF!important;
+  background:rgba(255,255,255,.10)!important;
+  box-shadow:none!important;
+  outline:none!important;
+}
+#appHeader .topbar-actions .dcm-ref-icon:focus-visible{
+  outline:2px solid #E9B84A!important;
+  outline-offset:2px!important;
+}
+/* Original bell and its dynamic unread indicator. */
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter{
+  flex:0 0 34px!important;
+  width:34px!important;min-width:34px!important;
+  max-width:34px!important;
+  height:34px!important;min-height:34px!important;
+  padding:0!important;margin:0!important;
+  border:0!important;border-radius:8px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter svg{
+  width:22px!important;height:22px!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:hover{
+  background:rgba(255,195,52,.18)!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter .cm-reminder-badge:not(.hidden){
+  top:1px!important;right:1px!important;
+}
+/* Guide matches the reference: text and tiny neutral switch, no large pill. */
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle{
+  display:inline-flex!important;
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  height:34px!important;
+  min-height:34px!important;
+  padding:0 1px!important;
+  margin:0!important;
+  gap:8px!important;
+  border:0!important;
+  border-radius:7px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#E3ECF8!important;
+  font:650 14px/1.2 Inter,Arial,sans-serif!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle:hover{
+  color:#FFFFFF!important;
+  background:rgba(255,255,255,.07)!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle .dcm-guide-track{
+  width:37px!important;height:20px!important;min-width:37px!important;
+  background:#73869C!important;
+  border-radius:20px!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle .dcm-guide-track i{
+  width:16px!important;height:16px!important;
+  left:2px!important;top:2px!important;
+  transform:none!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle[aria-checked="true"] .dcm-guide-track{
+  background:#15A77B!important;
+}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle[aria-checked="true"] .dcm-guide-track i{
+  transform:translateX(17px)!important;
+}
+/* Profile: one circular button, green online dot, flyout for original tools. */
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #authPill{
+  margin:0!important;
+  padding:0!important;
+  flex:0 0 auto!important;
+  position:relative!important;
+}
+#appHeader #userPill:not(.hidden){
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:46px!important;
+  height:46px!important;
+  padding:0!important;
+  gap:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#appHeader #userPill.hidden{display:none!important}
+#appHeader #dcmRefAvatarTrigger{
+  box-sizing:border-box!important;
+  position:relative!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 46px!important;
+  width:46px!important;height:46px!important;min-width:46px!important;
+  margin:0!important;padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:50%!important;
+  box-shadow:none!important;
+  cursor:pointer;
+}
+#appHeader #dcmRefAvatarTrigger #userAvatar{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:0 0 44px!important;
+  width:44px!important;min-width:44px!important;
+  height:44px!important;
+  border:0!important;border-radius:50%!important;
+  background:#E6EEF8!important;
+  color:#112E54!important;
+  box-shadow:none!important;
+  font:750 15px/1 Inter,Arial,sans-serif!important;
+}
+#appHeader #dcmRefAvatarTrigger::after{
+  content:"";position:absolute;right:-1px;bottom:0;
+  width:14px;height:14px;
+  background:#16C875;
+  border:2px solid #102B55;
+  box-sizing:border-box;
+  border-radius:50%;
+}
+#appHeader #dcmRefAvatarTrigger:hover #userAvatar,
+#appHeader #dcmRefAvatarTrigger:focus-visible #userAvatar{
+  background:#FFFFFF!important;
+}
+#appHeader #dcmRefAvatarTrigger:focus-visible{
+  outline:2px solid #E9B84A!important;
+  outline-offset:2px!important;
+}
+#appHeader #dcmRefUserMenu{
+  position:absolute!important;
+  z-index:60000!important;
+  right:0!important;
+  top:calc(100% + 9px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  width:260px!important;
+  min-width:260px!important;
+  padding:9px!important;
+  gap:3px!important;
+  border:1px solid #D7E1F0!important;
+  border-radius:12px!important;
+  background:#FFFFFF!important;
+  color:#193456!important;
+  box-shadow:0 16px 36px rgba(11,28,58,.23)!important;
+  white-space:normal!important;
+}
+#appHeader #dcmRefUserMenu[hidden]{display:none!important}
+#appHeader #dcmRefUserMenu .dcm-ref-user-info{
+  display:flex;flex-direction:column;
+  padding:9px 9px 11px;gap:6px;
+  border-bottom:1px solid #E6EBF3;
+}
+#appHeader #dcmRefUserMenu #userName{
+  display:block!important;
+  max-width:none!important;
+  font:750 13px/1.3 Inter,Arial,sans-serif!important;
+  color:#112B4C!important;
+  text-overflow:ellipsis!important;
+}
+#appHeader #dcmRefUserMenu #cmRoleBadge{
+  width:max-content!important;
+  max-width:100%!important;
+  color:#7B581A!important;
+  background:#FFF0CF!important;
+  border:1px solid #F0DFB4!important;
+  border-radius:5px!important;
+  padding:3px 6px!important;
+  font:750 10px/1.2 Inter,Arial,sans-serif!important;
+}
+#appHeader #dcmRefUserMenu .dcm-ref-language{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:9px 8px;
+  border-bottom:1px solid #E6EBF3;
+}
+#appHeader #dcmRefUserMenu .dcm-ref-menu-caption{
+  font:650 12px/1.25 Inter,Arial,sans-serif!important;
+  color:#294668;
+}
+#appHeader #dcmRefUserMenu #btnLangToggle{
+  display:inline-flex!important;
+  width:auto!important;min-width:0!important;
+  height:30px!important;
+  min-height:30px!important;
+  border:1px solid #D8E2EF!important;
+  border-radius:8px!important;
+  padding:0 5px!important;margin:0!important;
+  background:#F4F7FC!important;color:#294668!important;
+}
+#appHeader #dcmRefUserMenu #btnLangToggle .lang-opt{
+  color:#294668!important;
+}
+#appHeader #dcmRefUserMenu #btnLangToggle .lang-opt.active{
+  background:#DDE9F8!important;
+  color:#123765!important;
+}
+#appHeader #dcmRefUserMenu #btnAccessAdmin,
+#appHeader #dcmRefUserMenu #btnLogout{
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  width:100%!important;
+  min-width:0!important;
+  height:36px!important;
+  min-height:36px!important;
+  margin:0!important;
+  padding:0 12px!important;
+  gap:10px!important;
+  border:0!important;
+  border-radius:8px!important;
+  background:#FFFFFF!important;
+  color:#254566!important;
+  box-shadow:none!important;
+  font:650 12px/1.2 Inter,Arial,sans-serif!important;
+  cursor:pointer;
+}
+#appHeader #dcmRefUserMenu #btnAccessAdmin.hidden,
+#appHeader #dcmRefUserMenu #btnLogout.hidden{display:none!important}
+#appHeader #dcmRefUserMenu #btnAccessAdmin:hover,
+#appHeader #dcmRefUserMenu #btnLogout:hover{
+  background:#EDF3FC!important;
+  color:#102F59!important;
+}
+#appHeader #dcmRefUserMenu #btnAccessAdmin svg,
+#appHeader #dcmRefUserMenu #btnLogout svg{
+  width:17px!important;height:17px!important;
+  flex:none!important;stroke:currentColor!important;
+}
+#appHeader #dcmRefUserMenu #btnGoogleLogin.hidden{display:none!important}
+#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnGoogleLogin{
+  height:36px!important;
+  border-radius:9px!important;
+}
+/* Narrow desktop: preserve icon sizes; shorten the status label. */
+@media(max-width:1360px){
+  #appHeader .topbar-actions.dcm-reference-toolbar-30{gap:5px!important}
+  #appHeader #dcmRefStatus{font-size:12px!important}
+  #appHeader #dcmRefOrg{max-width:165px}
+  #appHeader .dcm-ref-divider{margin:0 4px!important}
+}
+@media(max-width:1130px){
+  #appHeader #dcmRefOrg{max-width:100px!important}
+  #appHeader .topbar-actions.dcm-reference-toolbar-30{max-width:57vw!important}
+}
+@media(max-width:960px){
+  #appHeader #dcmRefOrg,
+  #appHeader #dcmRefStatus .dcm-ref-middle{display:none!important}
+  #appHeader #dcmRefStatus{font-size:12px!important}
+}
+@media(max-width:720px){
+  #appHeader .topbar-actions.dcm-reference-toolbar-30{
+    max-width:100%!important;
+    width:100%!important;
+    gap:5px!important;
+    justify-content:flex-end!important;
+  }
+  #appHeader #dcmRefStatus{margin-right:auto!important}
+  #appHeader .dcm-ref-divider{height:24px!important;margin:0 2px!important}
+  #appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle{font-size:12px!important}
+}
