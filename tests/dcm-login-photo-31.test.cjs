@@ -23,7 +23,7 @@ const document={
    photoElements.push(image);return image;
  }
 };
-const context={document,window:{fbAuth:{currentUser:null}},cmCurrentPerson:()=>currentPerson,cmInitials:n=>n.trim().split(/\s+/).map(x=>x[0]).join('').toUpperCase().slice(0,2),cmUnitByCode:()=>null,uiText:(_,id)=>id};
+const context={document,window:{fbAuth:{currentUser:null}},cmGuestOffline:null,cmCurrentPerson:()=>currentPerson,cmInitials:n=>n.trim().split(/\s+/).map(x=>x[0]).join('').toUpperCase().slice(0,2),cmUnitByCode:()=>null,uiText:(_,id)=>id};
 vm.createContext(context);vm.runInContext(source,context,{filename:'cmUpdateUserPill'});
 function render(person,user){
  currentPerson=person;currentAuth=user;context.window.fbAuth.currentUser=user;
