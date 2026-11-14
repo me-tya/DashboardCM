@@ -1,0 +1,22 @@
+name: DCM 32 full ZIP backup before hover adjustment
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-hover-backup-32.yml']
+permissions: {contents: read}
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ZIP of exact untouched pre-hover Dashboard CM
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-32:refs/remotes/origin/backup/261114-DCM-32
+          git archive --format=zip --output=/tmp/261114-DCM-32.zip origin/backup/261114-DCM-32
+          unzip -t /tmp/261114-DCM-32.zip | tail -1
+          test -s /tmp/261114-DCM-32.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-32
+          path: /tmp/261114-DCM-32.zip
+          retention-days: 30
