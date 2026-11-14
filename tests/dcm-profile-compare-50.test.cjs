@@ -60,7 +60,7 @@ const m=api.prepare(input,{1:'existing:1'},live,docs,{},false,manual);
 assert.equal(m.docs.find(x=>x.id==='cfg-master').master.pic.length,3);
 assert.equal(m.docs.find(x=>x.id==='cfg-master').master.pic[1].foto,photo);
 const incompatible={...manual,manualTargets:{1:0}};
-assert.throws(()=>api.prepare(input,{1:'existing:0'},live,docs,{},false,incompatible),/NIP berbeda/);
+assert.throws(()=>api.prepare(input,{1:'existing:0'},live,docs,{},false,incompatible),/NIP .*berbeda/);
 const css=fs.readFileSync('mt-team-exact/dcm-profile-compare-50.css','utf8');
 assert(css.includes('.cmp-row')&&css.includes('.cmp-choice.selected'));
 const iframe=fs.readFileSync('tim-pusmantap-mt.html','utf8');
