@@ -1,0 +1,28 @@
+name: DCM 49 Safe Profile Import Regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mt-team-exact/dcm-profile-photo-import-48.js'
+      - 'mt-team-exact/dcm-mt-team-compat-46.js'
+      - 'tests/dcm-profile-photo-safety-49.test.cjs'
+      - '.github/workflows/dcm-profile-import-safety-49.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check syntax and duplicate-safe import
+        run: |
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+      - name: Verify MT source and iframe boot with simulated resources
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
