@@ -1,0 +1,17 @@
+/* Dashboard CM 261114-DCM-29 — optical vertical alignment for dashboard title/brand.
+ * Keep all right-header controls and header dimensions exactly as before.
+ * Header group in the supplied desktop screenshot sits ~9px beneath visual center.
+ * Translation changes rendering only: it does not reflow or move actions. */
+@media (min-width:1091px){
+  #appHeader.topbar > .brand{
+    align-self:center!important;
+    transform:translateY(-9px)!important;
+  }
+}
+/* Narrow screens can wrap/reflow the header, so preserve natural centering. */
+@media (max-width:1090px){
+  #appHeader.topbar > .brand{
+    align-self:center!important;
+    transform:none!important;
+  }
+}
