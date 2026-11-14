@@ -3,19 +3,20 @@
 'use strict';
 const T=x=>String(x==null?'':x).trim();
 const F=x=>T(x).toLocaleLowerCase('id-ID').replace(/\s+/g,' ');
-const N=x=>T(x).replace(/\D/g,'');
+const digits=x=>T(x).replace(/\D/g,'');
+const N=x=>{const v=digits(x);return v.length===18?v:''}; // NIP is 18 digits, 16-digit DCM identity is NIK
 const goodPhoto=x=>{const v=T(x);return v.length<=450000&&(/^data:image\/(?:jpeg|jpg|png|webp);base64,[a-z0-9+/=]+$/i.test(v)||/^https:\/\//i.test(v)&&v.length<2000)?v:''};
-const fields=['nk','nl','nip','jab','org','pang','unitAsal','emailK','emailP','hp','peran','rangkap','penugasan','penMulai','penSelesai','jenis','jenisSementara','keahlian','status','statusKerja','statusMulai','statusSelesai','jenisCuti','catatanStatus','alasanOff','foto','wfhDays','cuti'];
+const fields=['nk','nl','nip','nik','jab','org','pang','unitAsal','emailK','emailP','hp','peran','rangkap','penugasan','penMulai','penSelesai','jenis','jenisSementara','keahlian','status','statusKerja','statusMulai','statusSelesai','jenisCuti','catatanStatus','alasanOff','foto','wfhDays','cuti'];
 const str=x=>T(x).slice(0,500);
 const person=p=>{
  const n=str(p.n||p.nama||p.name);if(!n)return null;
  const q={n};
- const map={nk:['nk','namaPanggilan'],nl:['nl','namaLengkap'],nip:['nip','nip18'],jab:['jab','jabatan','job'],org:['org','organisasi'],pang:['pang','pangkat'],unitAsal:['unitAsal','unit'],emailK:['emailK','emailKemenkeu','email'],emailP:['emailP','emailPribadi'],hp:['hp','noHp'],peran:['peran','role'],rangkap:['rangkap'],penugasan:['penugasan'],penMulai:['penMulai','penugasanMulai'],penSelesai:['penSelesai','penugasanSelesai'],jenis:['jenis'],jenisSementara:['jenisSementara'],keahlian:['keahlian'],status:['status'],statusKerja:['statusKerja'],statusMulai:['statusMulai'],statusSelesai:['statusSelesai'],jenisCuti:['jenisCuti'],catatanStatus:['catatanStatus'],alasanOff:['alasanOff']};
+ const map={nk:['nk','namaPanggilan'],nl:['nl','namaLengkap'],nip:['nip','nip18'],nik:['nik'],jab:['jab','jabatan','job'],org:['org','organisasi'],pang:['pang','pangkat'],unitAsal:['unitAsal','unit'],emailK:['emailK','emailKemenkeu','email'],emailP:['emailP','emailPribadi'],hp:['hp','noHp'],peran:['peran','role'],rangkap:['rangkap'],penugasan:['penugasan'],penMulai:['penMulai','penugasanMulai'],penSelesai:['penSelesai','penugasanSelesai'],jenis:['jenis'],jenisSementara:['jenisSementara'],keahlian:['keahlian'],status:['status'],statusKerja:['statusKerja'],statusMulai:['statusMulai'],statusSelesai:['statusSelesai'],jenisCuti:['jenisCuti'],catatanStatus:['catatanStatus'],alasanOff:['alasanOff']};
  for(const [key,aliases] of Object.entries(map)){
   const v=aliases.map(k=>p[k]).find(x=>x!==null&&x!==undefined&&x!=='');
   if(v!==undefined)q[key]=key==='keahlian'&&Array.isArray(v)?v.join(', '):str(v);
  }
- q.nip=N(q.nip);q.foto=goodPhoto(p.foto||p.photo||p.avatar);
+ q.nip=N(q.nip);if(q.nik)q.nik=digits(q.nik);q.foto=goodPhoto(p.foto||p.photo||p.avatar);
  if(Array.isArray(p.wfhDays))q.wfhDays=p.wfhDays.filter(x=>Number.isInteger(+x)&&+x>=0&&+x<=6).map(Number);
  if(Array.isArray(p.cuti||p.rencanaCuti))q.cuti=(p.cuti||p.rencanaCuti).filter(x=>x&&/^\d{4}-\d{2}-\d{2}$/.test(T(x.mulai))).map(x=>({mulai:T(x.mulai),selesai:T(x.selesai||x.mulai),jenis:str(x.jenis),catatan:str(x.catatan)}));
  return q;
@@ -115,6 +116,10 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
   master.master.pic=copied(live);
  }else if(rosterIdentity(roster)!==rosterIdentity(live))throw Error('Daftar pegawai telah berubah sejak pratinjau. Buka kembali impor dan tinjau pencocokan.');
  const targetRoster=master.master.pic;
+ targetRoster.forEach(p=>{
+  const raw=digits(p.nip);
+  if(raw.length===16){p.nik=p.nik||raw;p.nip=''}
+ });
 
  const summary={updated:0,new:0,skipped:0,photosAdded:0,contactsAdded:0,contactsUpdated:0,contactsSkipped:0,conflicts:0};
  const selected=[];
@@ -149,7 +154,7 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
     if(fieldDecision[key]!=='mt')continue;
     const value=source[key];
     if(isEmpty(value))continue;
-    if(key==='nip'&&N(target.nip)&&N(target.nip)!==N(value))throw Error('NIP berbeda untuk '+source.n+'. Tidak dapat ditimpa.');
+    if(key==='nip'&&N(target.nip)&&N(target.nip)!==N(value))throw Error('NIP resmi berbeda untuk '+source.n+'. Verifikasi identitas terlebih dahulu.');
     target[key]=copied(value);
    }
   }else merged(target,source,fields);
