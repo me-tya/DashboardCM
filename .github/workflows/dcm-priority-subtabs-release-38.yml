@@ -1,0 +1,61 @@
+name: Release DCM 38 justified equal-width Prioritas subtabs
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-priority-subtabs-release-38.yml'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify full pre-change repository backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-38:refs/remotes/origin/backup/261114-DCM-38
+          git archive --format=zip --output=/tmp/261114-DCM-38.zip origin/backup/261114-DCM-38
+          unzip -t /tmp/261114-DCM-38.zip | tail -1
+          test -s /tmp/261114-DCM-38.zip
+      - name: Test 4 equal-width tabs and previously working features
+        run: |
+          node tests/dcm-priority-subtabs-38.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Load only the Prioritas submenu CSS
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          old=p.read_text(encoding='utf8')
+          assert old.count('dcm-knowledge-priority-compact-37.css?v=261114-37')==1
+          tag='<link rel="stylesheet" href="dcm-priority-justify-subtabs-38.css?v=261114-38">'
+          assert tag not in old
+          head=old.lower().find('</head>')
+          assert 0<head<old.lower().find('<body')
+          updated=old[:head]+tag+'\n'+old[head:]
+          assert updated.replace(tag+'\n','',1)==old
+          p.write_text(updated,encoding='utf8')
+          print('PASS style-only link; no changes to tab markup, card order, data or event handlers')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish requested submenu alignment only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): justify all four Prioritas subtabs equally as approved mockup"
+          git push origin HEAD:main
