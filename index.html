@@ -2896,6 +2896,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <link rel="stylesheet" href="dcm-priority-justify-subtabs-38.css?v=261114-39">
 <link rel="stylesheet" href="dcm-priority-original-mockup-40.css?v=261114-40">
 <link rel="stylesheet" href="dcm-priority-filter-option1-42.css?v=261114-42">
+<link rel="stylesheet" href="dcm-priority-collapsible-filter-43.css?v=261114-43">
 </head>
 <body>
 
@@ -16780,8 +16781,10 @@ function renderPriority(){
   <button type="button" class="prio-kpi k-low" data-prio-kpi="low" aria-pressed="${prioUi.filter==='low'}" title="${uiText('View low-priority projects','Lihat proyek prioritas rendah')}"><span class="prio-kpi-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M3 12 12 3h9v9l-9 9L3 12Z"/><circle cx="17" cy="7" r="1"/></svg></span><b>${cnt.low}</b><small>${uiText('Low','Prioritas Rendah')} <em>&lt;40</em></small></button>
   <button type="button" class="prio-kpi k-top" data-prio-kpi="top" aria-pressed="false" title="${uiText('Open highest-ranked project details','Buka rincian proyek prioritas teratas')}" ${top?'':'disabled'}><span class="prio-kpi-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10v7c0 4-2.3 6-5 6s-5-2-5-6V3ZM7 5H3v4c0 3 2 4 5 4M17 5h4v4c0 3-2 4-5 4M12 16v4M8 22h8"/></svg></span><small>${uiText('Top priority','Prioritas teratas')}</small><b class="prio-top-name">${top?escapeHtml(top.p.singkatan||top.p.nama):'—'}</b>${top?'<small>'+uiText('score','skor')+' '+prioFmt(top.score,1)+'</small>':''}</button>
 </div>`;
- let body='';
- if(tab==='projects')body=`<section class="prio-filter-panel"><div class="prio-filter-head"><span class="prio-filter-head-icon" aria-hidden="true">≡</span><strong>${uiText('Ranking Filters','Filter Peringkat')}</strong><span class="prio-filter-hint" title="${escapeHtml(prioScopeNote(rows))}">${uiText('Choose a scope to view and rank projects.','Tentukan lingkup untuk melihat dan meranking proyek.')}</span></div>${prioScopeBarHtml()}
+ const prioFilterOpen=prioLsGet('cmPrioFilterOpen','0')==='1';
+  const prioActiveFilterCount=[prioUi.scope.type!=='all',!!String(prioUi.q||'').trim(),prioUi.filter!=='all'].filter(Boolean).length;
+  let body='';
+ if(tab==='projects')body=`<section class="prio-filter-panel${prioFilterOpen?'':' is-collapsed'}"><div class="prio-filter-head"><span class="prio-filter-head-icon" aria-hidden="true">≡</span><strong>${uiText('Ranking Filters','Filter Peringkat')}</strong><span class="prio-filter-hint" title="${escapeHtml(prioScopeNote(rows))}">${uiText('Scope, status, order, and snapshot comparison','Lingkup, status, urutan, dan perbandingan snapshot')}</span>${prioActiveFilterCount?`<span class="prio-filter-active-chip">${prioActiveFilterCount} ${uiText('active filters','filter aktif')}</span>`:''}${nInc?`<span class="prio-filter-warning-chip" title="${uiText('Projects with incomplete data; open filters to review details.','Proyek memiliki data belum lengkap; buka filter untuk melihat rinciannya.')}">⚠ ${nInc} ${uiText('incomplete','belum lengkap')}</span>`:''}<button type="button" id="prioFilterToggle" class="prio-filter-toggle" aria-expanded="${prioFilterOpen}" aria-label="${uiText(prioFilterOpen?'Hide ranking filters':'Show ranking filters',prioFilterOpen?'Sembunyikan Filter Peringkat':'Tampilkan Filter Peringkat')}"><span class="prio-filter-toggle-label">${uiText(prioFilterOpen?'Hide filters':'Show filters',prioFilterOpen?'Sembunyikan':'Tampilkan')}</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>${prioScopeBarHtml()}
   ${rows.length?`<div class="prio-toolbar"><input type="search" id="prioQ" class="prio-search" placeholder="${uiText('Search project, unit, PIC…','Cari proyek, unit, PIC…')}" value="${escapeHtml(prioUi.q)}"><div class="prio-chips">${chips.map(([k,l])=>`<button type="button" class="prio-chip${prioUi.filter===k?' on':''}" data-prio-filter="${k}">${escapeHtml(l)}</button>`).join('')}</div><span class="prio-sp"></span><div class="prio-seg">${sorts.map(([k,l])=>`<button type="button" class="${prioUi.sort===k?'on':''}" data-prio-sort="${k}">${escapeHtml(l)}</button>`).join('')}</div><div class="prio-seg"><button type="button" class="${prioUi.view!=='quad'?'on':''}" data-prio-view="list">☰ ${uiText('List','Daftar')}</button><button type="button" class="${prioUi.view==='quad'?'on':''}" data-prio-view="quad">◫ ${uiText('Quadrant','Kuadran')}</button></div></div>${prioSnapBarHtml(can)}`:''}${prioUi.scope.type==='km'&&rows.length?prioCapacityHtml(rows):''}
   ${nInc?`<div class="prio-warn-bar">⚠ ${uiText(`${nInc} project(s) have incomplete data and cannot pass the Ministry threshold automatically yet (missing CRA/POSTER/user count uses a neutral value of 3). Open Details to see what is missing.`,`${nInc} proyek datanya belum lengkap sehingga belum dapat lolos otomatis ke level Kementerian (CRA/POSTER/jumlah pengguna yang kosong memakai nilai netral 3). Buka Rincian untuk melihat yang kurang.`)}</div>`:''}
   </section>
@@ -16855,7 +16858,23 @@ function renderPriority(){
  el.querySelectorAll('[data-ref-reset]').forEach(b=>b.onclick=()=>{if(confirm(uiText('Restore the default text for this table?','Pulihkan teks bawaan untuk tabel ini?')))prioSaveRefText(el,b.dataset.refReset,true);});
  el.querySelector('#prioReport')?.addEventListener('click',prioOpenReport);
  el.querySelectorAll('[data-prio-view]').forEach(b=>b.onclick=()=>{prioUi.view=b.dataset.prioView;prioLsSet('cmPrioView',prioUi.view);renderPriority();});
- el.querySelector('#prioCmpSnap')?.addEventListener('change',e=>{prioUi.cmpSnap=e.target.value||'';renderPriority();});
+ el.querySelector('#prioFilterToggle')?.addEventListener('click',()=>{
+    const panel=el.querySelector('.prio-filter-panel');
+    const toggle=el.querySelector('#prioFilterToggle');
+    if(!panel||!toggle)return;
+    const opening=panel.classList.contains('is-collapsed');
+    panel.classList.toggle('is-collapsed',!opening);
+    toggle.setAttribute('aria-expanded',String(opening));
+    toggle.setAttribute('aria-label',uiText(opening?'Hide ranking filters':'Show ranking filters',opening?'Sembunyikan Filter Peringkat':'Tampilkan Filter Peringkat'));
+    const label=toggle.querySelector('.prio-filter-toggle-label');
+    if(label)label.textContent=uiText(opening?'Hide filters':'Show filters',opening?'Sembunyikan':'Tampilkan');
+    prioLsSet('cmPrioFilterOpen',opening?'1':'0');
+  });
+  el.querySelector('.prio-filter-head')?.addEventListener('click',e=>{
+    if(e.target.closest('button'))return;
+    el.querySelector('#prioFilterToggle')?.click();
+  });
+  el.querySelector('#prioCmpSnap')?.addEventListener('change',e=>{prioUi.cmpSnap=e.target.value||'';renderPriority();});
  el.querySelector('#prioSnapSave')?.addEventListener('click',async()=>{if(!cmCanMutate())return cmDenyMutation();const lbl=(prompt(uiText('Snapshot label (e.g. Before CR: new project X):','Label snapshot (mis. Sebelum CR: penambahan proyek X):'),'')||'').trim();if(!lbl)return;const sn=prioMakeSnapshot(lbl,'manual');prioState.snapshots=(prioState.snapshots||[]).concat([sn]).slice(-40);await prioPersist();renderPriority();toast(uiText('Snapshot saved.','Snapshot disimpan.'),'success');});
  el.querySelector('#prioSnapDel')?.addEventListener('click',async()=>{if(!cmCanMutate())return cmDenyMutation();const sn=prioSnapCompare();if(!sn||!confirm(uiText(`Delete snapshot "${sn.label}"?`,`Hapus snapshot "${sn.label}"?`)))return;prioState.snapshots=(prioState.snapshots||[]).filter(x=>x.id!==sn.id);prioUi.cmpSnap='';await prioPersist();renderPriority();});
  el.querySelectorAll('[data-set-s]').forEach(sel=>sel.onchange=async()=>{if(!cmCanMutate())return cmDenyMutation();const s0=prioSettings();s0[sel.dataset.setS]=sel.value;prioState.settings=s0;await prioPersist();renderPriority();});
