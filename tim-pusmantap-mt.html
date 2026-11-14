@@ -14,7 +14,9 @@
 html,body{margin:0;min-width:0}
 body{background:transparent;font-family:Inter,Arial,sans-serif}
 #mt-app{min-width:0}
-#mt-import-bar{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:4px 16px 9px;background:transparent;border:0}
+#mt-import-bar{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:4px 16px 9px;background:transparent;border:0;flex-wrap:wrap}
+#mt-import-state{font-size:11px;line-height:1.35;color:#5e6b7f;margin-right:auto;min-width:0}
+#mt-import-state.is-pending{color:#91631a}
 #mt-import-bar button{font:600 12px Inter,Arial,sans-serif;color:#12396c;background:#f6f8fc;border:1px solid #cedaeb;border-radius:8px;padding:7px 11px;cursor:pointer}
 #mt-import-bar button:hover{background:#12396c;color:white}
 #mt-import-bar[hidden]{display:none}
@@ -33,7 +35,7 @@ body{background:transparent;font-family:Inter,Arial,sans-serif}
 </head>
 <body>
 <div id="mt-error" hidden></div>
-<div id="mt-import-bar" hidden><button type="button" id="mt-import-profiles" title="Impor massal dari backup JSON Modul Transformasi, termasuk foto dan detail profil">⇧ Impor Profil &amp; Foto</button></div>
+<div id="mt-import-bar" hidden><span id="mt-import-state" role="status" aria-live="polite"></span><button type="button" id="mt-import-profiles" title="Impor massal dari backup JSON Modul Transformasi, termasuk foto dan detail profil">⇧ Impor Profil &amp; Foto</button></div>
 <div id="mt-app"></div>
 <div id="mt-toast" role="status" aria-live="polite" hidden></div>
 <script src="mt-team-exact/dcm-mt-team-compat-46.js?v=261114-52"></script>
