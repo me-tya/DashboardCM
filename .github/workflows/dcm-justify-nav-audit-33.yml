@@ -1,0 +1,43 @@
+name: DCM 33 backup and main nav layout audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-justify-nav-audit-33.yml']
+permissions: {contents: read}
+jobs:
+  backup-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Backup unchanged entire repository to ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-33:refs/remotes/origin/backup/261114-DCM-33
+          git archive --format=zip --output=/tmp/261114-DCM-33.zip origin/backup/261114-DCM-33
+          unzip -t /tmp/261114-DCM-33.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-33
+          path: /tmp/261114-DCM-33.zip
+          retention-days: 30
+      - name: Inspect main navigation wrapper buttons and help
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('index.html').read_text('utf8')
+          l=s.splitlines()
+          for term in ['id="tabNav"','id="cmContextHelp"','class="tabs-row"','class="tab-btn"','class="tabs"',
+                       'function renderTabs(', 'cmContextHelp','cmOpenContextHelp','dcm-approved-navigation.css']:
+            hits=[i for i,line in enumerate(l) if term in line]
+            print('\n===',term,'matches',len(hits),'===')
+            for i in hits[:5]:
+              print('LINE',i+1)
+              for j in range(max(0,i-4),min(len(l),i+6)):print(j+1,l[j][:1600])
+          for term in ['.tabs-row{','.tabs{','.tab-btn{','#tabNav','.tab-btn.active','.context-help']:
+            print('\n=== STYLE',term)
+            for m in list(re.finditer(re.escape(term),s))[-8:]:
+              print('LINE',s.count(chr(10),0,m.start())+1,s[m.start():m.start()+650].replace(chr(10),' '))
+          print('\n=== ALL CURRENT TAB BUTTON LABELS ===')
+          for m in re.finditer(r'<button[^>]+class="[^"]*tab-btn[^"]*"[^>]*>',s):
+            print('BUTTON',m.group(0)[:450],s[m.end():m.end()+260].replace(chr(10),' ')[:260])
+          PY
