@@ -2,9 +2,10 @@
  * Approved compact header and CRA submenu standard.
  * Scope is limited to header geometry and the CRA contextual navigation. */
 #appHeader.topbar{
-  min-height:84px!important;
-  grid-template-rows:minmax(61px,auto)!important;
-  padding:5px 22px 8px!important;
+  min-height:70px!important;
+  grid-template-rows:auto!important;
+  padding:6px 22px!important;
+  box-sizing:border-box!important;
   align-items:center!important;
 }
 #appHeader .brand{align-self:center!important}
@@ -97,7 +98,7 @@
   border-radius:50%!important;
 }
 @media(max-width:1250px){
-  #appHeader.topbar{padding:5px 14px 8px!important}
+  #appHeader.topbar{padding:6px 14px!important}
 }
 @media(max-width:920px){
   #tab-survey .cm-survey-shell > .cm-survey-subtabs .cm-survey-subtab{
@@ -107,7 +108,7 @@
   }
 }
 @media(max-width:650px){
-  #appHeader.topbar{padding:5px 12px 7px!important}
+  #appHeader.topbar{padding:6px 12px!important}
   #tab-survey .cm-survey-shell > .cm-survey-subtabs .cm-survey-subtab{
     flex:0 0 135px!important;
     min-width:135px!important;
