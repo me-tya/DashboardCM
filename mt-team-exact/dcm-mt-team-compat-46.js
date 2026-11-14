@@ -102,7 +102,12 @@ function render(){
  try{
   const out=window.MT_T2.page();
   const app=document.getElementById('mt-app');
+  const bar=document.getElementById('mt-import-bar');
+  if(bar&&bar.parentElement!==document.body)document.body.insertBefore(bar,app);
   if(app)app.innerHTML=out;
+  const profileTabs=app?.querySelector('.t-pvw');
+  if(profileTabs&&bar){profileTabs.insertAdjacentElement('afterend',bar);bar.hidden=!actCanEdit()}
+  else if(bar)bar.hidden=true;
   document.getElementById('mt-error').hidden=true;
   mtResize();
  }catch(e){
@@ -120,16 +125,16 @@ function save(){
   __mtSend('mutation',{action:'mt-state-sync',data:{docs,ui:S.ui}});
  },180)
 }
-function mtImportCommit(docs){
+function mtImportCommit(docs,overrideUi){
  if(!actCanEdit())return Promise.reject(Error('Hak edit sudah tidak tersedia.'));
  if(!Array.isArray(docs)||!docs.some(x=>x.id==='cfg-master'))return Promise.reject(Error('Dokumen profil tidak valid.'));
- const payload={docs:mtCopy(docs),ui:mtCopy(S.ui)};
+ const payload={docs:mtCopy(docs),ui:mtCopy(overrideUi||S.ui)};
  if(JSON.stringify(payload).length>800000)return Promise.reject(Error('Data melebihi batas aman Firebase.'));
  clearTimeout(__mtSaveTimer);
  return new Promise((resolve,reject)=>{
   const requestId='mt-import-'+uid();
   const timeout=setTimeout(()=>{__mtImportPending.delete(requestId);reject(Error('Konfirmasi penyimpanan tidak diterima. Muat ulang untuk memeriksa data sebelum mengulangi.'))},25000);
-  __mtImportPending.set(requestId,{resolve,reject,timeout,docs:mtCopy(docs)});
+  __mtImportPending.set(requestId,{resolve,reject,timeout,docs:mtCopy(docs),ui:mtCopy(payload.ui)});
   __mtSend('mutation',{action:'mt-state-sync',requestId,data:payload,expectedState:mtCopy(__mtData?.manual?.mtState||{docs:[],ui:{}})});
  });
 }
@@ -162,10 +167,11 @@ function mtLoadSnapshot(m){
  __mtData=m; TODAY=/^\d{4}-\d{2}-\d{2}$/.test(m.today)?m.today:TODAY;
  ME={role:/superadmin|admin/i.test(mtTxt(m.role))?'SA':(m.canEdit?'PMOK':'KAPUS'),email:mtTxt(m.email)||'dcm',nama:mtTxt(m.user)||'Dashboard CM'};
  const oldUi=S.ui||{},stored=m.manual?.mtState||{};
- S.ui={...(stored.ui||{}),...oldUi};
+ S.ui={...(stored.ui||{}),...oldUi,mtProfilesAuthoritative:stored.ui?.mtProfilesAuthoritative===true};
  const docs=Array.isArray(stored.docs)?mtCopy(stored.docs).filter(x=>x&&typeof x.id==='string'):[];
  S.oneonone=docs;
  const master=actMaster(),existing=Array.isArray(master.pic)?master.pic:[];
+ if(!S.ui.mtProfilesAuthoritative){
  const raw=[...(m.resources||[]),...(m.manual?.members||[])].filter(x=>mtTxt(x.name));
  const seen=new Set();const roster=[];
  raw.forEach(src=>{
@@ -190,6 +196,7 @@ function mtLoadSnapshot(m){
   const t=mtTxt(teams[p.n]);if(t){const name=/^Tim /i.test(t)?t:'Tim '+t;k.pt[p.n]=name;if(!k.tims.includes(name))k.tims.push(name)}
   const rk=MT_STR[str[p.n]];if(rk)k.str[rk]=p.n;
  }
+ } // Imported Modul Transformasi is authoritative: do not merge legacy Dashboard CM people/teams.
  UNITS=[...new Set((m.activities||[]).map(a=>mtTxt(a.unit)).filter(Boolean))].sort();
  S.users=[];
  render();
@@ -201,7 +208,7 @@ window.addEventListener('message',ev=>{
  if(ev.data.type==='mutation-result'&&__mtImportPending.has(ev.data.requestId)){
   const pending=__mtImportPending.get(ev.data.requestId);
   __mtImportPending.delete(ev.data.requestId);clearTimeout(pending.timeout);
-  if(ev.data.ok){S.oneonone=pending.docs;render();pending.resolve(ev.data.stats||{})}
+  if(ev.data.ok){S.oneonone=pending.docs;S.ui=pending.ui;render();pending.resolve(ev.data.stats||{})}
   else pending.reject(Error(mtTxt(ev.data.error)||'Firebase menolak perubahan'));
   return;
  }
