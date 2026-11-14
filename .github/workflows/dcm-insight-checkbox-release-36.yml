@@ -1,0 +1,106 @@
+name: Release DCM 36 Insight checkbox like Modul Transformasi
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-insight-checkbox-release-36.yml']
+permissions: {contents: write}
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify untouched full backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-36:refs/remotes/origin/backup/261114-DCM-36
+          git archive --format=zip --output=/tmp/261114-DCM-36.zip origin/backup/261114-DCM-36
+          unzip -t /tmp/261114-DCM-36.zip | tail -1
+      - name: Replace only Overview explanation toggle and help text
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text('utf8')
+          old_toolbar='''<div class="narr-btns" role="group" aria-label="${uiText('Chart explanations','Penjelasan grafik')}"><button type="button" data-narr-all="open">${uiText('Show all explanations','Tampilkan semua penjelasan')}</button><button type="button" data-narr-all="close">${uiText('Hide all','Sembunyikan semua')}</button></div>'''
+          new_toolbar='''<label class="cm-narr-all-check"><input type="checkbox" data-narr-toggle-all aria-label="${uiText('Show all explanations','Tampilkan semua penjelasan')}"><span>${uiText('Show all explanations','Tampilkan semua penjelasan')}</span></label>'''
+          assert s.count(old_toolbar)==1,('Original insight toolbar unexpectedly changed',s.count(old_toolbar))
+          s=s.replace(old_toolbar,new_toolbar,1)
+
+          a=s.index('function cmNarrSyncAllBtns(root){')
+          b=s.index("\ndocument.addEventListener('click',e=>{",a)
+          previous=s[a:b]
+          assert '[data-narr-all="open"]' in previous and '[data-narr-all="close"]' in previous
+          sync='''function cmNarrSyncAllBtns(root){
+            const scope=(root&&root.closest?root.closest('.tab-panel'):null)||root||document;
+            scope.querySelectorAll?.('.narr-all').forEach(bar=>{
+              const panel=bar.closest('.tab-panel')||document;
+              const ws=[...panel.querySelectorAll('.narr-wrap')].filter(w=>w.querySelector('.chart-narr')?.textContent.trim());
+              const open=ws.filter(w=>!w.classList.contains('closed')).length;
+              const checkbox=bar.querySelector('[data-narr-toggle-all]');
+              if(!checkbox)return;
+              checkbox.checked=ws.length>0&&open===ws.length;
+              checkbox.indeterminate=open>0&&open<ws.length;
+            });
+          }'''
+          s=s[:a]+sync+s[b:]
+
+          click_start=s.index("  const all=e.target.closest('[data-narr-all]');",b)
+          click_end=s.index('\n});',click_start)+len('\n});')
+          old_all=s[click_start:click_end]
+          assert "dataset.narrAll==='close'" in old_all and 'cmNarrSave(st)' in old_all
+          new_all="""});
+          document.addEventListener('change',e=>{
+            const checkbox=e.target.closest?.('[data-narr-toggle-all]');
+            if(!checkbox)return;
+            const closed=!checkbox.checked,panel=checkbox.closest('.tab-panel')||document,st=cmNarrState();
+            panel.querySelectorAll('.narr-wrap').forEach(w=>{
+              if(closed)st[w.dataset.narrKey]=1;else delete st[w.dataset.narrKey];
+              cmNarrApply(w,closed);
+            });
+            cmNarrSave(st);
+            cmNarrSyncAllBtns(checkbox);
+          });"""
+          s=s[:click_start]+new_all+s[click_end:]
+
+          changes={
+            'Use "Show all explanations" or "Hide all" above the charts to change every explanation at once.':
+              'Check "Show all explanations" above the charts to open every explanation, or uncheck to hide them all.',
+            'Gunakan "Tampilkan semua penjelasan" atau "Sembunyikan semua" di atas grafik untuk mengubah seluruh penjelasan sekaligus.':
+              'Centang "Tampilkan semua penjelasan" di atas grafik untuk membuka semuanya, atau hilangkan centang untuk menyembunyikannya.'
+          }
+          for old,new in changes.items():
+            assert s.count(old)==1,('Exact manual guide phrase changed',old,s.count(old))
+            s=s.replace(old,new,1)
+          link='<link rel="stylesheet" href="dcm-insight-checkbox-36.css?v=261114-36">'
+          assert link not in s
+          i=s.lower().find('</head>')
+          assert 0<i<s.lower().find('<body')
+          s=s[:i]+link+'\n'+s[i:]
+          assert s.count(link)==1 and s.count('data-narr-all="open"')==0
+          assert s.count('data-narr-all="close"')==0 and 'CM_NARR_KEY' in s
+          p.write_text(s,'utf8')
+          print('PASS - checkbox replaced action pair, per-graph saved state and help unchanged otherwise')
+          PY
+      - name: Check checkbox interactions and all prior app regressions
+        run: |
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          git diff --check
+          git diff --stat
+      - name: Publish Dashboard CM checkbox
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): replace Insight show/hide buttons with MT-style checkbox"
+          git push origin HEAD:main
