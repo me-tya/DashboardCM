@@ -1,0 +1,54 @@
+/*
+ * DCM 261114-36 – Insight explanation checkbox, matching Modul Transformasi.
+ * Visual scope limited to the Overview narration toolbar.
+ * Existing per-chart state, localStorage and click controls remain intact.
+ */
+#tab-analytics .narr-all > .cm-narr-all-check{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  flex:0 0 auto!important;
+  box-sizing:border-box!important;
+  min-height:32px!important;
+  margin:0!important;
+  padding:6px 12px!important;
+  border:1px solid #DCE3EE!important;
+  border-radius:999px!important;
+  background:#F7F9FC!important;
+  color:var(--navy-800,#12275A)!important;
+  font:700 12.5px/1.2 'Inter',sans-serif!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+#tab-analytics .narr-all > .cm-narr-all-check:hover{
+  border-color:#B7C9E5!important;
+  background:#F1F5FB!important;
+}
+#tab-analytics .narr-all > .cm-narr-all-check:focus-within{
+  outline:2px solid #5B80BC!important;
+  outline-offset:2px!important;
+}
+#tab-analytics .narr-all > .cm-narr-all-check input[data-narr-toggle-all]{
+  box-sizing:border-box!important;
+  display:inline-block!important;
+  flex:0 0 16px!important;
+  width:16px!important;
+  min-width:16px!important;
+  height:16px!important;
+  margin:0!important;
+  padding:0!important;
+  accent-color:var(--navy-800,#12275A)!important;
+  cursor:pointer!important;
+}
+#tab-analytics .narr-all > .cm-narr-all-check span{
+  display:inline!important;
+  font:inherit!important;
+  color:inherit!important;
+}
+@media(max-width:600px){
+  #tab-analytics .narr-all > .cm-narr-all-check{
+    max-width:100%!important;
+    font-size:12px!important;
+  }
+}
