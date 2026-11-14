@@ -2,7 +2,9 @@ name: Release DCM 37 compact Knowledge and Priority
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-knowledge-priority-release-v2-37.yml']
+    paths:
+      - '.github/workflows/dcm-knowledge-priority-release-v2-37.yml'
+      - 'scripts/dcm_knowledge_priority_37.py'
 permissions:
   contents: write
 jobs:
