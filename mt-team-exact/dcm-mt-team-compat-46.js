@@ -72,7 +72,30 @@ function kpTimAdd(){
 }
 function modal(title,body,ok,onOk,o={}){const ov=document.createElement('div');ov.className='ov';ov.innerHTML=`<div class="md ${o.size||''}" role="dialog" aria-modal="true" aria-label="${esc(title.replace(/<[^>]+>/g,''))}"><h3>${title}</h3><div class="bd">${body}</div><div class="ft">${o.extra||''}<button class="btn" data-x>${o.cancel||'Batal'}</button>${ok?`<button class="btn ${o.danger?'dng':'pri'}" data-ok>${ok}</button>`:''}</div></div>`;document.body.appendChild(ov);const close=()=>ov.remove();ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-x]'))close();const ex=e.target.closest('[data-mx]');if(ex&&o.onExtra){if(o.onExtra(ex.dataset.mx,ov)!==false)close()}if(e.target.closest('[data-ok]')){if(onOk&&onOk(ov)===false)return;close()}});const f=ov.querySelector('input:not([disabled]):not([type=checkbox]),select,textarea');f&&f.focus();return ov}
 function confirmDel(what,fn,o){o=o||{};modal(o.delHead||'Hapus data?',o.delMsg?o.delMsg(what):`<p style="margin:0">Data <b>${esc(what)}</b> akan dihapus dan tercatat di log aktivitas.</p>`,o.delBtn||'Hapus',()=>{fn()},{danger:true,size:'sm'})}
-function kuResize(file){return Promise.resolve('')}
+function kuResize(file,max=160){
+ return new Promise((resolve,reject)=>{
+  if(!file||!/^image\\//.test(file.type||''))return reject(Error('Pilih file gambar yang valid'));
+  const rd=new FileReader();
+  rd.onerror=()=>reject(Error('Gagal membaca foto'));
+  rd.onload=()=>{
+   const img=new Image();
+   img.onerror=()=>reject(Error('Format foto tidak dapat dibaca'));
+   img.onload=()=>{
+    const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+    if(!w||!h)return reject(Error('Dimensi foto tidak valid'));
+    const scale=Math.min(1,max/Math.max(w,h));
+    const cvs=document.createElement('canvas');
+    cvs.width=Math.max(1,Math.round(w*scale));cvs.height=Math.max(1,Math.round(h*scale));
+    const ctx=cvs.getContext('2d');
+    if(!ctx)return reject(Error('Pemrosesan foto tidak tersedia'));
+    ctx.drawImage(img,0,0,cvs.width,cvs.height);
+    resolve(cvs.toDataURL('image/jpeg',0.8));
+   };
+   img.src=rd.result;
+  };
+  rd.readAsDataURL(file);
+ });
+}
 function render(){
  if(!__mtReady||!__mtData)return;
  try{
@@ -107,7 +130,11 @@ function mtMemberFromSnapshot(r){
   jenisCuti:mtTxt(r.jenisCuti),unitAsal:mtTxt(r.unit),
   wfhDays:Array.isArray(r.wfhDays)?r.wfhDays.map(Number):[],
   cuti:(r.leavePlans||[]).map(c=>({mulai:c.mulai,selesai:c.selesai||c.mulai,jenis:c.jenis,catatan:c.catatan||''})),
-  foto:mtTxt(r.foto),hp:mtTxt(r.hp),emailK:mtTxt(r.emailK)
+  foto:mtTxt(r.foto||r.photo),hp:mtTxt(r.hp||r.noHp),emailK:mtTxt(r.emailK||r.emailKemenkeu),
+  nk:mtTxt(r.nk||r.namaPanggilan),nl:mtTxt(r.nl||r.namaLengkap),org:mtTxt(r.org||r.organisasi),
+  emailP:mtTxt(r.emailP||r.emailPribadi),keahlian:mtTxt(r.keahlian),
+  penMulai:mtTxt(r.penMulai),penSelesai:mtTxt(r.penSelesai),
+  catatanStatus:mtTxt(r.catatanStatus),alasanOff:mtTxt(r.alasanOff)
  };
 }
 function mtLoadSnapshot(m){
