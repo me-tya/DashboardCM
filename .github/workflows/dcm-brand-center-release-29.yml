@@ -1,0 +1,65 @@
+name: Release DCM 29 center dashboard title only
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-brand-center-release-29.yml']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Validate complete prechange backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-29:refs/remotes/origin/backup/261114-DCM-29
+          git archive --format=zip --output=/tmp/261114-DCM-29.zip origin/backup/261114-DCM-29
+          unzip -t /tmp/261114-DCM-29.zip | tail -1
+      - name: Test left-only visual adjustment and unchanged app behavior
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          css=Path('dcm-brand-vertical-center-29.css').read_text(encoding='utf8')
+          assert css.count('{')==css.count('}'),'Unbalanced CSS'
+          assert css.count('#appHeader.topbar > .brand')==2
+          assert 'transform:translateY(-9px)!important' in css
+          assert 'transform:none!important' in css
+          assert 'align-self:center!important' in css
+          # Confirm right-hand actions are not selected by any CSS rule.
+          for token in ['#appHeader .topbar-actions{','#btnReminderCenter{','#userPill{','#authPill{',
+                        'grid-template-columns:','grid-template-rows:','padding:','min-height:']:
+            assert token not in css, ('Unwanted header layout change',token)
+          assert Path('index.html').read_text(encoding='utf8').count('dcm-cra-compact-27.css?v=261114-28')==1
+          print('PASS left brand only; right controls, height and padding untouched')
+          PY
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          node --check dcm-guide-header.js
+      - name: Link only the brand centering stylesheet
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf8')
+          link='<link rel="stylesheet" href="dcm-brand-vertical-center-29.css?v=261114-29">'
+          assert link not in s
+          assert s.count('dcm-cra-compact-27.css?v=261114-28')==1
+          pos=s.lower().find('</head>')
+          assert pos>0 and pos<s.lower().find('<body')
+          out=s[:pos]+link+'\n'+s[pos:]
+          assert out.replace(link+'\n','',1)==s
+          p.write_text(out,encoding='utf8')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish targeted change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): visually center dashboard title and logo, retain right toolbar at bottom"
+          git push origin HEAD:main
