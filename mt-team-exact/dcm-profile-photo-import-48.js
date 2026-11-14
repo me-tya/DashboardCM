@@ -140,7 +140,7 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
   const targetKey=targetRoster.indexOf(target);
   if(used.has(targetKey))throw Error('Lebih dari satu baris mengarah ke '+target.n+'. Pilih satu saja agar tidak terjadi duplikasi.');
   used.add(targetKey);
-  const before=!!target.foto;
+  const before=!!target.foto,beforeFoto=target.foto;
   const fieldDecision=options.fieldChoices?.[i];
   if(fieldDecision){
    for(const key of fields){
@@ -152,7 +152,7 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
    }
   }else merged(target,source,fields);
   if(!before&&target.foto)summary.photosAdded++;
-  if(before&&target.foto!==source.foto&&source.foto&&fieldDecision?.foto==='mt')summary.photosReplaced=(summary.photosReplaced||0)+1;
+  if(before&&fieldDecision?.foto==='mt'&&source.foto&&target.foto!==beforeFoto)summary.photosReplaced=(summary.photosReplaced||0)+1;
   if(fieldDecision)summary.fieldsFromMT=(summary.fieldsFromMT||0)+Object.entries(fieldDecision).filter(([key,v])=>v==='mt'&&fields.includes(key)&&!isEmpty(source[key])).length;
   mapped.set(normName(source.n),target.n);
   selected.push({source,target});
@@ -164,6 +164,7 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
   const dest=config.kp||{},src=parsed.kp||{};
   dest.tims=keepUniqueValues(dest.tims,src.tims);
   const lookup=name=>mapped.get(normName(name))||'';
+  if(!options.structureChoices){
   for(const key of ['pt','ptx','rl']){
    dest[key]=dest[key]||{};
    for(const [sourceName,value] of Object.entries(src[key]||{})){
@@ -183,9 +184,27 @@ function prepare(parsed,choices,live,docs,ui,includeStructure,options={}){
    }
   }
   for(const key of ['prog','tem'])dest[key]={...(src[key]||{}),...(dest[key]||{})};
+  }else{
+   for(const [idx,row] of selected.entries()){
+    const realIndex=parsed.profiles.indexOf(row.source);
+    const dec=options.structureChoices[realIndex]||{};
+    if(dec.pt==='mt'){
+     const value=src.pt?.[row.source.n];if(value)dest.pt[row.target.n]=value;
+    }
+    if(dec.ptx==='mt'){
+     const value=src.ptx?.[row.source.n];if(Array.isArray(value)){dest.ptx=dest.ptx||{};dest.ptx[row.target.n]=copied(value)}
+    }
+    if(dec.asg==='mt'){
+     const units=Object.entries(src.asg||{}).filter(([u,people])=>Array.isArray(people)&&people.includes(row.source.n)).map(([u])=>u);
+     dest.asg=dest.asg||{};
+     for(const list of Object.values(dest.asg))if(Array.isArray(list)){const k=list.indexOf(row.target.n);if(k>=0)list.splice(k,1)}
+     for(const u of units)dest.asg[u]=keepUniqueValues(dest.asg[u],[row.target.n]);
+    }
+   }
+  }
   config.kp=dest;
   const contacts=draft.filter(x=>/^cfg-kp-/.test(x.id||'')&&x.kp);
-  for(const raw of parsed.contacts){
+  for(const raw of (options.structureChoices&&!options.importContacts?[]:parsed.contacts)){
    const c=copied(raw);delete c._id;
    const name=T(c.nama),unit=normName(c.unit),id=N(c.nip);
    if(!name||!unit){summary.contactsSkipped++;continue}
