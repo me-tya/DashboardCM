@@ -136,8 +136,12 @@ function mtImportCommit(docs){
 window.mtImportCommit=mtImportCommit;
 function __mtSend(type,rest){if(window.self!==window.top)window.parent.postMessage({source:MT_SOURCE,type,...rest},location.origin)}
 function mtMemberFromSnapshot(r){
- const job=mtTxt(r.job||r.jabatan),name=mtTxt(r.name||r.nama);
- return {n:name,nip:mtTxt(r.nip),jab:job,pang:mtTxt(r.pang),
+ const readable=x=>typeof x==='string'||typeof x==='number'?mtTxt(x):x&&typeof x==='object'?mtTxt(x.jabatan||x.title||x.label||x.name||''):'';
+ const job=readable(r.job)||readable(r.jabatan),name=readable(r.name)||readable(r.nama);
+ const fromResource=mtTxt(r.nik||r.nip).replace(/\D/g,'');
+ const resourceNip=fromResource.length===18?fromResource:'';
+ const resourceNik=fromResource.length===16?fromResource:mtTxt(r.nik);
+ return {n:name,nip:resourceNip,nik:resourceNik,jab:job,pang:readable(r.pang),
   jenis:/sementara|magang|secondment|re-entry/i.test(mtTxt(r.jenis))?'Sementara':'Definitif',
   jenisSementara:mtTxt(r.jenis),peran:mtTxt(r.role),tim:/CM/i.test(mtTxt(r.team||r.role))?'CM':'Pusmantap',
   status:mtTxt(r.status)||'WFO',statusKerja:mtTxt(r.status)||'WFO',
@@ -172,6 +176,14 @@ function mtLoadSnapshot(m){
   roster.push(before?{...incoming,...before,n}:incoming);
  });
  existing.forEach(p=>{const k=mtTxt(p.n).toLocaleLowerCase('id-ID');if(k&&!seen.has(k)){seen.add(k);roster.push(p)}});
+ // Legacy Dashboard CM uses the 16-digit civil NIK, not the 18-digit NIP.
+ // Preserve it under nik, and never present it as a NIP for MT profile matching.
+ roster.forEach(p=>{
+  const id=mtTxt(p.nip).replace(/\D/g,'');
+  if(id.length===16){if(!p.nik)p.nik=id;p.nip=''}
+  if(!p.jab||p.jab==='[object Object]')p.jab='';
+  if(!p.pang||p.pang==='[object Object]')p.pang='';
+ });
  master.pic=roster;
  const k=kpCfg(),teams=m.manual?.teams||{},str=m.manual?.structural||{};
  for(const p of roster){
