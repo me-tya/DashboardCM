@@ -1,0 +1,50 @@
+name: DCM 46 MT Pusmantap Source Parity Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-pusmantap-audit-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read exact Modul Transformasi source without modifying either application
+        run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt-source
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, collections
+          mt=Path('/tmp/mt-source')
+          for fn in ['mt-tim.js','mt-tim2.js','index.html','ui-tabs-unified.css']:
+            s=(mt/fn).read_text('utf8')
+            print('SOURCE',fn,'LENGTH',len(s),'LINES',s.count('\n')+1)
+          src=(mt/'mt-tim2.js').read_text('utf8'); ix=(mt/'index.html').read_text('utf8')
+          print('== MT TIM2 EXPORTS AND END ==')
+          print(src[-11000:])
+          print('== MT TIM1 EXPORTS AND END ==')
+          print((mt/'mt-tim.js').read_text('utf8')[-4800:])
+          print('== SCRIPT LOAD ORDER ==')
+          for m in re.finditer(r'<script[^>]+src=[\"\']([^\"\']+)[\"\']',ix):
+            if any(t in m.group(1) for t in ('mt-tim','activity','squad','ui-tabs','cra')):
+              print('SCRIPT',m.group(1))
+          print('== CSS SELECTORS NEAR TIM2 ==')
+          for term in ['.t2{','.t2-','.tm-page{','.tm-kpis{','.t2-tabs{','/* ===== Tim Pusmantap','/* ===== Aktivitas','</style>']:
+            matches=list(re.finditer(re.escape(term),ix))
+            print(term,'COUNT',len(matches))
+            for m in matches[:4]:print('SNIP',ix[m.start()-140:m.start()+350].replace('\n',' ')[:500])
+          print('== MT TIM2 GLOBAL REFERENCES ==')
+          tokens=['actMaster','actMasterSave','kpCfg','kpPeople','pAktTimU','render','page','window.MT_T2','MT_TIM','S.ui','S.oneonone','TODAY','modal','toast','actCanEdit','canEdit','db','firebase','save','log','ACT_HDR','actKegiatan','actList','actAll','actLocal','actTglShort']
+          for token in tokens:print(token,len(re.findall(r'\b'+re.escape(token)+r'\b',src)))
+          print('== MT TIM2 FUNCTION DECLARATIONS ==')
+          print('\n'.join(re.findall(r'^(?:async )?function\s+[A-Za-z_$][\w$]*\([^\n]*',src,re.M)[:175]))
+          print('== DCM EMBEDDED FUNCTIONS and NAVIGATION ==')
+          d=Path('tim-pusmantap.html').read_text('utf8')
+          print('NAV',re.findall(r'const navigation\s*=\s*([^;]+);',d)[:1])
+          print('FUNCTIONS',re.findall(r'^(?:async )?function\s+([A-Za-z_$][\w$]*)\(',d,re.M)[:120])
+          print('== MT INDEX TIM VIEW ROUTE ==')
+          for term in ['MT_T2','MT_TIM','actTim','tm2','pAktTim','timPusmantap','Tim Pusmantap','Tim & Pendamping']:
+            matches=list(re.finditer(re.escape(term),ix))
+            print(term,'count',len(matches))
+            for m in matches[:8]:print('SNIP',ix[m.start()-200:m.start()+260].replace('\n',' '))
+          PY
