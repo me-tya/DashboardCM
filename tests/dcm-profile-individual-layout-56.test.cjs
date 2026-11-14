@@ -84,4 +84,4 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  assert.equal(w.S.oneonone.find(d=>d.id==='cfg-master').master.pic.length,25,'no data modified');
  console.log('PASS: filter below four KPI cards; original team+search functional; import beside profile tabs; selected profile framed; unit unchanged');
  dom.window.close();
-})().catch(e=>{console.error(e.stack||e);process.exitCode=1});
+})().catch(e=>{console.error(e.stack||e);process.exit(1)});
