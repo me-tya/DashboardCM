@@ -1,0 +1,62 @@
+
+.cmp50.ov{z-index:10000!important;display:flex;align-items:center;justify-content:center;padding:10px;font-family:Inter,Arial,sans-serif}
+.cmp50>.md{width:min(1220px,98vw);height:min(810px,94vh);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;border-radius:12px;background:#fff}
+.cmp50 .cmp-header{padding:11px 15px;border-bottom:1px solid #dce5f0;display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none}
+.cmp50 .cmp-header h3{margin:0;font-size:16px;font-weight:800;color:#0d2d5c}
+.cmp50 .cmp-header small{font-size:11px;color:#6e7d94}
+.cmp50 .cmp-header input{font:inherit;font-size:11px;max-width:280px}
+.cmp50 .cmp-main{display:flex;flex:1;min-height:0}
+.cmp50 .cmp-aside{width:235px;flex:0 0 235px;background:#f6f8fc;border-right:1px solid #dbe4f0;display:flex;flex-direction:column;min-height:0}
+.cmp50 #cmp-stats{font-size:11px;line-height:1.45;color:#50617a;padding:9px 10px;border-bottom:1px solid #e3eaf3}
+.cmp50 #cmp-search{margin:8px 9px;padding:7px 9px;border:1px solid #cbd5e4;border-radius:7px;width:calc(100% - 18px);box-sizing:border-box;font:inherit;font-size:12px;background:white}
+.cmp50 #cmp-people{overflow-y:auto;flex:1;padding:0 7px 9px}
+.cmp50 .cmp-person{display:block;width:100%;border:1px solid transparent;border-radius:8px;background:transparent;padding:8px 9px;text-align:left;font:inherit;font-size:12px;line-height:1.3;color:#172e51;cursor:pointer;margin:2px 0}
+.cmp50 .cmp-person b{font-size:12px;font-weight:750;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp50 .cmp-person small{font-size:10px;color:#718098;display:block;margin:2px 0}
+.cmp50 .cmp-person:hover{background:#edf3fb}
+.cmp50 .cmp-person.active{background:#e9f1fd;border-color:#adbfdb;box-shadow:inset 3px 0 #0e3169}
+.cmp50 .cmp-pill{display:inline-block;font-size:10px;color:#7b5f1b;background:#fff2d6;padding:2px 6px;border-radius:5px;font-weight:700}
+.cmp50 .cmp-panel{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;background:white}
+.cmp50 .cmp-placeholder{padding:20px;font-size:12px;color:#657692}
+.cmp50 .cmp-person-header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid #e6ebf4;flex:none}
+.cmp50 .cmp-person-header b{display:block;font-size:14px;color:#133566}
+.cmp50 .cmp-person-header small{font-size:11px;color:#657995;line-height:1.5}
+.cmp50 #cmp-target{font:inherit;font-size:12px;border:1px solid #c7d3e4;border-radius:7px;padding:7px 9px;color:#123668;background:#fff;max-width:48%;min-width:220px}
+.cmp50 .cmp-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid #e5eaf4;flex:none}
+.cmp50 .cmp-toolbar span{margin-right:auto;font-size:11px;color:#5c718e}
+.cmp50 .cmp-toolbar button{border:1px solid #cdd9e9;background:#fff;color:#244d82;border-radius:7px;padding:6px 8px;font:inherit;font-size:11px;cursor:pointer}
+.cmp50 .cmp-toolbar button:hover{background:#f0f5fc}
+.cmp50 .cmp-rows{overflow-y:auto;min-height:0;flex:1;padding:0 11px 12px}
+.cmp50 .cmp-row{display:grid;grid-template-columns:minmax(120px,.46fr) minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:stretch;padding:6px 0;border-bottom:1px solid #ecf0f7}
+.cmp50 .cmp-row label,.cmp50 .cmp-row>strong{display:flex;align-items:center;font-size:11px;font-weight:700;color:#425773}
+.cmp50 .cmp-row>strong{color:#9b731e}
+.cmp50 .cmp-sticky{position:sticky;top:0;background:#fff;z-index:2;border-bottom:2px solid #d3dfef;padding:10px 0 7px}
+.cmp50 .cmp-sticky b{font-size:11px;font-weight:800;color:#123d78}
+.cmp50 .cmp-sticky b:last-child{color:#936a15}
+.cmp50 .cmp-choice,.cmp50 .cmp-fixed{display:flex;align-items:center;gap:8px;text-align:left;font:inherit;font-size:12px;line-height:1.35;min-height:30px;min-width:0;overflow-wrap:anywhere;padding:6px 8px;color:#233b5e;background:#fff;border:1px solid #dce4ef;border-radius:7px}
+.cmp50 .cmp-choice{cursor:pointer;max-height:115px;overflow:auto}
+.cmp50 .cmp-choice:hover:not(:disabled){background:#f5f8fd}
+.cmp50 .cmp-choice.selected{border-color:#234e87;background:#eff5ff;box-shadow:inset 3px 0 #1a417d}
+.cmp50 .cmp-choice.gold.selected{border-color:#bc962f;background:#fff8e6;box-shadow:inset 3px 0 #bc962f}
+.cmp50 .cmp-choice:disabled{opacity:.62;cursor:default}
+.cmp50 .cmp-choice input{accent-color:#173c71;pointer-events:none;flex:none;margin:0}
+.cmp50 .cmp-choice.gold input{accent-color:#ae8725}
+.cmp50 .cmp-fixed{background:#f8fafc}
+.cmp50 .cmp-photo{width:48px;height:48px;object-fit:cover;border:1px solid #dfe5ed;border-radius:7px}
+.cmp50 .cmp-empty{font-size:11px;color:#98a4b2;font-style:italic}
+.cmp50 .cmp-hint{display:flex;align-items:center;gap:14px;justify-content:space-between;font-size:11px;color:#78601b;background:#fff9ed;border-top:1px solid #f0e2be;padding:8px 12px;flex:none}
+.cmp50 .cmp-hint label{white-space:nowrap;cursor:pointer}
+.cmp50 .cmp-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;border-top:1px solid #dce4ef;padding:10px 14px;flex:none}
+.cmp50 .cmp-footer>span{font-size:11px;color:#5e6e87}
+.cmp50 .cmp-footer>div{display:flex;gap:8px}
+.cmp50 .cmp-footer button{font:inherit;font-size:12px;font-weight:700;padding:8px 13px;border:1px solid #c9d5e5;background:#fff;border-radius:7px;cursor:pointer;color:#143566}
+.cmp50 .cmp-footer .cmp-primary{background:#12366e;border-color:#12366e;color:white}
+.cmp50 .cmp-footer button:disabled{opacity:.44;cursor:default}
+.cmp50 .cmp-review{overflow:auto;padding:18px 20px;font-size:13px;line-height:1.6}
+.cmp50 .cmp-review h3{font-size:17px;color:#123566}
+.cmp50 .cmp-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:13px 0}
+.cmp50 .cmp-metrics>div{background:#f6f9fd;padding:12px;border-radius:9px;border:1px solid #dce5ef}
+.cmp50 .cmp-metrics b{display:block;font-size:23px;color:#163866}
+.cmp50 .cmp-metrics span{font-size:11px;color:#66768d}
+.cmp50 .cmp-review-note{background:#fff9e8;border:1px solid #e4d39f;border-radius:8px;padding:10px}
+@media(max-width:750px){.cmp50 .cmp-aside{width:160px;flex-basis:160px}.cmp50 .cmp-row{grid-template-columns:minmax(88px,.45fr) minmax(0,1fr) minmax(0,1fr);gap:4px}.cmp50 .cmp-choice{padding:5px;font-size:11px}.cmp50 .cmp-header{flex-wrap:wrap}.cmp50 #cmp-target{max-width:100%;min-width:180px}.cmp50 .cmp-person-header{flex-wrap:wrap}}
