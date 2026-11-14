@@ -50,6 +50,19 @@ function match(p,roster){
  const b=roster.filter(x=>F(x.n)===F(p.n)||x.nl&&F(x.nl)===F(p.n));
  return b.length===1?b[0]:null;
 }
+function compactPhoto(url){
+ return new Promise(resolve=>{
+  if(!url||!url.startsWith('data:image/'))return resolve(url);
+  const img=new Image();img.onerror=()=>resolve(url);
+  img.onload=()=>{
+   try{const scale=Math.min(1,160/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.naturalWidth*scale));c.height=Math.max(1,Math.round(img.naturalHeight*scale));
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    const out=c.toDataURL('image/jpeg',0.76);resolve(out.length<url.length?out:url)
+   }catch(e){resolve(url)}
+  };img.src=url;
+ });
+}
 function open(){
  if(!w.actCanEdit())return w.toast('Anda tidak memiliki hak akses impor.');
  const wrap=document.createElement('div');wrap.className='ov';wrap.style.zIndex='10000';
@@ -75,12 +88,14 @@ function open(){
    $('#mt-profile-all').onchange=ev=>wrap.querySelectorAll('[data-row]').forEach(x=>x.checked=ev.target.checked);
   }catch(err){area.textContent='Tidak dapat membaca file: '+(err.message||err)}
  };
- $('#mt-profile-save').onclick=()=>{
+ $('#mt-profile-save').onclick=async()=>{
   const parsed=wrap._parsed;if(!parsed)return;
   const selected=[...wrap.querySelectorAll('[data-row]:checked')].map(c=>parsed.profiles[+c.dataset.row]);
   if(!selected.length)return w.toast('Pilih minimal satu profil.');
   if(!confirm('Impor '+selected.length+' profil ke Dashboard CM? Data yang sudah terisi tetap dipertahankan.'))return;
   try{
+   $('#mt-profile-save').disabled=true;
+   for(const p of selected)if(p.foto)p.foto=await compactPhoto(p.foto);
    const M=w.actMaster();let add=0,update=0,photos=0;
    for(const p of selected){
     let target=match(p,M.pic);
@@ -95,9 +110,12 @@ function open(){
     if(src){for(const key of ['pt','ptx','str','stp','asg','rl','prog','tem'])if(src[key]&&typeof src[key]==='object')k[key]={...src[key],...(k[key]||{})};if(Array.isArray(src.tims))k.tims=[...new Set([...k.tims,...src.tims])];}
     for(const p of parsed.contacts){if(!p.nama)continue;const same=w.kpPeople().find(x=>N(x.nip)&&N(x.nip)===N(p.nip)&&F(x.unit)===F(p.unit)||F(x.nama)===F(p.nama)&&F(x.unit)===F(p.unit));if(!same)w.kpPersonSave(p)}
    }
+   const predictedDocs=w.S.oneonone.filter(d=>d&&d.id&&/^(cfg-master|cfg-kp|cfg-tim|cfg-agpim|cfg-kp-[\\w-]+|pub-tim)$/.test(d.id));
+   const predicted=JSON.stringify({docs:predictedDocs,ui:w.S.ui});
+   if(predicted.length>800000)throw Error('Foto terlalu besar untuk penyimpanan bersama ('+Math.round(predicted.length/1024)+' KB). Pilih lebih sedikit pegawai per impor atau perkecil foto.');
    w.actMasterSave(M);w.render();w.toast('Impor diproses: '+add+' baru, '+update+' dilengkapi, '+photos+' foto tersedia. Periksa data setelah sinkronisasi.');
    close();
-  }catch(err){w.toast('Gagal impor: '+(err.message||err))}
+  }catch(err){$('#mt-profile-save').disabled=false;w.toast('Gagal impor: '+(err.message||err))}
  };
 }
 w.MT_PROFILE_IMPORT={open,parse,match};
