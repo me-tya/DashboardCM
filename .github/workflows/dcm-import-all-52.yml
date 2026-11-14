@@ -1,0 +1,75 @@
+name: DCM 52 Import All MT Profiles and Unit Mapping
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-import-all-52.yml']
+permissions:
+  contents: write
+jobs:
+  validate-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Generate complete pre-change ZIP
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-52:refs/remotes/origin/backup/261114-DCM-52
+          git archive --format=zip --output=261114-DCM-52.zip origin/backup/261114-DCM-52
+          unzip -t 261114-DCM-52.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-52
+          path: 261114-DCM-52.zip
+          retention-days: 90
+      - name: JavaScript and import regressions
+        run: |
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-import-all-52.js
+          node --check mt-team-exact/dcm-profile-compare-50.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+          node tests/dcm-profile-compare-50.test.cjs
+      - name: Browser-like modal and full-import tests
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-import-all-52.test.cjs
+          node tests/dcm-import-modal-nik-51.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Activate updated scripts without changing other menus
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          frame=Path('tim-pusmantap-mt.html');f=frame.read_text('utf-8')
+          changes={
+            'dcm-profile-compare-50.js?v=261114-50':'dcm-profile-compare-50.js?v=261114-52',
+            'dcm-profile-compare-50.css?v=261114-50':'dcm-profile-compare-50.css?v=261114-52',
+            'dcm-profile-photo-import-48.js?v=261114-50':'dcm-profile-photo-import-48.js?v=261114-52',
+            'dcm-mt-team-compat-46.js?v=261114-50':'dcm-mt-team-compat-46.js?v=261114-52'
+          }
+          for old,new in changes.items():
+            assert f.count(old)==1,(old,f.count(old))
+            f=f.replace(old,new)
+          frame.write_text(f,'utf-8')
+          p=Path('index.html');s=p.read_text('utf-8')
+          changes={
+            'tim-pusmantap-mt.html?embedded=1&amp;v=20261114-50':'tim-pusmantap-mt.html?embedded=1&amp;v=20261114-52',
+            'dcm-pusmantap-bridge.js?v=20261114-50':'dcm-pusmantap-bridge.js?v=20261114-52'
+          }
+          for old,new in changes.items():
+            assert s.count(old)==1,(old,s.count(old))
+            s=s.replace(old,new)
+          p.write_text(s,'utf-8')
+          print('PASS: Tim Pusmantap-only cache refresh')
+          PY
+          git diff --check
+      - name: Commit and release validated change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "feat(dcm): activate full MT profile/photo and unit-mapping import with one checkbox"
+          git push origin HEAD:main
