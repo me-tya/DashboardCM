@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/dcm-knowledge-priority-release-v2-37.yml'
       - 'scripts/dcm_knowledge_priority_37.py'
+      - 'tests/dcm-knowledge-priority-37.test.cjs'
 permissions:
   contents: write
 jobs:
