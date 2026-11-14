@@ -1,0 +1,115 @@
+/*
+ * Dashboard CM 261114-DCM-33
+ * Proportional justified main navigation with wider equal-sized clickable cards.
+ * Hide the duplicate gold '?' at the end of the menu: contextual Help and
+ * User Manual remain available in the top-right application header.
+ * Style-only; roles, active tab logic, badge data and CRUD are unchanged.
+ */
+
+/* Do not reserve space for the redundant question-mark button. */
+#appMain > .tabs-row #tabNav #cmContextHelp{
+  display:none!important;
+}
+
+/* Distribute the full available navigation width across visible menu buttons. */
+#appMain > .tabs-row #tabNav.tabs{
+  display:flex!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  align-items:stretch!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  gap:5px!important;
+  padding:5px 6px!important;
+  box-sizing:border-box!important;
+}
+
+/* One consistent, full-width click target per visible tab, including active. */
+#appMain > .tabs-row #tabNav > .tab-btn{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex:1 1 0%!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:7px 9px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-direction:column!important;
+  text-align:center!important;
+  border-radius:12px!important;
+  border-left:0!important;
+  scroll-snap-align:center;
+}
+
+/* Keep permission-hidden menu items hidden (even under legacy !important rules). */
+#appMain > .tabs-row #tabNav > .tab-btn.hidden,
+#appMain > .tabs-row #tabNav > .tab-btn[hidden],
+#appMain > .tabs-row #tabNav > .tab-btn[aria-hidden="true"],
+#appMain > .tabs-row #tabNav > .tab-btn[style*="display:none"],
+#appMain > .tabs-row #tabNav > .tab-btn[style*="display: none"]{
+  display:none!important;
+}
+
+/* Navy active card must occupy exactly the same slot as the inactive cards. */
+#appMain > .tabs-row #tabNav > .tab-btn.active{
+  flex-grow:1!important;
+  flex-shrink:1!important;
+  min-width:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:12px!important;
+}
+#appMain > .tabs-row #tabNav > .tab-btn > span:not(.count-badge){
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  min-width:0!important;
+  text-align:center!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  text-overflow:ellipsis!important;
+}
+#appMain > .tabs-row #tabNav > .tab-btn > .tab-icon{
+  flex:0 0 auto!important;
+  margin:0 auto!important;
+}
+
+/* Equal fixed-size items plus horizontal scrolling at narrow widths.
+   No wrapping or header movement while switching tabs. */
+@media(max-width:1290px){
+  #appMain > .tabs-row #tabNav.tabs{
+    justify-content:flex-start!important;
+    gap:5px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+  }
+  #appMain > .tabs-row #tabNav > .tab-btn{
+    flex:0 0 126px!important;
+    width:126px!important;
+    min-width:126px!important;
+    max-width:126px!important;
+  }
+  #appMain > .tabs-row #tabNav > .tab-btn.active{
+    flex:0 0 126px!important;
+    width:126px!important;
+    min-width:126px!important;
+    max-width:126px!important;
+  }
+}
+@media(max-width:720px){
+  #appMain > .tabs-row #tabNav > .tab-btn,
+  #appMain > .tabs-row #tabNav > .tab-btn.active{
+    flex:0 0 112px!important;
+    width:112px!important;
+    min-width:112px!important;
+    max-width:112px!important;
+  }
+  #appMain > .tabs-row #tabNav.tabs{
+    padding:4px 5px!important;
+    gap:4px!important;
+  }
+}
