@@ -69,3 +69,11 @@ body > .cmp50.ov > .md{flex:0 1 min(1220px,98vw)!important;position:relative!imp
 .cmp50 .cmp-upload-actions button:disabled{opacity:.45;cursor:not-allowed}
 .cmp50 .cmp-upload-actions button:hover:not(:disabled){background:#174880}
 @media(max-width:760px){.cmp50 .cmp-upload-actions{justify-content:flex-start}.cmp50 .cmp-upload-actions input{max-width:160px}}
+
+.cmp50 .cmp-footer-options{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.cmp50 .cmp-all-label{display:flex;align-items:center;gap:7px;color:#153b74;font-size:12px;font-weight:700;line-height:1.35;cursor:pointer}
+.cmp50 .cmp-all-label input{width:17px;height:17px;accent-color:#13386c;flex-shrink:0}
+.cmp50 .cmp-footer-options #cmp-footer-text{font-size:10.5px;color:#6a7b93}
+.cmp50 .cmp-panel.cmp-readonly .cmp-toolbar button,.cmp50 .cmp-panel.cmp-readonly #cmp-target,.cmp50 .cmp-panel.cmp-readonly .cmp-choice{pointer-events:none;opacity:.55}
+.cmp50 .cmp-footer:has(#cmp-replace-all:checked){background:#fffaf0;border-top-color:#e7ce8d}
+@media(max-width:760px){.cmp50 .cmp-footer{align-items:flex-start;flex-wrap:wrap}.cmp50 .cmp-footer>div:last-child{margin-left:auto}}
