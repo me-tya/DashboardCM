@@ -42,7 +42,7 @@ function parse(j){
  if(!profiles.length)throw Error('Tidak ada profil pegawai yang dapat dibaca.');
  const kp=docs.find(x=>x.id==='cfg-kp')?.kp||null;
  const contacts=docs.filter(x=>/^cfg-kp-/.test(x.id||'')&&x.kp).map(x=>({...x.kp,_id:x.id}));
- return {profiles,kp,contacts};
+ return {profiles,kp,contacts,sourceDocs:docs.map(copied)};
 }
 /* Safe identity check: NIP wins; exact full names without conflicting NIPs
  * can be merged; partial/fuzzy matches always require a human choice. */
