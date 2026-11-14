@@ -1,0 +1,31 @@
+/*
+ * Dashboard CM 261114-DCM-45
+ * Normalize ONLY the two gaps surrounding the Prioritas submenu.
+ * Match both to the tighter 7px rhythm; remove the inherited excess
+ * minimum height of the title line so its bottom isn't padded differently.
+ * No color, size, data, click target, header or unrelated menu changes.
+ */
+#tab-priority .prio-page{
+  gap:7px!important;
+  row-gap:7px!important;
+}
+#tab-priority .prio-page > .prio-hero{
+  min-height:0!important;
+  padding:0 0 0 20px!important;
+  margin:0!important;
+}
+#tab-priority .prio-page > .cm-survey-subtabs.prio-subtabs{
+  margin:0!important;
+  margin-block:0!important;
+}
+#tab-priority .prio-page > .prio-kpi-stage{
+  margin:0!important;
+}
+#tab-priority .prio-page > .prio-filter-panel{
+  margin:0!important;
+}
+@media(max-width:650px){
+  #tab-priority .prio-page > .prio-hero{
+    padding-left:14px!important;
+  }
+}
