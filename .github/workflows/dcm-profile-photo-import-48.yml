@@ -1,0 +1,50 @@
+name: DCM 48 Profile Photo Import Validation and Backup
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-profile-photo-import-48.yml']
+permissions:
+  contents: read
+jobs:
+  test-and-backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Backup complete pre-change repository
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-48:refs/remotes/origin/backup/261114-DCM-48
+          git archive -o 261114-DCM-48.zip origin/backup/261114-DCM-48
+          unzip -t 261114-DCM-48.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261114-DCM-48
+          path: 261114-DCM-48.zip
+          retention-days: 90
+      - name: Validate JS and import wiring
+        run: |
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          node - <<'JS'
+          const fs=require('fs'),vm=require('vm'),assert=require('assert');
+          const src=fs.readFileSync('mt-team-exact/dcm-profile-photo-import-48.js','utf8');
+          const scope={window:{}};vm.runInNewContext(src,scope);
+          const importer=scope.window.MT_PROFILE_IMPORT;
+          const original={oneonone:[{id:'cfg-master',master:{pic:[{n:'Contoh Pegawai',nip:'198501012010011001',jab:'Analis',foto:'data:image/png;base64,AAAA',emailK:'pegawai@kemenkeu.go.id'}]}},{id:'cfg-kp',kp:{tims:['Tim CM'],pt:{'Contoh Pegawai':'Tim CM'}}}]};
+          const result=importer.parse(original);
+          assert.equal(result.profiles.length,1);
+          assert.equal(result.profiles[0].foto,'data:image/png;base64,AAAA');
+          assert.equal(result.profiles[0].jab,'Analis');
+          assert.equal(result.kp.pt['Contoh Pegawai'],'Tim CM');
+          assert.equal(importer.match(result.profiles,[{n:'Contoh Pegawai',nip:'198501012010011001'}]).n,'Contoh Pegawai');
+          const html=fs.readFileSync('tim-pusmantap-mt.html','utf8');
+          assert(html.includes('dcm-profile-photo-import-48.js')&&html.includes('mt-import-profiles'));
+          assert(!fs.readFileSync('mt-team-exact/dcm-mt-team-compat-46.js','utf8').includes("startsWith('image/')(file.type"));
+          console.log('PASS: profile JSON import, photo retention, NIP matching, button wiring and syntax');
+          JS
+      - name: Validate source MT team loads
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-mt-team-parity-46.test.cjs
