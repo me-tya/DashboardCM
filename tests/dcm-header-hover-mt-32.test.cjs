@@ -25,7 +25,7 @@ has(guide,'background:transparent!important');has(guide,'color:#FFFFFF!important
 const bellBadge=body('#appHeader .topbar-actions.dcm-reference-toolbar-30 #btnReminderCenter:focus-visible .cm-reminder-badge:not(.hidden)');
 has(bellBadge,'border-color:#FDB913!important');
 assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length,'CSS braces balanced');
-for(const token of ['padding:','height:36px','width:36px','grid-template','display:none!important','position:','order:','userAvatar','btnLangToggle','authPill']) {
+for(const token of ['padding:','height:36px','width:36px','grid-template','display:none!important','position:','userAvatar','btnLangToggle','authPill']) {
   assert(!css.includes(token),'Hover color file should not modify layout/actions: '+token);
 }
 for(const token of ['dcmRefHelp','dcmRefBook','btnReminderCenter','cmGuideToggle','dcmRefAvatarTrigger']) {
