@@ -74,7 +74,7 @@ function modal(title,body,ok,onOk,o={}){const ov=document.createElement('div');o
 function confirmDel(what,fn,o){o=o||{};modal(o.delHead||'Hapus data?',o.delMsg?o.delMsg(what):`<p style="margin:0">Data <b>${esc(what)}</b> akan dihapus dan tercatat di log aktivitas.</p>`,o.delBtn||'Hapus',()=>{fn()},{danger:true,size:'sm'})}
 function kuResize(file,max=160){
  return new Promise((resolve,reject)=>{
-  if(!file||!/^image\\//.test(file.type||''))return reject(Error('Pilih file gambar yang valid'));
+  if(!file||!String(file.type||'').startsWith('image/')(file.type||''))return reject(Error('Pilih file gambar yang valid'));
   const rd=new FileReader();
   rd.onerror=()=>reject(Error('Gagal membaca foto'));
   rd.onload=()=>{
