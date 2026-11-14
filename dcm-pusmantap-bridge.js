@@ -107,7 +107,9 @@ async function saveMtState(input,expected){
  mtState=value;
  try{localStorage.setItem(KEY_MT,serialized)}catch(e){}
  send(true);
- return {updated:value.docs.length};
+ const profiles=value.docs.find(d=>d.id==='cfg-master')?.master?.pic||[];
+ const unitContacts=value.docs.filter(d=>/^cfg-kp-/.test(d.id||''));
+ return {updated:value.docs.length,profiles:profiles.length,photos:profiles.filter(p=>!!p.foto).length,contacts:unitContacts.length,authoritative:value.ui?.mtProfilesAuthoritative===true};
 }
 
 async function initRemote(){
