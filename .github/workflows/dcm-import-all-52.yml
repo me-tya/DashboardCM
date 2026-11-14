@@ -2,7 +2,13 @@ name: DCM 52 Import All MT Profiles and Unit Mapping
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-import-all-52.yml']
+    paths:
+      - '.github/workflows/dcm-import-all-52.yml'
+      - 'tests/dcm-profile-photo-safety-49.test.cjs'
+      - 'tests/dcm-import-all-52.test.cjs'
+      - 'tests/dcm-import-modal-nik-51.test.cjs'
+      - 'mt-team-exact/dcm-import-all-52.js'
+      - 'mt-team-exact/dcm-profile-compare-50.js'
 permissions:
   contents: write
 jobs:
