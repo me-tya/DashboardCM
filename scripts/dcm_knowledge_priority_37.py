@@ -33,8 +33,11 @@ new_cards = '''<div class="prio-kpis" aria-label="${uiText('Project priority sum
 </div>'''
 render = render[:a] + new_cards + render[b:]
 
-anchor = "  el.querySelectorAll('[data-prio-filter]').forEach(b=>b.onclick=()=>{prioUi.filter=b.dataset.prioFilter;renderPriority();});"
-assert render.count(anchor) == 1, "Must keep the original filter handler"
+anchor = "el.querySelectorAll('[data-prio-filter]').forEach"
+line_start = render.index(anchor)
+line_end = render.index("\n", line_start)
+anchor_line = render[line_start:line_end]
+assert "prioUi.filter=b.dataset.prioFilter" in anchor_line and "renderPriority()" in anchor_line, "Original category filter must remain intact"
 
 drilldown = """  // KPI cards re-use the same filters and read-only per-project details.
   el.querySelectorAll('[data-prio-kpi]').forEach(card=>card.addEventListener('click',()=>{
@@ -59,7 +62,7 @@ drilldown = """  // KPI cards re-use the same filters and read-only per-project 
     });
   }));
 """
-render = render.replace(anchor, anchor + "\n" + drilldown, 1)
+render = render[:line_end] + "\n" + drilldown + render[line_end:]
 assert render.count('data-prio-kpi=') == 5
 assert render.count("el.querySelectorAll('[data-prio-kpi]')") == 1
 assert "el.querySelectorAll('[data-prio-filter]')" in render
