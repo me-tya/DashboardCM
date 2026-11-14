@@ -1,0 +1,68 @@
+name: DCM 51 Fix Dialog And Correct NIK NIP
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-fix-import-51.yml'
+permissions:
+  contents: write
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Check pre-fix snapshot can be archived
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-51:refs/remotes/origin/backup/261114-DCM-51
+          git archive --format=zip --output=/tmp/261114-DCM-51.zip origin/backup/261114-DCM-51
+          unzip -t /tmp/261114-DCM-51.zip | tail -1
+      - name: Validate JavaScript and profile identity logic
+        run: |
+          node --check mt-team-exact/dcm-profile-compare-50.js
+          node --check mt-team-exact/dcm-profile-photo-import-48.js
+          node --check mt-team-exact/dcm-mt-team-compat-46.js
+          node --check dcm-pusmantap-bridge.js
+          node tests/dcm-profile-photo-safety-49.test.cjs
+          node tests/dcm-profile-compare-50.test.cjs
+      - name: Simulate browser, modal visibility and Firebase review
+        run: |
+          npm install --no-save --ignore-scripts --no-package-lock --no-audit --no-fund jsdom@25
+          node tests/dcm-import-modal-nik-51.test.cjs
+          node tests/dcm-profile-compare-ui-50.test.cjs
+          node tests/dcm-mt-team-parity-46.test.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+      - name: Update precise cache versions (other menus unchanged)
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          frame=Path('tim-pusmantap-mt.html');f=frame.read_text('utf-8')
+          for old,new in {
+           'dcm-profile-compare-50.js?v=261114-50':'dcm-profile-compare-50.js?v=261114-51',
+           'dcm-profile-compare-50.css?v=261114-50':'dcm-profile-compare-50.css?v=261114-51',
+           'dcm-profile-photo-import-48.js?v=261114-50':'dcm-profile-photo-import-48.js?v=261114-51',
+           'dcm-mt-team-compat-46.js?v=261114-50':'dcm-mt-team-compat-46.js?v=261114-51'
+          }.items():
+           assert f.count(old)==1,(old,f.count(old))
+           f=f.replace(old,new)
+          frame.write_text(f,'utf-8')
+          path=Path('index.html');s=path.read_text('utf-8')
+          for old,new in {
+            'tim-pusmantap-mt.html?embedded=1&amp;v=20261114-50':'tim-pusmantap-mt.html?embedded=1&amp;v=20261114-51',
+            'dcm-pusmantap-bridge.js?v=20261114-50':'dcm-pusmantap-bridge.js?v=20261114-51'
+          }.items():
+           assert s.count(old)==1,(old,s.count(old))
+           s=s.replace(old,new)
+          path.write_text(s,'utf-8')
+          print('PASS: iframe dialog and bridge cache versions refreshed')
+          PY
+          git diff --check
+      - name: Publish validated fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html tim-pusmantap-mt.html
+          git commit -m "fix(dcm): show migration dialog in viewport and use MT NIP instead of DCM NIK"
+          git push origin HEAD:main
