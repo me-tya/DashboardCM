@@ -2,7 +2,9 @@ name: Release DCM 31 Google login profile avatar
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-login-photo-release-31.yml']
+    paths:
+      - '.github/workflows/dcm-login-photo-release-31.yml'
+      - 'tests/dcm-login-photo-31.test.cjs'
 permissions:
   contents: write
 jobs:
