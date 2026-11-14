@@ -1,0 +1,49 @@
+/* DCM-56 · Tim Pusmantap Profil — layout-only overrides.
+ * Individual profile: one-line filter under KPI cards and framed selected
+ * employee header. Unit dampingan below stays on original MT styling. */
+#mt-app .t-pvw.dcm-pi-top-tabs{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;position:relative;padding:13px 16px 28px;min-width:0}
+#mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{flex:0 1 auto;min-width:0;max-width:calc(100% - 205px);margin:0;align-self:center}
+#mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar{display:flex;flex:0 0 auto;margin:0 0 0 auto;min-width:0;padding:0;gap:0;align-self:center;background:transparent;border:0}
+#mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar[hidden]{display:none!important}
+#mt-app .t-pvw.dcm-pi-top-tabs #mt-import-state{position:absolute;left:16px;bottom:4px;margin:0;color:#62738f;line-height:17px;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+#mt-app .t-pvw.dcm-pi-top-tabs #mt-import-profiles{display:inline-flex;align-items:center;justify-content:center;height:37px;white-space:nowrap;padding:7px 12px;border-radius:9px;font-size:12px;font-weight:700}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar{display:grid;grid-template-columns:minmax(190px,.78fr) minmax(225px,1fr) minmax(260px,1.45fr) auto;gap:9px;align-items:center;min-width:0;width:100%;margin:0 0 12px;padding:2px 0}
+#t2 .t-pv-orang .dcm-pi-filter-title{display:flex;align-items:center;min-width:0;padding:0 5px}
+#t2 .t-pv-orang .dcm-pi-filter-title b{font-size:12px;letter-spacing:.035em;font-weight:800;color:#315072;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#t2 .t-pv-orang .dcm-pi-filter-title b span{color:#526985}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-tsel{display:flex;gap:7px;margin:0;min-width:0;width:100%;align-items:stretch}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-tsl{flex:1;min-width:0;height:39px;align-items:center;border-radius:9px;background:#fff;border:1px solid #d7e1ee;margin:0;padding:0 11px;box-shadow:none}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-tsl select{min-width:0;height:36px;font:700 12px Inter,Arial,sans-serif;color:#173a6a;padding:0;background:transparent;outline:0;border:0;box-shadow:none;cursor:pointer}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-tsl:focus-within{border-color:#204878;box-shadow:none;outline:0}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-tadd{flex:0 0 auto;min-height:39px;padding:0 11px;border-radius:9px;font:700 12px Inter,Arial,sans-serif;white-space:nowrap}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-search{min-width:0;margin:0}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-search .inp{display:block;width:100%;height:39px;margin:0;border:1px solid #d7e1ee;border-radius:9px;background:#fff;padding:0 12px;box-shadow:none!important;outline:0!important;color:#173a6a;font:600 12px Inter,Arial,sans-serif}
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-search .inp:focus,
+#t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-search .inp:focus-visible{border-color:#204878!important;box-shadow:none!important;outline:none!important;outline-offset:0!important}
+#t2 .t-pv-orang .dcm-pi-add{display:flex;justify-content:flex-end;align-items:center;min-width:0}
+#t2 .t-pv-orang .dcm-pi-add>[data-act="tmAdd"]{height:39px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:0 12px;white-space:nowrap;font:700 12px Inter,Arial,sans-serif}
+#t2 .t-pv-orang .tm-left{gap:8px}
+#t2 .t-pv-orang .tm-left>.tm-list{margin-top:0}
+/* Only the selected person's identifying header receives the navy frame.
+   Do not touch the separate status, placement, or Unit dampingan sections. */
+#t2 .t-pv-orang .tm-right>.tm-dh{background:linear-gradient(112deg,#eef4ff 0%,#f5f8ff 72%,#fafcff 100%);border:1px solid #c8d8ef;border-left:5px solid #173c76;border-radius:12px;box-shadow:0 2px 7px rgba(18,54,108,.08);padding:13px 15px;margin:0 0 13px;min-width:0}
+#t2 .t-pv-orang .tm-right>.tm-dh .tm-dn{color:#102e5b}
+#t2 .t-pv-orang .tm-right>.tm-dh .tm-da{flex-shrink:0}
+@media(max-width:1050px){
+ #t2 .t-pv-orang .dcm-pi-filter-toolbar{grid-template-columns:minmax(195px,.8fr) minmax(220px,1fr) minmax(0,1.3fr);gap:8px}
+ #t2 .t-pv-orang .dcm-pi-add{grid-column:3}
+ #mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{max-width:calc(100% - 180px)}
+}
+@media(max-width:780px){
+ #mt-app .t-pvw.dcm-pi-top-tabs{flex-wrap:wrap;gap:7px;padding-bottom:29px}
+ #mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{max-width:100%;flex:1 1 100%}
+ #mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar{margin-left:auto}
+ #t2 .t-pv-orang .dcm-pi-filter-toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ #t2 .t-pv-orang .dcm-pi-filter-title{grid-column:1/-1}
+ #t2 .t-pv-orang .dcm-pi-filter-toolbar .tm-search{grid-column:1}
+ #t2 .t-pv-orang .dcm-pi-add{grid-column:2}
+}
+@media(max-width:560px){
+ #t2 .t-pv-orang .dcm-pi-filter-toolbar{grid-template-columns:minmax(0,1fr)}
+ #t2 .t-pv-orang .dcm-pi-filter-toolbar>*,#t2 .t-pv-orang .dcm-pi-add{grid-column:1}
+}
