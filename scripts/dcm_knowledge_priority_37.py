@@ -21,6 +21,7 @@ for match in re.finditer(r'</?div\b[^>]*>', render[a:]):
         break
 assert b is not None and b > a, 'Priority KPI grid closing tag not found'
 old_cards = render[a:b]
+print("DCM37 CARD BOUNDARIES", old_cards.count('class="prio-kpi'), len(old_cards), repr(old_cards[:220]), repr(old_cards[-500:]))
 assert old_cards.count('class="prio-kpi') == 5, "The five original KPI cards must be present"
 assert "const top=rows[0]" in render and "const cnt={high:0,mid:0,low:0}" in render
 
