@@ -1,0 +1,26 @@
+name: DCM 46 Original MT Contact/OCR Span Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-mt-contact-span-46.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          git clone --depth=1 https://github.com/me-tya/modultransformasi.git /tmp/mt
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('/tmp/mt/index.html').read_text('utf8')
+          a=s.index('const KQ_ESELON1=')
+          keys=['ACT.kpTimAdd=','ACT.kpUnits=','const KQ_ESELON1=','function kqParseProfile(', 'function kqRunOcr(', 'function kqAvatarRender(', 'function kuForm(', 'ACT.kuDel=', 'ACT.kuEdit=', 'ACT.kuAdd=', '/* ---------- Tim PMO & CMO Unit ---------- */','function pAktTimU(']
+          for k in keys:
+            i=s.find(k)
+            print(k,i,'DIFF_FROM_KQ',i-a)
+          print('KQ PREFIX',s[a:a+550])
+          ix=s.find('/* ---------- Tim PMO & CMO Unit ---------- */',a)
+          if ix>=0: print('KQ END',ix-a,s[ix-800:ix+150].replace('\n',' '))
+          print('KQ TO PACT',s.find('function pAktTimU(',a)-a)
+          PY
