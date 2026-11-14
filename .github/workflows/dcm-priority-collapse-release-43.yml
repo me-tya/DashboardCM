@@ -1,0 +1,68 @@
+name: Release DCM 43 Compact Collapsible Ranking Filter
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dcm-priority-collapse-release-43.yml'
+      - 'scripts/dcm_collapse_priority_filter_43.py'
+      - 'tests/dcm-priority-collapsible-filter-43.test.cjs'
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Verify immutable pre-change DCM-43 backup
+        run: |
+          git fetch origin refs/heads/backup/261114-DCM-43:refs/remotes/origin/backup/261114-DCM-43
+          git archive --format=zip --output=/tmp/261114-DCM-43.zip origin/backup/261114-DCM-43
+          unzip -t /tmp/261114-DCM-43.zip | tail -1
+          test -s /tmp/261114-DCM-43.zip
+      - name: Apply only compact hide/show Filter Peringkat UI
+        run: |
+          python3 -m py_compile scripts/dcm_collapse_priority_filter_43.py
+          python3 scripts/dcm_collapse_priority_filter_43.py
+      - name: Verify UI toggle, existing filters, snapshot actions and regressions
+        run: |
+          node tests/dcm-priority-collapsible-filter-43.test.cjs
+          node tests/dcm-option1-guide-42.test.cjs
+          node tests/dcm-knowledge-priority-37.test.cjs
+          node tests/dcm-insight-checkbox-36.test.cjs
+          node tests/dcm-contact-one-row-35.test.cjs
+          node tests/dcm-contact-toolbar-34.test.cjs
+          node tests/dcm-primary-nav-justify-33.test.cjs
+          node tests/dcm-header-reference-30.test.cjs
+          node tests/dcm-header-hover-mt-32.test.cjs
+          node tests/dcm-login-photo-31.test.cjs
+          node tests/dcm-cra-compact-27.test.cjs
+          node tests/dcm-settings-data-actions-smoke.cjs
+          node tests/dcm-import-pegawai-smoke.cjs
+          node tests/dcm-tim-pusmantap-smoke.cjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile
+          html=Path('index.html').read_text('utf8')
+          inline=re.findall(r'<script\b(.*?)>(.*?)</script\s*>',html,re.S|re.I)
+          count=0
+          for attrs,script in inline:
+            if 'src=' in attrs or not script.strip():continue
+            if 'type=' in attrs and not re.search(r'type=["\x27](?:text/javascript|module)',attrs,re.I):continue
+            count+=1
+            p=Path(tempfile.gettempdir())/('dcm43-inline-'+str(count)+'.js')
+            p.write_text(script,'utf8')
+            out=subprocess.run(['node','--check',str(p)],capture_output=True,text=True)
+            assert out.returncode==0,(count,out.stderr[:900])
+          print('PASS syntax for',count,'inline JavaScript scripts')
+          PY
+          git diff --check
+          git diff --stat
+      - name: Publish approved compact collapsible Filter Peringkat only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "style(dcm): make Filter Peringkat collapsible and reduce padding"
+          git push origin HEAD:main
