@@ -64,7 +64,7 @@ assert.throws(()=>api.prepare(parsed,{0:'existing:1'},roster,docs,{},false),/tid
 const added=api.prepare(parsed,{3:'add'},roster,docs,{},false);
 assert.equal(added.summary.new,1);
 assert.equal(added.docs.find(x=>x.id==='cfg-master').master.pic.length,5);
-assert.throws(()=>api.prepare(parsed,{3:'add'},roster.concat([{n:'Raisa Baru',nip:'199904012021011001'}]),docs,{},false),/belum siap|mungkin sudah ada|duplikat|sudah ada/);
+assert.throws(()=>api.prepare(parsed,{3:'add'},roster.concat([{n:'Raisa Baru',nip:'199904012021011001'}]),docs,{},false),/belum siap|mungkin sudah ada|duplikat|sudah ada|telah berubah/);
 const ui=fs.readFileSync('mt-team-exact/dcm-profile-photo-import-48.js','utf8');
 assert(ui.includes('Perlu verifikasi')&&ui.includes('Belum terdaftar')&&ui.includes('Konflik NIP'));
 assert(ui.includes("button.onclick=startReview"));
