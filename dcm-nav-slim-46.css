@@ -32,3 +32,8 @@
 .cm-add-menu button:hover,.cm-add-menu button:focus-visible{background:#F2F6FC}
 .cm-add-menu svg{width:16px;height:16px;flex:none;margin-top:2px;color:#1B3A73}
 .cm-add-menu b{display:block;font-weight:600;font-size:13px;color:#12275A}.cm-add-menu small{display:block;font-size:11.5px;color:#6B7690;margin-top:1px}
+/* Ikon & angka menu utama berwarna emas (aktif: emas terang di atas navy) */
+#appMain > .tabs-row #tabNav > .tab-btn > .tab-icon{color:#B07C0C!important;stroke:currentColor!important}
+#appMain > .tabs-row #tabNav > .tab-btn.active > .tab-icon{color:#E3C76A!important}
+#appMain > .tabs-row #tabNav > .tab-btn > .count-badge{background:#FFF3D1!important;color:#8A5E00!important;opacity:1!important}
+#appMain > .tabs-row #tabNav > .tab-btn.active > .count-badge{background:#E3C76A!important;color:#0F2346!important}
