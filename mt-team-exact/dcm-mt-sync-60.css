@@ -1,4 +1,4 @@
-/* DCM-60 · Sinkron menu Tim Pusmantap dengan Modul Transformasi (MT e54b60e).
+/* DCM-60 · Sinkron menu Tim Pusmantap dengan Modul Transformasi (MT 5994bee).
  * Tombol "Ekspor Profil & Foto (JSON)" milik MT dipakai untuk mengirim data ke
  * Dashboard CM; di Dashboard CM sendiri tidak relevan, jadi disembunyikan. */
 #mt-app [data-texportprofiles]{display:none!important}
