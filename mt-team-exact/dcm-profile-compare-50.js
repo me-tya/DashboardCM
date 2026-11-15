@@ -46,12 +46,18 @@ function open(){
   stylesheet.href='mt-team-exact/dcm-profile-compare-50.css?v=261114-51';
   hostDocument.head.appendChild(stylesheet);
  }
+ // Ensure the dialog stays visible if the parent page has not loaded this iframe's CSS.
+ const existing=hostDocument.querySelector('body > .cmp50.ov');
+ if(existing){existing.querySelector('#cmp-file')?.focus();return}
  const wrap=hostDocument.createElement('div');wrap.className='ov cmp50';
+ wrap.style.cssText='position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100vw!important;height:100dvh!important;margin:0!important;padding:10px!important;box-sizing:border-box!important;overflow:auto!important;background:rgba(8,28,62,.52)!important;z-index:2147483000!important';
  wrap.innerHTML='<div class="md" role="dialog" aria-modal="true" aria-label="Bandingkan data Dashboard CM dan Modul Transformasi">'+
- '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>NIP, foto &amp; profil Modul Transformasi menjadi acuan utama</small></div><div class="cmp-upload-actions">'+(typeof window.impZone==='function'?window.impZone({id:'cmp-file',accept:'.json,application/json',title:'JSON Modul Transformasi',info:'Pakai file <b>Ekspor Profil &amp; Foto (JSON)</b> dari Modul Transformasi. NIP, foto, dan profil Modul Transformasi menjadi acuan utama; perubahan ditinjau dulu sebelum disimpan.'}):'<input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi">')+'</div></header>'+
+ '<header class="cmp-header"><div><h3>Bandingkan Profil & Foto</h3><small>NIP, foto &amp; profil Modul Transformasi menjadi acuan utama</small></div><div class="cmp-upload-actions">'+'<input id="cmp-file" type="file" accept=".json,application/json" aria-label="Pilih JSON Modul Transformasi" title="Gunakan Ekspor Profil & Foto (JSON) dari Modul Transformasi">'+'</div></header>'+
  '<main class="cmp-main"><aside class="cmp-aside"><div id="cmp-stats">Pilih JSON Modul Transformasi.</div><input id="cmp-search" placeholder="Cari nama / NIP…" disabled><div id="cmp-people"></div></aside>'+
  '<section id="cmp-panel" class="cmp-panel"><p class="cmp-placeholder">Belum ada profil untuk dibandingkan.</p></section></main>'+
  '<div id="cmp-alert" class="cmp-alert" role="alert" hidden></div><footer class="cmp-footer"><div class="cmp-footer-options"><label class="cmp-all-label"><input type="checkbox" id="cmp-replace-all" disabled> <b>Impor semua &amp; timpa data Tim Pusmantap dari Modul Transformasi</b></label><span id="cmp-footer-text">Belum ada perubahan.</span></div><div><button id="cmp-cancel">Batal</button><button id="cmp-save" class="cmp-primary" disabled>Tinjau sebelum simpan</button></div></footer></div>';
+ const panel=wrap.querySelector(':scope > .md');
+ if(panel)panel.style.cssText='width:min(1220px,98vw)!important;max-height:94dvh!important;min-height:320px!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;background:#fff!important;border-radius:12px!important;margin:0 auto!important';
  hostDocument.body.appendChild(wrap);
  const $=s=>wrap.querySelector(s);
  const state={active:0,choices:{},fields:{},structure:{},manualApproved:{},contacts:false,replaceAll:false,stage:1,baseline:''};

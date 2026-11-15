@@ -53,6 +53,27 @@ body{background:transparent;font-family:Inter,Arial,sans-serif}
 <script src="mt-team-exact/dcm-profile-compare-50.js?v=261115-60"></script>
 <script src="mt-team-exact/dcm-profile-individual-56.js?v=261115-56"></script>
 <script src="mt-team-exact/dcm-modal-viewport-68.js?v=261115-68"></script>
-<script>window.mtTeamReady();document.getElementById("mt-import-profiles").addEventListener("click",()=>window.MT_PROFILE_IMPORT.open());</script>
+<script>
+window.mtTeamReady();
+(function(){
+  const button=document.getElementById('mt-import-profiles');
+  if(!button)return;
+  button.addEventListener('click',function(event){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    try{
+      const importer=window.MT_PROFILE_IMPORT;
+      if(!importer||typeof importer.open!=='function')throw Error('Komponen impor belum siap. Muat ulang halaman.');
+      importer.open();
+    }catch(err){
+      const message='Impor Profil & Foto belum dapat dibuka: '+String(err&&err.message||err);
+      const box=document.getElementById('mt-error');
+      if(box){box.textContent=message;box.hidden=false;}
+      if(typeof window.toast==='function')window.toast(message);
+      console.error('[DCM profile import]',err);
+    }
+  },true);
+})();
+</script>
 </body>
 </html>
