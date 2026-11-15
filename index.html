@@ -2342,6 +2342,7 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
 #filterBarBody .cm-fact .btn.cm-compile-btn svg{color:#A87308!important}#filterBarBody .cm-fact .btn.cm-compile-btn:hover,#filterBarBody .cm-fact .btn.btn-outline:hover{background:#F3F5FA!important}
 #filterBarBody .cm-fact .btn.cm-report-btn{background:#12275A!important;color:#fff!important;border:1px solid #12275A!important}#filterBarBody .cm-fact .btn.cm-report-btn svg{color:#E3C76A!important}#filterBarBody .cm-fact .btn.cm-report-btn:hover{background:#1B3A73!important}
 @media(max-width:900px){#filterBarBody.cm-fgrid:not(.hidden){grid-template-columns:repeat(2,minmax(0,1fr))}}
+#todayAgendaModule:not(.collapsed) .today-list-head,#todayAgendaModule:not(.collapsed) .today-empty{cursor:pointer}
 </style>
 
 <style id="cm-overflow-guard-v1">
@@ -7615,6 +7616,11 @@ function cmWireTodayAgenda(){
   document.getElementById('todayAgendaMore')?.addEventListener('click',cmOpenTodayCalendar);
   document.getElementById('todayCollapsedLine')?.addEventListener('click',()=>{state.todayAgendaCollapsed=false;try{localStorage.setItem('cmTodayAgendaCollapsed','0')}catch(e){};renderTable();});
   document.getElementById('todayAgendaCollapse')?.addEventListener('click',(e)=>{e.preventDefault();e.stopPropagation();state.todayAgendaCollapsed=!state.todayAgendaCollapsed;try{localStorage.setItem('cmTodayAgendaCollapsed',state.todayAgendaCollapsed?'1':'0')}catch(err){};renderTable();});
+  /* Agenda Hari Ini terbuka: area kosong (judul kolom, pesan kosong, sela) juga menutup panel, tidak hanya ikon bulat di kanan. */
+  document.querySelector('#todayAgendaModule:not(.collapsed) .today-list-wrap')?.addEventListener('click',e=>{
+    if(e.target.closest('a,button,input,select,textarea,label,[data-today-id],[data-today-link],[role=button]'))return;
+    const row=e.target.closest('.today-list > *');if(row&&!row.classList.contains('today-empty'))return;
+    state.todayAgendaCollapsed=true;try{localStorage.setItem('cmTodayAgendaCollapsed','1')}catch(err){};renderTable();});
   document.querySelectorAll('[data-today-link]').forEach(el=>el.addEventListener('click',e=>e.stopPropagation()));
   document.querySelectorAll('[data-today-id]').forEach(el=>{
     const open=()=>openDetail(el.dataset.todayId);
