@@ -9441,9 +9441,12 @@ function cmInvitationInfo(raw){
 // Nomor undangan yang ditampilkan: kolom "Nomor surat (terbaru)"; bila kosong, ambil nomor
 // dari versi terbaru di riwayat yang memiliki nomor (versi tanpa nomor tidak menghapus nomor sebelumnya).
 function cmInvitationNo(a){
+  const main=String(a?.undangan??'').trim();
   let rows=[];try{rows=parseActivityFiles(a?.undanganFiles);}catch(e){}
-  for(let i=rows.length-1;i>=0;i--){const n=String(rows[i]?.nomor||'').trim();if(n)return n;}
-  return String(a?.undangan??'').trim();
+  const latest=[...rows].reverse().map(r=>String(r?.nomor||'').trim()).find(Boolean)||'';
+  if(!main)return latest;
+  if(latest&&main!==latest&&rows.some(r=>String(r?.nomor||'').trim()===main))return latest;
+  return main;
 }
 function cmInvitationSources(a){const out=[];const u=String(a?.undanganUrl??'').trim();if(/^https?:\/\//i.test(u))out.push({url:u,name:fileNameFromUrl(u)||'Undangan'});try{parseActivityFiles(a?.undanganFiles).forEach(f=>{if(f.url||f.refId)out.push(f);});}catch(e){}const t=String(a?.undangan??'').trim();if(!out.length&&/^https?:\/\//i.test(t))out.push({url:t,name:fileNameFromUrl(t)||'Undangan'});return out.reverse();}
 function cmInvitationBadge(a){
@@ -13935,7 +13938,9 @@ function cmUndReview(file,text){
         unitPemohon:used('unitPemohon')?val('unitPemohon'):null,pesertaTarget:used('pesertaTarget')?val('pesertaTarget'):null,
         undangan:used('undangan')?val('undangan'):null
       },ov.querySelector('[data-attach]')?.checked?file:null,{replaceFile:false});
-      ov.remove();toast(editing?uiText(`${n} fields updated from the invitation. Click Save to keep the changes.`,`${n} kolom diperbarui dari undangan. Klik Simpan untuk menyimpan perubahan.`):uiText(`${n} fields filled from the invitation. Please complete the rest.`,`${n} kolom terisi dari undangan. Silakan lengkapi sisanya.`),'success');};
+      ov.remove();
+      if(!canAttach)toast(uiText('Fields were filled, but the PDF/Word file was NOT attached because it exceeds 600 KB. Add a SharePoint/Drive link before saving.','Isian sudah terisi, tetapi PDF/Word BELUM terlampir karena lebih dari 600 KB. Tambahkan tautan SharePoint/Drive sebelum menyimpan.'),'error');
+      else toast(editing?uiText(`${n} fields updated from the invitation. Click Save to keep the changes.`,`${n} kolom diperbarui dari undangan. Klik Simpan untuk menyimpan perubahan.`):uiText(`${n} fields filled from the invitation. Please complete the rest.`,`${n} kolom terisi dari undangan. Silakan lengkapi sisanya.`),'success');};
     cnt();syncMode();
   };
   render();
