@@ -15,6 +15,7 @@ expected=once(expected,top,'','remove duplicate top buttons');
 expected=once(expected,bottom,moved,'move Report beside lower Excel');
 expected=once(expected,"el.querySelector('#prioExport')?.addEventListener('click',prioExportExcel);",'','remove upper handler');
 expected=once(expected,"document.querySelectorAll('#prioExport,#prioExport2')","document.querySelectorAll('#prioExport2')",'remove upper busy state');
+expected=once(expected,"\n \n el.querySelector('#prioExport2')","\n el.querySelector('#prioExport2')",'remove blank line after deleted handler');
 assert.equal(now,expected,'Only four requested priority-control changes allowed in index');
 assert(!now.includes('id="prioExport"'),'upper Excel absent');
 assert.equal(now.split('id="prioExport2"').length-1,1,'lower Excel exactly once');
