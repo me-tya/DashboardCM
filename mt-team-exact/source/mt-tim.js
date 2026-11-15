@@ -87,8 +87,8 @@ function page(){const k=kpCfg(),all=people(),edit=canEdit(),U=S.ui;
  const inT=(p,t)=>p._team===t||(p._tx||[]).includes(t),cnt=t=>all.filter(p=>inT(p,t)&&!isOff(p)).length,nNone=all.filter(p=>!p._team&&!(p._tx||[]).length&&!(p._str||[]).length&&!isOff(p)).length,nOff=all.filter(isOff).length;
  const chip=(v,l,n)=>'<button type="button" class="tm-chip'+(team===v?' on':'')+'" data-act="tmTeam" data-v="'+H(v)+'">'+H(l)+(n!=null?' <i>'+n+'</i>':'')+'</button>';
  const opt=(v,l,n)=>'<option value="'+H(v)+'"'+(team===v?' selected':'')+'>'+H(l)+(n!=null?' ('+n+')':'')+'</option>',nStr=all.filter(p=>(p._str||[]).length&&!isOff(p)).length;
- const chips='<div class="tm-tsel"><label class="tm-tsl"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg><select data-tmteam aria-label="Saring per tim">'+opt('','Semua pegawai',act.length)+'<optgroup label="Tim">'+tims.map(t=>opt(t,t,cnt(t))).join('')+'</optgroup><optgroup label="Lainnya">'+(nStr?opt('_str','Struktural',nStr):'')+(nNone?opt('_none','Tanpa tim',nNone):'')+(nOff?opt('_off','Tidak aktif (arsip)',nOff):'')+'</optgroup></select></label>'+(edit?'<button type="button" class="tm-tadd" data-act="kpTimAdd" title="Tambah tim" aria-label="Tambah tim">+ Tim</button>':'')+'</div>';
- const inTeam=p=>team==='_off'?isOff(p):!isOff(p)&&(!team||(team==='_none'?!p._team&&!(p._tx||[]).length&&!(p._str||[]).length:team==='_str'?(p._str||[]).length:inT(p,team)));
+ const chips='<div class="tm-tsel"><label class="tm-tsl"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg><select data-tmteam aria-label="Saring per tim">'+opt('','Semua pegawai',act.length)+'<optgroup label="Tim">'+tims.map(t=>opt(t,t,cnt(t))).join('')+'</optgroup><optgroup label="Lainnya">'+(nStr?opt('_str','Struktural',nStr):'')+(nNone?opt('_none','Tanpa tim',nNone):'')+'</optgroup></select></label>'+(edit?'<button type="button" class="tm-tadd" data-act="kpTimAdd" title="Tambah tim" aria-label="Tambah tim">+ Tim</button>':'')+'</div>';
+ const hist=!!U.tmHist&&nOff>0;const inTeam=p=>team==='_off'?isOff(p):isOff(p)?hist&&(!team||inT(p,team)||p._team===team):(!team||(team==='_none'?!p._team&&!(p._tx||[]).length&&!(p._str||[]).length:team==='_str'?(p._str||[]).length:inT(p,team)));
  const list=all.filter(inTeam).sort((a,b)=>roleRank(a)-roleRank(b)||a.n.localeCompare(b.n,'id'));
  let sel=U.tmSel&&all.find(p=>p.n===U.tmSel)?U.tmSel:(list[0]||act[0]||{}).n;
  /* Kartu pegawai bergaya Pendampingan Unit: garis & cincin foto berwarna sesuai peran, label peran, NIP, jabatan. */
@@ -103,8 +103,8 @@ function page(){const k=kpCfg(),all=people(),edit=canEdit(),U=S.ui;
   return '<button type="button" class="tm-p tm-pc2'+(p.n===sel?' on':'')+(isOff(p)?' off':'')+'" style="--rc:'+col+'" data-act="tmSel" data-v="'+H(p.n)+'" data-search="'+H([p.n,p.jab,p._team,us.join(' '),p.keahlian,p.nip].join(' ').toLowerCase())+'"><span class="tm-avw">'+av(p.n,p.foto,'li')+'<i class="tm-sd '+s.k.toLowerCase()+'" title="'+H(STATUS_LAB[s.k]||s.k)+'"></i></span>'+
    '<span class="tm-pb"><span class="tm-pn">'+H(p.n)+'</span><span class="tm-pj" title="'+H([p.jab,p.pang].filter(Boolean).join(' · '))+'">'+H(isOff(p)?'Tidak aktif · '+offReason(p):(p.jab||'Jabatan belum diisi'))+'</span>'+
    '<span class="tm-rcs">'+(isOff(p)?'':'<em class="rl">'+H(rl)+'</em>')+(more?'<em class="mo">+'+more+' tim</em>':'')+strs.map(x=>'<em class="sr">'+H(x)+'</em>').join('')+(p.jenis==='Sementara'?'<em class="tp">'+H(p.jenisSementara||'Sementara')+'</em>':'')+'</span></span>'+stBadge(s)+'</button>'};
- const grouped=()=>{let last='';return list.slice().sort((a,b)=>roleOrd[roleIn(a)]-roleOrd[roleIn(b)]||a.n.localeCompare(b.n,'id')).map(p=>{const r=roleIn(p),h=r!==last?'<div class="tm-gh" style="--rc:'+RC[r]+'">'+H(r==='Ketua'?'Ketua Tim':r==='Kapus'?'Kepala Pusat':r)+'</div>':'';last=r;return h+item(p)}).join('')};
- const bar='<div class="tm-bar"><b class="tm-bt">PMO & CMO KEMENKEU <span>('+act.length+')</span></b>'+chips+'<label class="tm-search tm-bq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="inp" data-tmq placeholder="Cari nama, unit, jabatan, keahlian…" aria-label="Cari PMO & CMO Kemenkeu"></label>'+(edit?'<button type="button" class="tm-badd" data-act="tmAdd">+ Pegawai</button>':'')+'</div>';
+ const grouped=()=>{let last='';return list.slice().sort((a,b)=>roleOrd[roleIn(a)]-roleOrd[roleIn(b)]||a.n.localeCompare(b.n,'id')).map(p=>{const r=roleIn(p),h=r!==last?'<div class="tm-gh" style="--rc:'+RC[r]+'">'+H(r==='Ketua'?'Ketua Tim':r==='Kapus'?'Kepala Pusat':r==='Arsip'?'Riwayat · tidak aktif':r)+'</div>':'';last=r;return h+item(p)}).join('')};
+ const bar='<div class="tm-bar"><b class="tm-bt">PMO & CMO KEMENKEU <span>('+act.length+')</span></b>'+chips+'<label class="tm-search tm-bq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="inp" data-tmq placeholder="Cari nama, unit, jabatan, keahlian…" aria-label="Cari PMO & CMO Kemenkeu"></label>'+(nOff?'<button type="button" class="tm-bhist'+(hist?' on':'')+'" data-act="tmHist" aria-pressed="'+hist+'" title="Pegawai yang sudah tidak aktif (pensiun, mutasi, meninggal dunia, dll.) tetap disimpan sebagai riwayat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>'+(hist?'Sembunyikan':'Lihat')+' riwayat ('+nOff+')</button>':'')+(edit?'<button type="button" class="tm-badd" data-act="tmAdd">+ Pegawai</button>':'')+'</div>';
  const left='<aside class="tm-left card"><div class="tm-list">'+(list.length?grouped():'<p class="s tm-none">Tidak ada pegawai pada saringan ini.</p>')+'</div><div class="tm-pgr"></div></aside>';setTimeout(tmPaginate,0);
  const p=all.find(x=>x.n===sel);
  return AKT_HDR()+viewSwitch()+kpis+bar+'<div class="tm-page">'+left+'<section class="tm-right card">'+(p?detail(p,k,edit):'<p class="s" style="padding:24px">Belum ada data PMO & CMO Kemenkeu. '+(edit?'Klik <b>+ Pegawai</b>.':'')+'</p>')+'</section></div>'}
@@ -248,6 +248,7 @@ function unitsForm(n){if(!canEdit())return toast('Tidak memiliki izin mengatur u
  ov.querySelectorAll('.tm-ug input').forEach(i=>i.addEventListener('change',()=>{i.closest('.tm-upick').classList.toggle('on',i.checked);cnt()}));cnt()}
 
 /* ---------- Aksi ---------- */
+ACT.tmHist=()=>{S.ui.tmHist=!S.ui.tmHist;try{save()}catch(e){}render()};
 ACT.tmDt=el=>{S.ui.tmDt=el.dataset.v;try{save()}catch(e){}render()};
 ACT.tmSel=el=>{S.ui.tmSel=el.dataset.v;save();render();setTimeout(()=>{const r=document.querySelector('.tm-right');if(r&&window.innerWidth<1000)r.scrollIntoView({behavior:'smooth'})},30)};
 ACT.tmTeam=el=>{S.ui.tmTeam=el.dataset.v;save();render()};
@@ -492,7 +493,7 @@ const css=`
 .tm-form .tm-adjh{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#17457F;text-align:left}
 .tm-form .tm-adjok{justify-self:end;margin-top:2px}
 .tm-hero .tm-ha{align-self:center!important}
-.tm-bar{display:grid;grid-template-columns:auto minmax(220px,360px) minmax(0,1fr) auto;gap:10px;align-items:center;margin:14px 0 12px}
+.tm-bar{display:grid;grid-template-columns:auto minmax(220px,360px) minmax(0,1fr) auto auto;gap:10px;align-items:center;margin:14px 0 12px}
 .tm-bar .tm-bt{font-size:13px;font-weight:800;letter-spacing:.07em;color:#12275A;padding:0 6px 0 4px;white-space:nowrap}.tm-bar .tm-bt span{color:#8A97AB}
 .tm-bar .tm-tsel{margin:0!important;display:flex;gap:8px;min-width:0}.tm-bar .tm-tsl{flex:1;min-width:0;height:44px!important;background:#fff!important}
 .tm-bar .tm-tadd{height:44px;padding:0 14px;white-space:nowrap}
@@ -503,6 +504,8 @@ const css=`
 .tm-left .tm-list{margin-top:4px}
 @media(max-width:1100px){.tm-bar{grid-template-columns:1fr auto}.tm-bar .tm-bt{grid-column:1/-1}.tm-bar .tm-bq{grid-column:1/2}}
 .tm-left img.tm-av.li[src^="data:"],.tm-hav img.tm-av[src^="data:"]{object-view-box:inset(10%)}/* foto hasil skrinsyut Satu Kemenkeu membawa cincin putih di tepinya: dipangkas agar foto penuh sampai lingkaran */
+.tm-bhist{display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 14px;border:1px dashed #B9C6DD;border-radius:12px;background:#fff;font:inherit;font-size:12.5px;font-weight:700;color:#4C5D78;cursor:pointer;white-space:nowrap}.tm-bhist svg{width:15px;height:15px}.tm-bhist:hover{border-color:#8A97AB;color:#13233F}.tm-bhist.on{border-style:solid;border-color:#0B2447;background:#0B2447;color:#fff}
+.tm-p.tm-pc2.off{opacity:.62}.tm-p.tm-pc2.off .tm-av{filter:grayscale(1)}.tm-p.tm-pc2.off:hover,.tm-p.tm-pc2.off.on{opacity:1}
 @media(max-width:760px){.tm-hero{flex-wrap:wrap}.tm-prow{grid-template-columns:1fr;gap:4px}.tm-meta{grid-template-columns:1fr}}
 @media(max-width:1000px){.tm-page{grid-template-columns:1fr}.tm-left{position:static;max-height:none}.tm-kpis{grid-template-columns:repeat(2,1fr)}.tm-prof{grid-template-columns:repeat(2,1fr)}.tm-crow{grid-template-columns:1fr 1fr}}
 `;
