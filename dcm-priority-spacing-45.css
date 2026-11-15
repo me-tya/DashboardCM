@@ -67,3 +67,73 @@
   background:#FFF0C8!important;
   color:#122E60!important;
 }
+
+/* 261115-DCM-60 — Agenda secondary navigation shares Prioritas dimensions,
+   Inter type, white surface and gold underline; behavior is unchanged. */
+#dcm-activity-view-tabs{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  width:100%!important;
+  min-height:54px!important;
+  height:54px!important;
+  gap:9px!important;
+  padding:4px 5px!important;
+  margin:0 0 7px!important;
+  background:#FFFFFF!important;
+  border:1px solid #E0E6EF!important;
+  border-radius:12px!important;
+  box-shadow:none!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex:none!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  height:44px!important;
+  min-height:44px!important;
+  padding:7px 9px!important;
+  gap:8px!important;
+  background:#FFFFFF!important;
+  color:#123264!important;
+  border:0!important;
+  border-bottom:3px solid transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  font:700 12.5px/1.2 Inter,Arial,sans-serif!important;
+  text-align:center!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn.active,
+#dcm-activity-view-tabs > button.dcm-activity-view-btn[aria-selected="true"],
+#dcm-activity-view-tabs > button.dcm-activity-view-btn.active:hover,
+#dcm-activity-view-tabs > button.dcm-activity-view-btn[aria-selected="true"]:hover{
+  background:#FFFFFF!important;
+  color:#0D2A5B!important;
+  border:0!important;
+  border-bottom:3px solid #D8AD3F!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn.active svg,
+#dcm-activity-view-tabs > button.dcm-activity-view-btn.active i,
+#dcm-activity-view-tabs > button.dcm-activity-view-btn[aria-selected="true"] svg{
+  color:#0D2A5B!important;
+  stroke:currentColor!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn:not(.active):not([aria-selected="true"]):hover{
+  background:#F8FAFD!important;
+  color:#0D2A5B!important;
+  border-bottom-color:#DCE5F0!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn::after{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#dcm-activity-view-tabs > button.dcm-activity-view-btn:focus-visible{
+  outline:2px solid #D8AD3F!important;
+  outline-offset:2px!important;
+}
