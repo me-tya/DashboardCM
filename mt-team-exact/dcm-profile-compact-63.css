@@ -1,0 +1,69 @@
+/* DCM-63 — Compact Profil header, approved 15 Nov 2026.
+   Keep the original MT tabs, import handler, live counters and filters intact.
+   Only remove the spare counter row and normalize vertical spacing. */
+#mt-app .t-pvw.dcm-pi-top-tabs{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;
+  flex-wrap:nowrap!important;gap:12px!important;min-width:0!important;
+  min-height:0!important;margin:0!important;padding:10px 16px 6px!important;
+}
+#mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{
+  display:inline-flex!important;align-items:center!important;flex:0 0 auto!important;
+  min-width:0!important;max-width:none!important;flex-wrap:nowrap!important;
+  margin:0!important;align-self:center!important;
+}
+#mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs>button{
+  min-height:42px!important;padding:8px 13px!important;
+  font:800 13px/1.25 Inter,Arial,sans-serif!important;white-space:nowrap!important;
+}
+#mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar{
+  display:flex!important;align-items:center!important;justify-content:flex-end!important;
+  flex:1 1 auto!important;min-width:0!important;gap:12px!important;
+  padding:0!important;margin:0!important;border:0!important;
+  background:transparent!important;flex-wrap:nowrap!important;align-self:center!important;
+}
+#mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar[hidden]{display:none!important}
+#mt-app .t-pvw.dcm-pi-top-tabs #mt-import-state{
+  position:static!important;inset:auto!important;left:auto!important;bottom:auto!important;
+  display:block!important;flex:0 1 auto!important;min-width:0!important;
+  max-width:100%!important;overflow:hidden!important;text-overflow:ellipsis!important;
+  margin:0 auto 0 0!important;padding:0!important;white-space:nowrap!important;
+  font:500 12.5px/1.35 Inter,Arial,sans-serif!important;color:#62738f!important;
+}
+#mt-app .t-pvw.dcm-pi-top-tabs #mt-import-state.is-pending{color:#91631a!important}
+#mt-app .t-pvw.dcm-pi-top-tabs #mt-import-profiles{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;height:42px!important;min-height:42px!important;
+  padding:0 13px!important;border-radius:10px!important;
+  font:700 12.5px/1.25 Inter,Arial,sans-serif!important;white-space:nowrap!important;
+}
+#mt-app .t-pvb.t-pv-unit{padding-top:6px!important}
+#mt-app .t-pvb.t-pv-unit>.t-pubar{
+  display:grid!important;grid-template-columns:minmax(0,auto) minmax(180px,.77fr) minmax(240px,1.25fr)!important;
+  align-items:center!important;column-gap:10px!important;row-gap:8px!important;
+  height:auto!important;min-height:0!important;margin:0 0 10px!important;
+}
+#mt-app .t-pvb.t-pv-unit>.t-pubar>:is(.t-fg,.t-lihat,.t-putim,.t-pubq){
+  box-sizing:border-box!important;min-height:42px!important;height:42px!important;
+}
+#mt-app .t-pvb.t-pv-unit>.t-pubar .t-fa{font-size:13px!important}
+#mt-app .t-pvb.t-pv-unit>.t-pubar .t-fi{font-size:13px!important}
+@media(max-width:1390px){
+  #mt-app .t-pvw.dcm-pi-top-tabs{gap:9px!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs>button{padding-inline:10px!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs #mt-import-state{font-size:12px!important}
+}
+@media(max-width:1100px){
+  #mt-app .t-pvw.dcm-pi-top-tabs{flex-wrap:wrap!important;gap:8px!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{flex:1 1 100%!important;max-width:100%!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar{flex:1 1 100%!important;max-width:100%!important}
+  #mt-app .t-pvb.t-pv-unit>.t-pubar{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)!important}
+  #mt-app .t-pvb.t-pv-unit>.t-pubar>:last-child{grid-column:1/-1!important}
+}
+@media(max-width:650px){
+  #mt-app .t-pvw.dcm-pi-top-tabs{padding:8px 10px 6px!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs>.t-pvs{flex-wrap:wrap!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs>#mt-import-bar{flex-wrap:wrap!important;justify-content:flex-start!important}
+  #mt-app .t-pvw.dcm-pi-top-tabs #mt-import-state{white-space:normal!important;flex:1 1 100%!important}
+  #mt-app .t-pvb.t-pv-unit>.t-pubar{grid-template-columns:minmax(0,1fr)!important}
+  #mt-app .t-pvb.t-pv-unit>.t-pubar>*{grid-column:1!important}
+}
