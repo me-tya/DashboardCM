@@ -32,6 +32,12 @@ function enhance(app){
  const toggle=aside.querySelector(':scope > .t-pum');
  const search=aside.querySelector(':scope > .t-pul-s');
  if(!toggle||!search)return;
+ // Display label only; keep the original data-tpum="unit" behavior intact.
+ const unitButton=toggle.querySelector('[data-tpum="unit"]');
+ if(unitButton){
+  unitButton.textContent='PMO & CMO Unit';
+  unitButton.setAttribute('aria-label','Lihat PMO dan CMO Unit');
+ }
  const selected=w.MT_T2?._ST?.pum||w.S?.ui?.t2pum||'pic';
  const change=selected!==state.mode;
  state.mode=selected;
@@ -104,10 +110,10 @@ function applyFilters(autoSelect,restoreSearch){
  const title=pv.querySelector('[data-dcm-pu-count-label]');
  if(title){
   const total=items.length;
-  title.innerHTML=mode==='unit'?'UNIT ESELON I <em>'+shown+' / '+total+'</em>':'PMO &amp; CMO KEMENKEU <em>'+shown+' / '+total+'</em>';
+  title.innerHTML=mode==='unit'?'PMO &amp; CMO UNIT <em>'+shown+' / '+total+'</em>':'PMO &amp; CMO KEMENKEU <em>'+shown+' / '+total+'</em>';
  }else{
   const caption=pv.querySelector('.dcm-pu-caption');
-  if(caption)caption.textContent=(mode==='unit'?'Unit Eselon I: ':'PMO & CMO Kemenkeu: ')+shown+' dari '+items.length;
+  if(caption)caption.textContent=(mode==='unit'?'PMO & CMO Unit: ':'PMO & CMO Kemenkeu: ')+shown+' dari '+items.length;
  }
  const empty=pv.querySelector('.dcm-pu-empty');
  if(empty)empty.hidden=shown>0;
