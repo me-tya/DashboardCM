@@ -16890,6 +16890,17 @@ function renderPriority(){
 </div>
   ${tab==='projects'?`<section class="prio-kpi-stage" aria-label="${uiText('Project priority at a glance','Ringkasan prioritas proyek')}">${prioKpisHtml}</section>`:''}
   ${body}</div>`;
+ // DCM-62: Project actions belong to the project ranking header, not an empty toolbar row.
+ // Move the existing live controls instead of cloning them (preserves report dropdown and handlers).
+ if(tab==='projects'){
+   const rankingHead=el.querySelector('.prio-list-head');
+   const actions=el.querySelector('.prio-unified-toolbar .prio-toolbar-actions');
+   if(rankingHead&&actions){
+     actions.classList.add('prio-ranking-actions');
+     rankingHead.appendChild(actions);
+     el.querySelector('.prio-unified-toolbar')?.remove();
+   }
+ }
  el.querySelector('#prioAdd')?.addEventListener('click',()=>prioOpenForm(''));
  el.querySelectorAll('input[name="prioMvMode"]').forEach(r=>r.addEventListener('change',()=>{if(!r.checked)return;prioUi.monevView=r.value;prioLsSet('cmPrioMvView',r.value);renderPriority();}));
  el.querySelectorAll('[data-prio-report-action]').forEach(b=>b.addEventListener('click',()=>{el.querySelector('.prio-report-menu')?.removeAttribute('open');if(b.dataset.prioReportAction==='monev')prioOpenMonevReport();else prioOpenReport();}));
