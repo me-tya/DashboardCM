@@ -502,6 +502,7 @@ const css=`
 .tm-badd{height:44px;padding:0 16px;border:1px solid #DCE3EE;border-radius:12px;background:#fff;font:inherit;font-size:13px;font-weight:700;color:#0B2447;cursor:pointer;white-space:nowrap}.tm-badd:hover{border-color:#9DB6E6;background:#F5F8FD}
 .tm-left .tm-list{margin-top:4px}
 @media(max-width:1100px){.tm-bar{grid-template-columns:1fr auto}.tm-bar .tm-bt{grid-column:1/-1}.tm-bar .tm-bq{grid-column:1/2}}
+.tm-left img.tm-av.li[src^="data:"],.tm-hav img.tm-av[src^="data:"]{object-view-box:inset(10%)}/* foto hasil skrinsyut Satu Kemenkeu membawa cincin putih di tepinya: dipangkas agar foto penuh sampai lingkaran */
 @media(max-width:760px){.tm-hero{flex-wrap:wrap}.tm-prow{grid-template-columns:1fr;gap:4px}.tm-meta{grid-template-columns:1fr}}
 @media(max-width:1000px){.tm-page{grid-template-columns:1fr}.tm-left{position:static;max-height:none}.tm-kpis{grid-template-columns:repeat(2,1fr)}.tm-prof{grid-template-columns:repeat(2,1fr)}.tm-crow{grid-template-columns:1fr 1fr}}
 `;
