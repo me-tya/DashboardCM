@@ -1,0 +1,24 @@
+name: DCM 63 Full Prechange ZIP
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-63.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Export exact original repository before DCM 63
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-63:refs/remotes/origin/backup/261115-DCM-63
+          git archive --format=zip --output=261115-DCM-63.zip origin/backup/261115-DCM-63
+          unzip -t 261115-DCM-63.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-63
+          path: 261115-DCM-63.zip
+          retention-days: 90
