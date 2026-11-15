@@ -1,0 +1,52 @@
+name: DCM 64 Import Profil Foto Repair Test and Cache Activation
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-import-button-64.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify complete prechange backup ZIP
+        run: |
+          git fetch origin refs/heads/backup/261115-DCM-64:refs/remotes/origin/backup/261115-DCM-64
+          git archive --format=zip --output=/tmp/261115-DCM-64.zip origin/backup/261115-DCM-64
+          unzip -t /tmp/261115-DCM-64.zip | tail -1
+      - name: Validate import behavior and source syntax
+        run: |
+          node --check mt-team-exact/dcm-profile-compare-50.js
+          node tests/dcm-import-button-64.test.cjs
+      - name: Invalidate Tim Pusmantap iframe and import dialog cache only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tim-pusmantap-mt.html')
+          s=p.read_text(encoding='utf-8')
+          old='dcm-profile-compare-50.js?v=261115-60'
+          new='dcm-profile-compare-50.js?v=261115-64'
+          assert s.count(old)==1,(old,s.count(old))
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-69'
+          new='tim-pusmantap-mt.html?embedded=1&amp;v=20261115-70'
+          assert s.count(old)==1,(old,s.count(old))
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          print('PASS: import modal and outer iframe caches refreshed')
+          PY
+          git diff --check
+      - name: Publish only the two cache references
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tim-pusmantap-mt.html index.html
+          git commit -m "DCM-64: activate fixed import button and dialog with fresh iframe cache"
+          git pull --rebase origin main
+          git push origin HEAD:main
