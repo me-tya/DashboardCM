@@ -1344,6 +1344,13 @@ select.t-fi{font-weight:700;cursor:pointer;padding-right:10px}input.t-fi{font-we
 .t-frad input{width:16px;height:16px;margin:0;accent-color:#0B2447;cursor:pointer}
 .t2 .t-frad input:focus-visible{outline:2px solid #0B2447!important;outline-offset:2px}
 @media(max-width:1000px){.t-pubar .t-fg-pri{grid-column:1/-1}}
+/* Pendampingan Unit: ukuran & cincin foto sama dengan Profil Individu (58px, foto penuh sampai lingkaran) */
+#t2 .t-pu .t-pir .t-av,#t2 .t-pu .t-pip-h .t-av{width:58px!important;height:58px!important;font-size:17px;border:2.5px solid #143966;box-shadow:none!important}
+#t2 .t-pu .t-pir.t-on .t-av{border-color:#FDB913}
+#t2 .t-pu .t-pir .t-av img,#t2 .t-pu .t-pip-h .t-av img{background:#fff}
+#t2 .t-pu .t-kph{width:58px!important;height:58px!important;font-size:17px;box-shadow:none!important;border:2.5px solid var(--kc)}
+#t2 .t-pu .t-kph img{inset:0}
+#t2 .t-pu .t-av img[src^="data:"],#t2 .t-pu .t-kph img[src^="data:"]{object-view-box:inset(10%)}
 `;
 const st=document.createElement('style');st.id='mt-t2-css';st.textContent=css;document.head.appendChild(st);
 window.MT_T2={page,pubBuild,mapRes,musimOf:ds=>musimOf(ds),ghGuess:g=>ghGuess(g),checkDay:(ds,c)=>checkDay(ds,c),_ST:ST};
