@@ -2324,6 +2324,24 @@ html[data-public-survey="1"] .cm-reminder-bell,html[data-public-survey="1"] .cm-
  .cm-af .af-vr-edit{flex-wrap:wrap}
 }
 
+
+/* Panel filter grid (Overview/Agenda/Kalender/Workboard/Matriks): 4 kolom seragam, filter aktif emas,
+   baris terakhir Periode + Reset ringkas + Kompilasi (outline) + Laporan (utama navy) */
+#filterBarBody.cm-fgrid:not(.hidden){display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:center}
+#filterBarBody.cm-fgrid select.filter-select{width:100%!important;min-width:0!important;max-width:none!important;height:38px!important;padding:0 28px 0 11px!important;line-height:normal!important}
+#filterBarBody.cm-fgrid select.filter-select.on,#filterBarBody.cm-fgrid .cm-fper.on{border-color:#D6AD3A!important;background-color:#FFF9E9!important;color:#12275A!important;font-weight:600}
+#filterBarBody .cm-fper{grid-column:span 2;display:flex;align-items:center;gap:8px;height:38px;padding:0 4px 0 11px;border:1px solid var(--border,#E3E7F1);border-radius:9px;background:var(--bg,#F3F5FA);min-width:0}
+#filterBarBody .cm-fper small{font-size:11.5px;font-weight:700;color:#A87308;white-space:nowrap}
+#filterBarBody .cm-fper input.filter-date{flex:1 1 0;min-width:0!important;width:auto!important;border:0!important;background:transparent!important;padding:0 4px!important;height:34px;box-shadow:none!important;color:inherit;font-weight:inherit}
+#filterBarBody .cm-fact{grid-column:span 2;display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}#filterBarBody .cm-fact .sp{flex:1}
+#filterBarBody .cm-fact .cm-frst{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 8px;border-radius:9px;font-weight:600;font-size:13px;color:#5F6B85;cursor:pointer;white-space:nowrap}
+#filterBarBody .cm-fact .cm-frst:hover{background:#F3F5FA;color:#12275A}#filterBarBody .cm-fact .cm-frst:focus-visible{outline:2px solid #1B3A73;outline-offset:2px}
+#filterBarBody .cm-fact .cm-frst .n{background:#EEF1F6;color:#12275A;border-radius:9px;font-size:11px;padding:0 6px;line-height:17px}#filterBarBody .cm-fact .cm-frst .n.hidden{display:none}
+#filterBarBody .cm-fact .btn{height:38px;padding:0 14px;border-radius:9px;box-shadow:none!important;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+#filterBarBody .cm-fact .btn.cm-compile-btn,#filterBarBody .cm-fact .btn.btn-outline{background:#fff!important;color:#12275A!important;border:1px solid #C9D3E6!important}
+#filterBarBody .cm-fact .btn.cm-compile-btn svg{color:#A87308!important}#filterBarBody .cm-fact .btn.cm-compile-btn:hover,#filterBarBody .cm-fact .btn.btn-outline:hover{background:#F3F5FA!important}
+#filterBarBody .cm-fact .btn.cm-report-btn{background:#12275A!important;color:#fff!important;border:1px solid #12275A!important}#filterBarBody .cm-fact .btn.cm-report-btn svg{color:#E3C76A!important}#filterBarBody .cm-fact .btn.cm-report-btn:hover{background:#1B3A73!important}
+@media(max-width:900px){#filterBarBody.cm-fgrid:not(.hidden){grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 
 <style id="cm-overflow-guard-v1">
@@ -9354,9 +9372,10 @@ function cmCtxReportButtons(tab){
   const map={analytics:['cmOpenOverviewReport',uiText('Overview Report','Laporan Overview')],table:['cmOpenActivityReportBuilder',uiText('Report','Laporan')],calendar:['cmOpenCalendarReport',uiText('Calendar Report','Laporan Kalender')],kanban:['cmOpenWorkboardReport',uiText('Workboard Report','Laporan Workboard')],matrix:['cmOpenMatrixReport',uiText('Matrix Report','Laporan Matriks')]}[tab];
   if(!map)return '';
   const btn=(id,fn,label,cls,title,icon)=>`<button type="button" class="btn btn-sm ${cls}" id="${id}" onclick="event.preventDefault();event.stopPropagation();window.${fn}();return false;" title="${escapeHtml(title)}">${icon}${escapeHtml(label)}</button>`;
-  let h=btn(tab==='table'?'btnActivityReport':'btnMenuReport',map[0],map[1],'cm-report-btn',uiText('Generate report from current filters','Generate laporan sesuai filter aktif'),CM_X_DOC_ICON);
-  if(tab==='calendar')h+=btn('btnCalExcelCtx','cmXExportCalendarExcel','Excel','btn-outline',uiText('Export the calendar month to Excel','Ekspor kalender bulan ini ke Excel'),'&#8615; ');
+  /* Urutan: aksi sekunder dulu, Laporan (aksi utama) paling kanan */
+  let h=tab==='calendar'?btn('btnCalExcelCtx','cmXExportCalendarExcel','Excel','btn-outline',uiText('Export the calendar month to Excel','Ekspor kalender bulan ini ke Excel'),'&#8615; '):'';
   h+=btn('btnCompileReport','cmOpenCompiledReportBuilder',uiText('Compile Reports','Kompilasi Laporan'),'btn-outline cm-compile-btn',uiText('Combine reports from Overview, Agenda, Calendar, Workboard and Matrix','Gabungkan laporan Overview, Agenda, Kalender, Workboard, dan Matriks'),CM_X_STACK_ICON);
+  h+=btn(tab==='table'?'btnActivityReport':'btnMenuReport',map[0],map[1],'cm-report-btn',uiText('Generate report from current filters','Generate laporan sesuai filter aktif'),CM_X_DOC_ICON);
   return h;
 }
 
@@ -12392,6 +12411,8 @@ function contextFilterCount(tab=state.activeTab){
 function updateFilterActiveBadge(){
   const badge=document.getElementById('filterActiveBadge');if(!badge)return;
   const n=contextFilterCount();badge.textContent=n;badge.classList.toggle('hidden',n===0);
+  /* Panel filter grid: tandai filter aktif (emas) dan angka di tombol Reset */
+  const fb=document.getElementById('filterBarBody');if(fb){fb.querySelectorAll('select.filter-select').forEach(x=>x.classList.toggle('on',!!x.value&&x.value!=='ALL'));const per=fb.querySelector('.cm-fper');if(per)per.classList.toggle('on',!!(state.filters.dateFrom||state.filters.dateTo));const rn=document.getElementById('cmFrstN');if(rn){rn.textContent=n;rn.classList.toggle('hidden',n===0);}}
 }
 function contextSearchValue(tab=state.activeTab){
   if(['analytics','table','calendar','kanban','matrix'].includes(tab))return state.filters.search||'';
@@ -12429,7 +12450,7 @@ function configureContextToolbar(tab=state.activeTab){
   label.textContent=uiText('Filters','Filter');
   let html='';
   if(['analytics','table','calendar','kanban','matrix'].includes(tab)){
-    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}"><span class="filter-date-sep">${uiText('to','s/d')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}"><button class="btn btn-outline btn-sm context-reset" id="btnResetFilter">${uiText('Reset','Reset')}</button>${typeof cmCtxReportButtons==='function'?cmCtxReportButtons(tab):''}`;
+    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><div class="cm-fper"><small>${uiText('Period','Periode')}</small><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}" aria-label="${uiText('From date','Dari tanggal')}"><span class="filter-date-sep">${uiText('to','s.d.')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}" aria-label="${uiText('To date','Sampai tanggal')}"></div><div class="cm-fact"><button type="button" class="cm-frst" id="btnResetFilter" title="${uiText('Clear all filters and search','Kosongkan semua filter dan pencarian')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg><span>${uiText('Reset','Reset')}</span><span class="n hidden" id="cmFrstN"></span></button><span class="sp"></span>${typeof cmCtxReportButtons==='function'?cmCtxReportButtons(tab):''}</div>`;
     body.innerHTML=html;populateFilterDropdowns();
     const map={filterKategori:'kategori',filterProgram:'program',filterStatus:'status',filterPic:'pic',filterUnit:'unit',filterLayanan:'layanan',filterTahun:'tahun',filterUnitType:'unitType'};
     Object.entries(map).forEach(([id,key])=>document.getElementById(id)?.addEventListener('change',e=>{state.filters[key]=e.target.value;state.page=1;renderActiveTab();updateFilterActiveBadge();}));
@@ -12458,6 +12479,7 @@ function configureContextToolbar(tab=state.activeTab){
     [['ctxCraStatus','status'],['ctxCraRound','round'],['ctxCraRole','role'],['ctxCraSeries','series']].forEach(([id,key])=>document.getElementById(id)?.addEventListener('change',e=>{cmSurveyState.uiFilters[key]=e.target.value;cmSurveyState.decksPage={active:1,closed:1};renderSurveyHub();updateFilterActiveBadge();}));
     document.getElementById('ctxCraReset').onclick=()=>{cmSurveyState.uiFilters={search:cmSurveyState.uiFilters.search||'',status:'ALL',round:'ALL',role:'ALL',series:'ALL'};configureContextToolbar(tab);renderSurveyHub();};
   }
+  body.classList.toggle('cm-fgrid',['analytics','table','calendar','kanban','matrix'].includes(tab));
   const key='contextFilterOpen:'+tab;let open=false;try{open=localStorage.getItem(key)==='1'}catch(e){};
   body.classList.toggle('hidden',!open);toggle.classList.toggle('open',open);toggle.classList.toggle('hidden',!body.children.length);
   updateFilterActiveBadge();
