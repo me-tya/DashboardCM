@@ -137,7 +137,7 @@ function applySelection(selected,deps){
    const source=e.source,prior=matchingContact(e,contacts);
    const o={
     nama:e.n,nip:e.nip,unit:e.unit,peran:e.peran,
-    jabatan:clean(source.jabatan),email:workEmail(source.email||source.emailKemenkeu),
+    jabatan:clean(source.jabatan),unitKerja:clean(source.unitKerja),email:workEmail(source.email||source.emailKemenkeu),
     hp:clean(source.hp||source.noHp),pangkat:clean(source.pangkat),foto:e.photo||'',
     ket:'Sumber: Squad Team Dashboard CM · '+clean(source.squadTeam).slice(0,125)+' · Unit sumber: '+clean(e.sourceUnit||e.unit).slice(0,125)+
       (e.kind==='candidate'?' · Pemilik probis (dipilih setelah verifikasi)':'')
@@ -146,7 +146,7 @@ function applySelection(selected,deps){
      // Per-role merge; one contact can be both PMO and CMO on the same unit.
      o._id=prior._id;
      o.peran=[...new Set([...(Array.isArray(prior.peran)?prior.peran:[]),...o.peran])];
-     for(const key of ['jabatan','email','hp','pangkat','foto','ket'])if(!o[key]||prior[key])o[key]=prior[key]||o[key];
+     for(const key of ['jabatan','unitKerja','email','hp','pangkat','foto','ket'])if(!o[key]||prior[key])o[key]=prior[key]||o[key];
      o.nama=prior.nama;o.nip=prior.nip||o.nip;
      kpPersonSave(Object.assign({},prior,o));
      stats.contactsUpdated++;
