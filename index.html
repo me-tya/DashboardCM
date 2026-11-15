@@ -4422,9 +4422,11 @@ const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','kn
 var cmMenuCfg=(()=>{try{return JSON.parse(localStorage.getItem('cm_menu_cfg_v1')||'{}')||{};}catch(e){return {};}})();
 function cmMenuHidden(key){let h=cmMenuCfg?.hidden?.[key];if(key==='viewer'&&!Array.isArray(h))h=cmMenuCfg?.hidden?.admin; // default Pembaca = seperti CMO Pusat
   return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
+/* Superadmin dapat menyembunyikan menu untuk akunnya sendiri (per email); Overview selalu tampil. */
+function cmSaHidden(){const em=String((typeof getCurrentUserEmail==='function'&&getCurrentUserEmail())||'').toLowerCase();const h=em&&cmMenuCfg?.hiddenSa?.[em];return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
 function cmAllowedTabsForRole(role){
   const all=new Set(CM_MENU_TABS);
-  if(role===CM_ROLE_SUPERADMIN)return all;
+  if(role===CM_ROLE_SUPERADMIN){cmSaHidden().forEach(t=>all.delete(t));return all;}
   // Superadmin dapat menyembunyikan menu per peran (Tamu / CMO Pusat). Overview selalu tampil.
   cmMenuHidden(role===CM_ROLE_ADMIN?'admin':role===CM_ROLE_VIEWER?'viewer':'guest').forEach(t=>all.delete(t));
   return all;
@@ -5876,24 +5878,26 @@ function cmOpenAccessManager(tab){
 }
 function cmCloseAccessPanel(){cmAL.charts.forEach(c=>{try{c.destroy()}catch(e){}});cmAL.charts=[];document.getElementById('cmAccessPanel')?.remove();}
 function cmRenderApMenus(body){
-  const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin'),hv=cmMenuHidden('viewer');
+  const hg=cmMenuHidden('guest'),ha=cmMenuHidden('admin'),hv=cmMenuHidden('viewer'),hs=cmSaHidden();
   const row=t=>{const lock=t==='analytics';return `<tr><td><b>${escapeHtml(cmMenuLabel(t))}</b>${lock?` <small style="color:#8A94A6">(${uiText('always shown','selalu tampil')})</small>`:''}</td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="guest" value="${t}" ${!hg.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="admin" value="${t}" ${!ha.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
     <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="viewer" value="${t}" ${!hv.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td>
-    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" checked disabled><span></span></label></td></tr>`;};
-  body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>${uiText('Menu visibility','Pengaturan menu')}</b><span>${uiText('Turn a menu off to hide it for that role. The Superadmin always sees every menu (hidden ones are marked with a small gold lock). Changes apply to all visitors.','Matikan menu untuk menyembunyikannya dari peran tersebut. Superadmin selalu melihat semua menu (menu yang disembunyikan diberi ikon gembok emas kecil). Perubahan berlaku untuk semua pengunjung.')}</span>
-   <table class="cm-mn-table"><thead><tr><th>${uiText('Menu','Menu')}</th><th>${uiText('Guest','Tamu')}</th><th>CMO Pusat</th><th>${uiText('Viewer','Pembaca')}</th><th>Superadmin</th></tr></thead><tbody>${CM_MENU_TABS.map(row).join('')}</tbody></table>
-   <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px"><span id="cmMnMsg" style="font-size:12.5px;margin-right:auto"></span><button type="button" class="btn btn-outline btn-sm" id="cmMnReset">${uiText('Show all','Tampilkan semua')}</button><button type="button" class="btn btn-sm cm-sr-btn-navy" id="cmMnSave">${uiText('Save','Simpan')}</button></div></div>`;
+    <td style="text-align:center"><label class="cm-mn-sw"><input type="checkbox" data-mn="sa" value="${t}" ${!hs.has(t)?'checked':''} ${lock?'disabled':''}><span></span></label></td></tr>`;};
+  body.innerHTML=`<div class="cm-ap-empty" style="text-align:left;align-items:stretch"><b>${uiText('Menu visibility','Pengaturan menu')}</b><span>${uiText('Turn a menu off to hide it for that role. The Superadmin column applies only to your own account, so other Superadmins are not affected; Overview and the Settings button always stay available. Menus hidden for other roles are marked with a small gold lock.','Matikan menu untuk menyembunyikannya bagi peran tersebut. Kolom Superadmin hanya berlaku untuk akun Anda sendiri, superadmin lain tidak terpengaruh; Overview dan tombol Pengaturan selalu tersedia. Menu yang disembunyikan untuk peran lain ditandai gembok emas kecil.')}</span>
+   <table class="cm-mn-table"><thead><tr><th>${uiText('Menu','Menu')}</th><th>${uiText('Guest','Tamu')}</th><th>CMO Pusat</th><th>${uiText('Viewer','Pembaca')}</th><th title="${uiText('Applies only to your own account','Hanya berlaku untuk akun Anda')}">Superadmin<br><small style="font-weight:500;color:#8A94A6">(${uiText('you','akun Anda')})</small></th></tr></thead><tbody>${CM_MENU_TABS.map(row).join('')}</tbody></table>
+   <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:12px"><span id="cmMnMsg" style="font-size:12.5px;margin-right:auto"></span><button type="button" class="btn btn-outline btn-sm" id="cmMnSaLock" title="${uiText('Untick, in the Superadmin column, every menu hidden for another role','Matikan di kolom Superadmin semua menu yang disembunyikan untuk peran lain')}">🔒 ${uiText('Hide locked menus for me','Sembunyikan menu terkunci untuk saya')}</button><button type="button" class="btn btn-outline btn-sm" id="cmMnReset">${uiText('Show all','Tampilkan semua')}</button><button type="button" class="btn btn-sm cm-sr-btn-navy" id="cmMnSave">${uiText('Save','Simpan')}</button></div></div>`;
   const msg=(t,ok)=>{const m=body.querySelector('#cmMnMsg');m.style.color=ok?'#15784F':'#9E1811';m.textContent=t;};
   const save=async(hidden)=>{
-    const next={hidden,updatedAt:new Date().toISOString(),updatedBy:getCurrentUserEmail()||''};
+    const em=String(getCurrentUserEmail()||'').toLowerCase(),sa=Object.assign({},cmMenuCfg?.hiddenSa||{});if(em&&hidden.sa)sa[em]=hidden.sa;delete hidden.sa;
+    const next={hidden,hiddenSa:sa,updatedAt:new Date().toISOString(),updatedBy:getCurrentUserEmail()||''};
     try{await window.fbSetDoc(window.fbDoc(window.fbDb,'cmPublicConfig','menus'),next);cmMenuCfg=next;try{localStorage.setItem('cm_menu_cfg_v1',JSON.stringify(next));}catch(e){}
       if(window.cmEnforceMenuAccess)window.cmEnforceMenuAccess();cmRenderApMenus(body);body.querySelector('#cmMnMsg')&&(msg(uiText('Saved. Applies to all visitors.','Tersimpan. Berlaku untuk semua pengunjung.'),true));}
     catch(e){msg(/permission/i.test(e?.code||e?.message||'')?uiText('Rejected by Firebase. Check the cmPublicConfig rules.','Ditolak Firebase. Cek aturan cmPublicConfig.'):(e?.message||'Gagal menyimpan.'),false);}
   };
-  body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[],viewer:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
-  body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[],viewer:[]});
+  body.querySelector('#cmMnSave').onclick=()=>{const h={guest:[],admin:[],viewer:[],sa:[]};body.querySelectorAll('input[data-mn]').forEach(i=>{if(!i.checked&&!i.disabled)h[i.dataset.mn].push(i.value);});save(h);};
+  body.querySelector('#cmMnSaLock').onclick=()=>{body.querySelectorAll('input[data-mn="sa"]').forEach(i=>{const t=i.value;if(!i.disabled&&(hg.has(t)||ha.has(t)||hv.has(t)))i.checked=false;});msg(uiText('Locked menus unticked in the Superadmin column. Click Save to apply.','Menu terkunci dimatikan di kolom Superadmin. Klik Simpan untuk menerapkan.'),true);};
+  body.querySelector('#cmMnReset').onclick=()=>save({guest:[],admin:[],viewer:[],sa:[]});
 }
 function cmRenderApSvcDesc(body,draft){
   const cur=(cmGateCfg&&cmGateCfg.svcDesc)||{};
