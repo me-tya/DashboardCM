@@ -137,3 +137,63 @@
   outline:2px solid #D8AD3F!important;
   outline-offset:2px!important;
 }
+
+/* DCM-62 — Project tab: no empty action strip; existing controls now sit in
+   the ranking heading, directly after the utility-criteria note. */
+#tab-priority .prio-page > .prio-list .prio-list-head{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:10px!important;
+  flex-wrap:wrap!important;
+  min-height:48px!important;
+  padding:6px 12px!important;
+  margin:0!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head > h3{
+  margin:0 auto 0 0!important;
+  flex:0 0 auto!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head > span{
+  flex:0 1 auto!important;
+  margin:0 6px 0 auto!important;
+  text-align:right!important;
+  white-space:nowrap!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head > .prio-ranking-actions{
+  display:flex!important;
+  flex:0 0 auto!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:9px!important;
+  margin:0!important;
+  padding:0!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head .prio-ranking-actions .prio-toolbar-btn{
+  height:38px!important;
+  min-height:38px!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head .prio-ranking-actions .prio-report-menu{
+  position:relative!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head .prio-ranking-actions .prio-report-options{
+  z-index:60!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head.has-bulk{
+  flex-wrap:wrap!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head.has-bulk > .prio-bulk{
+  flex:1 1 250px!important;
+  min-width:0!important;
+}
+#tab-priority .prio-page > .prio-list .prio-list-head.has-bulk > .prio-ranking-actions{
+  margin-left:auto!important;
+}
+@media(max-width:1050px){
+  #tab-priority .prio-page > .prio-list .prio-list-head > span{
+    white-space:normal!important;
+  }
+  #tab-priority .prio-page > .prio-list .prio-list-head > .prio-ranking-actions{
+    margin-left:auto!important;
+  }
+}
