@@ -4,3 +4,95 @@
 #mt-app [data-texportprofiles]{display:none!important}
 /* Kotak impor ringkas (impZone) di header Bandingkan Profil & Foto */
 .cmp50 .cmp-upload-actions .imz{width:min(470px,52vw);text-align:left}
+
+/* 261115-DCM-60: Tim Pusmantap top contextual tabs follow Agenda/Prioritas.
+   Applies inside embedded MT team only, without touching nested profile tabs. */
+#mt-app .t2 .t-card > .t-head:has(> .t-seg.t-tabs2){
+  display:flex!important;
+  align-items:stretch!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  min-height:54px!important;
+  height:54px!important;
+  margin:0!important;
+  padding:0!important;
+  border-bottom:0!important;
+  background:#FFFFFF!important;
+  border-radius:12px 12px 0 0!important;
+}
+#mt-app .t2 .t-card > .t-head > .t-seg.t-tabs2{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:54px!important;
+  height:54px!important;
+  gap:9px!important;
+  margin:0!important;
+  padding:4px 5px!important;
+  border:1px solid #E0E6EF!important;
+  border-radius:12px!important;
+  background:#FFFFFF!important;
+  box-shadow:none!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > .t-gsep{
+  display:none!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv]{
+  box-sizing:border-box!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex:none!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:44px!important;
+  height:44px!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:7px 9px!important;
+  background:#FFFFFF!important;
+  color:#123264!important;
+  border:0!important;
+  border-bottom:3px solid transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  font:700 12.5px/1.2 Inter,Arial,sans-serif!important;
+  white-space:nowrap!important;
+  cursor:pointer!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv].t-on,
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv][aria-selected="true"],
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv].t-on:hover{
+  background:#FFFFFF!important;
+  color:#0D2A5B!important;
+  border:0!important;
+  border-bottom:3px solid #D8AD3F!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv] .t-i,
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv].t-on .t-i{
+  color:inherit!important;
+  stroke:currentColor!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv]:not(.t-on):hover{
+  background:#F8FAFD!important;
+  color:#0D2A5B!important;
+  border-bottom-color:#DCE5F0!important;
+}
+#mt-app .t2 .t-head > .t-seg.t-tabs2 > button[data-tv]:focus-visible{
+  outline:2px solid #D8AD3F!important;
+  outline-offset:2px!important;
+}
+@media(max-width:880px){
+  #mt-app .t2 .t-head > .t-seg.t-tabs2{
+    grid-template-columns:repeat(6,minmax(145px,1fr))!important;
+    scrollbar-width:thin;
+  }
+}
