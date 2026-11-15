@@ -47,8 +47,8 @@ function open(){
   hostDocument.head.appendChild(stylesheet);
  }
  // Ensure the dialog stays visible if the parent page has not loaded this iframe's CSS.
- const existing=hostDocument.querySelector('body > .cmp50.ov');
- if(existing){existing.querySelector('#cmp-file')?.focus();return}
+ const openModal=hostDocument.querySelector('body > .cmp50.ov');
+ if(openModal){openModal.querySelector('#cmp-file')?.focus();return}
  const wrap=hostDocument.createElement('div');wrap.className='ov cmp50';
  wrap.style.cssText='position:fixed!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100vw!important;height:100dvh!important;margin:0!important;padding:10px!important;box-sizing:border-box!important;overflow:auto!important;background:rgba(8,28,62,.52)!important;z-index:2147483000!important';
  wrap.innerHTML='<div class="md" role="dialog" aria-modal="true" aria-label="Bandingkan data Dashboard CM dan Modul Transformasi">'+
