@@ -33,6 +33,20 @@ const canEdit=()=>{try{return actCanEdit()}catch(e){return false}};
 function teamOf(p,k){k=k||kpCfg();return k.pt[p.n]||(p.tim==='CM'?'Tim CM':'')}
 const TM_STR=[['kapus','Kepala Pusat','Ka. Pusat'],['kabid','Kepala Bidang Program dan Manajemen Pengetahuan','Kabid PMP'],['psk','Kepala Subbidang Program dan Sistem Kerja','Kasub Prosiker'],['tu','Kepala Subbagian Tata Usaha','Kasub TU'],['mp','Kepala Subbidang Manajemen Pengetahuan','Kasub MP']];
 const TM_STU={kabid:'Bidang Program dan Manajemen Pengetahuan',psk:'Subbidang Program dan Sistem Kerja',tu:'Subbagian Tata Usaha',mp:'Subbidang Manajemen Pengetahuan'};
+/* Jabatan lengkap: jabatan struktural yang hanya tertulis "Kepala Subbidang" dsb. dilengkapi nama unitnya
+   (dari unit organisasi impor Satu Kemenkeu, atau dari penetapan struktural di Onboarding), tanpa kata berulang:
+   "Kepala Bidang" + "Bidang Program dan Manajemen Pengetahuan" → "Kepala Bidang Program dan Manajemen Pengetahuan". */
+const TM_UNIT_E2='Pusat Manajemen Transformasi dan Perubahan';
+const tmJabNorm=x=>String(x||'').replace(/\s+/g,' ').trim().replace(/\bSub\s+Bidang\b/gi,'Subbidang').replace(/\bSub\s+Bagian\b/gi,'Subbagian');
+function tmJabFull(p,k){const raw=tmJabNorm(p&&p.jab);k=k||kpCfg();const st=(k&&k.str)||{};
+ const slot=Object.keys(st).find(id=>st[id]===(p&&p.n));
+ if(!raw)return slot?(slot==='kapus'?'Kepala '+TM_UNIT_E2:(TM_STR.find(x=>x[0]===slot)||['',''])[1]):'';
+ if(!/^kepala\b/i.test(raw))return raw;
+ const unit=tmJabNorm(p.org)||(slot==='kapus'||/^kepala pusat$/i.test(raw)?TM_UNIT_E2:slot?TM_STU[slot]:'');
+ if(!unit)return raw;
+ if(raw.toLowerCase().includes(unit.toLowerCase().replace(/^(pusat|bidang|subbidang|subbagian|bagian|sub bidang|sub bagian)\s+/,'')))return raw;
+ try{if(typeof kqJabFull==='function')return kqJabFull(raw,unit)}catch(e){}
+ const a=raw.split(' '),b=unit.split(' '),lc=x=>x.toLowerCase();for(let i=Math.min(a.length,b.length);i>0;i--){if(a.slice(-i).map(lc).join(' ')===b.slice(0,i).map(lc).join(' '))return a.concat(b.slice(i)).join(' ')}return raw+' '+unit}
 const tmRole=s=>/supervisor|spv/i.test(s||'')?'Supervisor':/ketua|katim/i.test(s||'')?'Ketua':'Anggota';
 /* Penempatan (satu sumber dengan tab Penempatan Tim): tim utama + peran, tim tambahan + peran, jabatan struktural. */
 function place(p,k){k=k||kpCfg();const t=teamOf(p,k),tx=((k.ptx||{})[p.n]||[]).filter(x=>x&&x!==t&&k.tims.includes(x));
@@ -45,7 +59,7 @@ function tmDupOf(p){const a=tmNameKey(p.n),nip=String(p.nip||'').replace(/\D/g,'
 function tmDupNote(p){if(!tmIsSA())return '';const d=tmDupOf(p);return d.length?'<div class="tm-dup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg><span>Kemungkinan data ganda dengan '+d.map(x=>'<button type="button" class="tm-lnk" data-act="tmSel" data-v="'+H(x.n)+'">'+H(x.n)+'</button>').join(', ')+'. Periksa lalu hapus salah satu (riwayat aktivitas tetap memakai nama yang tercatat).</span></div>':''}
 function placeChips(pl){const rc=r=>r==='Supervisor'?' spv':r==='Ketua'?' kt':'';return (pl.t?'<span class="tm-pl'+rc(pl.r)+'"><b>'+H(tmLab(pl.t,pl.r))+'</b> <i>utama</i></span>':'')+pl.tx.map(x=>'<span class="tm-pl'+rc(x.r)+'"><b>'+H(tmLab(x.t,x.r))+'</b> <i>tambahan</i></span>').join('')+pl.str.map(x=>'<span class="tm-pl st"><b>'+H(x[1])+'</b> <i>struktural</i></span>').join('')+pl.stp.map(id=>'<span class="tm-pl st"><b>Pelaksana '+H(TM_STU[id])+'</b> <i>struktural</i></span>').join('')}
 function people(){const M=actMaster(),k=kpCfg();const names=[...new Set([...M.pic.map(p=>p.n),...Object.keys(k.pt)])].filter(Boolean);
- return names.map(n=>{const p=Object.assign({n},M.pic.find(x=>x.n===n)||{});p._team=teamOf(p,k);const pl=place(p,k);p._tx=pl.tx.map(x=>x.t);p._str=pl.str.concat(pl.stp.map(id=>[id,'Pelaksana '+TM_STU[id],'Pelaksana '+({kabid:'Bidang PMP',psk:'Subbid PSK',tu:'Subbag TU',mp:'Subbid MP'})[id]]));return p})}
+ return names.map(n=>{const p=Object.assign({n},M.pic.find(x=>x.n===n)||{});p._jabRaw=p.jab||'';p.jab=tmJabFull(p,k);p._team=teamOf(p,k);const pl=place(p,k);p._tx=pl.tx.map(x=>x.t);p._str=pl.str.concat(pl.stp.map(id=>[id,'Pelaksana '+TM_STU[id],'Pelaksana '+({kabid:'Bidang PMP',psk:'Subbid PSK',tu:'Subbag TU',mp:'Subbid MP'})[id]]));return p})}
 function unitsOf(n,k){k=k||kpCfg();return Object.keys(k.asg).filter(u=>(k.asg[u]||[]).includes(n)).sort((a,b)=>a.localeCompare(b))}
 /* Status kerja efektif pada tanggal tertentu (urutan sama dengan Dashboard CM):
    Nonaktif → penugasan berakhir → rencana cuti → status khusus (WFH/Cuti) berperiode → akhir pekan/libur → jadwal WFH mingguan → WFO. */
@@ -157,7 +171,7 @@ function detail(p,k,edit){const PL=place(p,k),us=unitsOf(p.n,k),s=statusOn(p),wa
 /* ---------- Form profil (Resource Tim CM) ---------- */
 function jenisList(){const d=(S.oneonone||[]).find(x=>x.id==='cfg-tim'),j=d&&d.tim&&d.tim.jenis;return Array.isArray(j)&&j.length?j:[{n:'Secondment',d:6},{n:'Re-Entry',d:3},{n:'Magang Kemnaker',d:6},{n:'Magang Kemenkeu',d:6}]}
 function form(name){if(!canEdit())return toast('Tidak memiliki izin mengelola tim.');
- const M=actMaster(),k=kpCfg(),old=name?M.pic.find(x=>x.n===name):null,p=Object.assign({n:'',jenis:'Definitif',status:'WFO',wfhDays:[],cuti:[]},old||{});
+ const M=actMaster(),k=kpCfg(),old=name?M.pic.find(x=>x.n===name):null,p=Object.assign({n:'',jenis:'Definitif',status:'WFO',wfhDays:[],cuti:[]},old||{});if(old)p.jab=tmJabFull(p,k);
  if(!p.status)p.status=({'WFH':'WFH','Cuti':'Cuti','Nonaktif':'Nonaktif'})[p.statusKerja]||'WFO';
  let foto=p.foto||'',cuti=(p.cuti||[]).map(c=>Object.assign({},c));const team=name?teamOf(p,k):(S.ui.tmTeam&&k.tims.includes(S.ui.tmTeam)?S.ui.tmTeam:'');
  const f=(key,l,ph,o)=>{o=o||{};return '<div class="fld'+(o.w?' wide':'')+'"><label>'+l+'</label><input class="inp" data-tf="'+key+'"'+(o.t?' type="'+o.t+'"':'')+' value="'+H(p[key]||'')+'" placeholder="'+H(ph||'')+'"></div>'};
@@ -510,5 +524,5 @@ const css=`
 @media(max-width:1000px){.tm-page{grid-template-columns:1fr}.tm-left{position:static;max-height:none}.tm-kpis{grid-template-columns:repeat(2,1fr)}.tm-prof{grid-template-columns:repeat(2,1fr)}.tm-crow{grid-template-columns:1fr 1fr}}
 `;
 const st=document.createElement('style');st.id='mt-tim-css';st.textContent=css;document.head.appendChild(st);
-window.pAktTim=page;window.MT_TIM={page,statusOn,cutiEff,cutiAktual,people,unitsOf,form,unitsForm,offReason,offSince};
+window.pAktTim=page;window.MT_TIM={page,jabFull:tmJabFull,statusOn,cutiEff,cutiAktual,people,unitsOf,form,unitsForm,offReason,offSince};
 })();
