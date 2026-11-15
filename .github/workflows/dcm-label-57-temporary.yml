@@ -33,7 +33,7 @@ jobs:
           assert(s.includes("'PMO & CMO Unit: '"));
           assert(!s.includes('Unit Eselon I'));
           assert(s.includes("const selected=w.MT_T2?._ST?.pum"));
-          assert(s.includes("mode==='unit'?st.pu"));
+          assert(s.includes("if(mode==='unit')st.pu="));
           console.log('PASS: label and count caption changed, original unit selection remains');
           JS
       - name: Regression test for unchanged unit filtering
