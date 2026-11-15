@@ -52,7 +52,7 @@ function enhance(app){
  const modes=doc.createElement('div');modes.className='dcm-pu-modes';modes.appendChild(toggle);
  // "Lihat dari" (radio-style, gold frame) — same buttons and data-tpum behavior.
  toggle.classList.add('dcm-lihat');toggle.setAttribute('role','radiogroup');toggle.setAttribute('aria-label','Lihat dari');
- if(!toggle.querySelector(':scope > .dcm-lihat-l')){const l=doc.createElement('span');l.className='dcm-lihat-l';l.textContent='Lihat dari';toggle.insertBefore(l,toggle.firstChild)}
+ if(!toggle.querySelector(':scope > .dcm-lihat-l')){const l=doc.createElement('span');l.className='dcm-lihat-l';l.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Lihat dari';toggle.insertBefore(l,toggle.firstChild)}
  toggle.querySelectorAll('[data-tpum]').forEach(b=>{b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.classList.contains('t-on')));if(!b.querySelector('i.dcm-rd')){const i=doc.createElement('i');i.className='dcm-rd';i.setAttribute('aria-hidden','true');b.insertBefore(i,b.firstChild)}});
  const group=doc.createElement('label');group.className='dcm-pu-team';
  const caption=doc.createElement('span');caption.textContent='Tim';
@@ -66,6 +66,7 @@ function enhance(app){
  select.value=state.team;
  group.append(caption,select);
  const searchWrap=doc.createElement('div');searchWrap.className='dcm-pu-search';
+ const sv=search.querySelector(':scope > svg');if(sv&&!sv.parentElement.classList.contains('dcm-fa')){const fa=doc.createElement('span');fa.className='dcm-fa';search.insertBefore(fa,sv);fa.appendChild(sv)}
  const input=search.querySelector('[data-tpuq]');
  input.placeholder=selected==='pic'?'Cari nama, NIP, atau unit…':'Cari unit atau nama kontak…';
  input.setAttribute('aria-label',input.placeholder);

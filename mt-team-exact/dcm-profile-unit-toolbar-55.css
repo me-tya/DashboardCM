@@ -32,15 +32,24 @@
  #t2 .t-pvb.t-pv-unit .dcm-pu-search{grid-column:auto}
 }
 
-/* v57 · "Lihat dari" radio dengan bingkai gold & navy */
-#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat{display:flex;align-items:center;gap:4px;min-height:44px;height:44px;padding:0 4px 0 12px;background:#FFFBEF;border:1.5px solid #FDB913;border-radius:11px;width:auto}
-#t2 .t-pvb.t-pv-unit .dcm-lihat .dcm-lihat-l{font-size:12.5px;font-weight:800;color:#0B2447;margin-right:6px;white-space:nowrap}
-#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button{display:inline-flex;align-items:center;gap:8px;width:auto;height:34px;padding:0 12px;border-radius:8px;background:transparent;color:#0B2447;font-size:12.5px;font-weight:700;overflow:visible}
-#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button:hover{background:#FFF1C7}
-#t2 .t-pvb.t-pv-unit .dcm-lihat i.dcm-rd{width:15px;height:15px;border-radius:50%;border:2px solid #8C99B3;background:#fff;position:relative;flex:none}
-#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button.t-on{background:#0B2447;color:#fff}
-#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd{border-color:#FDB913;background:#0B2447}
-#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd:after{content:'';position:absolute;inset:2px;border-radius:50%;background:#FDB913}
-#t2 .t-pvb.t-pv-unit .dcm-pu-team,#t2 .t-pvb.t-pv-unit .dcm-pu-search .t-pul-s{height:44px}
+/* v58 · baris filter label navy + gold (sama dengan Modul Transformasi) */
+#t2 .t-pvb.t-pv-unit .dcm-pu-toolbar{grid-template-columns:auto minmax(175px,.75fr) minmax(225px,1.4fr)}
 #t2 .t-pvb.t-pv-unit .dcm-pu-modes{min-width:max-content}
-#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button{flex:none;text-overflow:clip}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat{display:flex;align-items:stretch;gap:0;height:38px;min-height:38px;padding:0;background:#fff;border:1px solid #FDB913;border-radius:10px;overflow:hidden;width:auto}
+#t2 .t-pvb.t-pv-unit .dcm-lihat .dcm-lihat-l,#t2 .t-pvb.t-pv-unit .dcm-pu-team>span,#t2 .t-pvb.t-pv-unit .dcm-pu-search .dcm-fa{display:flex;align-items:center;gap:7px;padding:0 13px;background:#0B2447;color:#FDB913;font-size:13px;font-weight:800;white-space:nowrap;flex:none;margin:0}
+#t2 .t-pvb.t-pv-unit .dcm-lihat .dcm-lihat-l svg{width:15px;height:15px}
+#t2 .t-pvb.t-pv-unit .dcm-pu-search .dcm-fa{padding:0 12px;align-self:stretch}#t2 .t-pvb.t-pv-unit .dcm-pu-search .dcm-fa svg{width:16px;height:16px;color:#FDB913}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button{flex:none;display:inline-flex;align-items:center;gap:8px;width:auto;height:100%;padding:0 11px;margin:0;border:0;border-radius:0;background:transparent!important;color:#3A4763;font-size:13px;font-weight:600;overflow:visible;text-overflow:clip;box-shadow:none}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button:first-of-type{padding-left:14px}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button:last-of-type{padding-right:14px}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button.t-on{color:#0B2447;font-weight:800}
+#t2 .t-pvb.t-pv-unit .dcm-lihat i.dcm-rd{width:16px;height:16px;border-radius:50%;border:1.5px solid #8C99B3;background:#fff;position:relative;flex:none}
+#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd{border-color:#0B2447;border-width:2px}
+#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd:after{content:'';position:absolute;inset:2.5px;border-radius:50%;background:#0B2447}
+#t2 .t-pvb.t-pv-unit .dcm-pu-team{padding:0;gap:0;height:38px;border-radius:10px;border-color:#D6DFEC;overflow:hidden}
+#t2 .t-pvb.t-pv-unit .dcm-pu-team select{height:100%;padding:0 10px 0 14px;font-size:13.5px;color:#13233F}
+#t2 .t-pvb.t-pv-unit .dcm-pu-search .t-pul-s{height:38px;padding:0;gap:0;border-radius:10px;border-color:#D6DFEC;overflow:hidden}
+#t2 .t-pvb.t-pv-unit .dcm-pu-search .t-pul-s input{padding:0 14px;font-size:13.5px;font-weight:500}
+#t2 .t-pvb.t-pv-unit .dcm-pu-team:focus-within,#t2 .t-pvb.t-pv-unit .dcm-pu-search .t-pul-s:focus-within{border-color:#17457F!important;box-shadow:0 0 0 3px rgba(23,69,127,.12)!important}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat:focus-within{box-shadow:0 0 0 3px rgba(253,185,19,.25)}
+#t2 .t-pvb.t-pv-unit .dcm-pu-team{align-items:stretch}#t2 .t-pvb.t-pv-unit .dcm-pu-team>span{align-self:stretch}
