@@ -50,6 +50,10 @@ function enhance(app){
  bar.setAttribute('role','group');
  bar.setAttribute('aria-label','Filter profil per unit');
  const modes=doc.createElement('div');modes.className='dcm-pu-modes';modes.appendChild(toggle);
+ // "Lihat dari" (radio-style, gold frame) — same buttons and data-tpum behavior.
+ toggle.classList.add('dcm-lihat');toggle.setAttribute('role','radiogroup');toggle.setAttribute('aria-label','Lihat dari');
+ if(!toggle.querySelector(':scope > .dcm-lihat-l')){const l=doc.createElement('span');l.className='dcm-lihat-l';l.textContent='Lihat dari';toggle.insertBefore(l,toggle.firstChild)}
+ toggle.querySelectorAll('[data-tpum]').forEach(b=>{b.setAttribute('role','radio');b.setAttribute('aria-checked',String(b.classList.contains('t-on')));if(!b.querySelector('i.dcm-rd')){const i=doc.createElement('i');i.className='dcm-rd';i.setAttribute('aria-hidden','true');b.insertBefore(i,b.firstChild)}});
  const group=doc.createElement('label');group.className='dcm-pu-team';
  const caption=doc.createElement('span');caption.textContent='Tim';
  const select=doc.createElement('select');select.setAttribute('data-dcm-pu-team','');
