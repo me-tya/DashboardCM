@@ -1,0 +1,28 @@
+name: DCM 58 Priority Controls Safe Change
+on:
+  push:
+    branches: [fix/prioritas-export-report-58]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create full prechange repository ZIP for manual restore
+        run: |
+          git fetch origin 92b7481f7ca343c90211cbc45e97f55054f42b34
+          git archive --format=zip --output=261115-DCM-58.zip 92b7481f7ca343c90211cbc45e97f55054f42b34
+          unzip -t 261115-DCM-58.zip | tail -1
+          test -s 261115-DCM-58.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261115-DCM-58
+          path: 261115-DCM-58.zip
+          retention-days: 90
+      - name: Confirm identical export function and exact UI-only change
+        run: |
+          node tests/dcm-priority-export-report-58.test.cjs
+          git diff --check 92b7481f7ca343c90211cbc45e97f55054f42b34..HEAD
