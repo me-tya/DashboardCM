@@ -1352,7 +1352,7 @@ select.t-fi{font-weight:700;cursor:pointer;padding-right:10px}input.t-fi{font-we
 #t2 .t-pu .t-kph img{inset:0}
 #t2 .t-pu .t-av img[src^="data:"],#t2 .t-pu .t-kph img[src^="data:"]{object-view-box:inset(10%)}
 /* Kartu kontak PMO/CMO Unit & Pemilik Probis: jabatan, email, WA memakai lebar penuh kartu (di bawah foto) */
-#t2 .t-kc{display:grid!important;grid-template-columns:auto minmax(0,1fr);column-gap:14px;row-gap:0;align-items:center}
+#t2 .t-kc{display:grid!important;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:0;align-items:center;align-content:start}
 #t2 .t-kc>.t-kph{grid-row:1}
 #t2 .t-kc>.t-x{grid-row:1;align-self:center}
 #t2 .t-kc>.t-kd{grid-column:1/-1;min-width:0;margin-top:10px;padding-top:9px;border-top:1px dashed #E3E8F0;display:flex;flex-direction:column;gap:5px}
