@@ -16840,7 +16840,6 @@ function renderPriority(){
   ${tab==='projects'?`<section class="prio-kpi-stage" aria-label="${uiText('Project priority at a glance','Ringkasan prioritas proyek')}">${prioKpisHtml}</section>`:''}
   ${body}</div>`;
  el.querySelector('#prioAdd')?.addEventListener('click',()=>prioOpenForm(''));
- 
  el.querySelector('#prioExport2')?.addEventListener('click',prioExportExcel);
  el.querySelector('#prioToggleDone')?.addEventListener('click',()=>{prioUi.showDone=!prioUi.showDone;renderPriority();});
  el.querySelectorAll('[data-prio-tab]').forEach(b=>b.onclick=()=>{prioUi.tab=b.dataset.prioTab;prioLsSet('cmPrioTab',prioUi.tab);renderPriority();});
