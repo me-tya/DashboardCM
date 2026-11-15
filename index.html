@@ -2918,6 +2918,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 <link rel="stylesheet" href="dcm-priority-density-44.css?v=261114-44">
 <link rel="stylesheet" href="dcm-secondary-navy-44.css?v=261114-44">
 <link rel="stylesheet" href="dcm-priority-spacing-45.css?v=261114-45">
+<link rel="stylesheet" href="dcm-nav-slim-46.css?v=261115-46">
 </head>
 <body>
 
@@ -9447,8 +9448,10 @@ function renderTable() {
 
   const container = document.getElementById('tab-table');
   const todayHtml=cmRenderTodayAgenda();
+  const cmAddHtml=(typeof cmCanMutate==='function'&&cmCanMutate())?`<span class="cm-addg"><button type="button" class="cm-add" onclick="openForm(null)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${uiText('Activity','Aktivitas')}</button><button type="button" class="cm-addc" onclick="cmAddMenu(this)" aria-haspopup="menu" aria-expanded="false" aria-label="${uiText('Add activity options','Pilihan tambah aktivitas')}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span>`:'';
+  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span>${cmAddHtml}</div>`;
   if (!filtered.length) {
-    container.innerHTML = todayHtml + emptyState(uiText('No matching agenda found','Agenda yang sesuai tidak ditemukan'), uiText('Try adjusting the search or filters.','Coba sesuaikan pencarian atau filter.'));
+    container.innerHTML = todayHtml + cmTblHead + emptyState(uiText('No matching agenda found','Agenda yang sesuai tidak ditemukan'), uiText('Try adjusting the search or filters.','Coba sesuaikan pencarian atau filter.'));
     cmWireTodayAgenda();
     return;
   }
@@ -9465,7 +9468,7 @@ function renderTable() {
   ];
   const sortInd = k => state.sortKey === k ? `<span class="sort-ind">${state.sortDir === 'asc' ? '▲' : '▼'}</span>` : '';
 
-  let html = `<div class="table-wrap"><table class="data-table"><colgroup>
+  let html = `${cmTblHead}<div class="table-wrap"><table class="data-table"><colgroup>
     <col class="col-no"><col class="col-date"><col class="col-activity"><col class="col-service"><col class="col-unit">
     <col class="col-category"><col class="col-program"><col class="col-pic"><col class="col-status"><col class="col-actions">
   </colgroup><thead><tr>`;
@@ -13806,6 +13809,16 @@ function cmUndParse(text,map,fileName){
   return res;
 }
 
+/* Menu tombol tambah aktivitas (split) — sama dengan Modul Transformasi */
+function cmAddMenu(el){const prev=document.getElementById('cmAddMenu');if(prev){prev.remove();el.setAttribute('aria-expanded','false');return}
+  const m=document.createElement('div');m.id='cmAddMenu';m.className='cm-add-menu';m.setAttribute('role','menu');
+  const it=(k,lab,sub,p)=>`<button type="button" role="menuitem" data-k="${k}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg><span><b>${lab}</b><small>${sub}</small></span></button>`;
+  m.innerHTML=it('manual',uiText('Fill in manually','Isi manual'),uiText('Create a new activity from an empty form','Buat aktivitas baru dari formulir kosong'),'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>')+it('und',uiText('From an invitation letter','Dari surat undangan'),uiText('Auto-fill from a PDF or Word file','Isi otomatis dari berkas PDF atau Word'),'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5M12 3v12"/>');
+  document.body.appendChild(m);el.setAttribute('aria-expanded','true');const g=el.parentElement.getBoundingClientRect();let top=g.bottom+6;if(top+m.offsetHeight>innerHeight-8)top=Math.max(8,g.top-m.offsetHeight-6);m.style.top=top+'px';m.style.left=Math.max(8,Math.min(g.right-m.offsetWidth,innerWidth-m.offsetWidth-8))+'px';
+  const close=()=>{m.remove();el.setAttribute('aria-expanded','false');document.removeEventListener('click',oc,true);document.removeEventListener('keydown',ok);removeEventListener('scroll',close,true)};
+  const oc=e=>{if(e.target.closest('.cm-addc')===el)return;if(!m.contains(e.target))close()},ok=e=>{if(e.key==='Escape'){close();el.focus()}};
+  m.onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;close();openForm(null);if(b.dataset.k==='und')cmUndOpenImport();};
+  document.addEventListener('click',oc,true);document.addEventListener('keydown',ok);addEventListener('scroll',close,true);m.querySelector('button').focus();}
 /* ---- review / mapping popup ---- */
 function cmUndOpenImport(){
   const inp=document.createElement('input');inp.type='file';inp.accept='.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain';
