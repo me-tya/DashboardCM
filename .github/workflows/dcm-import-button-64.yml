@@ -2,7 +2,9 @@ name: DCM 64 Import Profil Foto Repair Test and Cache Activation
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/dcm-import-button-64.yml']
+    paths:
+      - '.github/workflows/dcm-import-button-64.yml'
+      - 'mt-team-exact/dcm-profile-compare-50.js'
   workflow_dispatch:
 permissions:
   contents: write
