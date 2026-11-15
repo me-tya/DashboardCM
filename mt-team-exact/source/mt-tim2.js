@@ -354,12 +354,17 @@ function vProfil(){const pv=ST.pv||'orang';let inner='';
  if(pv==='unit')inner=vProfilUnit();
  else if(pv==='tmp'){const h=vSementara(),pre='<div class="t-card"><div class="t-head">'+seg()+'</div>';inner=h.startsWith(pre)?h.slice(pre.length).replace(/<\/div>$/,''):h}
  else{try{S.ui.tmView='orang';inner='<div class="t2-old">'+T().page().replace(AKT_HDR(),'').replace(/<div class="tm-vs"[\s\S]*?<\/div>/,'')+'</div>'}catch(e){inner='<p class="t-s" style="padding:18px">Profil belum dapat dimuat.</p>'}}
- return '<div class="t-card"><div class="t-head">'+seg()+'</div><div class="t-pvw">'+tabs+'</div><div class="t-pvb t-pv-'+pv+'">'+inner+'</div></div>'}
+ return '<div class="t-card"><div class="t-head">'+seg()+'</div><div class="t-pvw" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'+tabs+(canEdit()?'<button type="button" class="t-btn t-sm" data-texportprofiles title="Ekspor profil, foto, penempatan tim, dan kontak PMO/CMO Unit ke JSON untuk Dashboard CM">'+ic('dl','s')+'Ekspor Profil &amp; Foto (JSON)</button>':'')+'</div><div class="t-pvb t-pv-'+pv+'">'+inner+'</div></div>'}
 /* Per unit: daftar unit (kiri) + kartu kontak unit per peran (kanan). */
 /* Per unit: dua sudut pandang — PMO & CMO Kemenkeu (seperti Dashboard CM) atau Unit Eselon I. */
-function vProfilUnit(){const m=ST.pum||S.ui.t2pum||'pic',sw='<div class="t-pum" role="tablist"><button type="button" data-tpum="pic" class="'+(m==='pic'?'t-on':'')+'">PMO & CMO Kemenkeu</button><button type="button" data-tpum="unit" class="'+(m==='unit'?'t-on':'')+'">Unit Eselon I</button></div>';
- const h=m==='pic'?vProfilPic():vProfilUnitE();return h.replace('<aside class="t-pul">','<aside class="t-pul">'+sw)}
-function vProfilPic(){const ppl=P.filter(p=>(p.u||[]).length||temOfP(p).length||isPMO(p)||isCMO(p)).sort((a,b)=>((b.u||[]).length?1:0)-((a.u||[]).length?1:0)||a.n.localeCompare(b.n,'id'));
+function vProfilUnit(){const m=ST.pum||S.ui.t2pum||'pic',tm=ST.put&&TEAMS.some(x=>x.id===ST.put)?ST.put:'';ST.put=tm;
+ const sw='<div class="t-fg t-fg-pri" role="radiogroup" aria-label="Lihat dari"><span class="t-fa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Lihat dari</span><span class="t-fi t-frad">'+[['pic','PMO & CMO Kemenkeu'],['unit','PMO & CMO Unit']].map(o=>'<label data-tpum="'+o[0]+'"><input type="radio" name="t2-pum" value="'+o[0]+'"'+(m===o[0]?' checked':'')+'>'+o[1]+'</label>').join('')+'</span></div>';
+ const ts='<label class="t-fg"><span class="t-fa">Tim</span><select class="t-fi" data-tput aria-label="Saring per tim"><option value="">Semua tim</option>'+TEAMS.map(x=>'<option value="'+H(x.id)+'"'+(x.id===tm?' selected':'')+'>'+H(x.id)+'</option>').join('')+'</select></label>';
+ const q='<label class="t-fg"><span class="t-fa t-fa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></span><input class="t-fi" data-tpuq placeholder="'+(m==='pic'?'Cari nama, NIP, atau unit…':'Cari unit atau nama kontak…')+'" aria-label="Cari"></label>';
+ const h=(m==='pic'?vProfilPic():vProfilUnitE()).replace(/<div class="t-pul-s">[\s\S]*?<\/div>/,'');
+ return '<div class="t-pubar">'+sw+ts+q+'</div>'+h}
+const puTeamUnit=u=>{const t=ST.put;if(!t)return true;try{if(progsAt(u).includes(t))return true}catch(e){}const k=kpCfg();return (k.asg[u]||[]).some(n=>{const p=P.find(x=>x.n===n);return p&&teamsOf(p).includes(t)})};
+function vProfilPic(){const ppl=P.filter(p=>((p.u||[]).length||temOfP(p).length||isPMO(p)||isCMO(p))&&(!ST.put||teamsOf(p).includes(ST.put))).sort((a,b)=>((b.u||[]).length?1:0)-((a.u||[]).length?1:0)||a.n.localeCompare(b.n,'id'));
  if(!ST.pip||!ppl.some(p=>p.n===ST.pip))ST.pip=(ppl[0]||{}).n||'';const p=ppl.find(x=>x.n===ST.pip),edit=canEdit();
  const role=p=>(isPMO(p)&&isCMO(p)?'PMO & CMO':isCMO(p)?'CMO':isPMO(p)?'PMO':''),wa=p=>String(p.hp||'').replace(/\D/g,'').replace(/^0/,'62');
  const row=x=>{const r=x.raw||{};return '<button type="button" class="t-pir'+(x.n===ST.pip?' t-on':'')+'" data-tpip="'+H(x.n)+'" data-s="'+H([x.n,nk(x),r.nip,(x.u||[]).join(' ')].join(' ').toLowerCase())+'">'+av(x,'md',false)+'<span class="t-pir-x"><span class="t-pir-n"><b>'+H(x.n)+'</b>'+(x.k?'<em class="t-pir-k">KATIM</em>':'')+'</span><span class="t-pir-l">'+(r.nip?'<small class="t-mono">'+H(r.nip)+'</small>':'')+(x.hp?'<span class="t-pir-wa">'+ic('wa','s')+H(x.hp)+'</span>':'')+'</span><span class="t-pir-u">'+(((x.u||[]).map(u=>'<i>'+H(u)+'</i>').join('')+temOfP(x).filter(u=>!(x.u||[]).includes(u)).map(u=>'<i class="tm" title="Tematik">'+H(u)+'</i>').join(''))||'<i class="z">belum pegang unit</i>')+'</span></span></button>'};
@@ -369,11 +374,11 @@ function vProfilPic(){const ppl=P.filter(p=>(p.u||[]).length||temOfP(p).length||
  const sec=u=>{const cs=kpPeople().filter(c=>c.unit===u),G=kGrid(kSort(cs)),x=uScore(u);return '<section class="t-piu'+(typeof kpHistCls==='function'?kpHistCls(u):'')+'" data-kph="'+H(u)+'"><div class="t-piu-h">'+ring(x.sc)+'<h3>'+H(u)+'</h3><span class="t-xs t-muted">'+G.nA+' kontak</span><span style="flex:1"></span>'+(typeof kpHistBtn==='function'?kpHistBtn(u,G.nO):'')+(edit?'<button type="button" class="t-icb" data-tunitset="'+H(u)+'" title="Atur pendamping Kemenkeu" aria-label="Atur pendamping">'+ic('edit','s')+'</button><button type="button" class="t-icb t-icb-pri" data-tkunew="" data-tku-u="'+H(u)+'" title="Tambah kontak unit" aria-label="Tambah kontak">'+ic('plus','s')+'</button>':'')+'</div>'+(G.nA||G.nO?'<div class="t-kgrid">'+G.html+'</div>':'<div class="t-pug-0">Belum ada kontak PMO, CMO, atau Pemilik Proses Bisnis.</div>')+'</section>'};
  const right='<section class="t-pur-d t-pic"><div class="t-pip-h"><button type="button" class="t-pip-av" data-tp="'+H(p.n)+'" title="Lihat profil & aktivitas">'+av(p,'md',false)+'</button><div style="flex:1;min-width:0"><div class="t-pir-n"><h3><button type="button" class="t-pip-nm" data-tp="'+H(p.n)+'" title="Lihat profil & aktivitas">'+H(p.n)+'</button></h3>'+(p.k?'<em class="t-pir-k">KATIM</em>':'')+(role(p)?'<span class="t-pkc-r">'+role(p)+' Kemenkeu</span>':'')+'</div><div class="t-pip-m">'+(r.nip?'<span class="t-mono">NIP '+H(r.nip)+'</span>':'')+(r.pang?'<span>'+H(r.pang)+'</span>':'')+'</div>'+(p.hp?(w.length>=9&&!/\*/.test(p.hp)?'<a class="t-pir-wa" href="https://wa.me/'+w+'" target="_blank" rel="noopener">'+ic('wa','s')+H(p.hp)+'</a>':'<span class="t-pir-wa">'+ic('wa','s')+H(p.hp)+'</span>'):'')+'</div><span class="t-pip-c">'+us.length+' unit'+(tus.length?' · '+tus.length+' tematik':'')+'</span></div>'+(us.map(sec).join('')||(tus.length?'':'<div class="t-pug-0" style="margin-top:14px">Belum memegang unit. Atur lewat tampilan Unit Eselon I.</div>'))+(tus.length?'<div class="t-temh">'+ic('pin','s')+'<b>Program tematik</b><span>sebagai '+H([...new Set(teamsOf(p).filter(t=>temUnits(t).length).map(t=>temRole(t)+' · '+t))].join(', '))+'</span></div>'+tus.map(sec).join(''):'')+'</section>';
  return '<div class="t-pu">'+left+right+'</div>'}
-function vProfilUnitE(){const all=unitList().map(u=>Object.assign({u},uScore(u))).sort((a,b)=>a.u.localeCompare(b.u)),f=ST.puf||'all',L=all.filter(x=>f==='all'||(f==='need'?x.sc<5:x.sc===5));
+function vProfilUnitE(){const all=unitList().filter(puTeamUnit).map(u=>Object.assign({u},uScore(u))).sort((a,b)=>a.u.localeCompare(b.u)),f=ST.puf||'all',L=all.filter(x=>f==='all'||(f==='need'?x.sc<5:x.sc===5));
  if(!ST.pu||!all.some(x=>x.u===ST.pu))ST.pu=(L[0]||all[0]||{}).u||'';const x=all.find(y=>y.u===ST.pu),cs=x?kpPeople().filter(c=>c.unit===x.u):[];
  const on=typeof kpOn==='function'?kpOn:()=>true,cnt=(a,k)=>a.c[k].length;
  const row=y=>{const nm=kpPeople().filter(c=>c.unit===y.u).map(c=>c.nama).join(' ');return '<button type="button" class="t-pur'+(y.u===ST.pu?' t-on':'')+'" data-tpu="'+H(y.u)+'" data-s="'+H((y.u+' '+nm).toLowerCase())+'">'+ring(y.sc)+'<span class="t-pur-x"><b>'+H(y.u)+'</b><span class="t-pur-c"><i class="'+(cnt(y,'pmo')?'':'z')+'" style="--c:#2B5AA8">PMO '+cnt(y,'pmo')+'</i><i class="'+(cnt(y,'cmo')?'':'z')+'" style="--c:#6D53C7">CMO '+cnt(y,'cmo')+'</i><i class="'+(cnt(y,'pb')?'':'z')+'" style="--c:#16A37F">Probis '+cnt(y,'pb')+'</i></span></span>'+(y.miss.length?'<span class="t-pur-w" title="'+H(y.miss.join(', '))+'">'+ic('alert','s')+'</span>':'')+'</button>'};
- const left='<aside class="t-pul"><div class="t-pul-s">'+ic('search','s')+'<input data-tpuq placeholder="Cari unit atau nama kontak…" aria-label="Cari unit"></div><div class="t-pul-f">'+[['all','Semua',all.length],['need','Perlu dilengkapi',all.filter(y=>y.sc<5).length],['ok','Lengkap',all.filter(y=>y.sc===5).length]].map(o=>'<button type="button" data-tpuf="'+o[0]+'" class="'+(f===o[0]?'t-on':'')+'">'+o[1]+' <em>'+o[2]+'</em></button>').join('')+'</div><div class="t-pul-l">'+(L.map(row).join('')||'<div class="t-empty">Tidak ada unit</div>')+'</div></aside>';
+ const left='<aside class="t-pul"><div class="t-pul-s">'+ic('search','s')+'<input data-tpuq placeholder="Cari unit atau nama kontak…" aria-label="Cari unit"></div><div class="t-pul-cap">Unit Eselon I <b>'+L.length+'</b>'+(L.length!==unitList().length?' dari '+unitList().length:'')+(ST.put?' · '+H(ST.put):'')+'</div><div class="t-pul-f">'+[['all','Semua',all.length],['need','Perlu dilengkapi',all.filter(y=>y.sc<5).length],['ok','Lengkap',all.filter(y=>y.sc===5).length]].map(o=>'<button type="button" data-tpuf="'+o[0]+'" class="'+(f===o[0]?'t-on':'')+'">'+o[1]+' <em>'+o[2]+'</em></button>').join('')+'</div><div class="t-pul-l">'+(L.map(row).join('')||'<div class="t-empty">Tidak ada unit</div>')+'</div></aside>';
  if(!x)return '<div class="t-pu">'+left+'<section class="t-pur-d"><div class="t-empty" style="padding:40px">Belum ada unit.</div></section></div>';
  const pd=[...new Set(x.pm.concat(x.cm))],nO=cs.filter(c=>!on(c)).length,edit=canEdit();
  const grp=(k,lbl,col)=>{const G=kGrid(kSort(cs.filter(c=>(c.peran||[]).includes(k))));return '<div class="t-pug" style="--c:'+col+'"><div class="t-pug-h"><i></i><b>'+lbl+'</b><em>'+G.nA+'</em>'+(G.nO?'<small>+'+G.nO+' riwayat</small>':'')+'</div>'+(G.nA||G.nO?'<div class="t-kgrid">'+G.html+'</div>':'<div class="t-pug-0">Belum ada '+lbl+(edit?' · <button type="button" class="t-lnk" data-tkunew="" data-tku-u="'+H(x.u)+'">tambah</button>':'')+'</div>')+'</div>'};
@@ -546,6 +551,15 @@ function onClick(e){const r=e.target.closest('#t2,#t2-layer');if(!r)return;const
  if(g('.t-cpop')&&!g('[data-tsetc]'))return;
  if((el=g('[data-tclose]'))){ST.dr=null;ST.md=null;rr();return}
  if((el=g('[data-tcmon]'))){const d=el.dataset.tcmon;ST.calY=+d.slice(0,4);ST.calM=+d.slice(5,7)-1;ST.calSel=d;ST.calSc='ALL'}
+ if((el=g('[data-texportprofiles]'))){
+  if(!canEdit()){toastT('Anda tidak memiliki hak akses untuk mengekspor profil.');return}
+  try{
+   if(!window.MT_PROFILE_EXPORT||typeof window.MT_PROFILE_EXPORT.download!=='function')throw Error('Komponen ekspor belum dimuat. Muat ulang halaman.');
+   const result=window.MT_PROFILE_EXPORT.download({docs:S.oneonone||[],master:actMaster(),cfg:kpCfg()});
+   toastT('JSON siap diunduh: '+result.summary.profiles+' profil, '+result.summary.photos+' foto, '+result.summary.unitContacts+' kontak unit.');
+  }catch(err){toastT('Ekspor gagal: '+(err.message||String(err)))}
+  return;
+ }
  if((el=g('[data-tv]'))){setV(el.dataset.tv);return}
  if((el=g('[data-tstf]'))){ST.stF=el.dataset.tstf;ST.pg.stL=0;rr();return}
  if((el=g('[data-tpv]'))){ST.pv=el.dataset.tpv;S.ui.t2pv=ST.pv;rr();return}
@@ -635,9 +649,26 @@ function temForm(t){const k=kpCfg(),r0=progR(t),j0=progJ(t),cur=new Set(((k.tem|
   try{log('Jenis program',t+': '+progTag(t)+(jj==='t'?' · '+on.join(', '):''))}catch(e){}TEAMS.forEach(x=>{if(x.id===t)x.r=rr2});save();rr();toastT(t+' diatur sebagai '+progTag(t)+(jj==='a'?' (semua program)':' ('+(jj==='t'?'tematik':'berkelanjutan')+', '+on.length+' unit)'))},{size:'md'});
  const upd=()=>{const r=(ov.querySelector('input[name=pr]:checked')||{}).value,j=(ov.querySelector('input[name=pj]:checked')||{}).value,l=ov.querySelector('#t2-pjl').value.trim()||tshort(t);ov.querySelector('.t-pju').hidden=j==='a';ov.querySelector('[data-pjuh]').textContent=j==='t'?'Unit Eselon I yang dilibatkan (anggota otomatis jadi pendamping)':'Unit Eselon I yang dicakup program ini';const cb=[...ov.querySelectorAll('.t-temg input')],al=ov.querySelector('[data-pjall]'),nc=cb.filter(i=>i.checked).length;al.checked=nc===cb.length;al.indeterminate=nc>0&&nc<cb.length;ov.querySelector('.t-pjl').hidden=j==='a';ov.querySelector('[data-pjprev]').textContent=r+(j==='a'?'':' '+l)+' · '+({a:'Semua program',b:'Berkelanjutan',t:'Tematik'}[j])};
  ov.addEventListener('change',e=>{if(e.target.matches('[data-pjall]'))ov.querySelectorAll('.t-temg input').forEach(i=>i.checked=e.target.checked);upd()});ov.addEventListener('input',e=>{if(e.target.id==='t2-pjl')upd()});upd()}
-function unitPendForm(u){const k=kpCfg(),cur=new Set(k.asg[u]||[]);const body='<p class="t-s" style="margin:0 0 8px">Pilih PMO/CMO Kemenkeu yang mendampingi <b>'+H(u)+'</b>.</p><div class="t2"><div class="t-pchk" style="max-height:360px;overflow:auto">'+P.slice().sort((a,b)=>{const pa=progsAt(u),f=p=>teamsOf(p).some(t=>pa.includes(t))?0:1;return f(a)-f(b)||a.n.localeCompare(b.n)}).map(p=>'<label><input type="checkbox" value="'+H(p.n)+'" '+(cur.has(p.n)?'checked':'')+'> '+H(nk(p))+' <span class="t-muted t-xs">'+H(p.n)+' · '+H(teamsOf(p).map(tshort).join(', ')||'tanpa tim')+'</span></label>').join('')+'</div></div>';
- modal('Pendamping '+u,body,'Simpan',ov=>{const on=[...ov.querySelectorAll('input:checked')].map(i=>i.value);if(on.length)k.asg[u]=on;else delete k.asg[u];try{log('Atur pendamping unit',u+': '+on.join(', '))}catch(e){}save();rr();toastT('Pendamping '+u+' diperbarui.')},{size:'md'})}
-function onChange(e){const r=e.target.closest('#t2,#t2-layer');if(!r)return;const t=e.target;
+function unitPendForm(u){const k=kpCfg(),cur=new Set(k.asg[u]||[]),pa=progsAt(u);
+ const CL=[{id:'b',l:'PMO Berkelanjutan',d:'Program berkelanjutan per unit',c:'#17457F',bg:'#EAF0FA'},{id:'t',l:'PMO Tematik',d:'Program tematik lintas unit',c:'#0E7C7C',bg:'#E3F5F4'},{id:'c',l:'CMO Kemenkeu',d:'Manajemen perubahan',c:'#6B4FC4',bg:'#EFEBFB'}];
+ const clOf=t=>progR(t)==='CMO'?'c':progJ(t)==='t'?'t':'b',spvs=P.filter(p=>teamsOf(p).some(t=>rlIn(p,t)==='Supervisor')),rest=P.filter(p=>!spvs.includes(p));
+ const tile=(p,t)=>{const r=t?rlIn(p,t):(spvs.includes(p)?'Supervisor':'Anggota'),on=cur.has(p.n);return '<label class="upf-p'+(on?' on':'')+'" data-q="'+H([p.n,nk(p),p.j].join(' ').toLowerCase())+'"><input type="checkbox" value="'+H(p.n)+'"'+(on?' checked':'')+'>'+av(p,'sm',false)+'<span class="upf-t"><b>'+H(nk(p))+'</b><small>'+H(p.n)+'</small></span>'+(r!=='Anggota'?'<em class="'+(r==='Supervisor'?'spv':'kt')+'">'+(r==='Supervisor'?'SPV':'Katim')+'</em>':'')+'<i class="upf-ck" aria-hidden="true"></i></label>'};
+ const grpH=(l,rel,extra)=>'<div class="upf-gh"><span>'+H(l)+'</span>'+(rel?'<em class="rel">mencakup '+H(u)+'</em>':'<em class="no">di luar cakupan '+H(u)+'</em>')+(extra||'')+'<label class="upf-all"><input type="checkbox" data-upfall> Pilih semua</label></div>';
+ const byT=t=>rest.filter(p=>p.t===t).sort((a,b)=>mRank(a,t)-mRank(b,t)||a.n.localeCompare(b.n));
+ const sec=(cc,cb,cls,title,desc,people,inner)=>'<section class="upf-c'+(cls?' '+cls:'')+'" style="--cc:'+cc+';--cb:'+cb+'"><header><span class="upf-dot"></span><div><b>'+title+'</b><small>'+desc+'</small></div><span class="upf-n" data-upfn>'+people.filter(p=>cur.has(p.n)).length+'/'+people.length+'</span></header>'+inner+'</section>';
+ const secs=CL.map(c=>{const ts=TEAMS.map(x=>x.id).filter(t=>clOf(t)===c.id&&byT(t).length);if(!ts.length)return '';const rel=ts.some(t=>pa.includes(t));
+   return sec(c.c,c.bg,rel?'':'dim',c.l,c.d,ts.flatMap(byT),ts.map(t=>'<div class="upf-g">'+grpH(progTag(t),pa.includes(t),temUnits(t).length?'<span class="upf-tu">Unit: '+H(temUnits(t).join(' · '))+'</span>':'')+'<div class="upf-grid">'+byT(t).map(p=>tile(p,t)).join('')+'</div></div>').join(''))}).join('');
+ const noT=rest.filter(p=>!p.t);
+ const top=spvs.length?sec('#8C6B12','#FFF6DB','','Supervisor','Mengawasi lintas tim',spvs,'<div class="upf-g"><div class="upf-grid">'+spvs.map(p=>tile(p,null)).join('')+'</div></div>'):'';
+ const oth=noT.length?sec('#7E889B','#F2F5FA','dim','Tanpa tim','Belum ditempatkan di tim',noT,'<div class="upf-g"><div class="upf-grid">'+noT.map(p=>tile(p,null)).join('')+'</div></div>'):'';
+ const body='<div class="t2 upf"><div class="upf-top"><p>Pilih PMO/CMO Kemenkeu yang mendampingi <b>'+H(u)+'</b>. Tim yang programnya mencakup '+H(u)+' diberi tanda hijau.</p><div class="upf-bar"><input type="search" class="upf-q" placeholder="Cari nama…" aria-label="Cari nama"><span class="upf-sum" data-upfsum></span></div></div><div class="upf-body">'+top+secs+oth+'</div></div>';
+ modal('Pendamping '+u,body,'Simpan',ov=>{const on=[...new Set([...ov.querySelectorAll('.upf-p input:checked')].map(i=>i.value))];if(on.length)k.asg[u]=on;else delete k.asg[u];try{log('Atur pendamping unit',u+': '+on.join(', '))}catch(e){}save();rr();toastT('Pendamping '+u+' diperbarui.')},{size:'lg'});
+ const ov=[...document.querySelectorAll('.upf')].pop();if(!ov)return;
+ const sync=()=>{ov.querySelectorAll('.upf-p').forEach(l=>l.classList.toggle('on',l.querySelector('input').checked));ov.querySelectorAll('.upf-g').forEach(g=>{const cb=[...g.querySelectorAll('.upf-p input')],al=g.querySelector('[data-upfall]');if(!al)return;const n=cb.filter(i=>i.checked).length;al.checked=!!n&&n===cb.length;al.indeterminate=n>0&&n<cb.length});ov.querySelectorAll('.upf-c').forEach(c=>{const cb=[...c.querySelectorAll('.upf-p input')],el=c.querySelector('[data-upfn]');if(el)el.textContent=cb.filter(i=>i.checked).length+'/'+cb.length});const sel=new Set([...ov.querySelectorAll('.upf-p input:checked')].map(i=>i.value));ov.querySelector('[data-upfsum]').innerHTML='<b>'+sel.size+'</b> dipilih'};
+ ov.addEventListener('change',e=>{const t=e.target;if(t.matches('[data-upfall]'))t.closest('.upf-g').querySelectorAll('.upf-p input').forEach(i=>i.checked=t.checked);sync()});
+ ov.querySelector('.upf-q').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();ov.querySelectorAll('.upf-p').forEach(l=>l.hidden=!!q&&!l.dataset.q.includes(q));ov.querySelectorAll('.upf-g').forEach(g=>g.hidden=![...g.querySelectorAll('.upf-p')].some(l=>!l.hidden));ov.querySelectorAll('.upf-c').forEach(c=>c.hidden=![...c.querySelectorAll('.upf-p')].some(l=>!l.hidden))});
+ sync()}
+function onChange(e){const r=e.target.closest('#t2,#t2-layer');if(!r)return;const t=e.target;if(t.matches('[data-tput]')){ST.put=t.value;rr();return}
  if(t.matches('[data-tps]')){const PS=lsGet('ps',{});PS[t.dataset.tps]=+t.value;lsSet('ps',PS);ST.pg[t.dataset.tps]=0;rr();return}
  if(t.matches('[data-tagsel]')){ST.agF=t.value;ST.pg.agenda=0;rr();return}
  if(t.matches('[data-tshowall]')){lsSet('col',t.checked?[]:hl().slice());rr();return}
@@ -702,7 +733,7 @@ function impDcm(){
  let script=document.getElementById('mt-dcm-squad-import-loader');
  if(script){toastT('Pustaka impor sedang dimuat.');return}
  script=document.createElement('script');script.id='mt-dcm-squad-import-loader';
- script.src='mt-dcm-squad-import.js?v=20261114-01';
+ script.src='mt-dcm-squad-import.js?v=20261115-imz1';
  script.onload=open;
  script.onerror=()=>{script.remove();toastT('Gagal memuat pustaka impor. Periksa koneksi dan ulangi.')};
  document.head.appendChild(script);
@@ -751,7 +782,7 @@ async function impRead(kind,files,prog){const out=[];
    out.push({n:r.nama||'',nip:r.nip||'',jab:r.jabatan||'',org:r.unitKerja||'',pang:r.pangkat||'',emailK:/@kemenkeu\.go\.id$/i.test(r.email||'')?r.email:'',hp:/\*/.test(r.hp||'')?'':(r.hp||''),foto,str:strSlot(r.jabatan,r.unitKerja),_ocr:f.name})}}
  return out.filter(o=>o.n)}
 function impPegawai(kind){if(!canEdit())return;const lbl={json:['JSON Satu Kemenkeu','.json,application/json',false],xlsx:['Excel / CSV','.xlsx,.xls,.csv',false],ocr:['skrinsyut profil','image/*',true]}[kind];
- const ov=modal('Impor pegawai · '+lbl[0],'<div class="t2 t-imp"><p class="t-s" style="margin:0 0 8px">'+(kind==='xlsx'?'Kolom yang dibaca: Nama, NIP, Jabatan, Unit organisasi, Pangkat, Golongan, Email kantor, HP, Tim utama, Tim tambahan, Peran, Struktural, Status. <button type="button" class="t-lnk" data-timptpl>Unduh templat Excel</button>':kind==='ocr'?'Pilih satu atau beberapa skrinsyut halaman profil Satu Kemenkeu. Teks dibaca di perangkat ini; periksa hasilnya sebelum disimpan.':'Pilih file JSON data pegawai dari Satu Kemenkeu (mis. pusmantap.json).')+'</p><p class="t-xs t-muted" style="margin:0 0 8px">'+ic('lock','s')+' Yang disimpan hanya data kerja (nama, NIP, jabatan, unit, pangkat, email kantor, HP, foto, status). NIK, NPWP, KK, agama, tanggal lahir, dan kontak darurat diabaikan.</p><input type="file" id="t2-imp-f" accept="'+lbl[1]+'" '+(lbl[2]?'multiple':'')+'><div id="t2-imp-r" style="margin-top:10px"></div></div>','Impor terpilih',ov=>{const L=ov._rows;if(!L||!L.length){toastT('Pilih file dulu.');return false}const sel=[...ov.querySelectorAll('[data-impi]')].filter(c=>c.checked).map(c=>L[+c.dataset.impi]);if(!sel.length){toastT('Tidak ada baris yang dipilih.');return false}impApply(sel)},{size:'lg'});
+ const ov=modal('Impor pegawai · '+lbl[0],'<div class="t2 t-imp">'+impZone({id:'t2-imp-f',accept:lbl[1],multiple:lbl[2],icon:kind==='ocr'?'img':'',title:kind==='xlsx'?'Excel / CSV pegawai':kind==='ocr'?'Skrinsyut profil Satu Kemenkeu':'JSON data pegawai Satu Kemenkeu',hint:kind==='ocr'?'tarik satu atau beberapa gambar ke sini, atau':'tarik file ke sini atau',extra:kind==='xlsx'?' · <button type="button" class="imz-l" data-timptpl>unduh templat</button>':'',info:'<p>'+(kind==='xlsx'?'Kolom yang dibaca: Nama, NIP, Jabatan, Unit organisasi, Pangkat, Golongan, Email kantor, HP, Tim utama, Tim tambahan, Peran, Struktural, Status.':kind==='ocr'?'Teks dibaca di perangkat ini; periksa hasilnya sebelum disimpan.':'Contoh file: pusmantap.json.')+'</p><p>Yang disimpan hanya data kerja (nama, NIP, jabatan, unit, pangkat, email kantor, HP, foto, status). NIK, NPWP, KK, agama, tanggal lahir, dan kontak darurat diabaikan.</p>'})+'<div id="t2-imp-r" style="margin-top:10px"></div></div>','Impor terpilih',ov=>{const L=ov._rows;if(!L||!L.length){toastT('Pilih file dulu.');return false}const sel=[...ov.querySelectorAll('[data-impi]')].filter(c=>c.checked).map(c=>L[+c.dataset.impi]);if(!sel.length){toastT('Tidak ada baris yang dipilih.');return false}impApply(sel)},{size:'lg'});
  const tp=ov.querySelector('[data-timptpl]');if(tp)tp.onclick=e=>{e.preventDefault();impTemplate()};
  ov.querySelector('#t2-imp-f').onchange=async e=>{const fs=[...e.target.files],out=ov.querySelector('#t2-imp-r');if(!fs.length)return;out.innerHTML='<div class="t-s">Memproses…</div>';
   try{const rows=await impRead(kind,fs,m=>{out.innerHTML='<div class="t-s">'+H(m)+'</div>'});const M=actMaster();rows.forEach(o=>{o._m=matchPic(o,M.pic)});ov._rows=rows;out.innerHTML=impPreview(rows)}catch(er){ov._rows=null;out.innerHTML='<span style="color:var(--bad)">'+H(er.message||String(er))+'</span>'}}}
@@ -1263,6 +1294,56 @@ const css=`
 .t-wks{margin-left:auto}
 @media(max-width:1100px){.t-pane2{grid-template-columns:1fr}.t-wgrid>*,.t-lgrid>*{grid-column:1/-1!important}.t-hero .t-att{grid-column:1/-1}}
 @media(max-width:700px){.t-fgrid{grid-template-columns:1fr 1fr}.t-search input{width:130px}.t-band{margin:10px 10px 0}.t-wgrid{padding:10px;gap:12px}}
+.upf{display:flex;flex-direction:column;gap:12px}.upf-top p{margin:0 0 10px;font-size:13px;color:#3A4763}
+.upf-bar{display:flex;gap:10px;align-items:center}.upf-q{flex:1;height:38px;border:1px solid #D6DFEC;border-radius:10px;padding:0 12px;font:inherit;font-size:13px;background:#F7F9FC}.upf .upf-q:focus,.upf .upf-q:focus-visible{outline:none!important;border-color:#9DB6E6!important;background:#fff;box-shadow:0 0 0 3px rgba(23,69,127,.10)!important}
+.upf-sum{font-size:12.5px;color:#66728C;white-space:nowrap;background:#EEF3FB;border-radius:999px;padding:6px 12px}.upf-sum b{color:#0B2447;font-size:14px}
+.upf-body{display:flex;flex-direction:column;gap:12px;max-height:min(58vh,560px);overflow:auto;padding-right:4px}
+.upf-c{border:1px solid #E3E8F0;border-left:4px solid var(--cc);border-radius:14px;overflow:hidden;background:#fff;flex:none}.upf-c[hidden],.upf-g[hidden],.upf-p[hidden]{display:none!important}
+.upf-c>header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--cb)}.upf-c>header b{display:block;font-size:13.5px;color:var(--cc)}.upf-c>header small{display:block;font-size:11.5px;color:#66728C}
+.upf-dot{width:10px;height:10px;border-radius:50%;background:var(--cc);flex:none}.upf-n{margin-left:auto;font-size:12px;font-weight:800;color:var(--cc);background:#fff;border-radius:999px;padding:3px 10px}
+.upf-g{padding:10px 14px 12px}.upf-g+.upf-g{border-top:1px dashed #E3E8F0}
+.upf-gh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}.upf-gh>span{font-size:12.5px;font-weight:800;color:#13233F}
+.upf-gh em{font-style:normal;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 7px}.upf-gh em.rel{background:#E7F6EE;color:#15805F}.upf-gh em.no{background:#F2F5FA;color:#8A97AB}
+.upf-tu{font-size:11px;color:#66728C}.upf-all{margin-left:auto;display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:700;color:#17457F;cursor:pointer}
+.upf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.upf-p{position:relative;display:flex;align-items:center;gap:10px;padding:8px 34px 8px 8px;border:1.5px solid #E3E8F0;border-radius:12px;cursor:pointer;background:#fff;transition:border-color .15s,background .15s;min-width:0;margin:0}
+.upf-p:hover{border-color:#B9C8E4}.upf-p input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}.upf-p:focus-within{box-shadow:0 0 0 3px rgba(23,69,127,.15)}
+.upf-p.on{border-color:var(--cc);background:var(--cb)}
+.upf-p .t-av{flex:none;width:36px!important;height:36px!important}.upf-t{min-width:0;display:flex;flex-direction:column;flex:1}.upf-t b{font-size:13px;color:#13233F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.upf-t small{font-size:11px;color:#66728C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upf-p>em{font-style:normal;font-size:10px;font-weight:800;border-radius:5px;padding:1px 6px;flex:none}.upf-p>em.spv{background:#EFEBFB;color:#5B43B5}.upf-p>em.kt{background:#E7F6EE;color:#15805F}
+.upf-ck{position:absolute;right:9px;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:50%;border:1.5px solid #CBD5E3;background:#fff}
+.upf-p.on .upf-ck{background:var(--cc);border-color:var(--cc)}.upf-p.on .upf-ck:after{content:'';position:absolute;left:5px;top:2px;width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.t-pubar{display:grid;grid-template-columns:auto minmax(0,.75fr) minmax(0,1.4fr);gap:12px;align-items:center;margin:4px 0 14px}
+.t-pubar .t-pum-bar{height:50px;padding:4px;border-radius:12px;background:#EDF2F8;border-color:#DCE3EE}.t-pubar .t-pum-bar button{font-size:13.5px;border-radius:9px}
+.t-putim{display:flex;align-items:center;gap:12px;height:50px;padding:0 14px;border:1px solid #DCE3EE;border-radius:12px;background:#fff;min-width:0;cursor:pointer}
+.t-putim span{font-size:13px;font-weight:800;color:#4C5D78}.t-putim select{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:13.5px;font-weight:700;color:#13233F;cursor:pointer;height:100%}
+.t-putim:focus-within,.t-pubq:focus-within{border-color:#9DB6E6;box-shadow:0 0 0 3px rgba(23,69,127,.10)}
+.t2 .t-putim select:focus-visible{outline:none!important;box-shadow:none!important}
+.t-pubq{display:flex;align-items:center;gap:10px;height:50px;padding:0 14px;border:1px solid #DCE3EE;border-radius:12px;background:#fff;min-width:0;color:#8A97AB}
+.t-pubq input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:13.5px;font-weight:600;color:#13233F;height:100%}
+.t2 .t-pubq input:focus-visible{outline:none!important;box-shadow:none!important}
+@media(max-width:1000px){.t-pubar{grid-template-columns:1fr 1fr}.t-pubar .t-pum-bar{grid-column:1/-1}}
+.t-lihat{display:flex;align-items:center;gap:4px;height:50px;padding:0 5px 0 14px;border:1.5px solid #FDB913;border-radius:12px;background:#FFFBEF;white-space:nowrap;min-width:0}
+.t-lihat>span{font-size:13px;font-weight:800;color:#0B2447;margin-right:6px}
+.t-lihat button{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 13px;border:0;border-radius:9px;background:transparent;font:inherit;font-size:13px;font-weight:700;color:#0B2447;cursor:pointer}
+.t-lihat button:hover{background:#FFF1C7}
+.t-lihat button i{width:16px;height:16px;border-radius:50%;border:2px solid #8C99B3;position:relative;flex:none;background:#fff}
+.t-lihat button.t-on{background:#0B2447;color:#fff}.t-lihat button.t-on i{border-color:#FDB913;background:#0B2447}.t-lihat button.t-on i:after{content:'';position:absolute;inset:2px;border-radius:50%;background:#FDB913}
+.t-lihat button:focus-visible{outline:2px solid #0B2447!important;outline-offset:2px}
+@media(max-width:1000px){.t-pubar .t-lihat{grid-column:1/-1}}
+.t-fg{display:flex;align-items:stretch;height:38px;border:1px solid #D6DFEC;border-radius:10px;background:#fff;overflow:hidden;min-width:0;margin:0;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.t-fg:focus-within{border-color:#17457F;box-shadow:0 0 0 3px rgba(23,69,127,.12)}
+.t-fg.t-fg-pri{border-color:#FDB913}.t-fg.t-fg-pri:focus-within{box-shadow:0 0 0 3px rgba(253,185,19,.25)}
+.t-fa{display:flex;align-items:center;gap:7px;padding:0 13px;background:#0B2447;color:#FDB913;font-size:13px;font-weight:800;white-space:nowrap;flex:none}
+.t-fa svg{width:15px;height:15px}.t-fa-ic{padding:0 12px}.t-fa-ic svg{width:16px;height:16px}
+.t-fi{flex:1;min-width:0;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;font:inherit;font-size:13.5px;color:#13233F;height:100%;padding:0 14px;margin:0}
+select.t-fi{font-weight:700;cursor:pointer;padding-right:10px}input.t-fi{font-weight:500;cursor:text}input.t-fi::placeholder{color:#9AA4BA}
+.t-frad{display:flex;align-items:center;gap:22px}
+.t-frad label{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:#3A4763;cursor:pointer;white-space:nowrap;margin:0}
+.t-frad label:has(input:checked){color:#0B2447;font-weight:800}
+.t-frad input{width:16px;height:16px;margin:0;accent-color:#0B2447;cursor:pointer}
+.t2 .t-frad input:focus-visible{outline:2px solid #0B2447!important;outline-offset:2px}
+@media(max-width:1000px){.t-pubar .t-fg-pri{grid-column:1/-1}}
 `;
 const st=document.createElement('style');st.id='mt-t2-css';st.textContent=css;document.head.appendChild(st);
 window.MT_T2={page,pubBuild,mapRes,musimOf:ds=>musimOf(ds),ghGuess:g=>ghGuess(g),checkDay:(ds,c)=>checkDay(ds,c),_ST:ST};
