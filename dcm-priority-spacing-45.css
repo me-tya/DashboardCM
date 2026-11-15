@@ -29,3 +29,41 @@
     padding-left:14px!important;
   }
 }
+
+/* 261115-DCM-59: unified white secondary tabs with gold active underline.
+   Prioritas only; preserve four equal widths, placement, handlers and tab counts. */
+#tab-priority .prio-page > .cm-survey-subtabs.prio-subtabs{
+  background:#FFFFFF!important;
+  border:1px solid #E0E6EF!important;
+  border-radius:12px!important;
+  padding:4px 5px!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab{
+  background:#FFFFFF!important;
+  color:#123264!important;
+  border:0!important;
+  border-bottom:3px solid transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  font-weight:700!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active,
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"],
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active:hover,
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"]:hover{
+  background:#FFFFFF!important;
+  color:#0D2A5B!important;
+  border:0!important;
+  border-bottom:3px solid #D8AD3F!important;
+  box-shadow:none!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab:not(.active):not([aria-selected="true"]):hover{
+  background:#F8FAFD!important;
+  color:#0D2A5B!important;
+  border-bottom-color:#DCE5F0!important;
+}
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab.active .prio-tab-n,
+#tab-priority .cm-survey-subtabs.prio-subtabs > button.cm-survey-subtab[aria-selected="true"] .prio-tab-n{
+  background:#FFF0C8!important;
+  color:#122E60!important;
+}
