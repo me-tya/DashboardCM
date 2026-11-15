@@ -16450,7 +16450,7 @@ function prioReferenceTabHtml(can,rows){
   ${ex?`<div class="prio-worked"><b>${uiText('Example','Contoh')}: ${escapeHtml(top.p.singkatan||top.p.nama)} · ${ex.c.code}</b><div class="prio-wk"><span class="h">c</span><span class="h">u</span><span class="h">w′</span><span class="h">w′·u×100</span><span>${ex.v}</span><span>${prioFmt(ex.u,2)}</span><span>${prioFmt(ex.wn,3)}</span><span>${prioFmt(ex.contrib*100,1)}</span></div></div>`:''}
  </aside>`;
  const tog=(k,on,label)=>`<label class="prio-tog"><input type="checkbox" data-rtog="${k}" ${on?'checked':''}><span class="prio-sw"></span>${label}</label>`;
- return `<div class="prio-reftools"><b>${uiText('Table 1 · Criteria and Weights','Tabel 1 · Kriteria dan Bobot')}</b>${prioRefEditBtns('crit',can)}<span class="prio-sp"></span>${tog('formula',prioUi.showFormula,uiText('Show formula','Tampilkan formula'))}${can?tog('edit',prioUi.wEdit,uiText('Edit weights','Edit bobot')):''}${tog('params',prioUi.showParams,uiText('Show all parameters','Tampilkan semua parameter'))}<button type="button" class="btn btn-outline btn-sm" id="prioExport2" ${prioState.projects.length?'':'disabled'}>${iconDownload()} Excel</button></div>
+ return `<div class="prio-reftools"><b>${uiText('Table 1 · Criteria and Weights','Tabel 1 · Kriteria dan Bobot')}</b>${prioRefEditBtns('crit',can)}<span class="prio-sp"></span>${tog('formula',prioUi.showFormula,uiText('Show formula','Tampilkan formula'))}${can?tog('edit',prioUi.wEdit,uiText('Edit weights','Edit bobot')):''}${tog('params',prioUi.showParams,uiText('Show all parameters','Tampilkan semua parameter'))}<button type="button" class="btn btn-outline btn-sm" id="prioExport2" ${prioState.projects.length?'':'disabled'}>${iconDownload()} Excel</button><button type="button" class="btn btn-outline btn-sm" id="prioReport" ${prioState.projects.length?'':'disabled'}>📄 ${uiText('Report','Laporan')}</button></div>
   <div class="prio-rlayout${prioUi.showFormula?'':' noformula'}"><div class="prio-rmain">${prioCritTextEditorHtml(can)}${table}${poster}${prioProgramTableHtml()}${prioRiskTableHtml(can)}${prioIndLibCardHtml(can)}</div>${prioUi.showFormula?formula:''}</div>
   <p class="prio-foot">${uiText('The ranking is a decision aid for focusing Pusmantap\'s advisory support (resource person/FGD); decisions on substantive work remain with the owning unit.','Peringkat ini alat bantu menentukan fokus pendampingan (narasumber/FGD) Pusmantap; keputusan substansi tetap berada pada unit pemilik proyek.')}</p>`;
 }
@@ -16835,12 +16835,12 @@ function renderPriority(){
  else if(tab==='monev')body=prioMonevTabHtml(can);
  else body=prioReferenceTabHtml(can,rows);
  el.innerHTML=`<div class="prio-page">
-  <div class="prio-hero"><div class="prio-title-group"><h2>${uiText('Project Prioritization','Prioritas Proyek')}</h2><p>${uiText('Ranking of transformation projects based on criteria, weights, and benefit indicators.','Pemeringkatan proyek transformasi berdasarkan kriteria, bobot, dan indikator manfaat.')}</p></div><div class="prio-hero-actions">${can?`<button class="btn btn-gold btn-sm" id="prioAdd">+ ${uiText('Add Project','Tambah Proyek')}</button>`:''}<button class="btn btn-outline btn-sm prio-btn-light" id="prioExport" ${prioState.projects.length?'':'disabled'}>${iconDownload()} Excel</button><button class="btn btn-outline btn-sm prio-btn-light" id="prioReport" ${prioState.projects.length?'':'disabled'}>📄 ${uiText('Report','Laporan')}</button></div></div>
+  <div class="prio-hero"><div class="prio-title-group"><h2>${uiText('Project Prioritization','Prioritas Proyek')}</h2><p>${uiText('Ranking of transformation projects based on criteria, weights, and benefit indicators.','Pemeringkatan proyek transformasi berdasarkan kriteria, bobot, dan indikator manfaat.')}</p></div><div class="prio-hero-actions">${can?`<button class="btn btn-gold btn-sm" id="prioAdd">+ ${uiText('Add Project','Tambah Proyek')}</button>`:''}</div></div>
   <div class="cm-survey-subtabs prio-subtabs" role="tablist">${tabs.map(([k,l,n])=>`<button type="button" role="tab" aria-selected="${tab===k}" class="cm-survey-subtab ${tab===k?'active':''}" data-prio-tab="${k}">${l}${n!==null?` <em class="prio-tab-n">${n}</em>`:''}${k!=='projects'&&prioUi.wEdit&&prioDraftDirty()?' <i class="prio-tab-dot" title="'+uiText('Unsaved weights','Bobot belum disimpan')+'"></i>':''}</button>`).join('')}</div>
   ${tab==='projects'?`<section class="prio-kpi-stage" aria-label="${uiText('Project priority at a glance','Ringkasan prioritas proyek')}">${prioKpisHtml}</section>`:''}
   ${body}</div>`;
  el.querySelector('#prioAdd')?.addEventListener('click',()=>prioOpenForm(''));
- el.querySelector('#prioExport')?.addEventListener('click',prioExportExcel);
+ 
  el.querySelector('#prioExport2')?.addEventListener('click',prioExportExcel);
  el.querySelector('#prioToggleDone')?.addEventListener('click',()=>{prioUi.showDone=!prioUi.showDone;renderPriority();});
  el.querySelectorAll('[data-prio-tab]').forEach(b=>b.onclick=()=>{prioUi.tab=b.dataset.prioTab;prioLsSet('cmPrioTab',prioUi.tab);renderPriority();});
@@ -17216,7 +17216,7 @@ function prioXlsxProjectSheet(wb,used,name,title,sc,opts={}){
 }
 async function prioExportExcel(){
  let ExcelJS;try{ExcelJS=await prioLoadExcelJS();}catch(e){toast(uiText('Styled Excel library unavailable — exporting basic Excel.','Library Excel bergaya tidak termuat — mengekspor Excel standar.'),'info');return prioExportExcelBasic();}
- const btns=[...document.querySelectorAll('#prioExport,#prioExport2')];btns.forEach(b=>b.disabled=true);
+ const btns=[...document.querySelectorAll('#prioExport2')];btns.forEach(b=>b.disabled=true);
  try{
  prioAbsCache=null;const prevLang=currentLang;currentLang='id';
  let wb;
