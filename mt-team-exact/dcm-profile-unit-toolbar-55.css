@@ -1,6 +1,6 @@
 /* Dashboard CM v55 · Tim Pusmantap Profil / Per Unit only.
    Overrides are scoped to this tab: original MT buttons and cards unchanged. */
-#t2 .t-pvb.t-pv-unit .dcm-pu-toolbar{display:grid;grid-template-columns:minmax(315px,1.15fr) minmax(175px,.6fr) minmax(225px,1fr);align-items:center;gap:10px;margin:0 0 12px;padding:0;min-width:0}
+#t2 .t-pvb.t-pv-unit .dcm-pu-toolbar{display:grid;grid-template-columns:auto minmax(175px,.7fr) minmax(225px,1.3fr);align-items:center;gap:10px;margin:0 0 12px;padding:0;min-width:0}
 #t2 .t-pvb.t-pv-unit .dcm-pu-modes{min-width:0}
 #t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum{width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;padding:3px;background:#f2f5fb;border:1px solid #e1e8f3;border-radius:10px;gap:3px;min-height:40px}
 #t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum button{min-width:0;width:100%;padding:6px 8px;border-radius:7px;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;box-shadow:none}
@@ -31,3 +31,16 @@
  #t2 .t-pvb.t-pv-unit .dcm-pu-toolbar{grid-template-columns:minmax(0,1fr);gap:7px}
  #t2 .t-pvb.t-pv-unit .dcm-pu-search{grid-column:auto}
 }
+
+/* v57 · "Lihat dari" radio dengan bingkai gold & navy */
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat{display:flex;align-items:center;gap:4px;min-height:44px;height:44px;padding:0 4px 0 12px;background:#FFFBEF;border:1.5px solid #FDB913;border-radius:11px;width:auto}
+#t2 .t-pvb.t-pv-unit .dcm-lihat .dcm-lihat-l{font-size:12.5px;font-weight:800;color:#0B2447;margin-right:6px;white-space:nowrap}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button{display:inline-flex;align-items:center;gap:8px;width:auto;height:34px;padding:0 12px;border-radius:8px;background:transparent;color:#0B2447;font-size:12.5px;font-weight:700;overflow:visible}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button:hover{background:#FFF1C7}
+#t2 .t-pvb.t-pv-unit .dcm-lihat i.dcm-rd{width:15px;height:15px;border-radius:50%;border:2px solid #8C99B3;background:#fff;position:relative;flex:none}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button.t-on{background:#0B2447;color:#fff}
+#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd{border-color:#FDB913;background:#0B2447}
+#t2 .t-pvb.t-pv-unit .dcm-lihat button.t-on i.dcm-rd:after{content:'';position:absolute;inset:2px;border-radius:50%;background:#FDB913}
+#t2 .t-pvb.t-pv-unit .dcm-pu-team,#t2 .t-pvb.t-pv-unit .dcm-pu-search .t-pul-s{height:44px}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes{min-width:max-content}
+#t2 .t-pvb.t-pv-unit .dcm-pu-modes .t-pum.dcm-lihat button{flex:none;text-overflow:clip}
