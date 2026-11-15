@@ -348,9 +348,9 @@ function popup(p,tid){const o=(v,a)=>a.map(x=>'<option '+(x[0]===v?'selected':''
   (extra?'<button type="button" class="t-btn t-sm" data-tprm="'+H(tid)+'" data-tpn="'+H(p.n)+'" style="width:100%;margin-top:6px;justify-content:center">Keluarkan dari '+H(tid)+'</button>':'')+'<div style="display:flex;justify-content:space-between;margin-top:8px"><button type="button" class="t-lnk" data-act="tmUnits" data-v="'+H(p.n)+'">Atur unit '+ic('arrow','s')+'</button><button type="button" class="t-lnk" data-topen="'+H(p.n)+'">Profil '+ic('arrow','s')+'</button></div></div>'}
 
 /* ================= TAB PROFIL (halaman master–detail mt-tim.js) ================= */
-/* Profil: tab Profil Individu · Per unit · Pegawai sementara. */
+/* Profil: tab Profil Individu · Pegawai sementara · Pendampingan Unit. */
 function vProfil(){const pv=ST.pv||'orang';let inner='';
- const tabs='<div class="t-pvs" role="tablist" aria-label="Tampilan profil">'+[['orang','idc','Profil Individu'],['unit','org','Per unit (PMO, CMO, Pemilik Probis)'],['tmp','hour','Pegawai sementara']].map(x=>'<button type="button" role="tab" aria-selected="'+(pv===x[0])+'" data-tpv="'+x[0]+'" class="'+(pv===x[0]?'t-on':'')+'">'+ic(x[1],'s')+x[2]+(x[0]==='tmp'?'<em>'+P.filter(isTmp).length+'</em>':'')+'</button>').join('')+'</div>';
+ const tabs='<div class="t-pvs" role="tablist" aria-label="Tampilan profil">'+[['orang','idc','Profil Individu'],['tmp','hour','Pegawai sementara'],['unit','org','Pendampingan Unit']].map(x=>'<button type="button" role="tab" aria-selected="'+(pv===x[0])+'" data-tpv="'+x[0]+'" class="'+(pv===x[0]?'t-on':'')+'">'+ic(x[1],'s')+x[2]+(x[0]==='tmp'?'<em>'+P.filter(isTmp).length+'</em>':'')+'</button>').join('')+'</div>';
  if(pv==='unit')inner=vProfilUnit();
  else if(pv==='tmp'){const h=vSementara(),pre='<div class="t-card"><div class="t-head">'+seg()+'</div>';inner=h.startsWith(pre)?h.slice(pre.length).replace(/<\/div>$/,''):h}
  else{try{S.ui.tmView='orang';inner='<div class="t2-old">'+T().page().replace(AKT_HDR(),'').replace(/<div class="tm-vs"[\s\S]*?<\/div>/,'')+'</div>'}catch(e){inner='<p class="t-s" style="padding:18px">Profil belum dapat dimuat.</p>'}}
