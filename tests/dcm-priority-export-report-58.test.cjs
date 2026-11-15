@@ -26,7 +26,7 @@ assert(now.includes('class="btn btn-gold btn-sm" id="prioAdd"'),'gold main CTA u
 let checked=0;
 for(const match of now.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){
  const attrs=match[1]||'',script=match[2]||'';
- if(!script.trim()||/\bsrc\s*=/i.test(attrs)||/type\s*=\s*["']application\/(json|ld\+json)["']/i.test(attrs))continue;
+ if(!script.trim()||/\bsrc\s*=/i.test(attrs)||/type\s*=\s*["'](?:module|application\/(?:json|ld\+json))["']/i.test(attrs))continue;
  new vm.Script(script,{filename:'index-inline-'+(++checked)+'.js'});
 }
 assert(checked>2,'inline script validation ran');
