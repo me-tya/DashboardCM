@@ -37,3 +37,87 @@
 #appMain > .tabs-row #tabNav > .tab-btn.active > .tab-icon{color:#E3C76A!important}
 #appMain > .tabs-row #tabNav > .tab-btn > .count-badge{background:#FFF3D1!important;color:#8A5E00!important;opacity:1!important}
 #appMain > .tabs-row #tabNav > .tab-btn.active > .count-badge{background:#E3C76A!important;color:#0F2346!important}
+
+/* 261115-DCM-61 — compact shared filters: two desktop rows, icon-only actions.
+   Works with existing controls/events. Narrow screens retain the original
+   responsive filter layout to avoid truncating dates or select values. */
+@media(min-width:1500px){
+  #contextFilterBar:has(> #filterBarBody.cm-fgrid:not(.hidden)){
+    display:grid!important;
+    grid-template-columns:repeat(16,minmax(0,1fr))!important;
+    grid-template-rows:38px 38px!important;
+    align-items:stretch!important;
+    column-gap:7px!important;
+    row-gap:7px!important;
+    padding:8px 10px!important;
+    min-height:0!important;
+  }
+  #contextFilterBar:has(> #filterBarBody.cm-fgrid:not(.hidden)) > .filter-bar-row1,
+  #contextFilterBar > #filterBarBody.cm-fgrid:not(.hidden){
+    display:contents!important;
+  }
+  #contextFilterBar:has(> #filterBarBody.cm-fgrid:not(.hidden)) > .filter-bar-row1 > .search-wrap{
+    grid-column:1 / span 3!important;grid-row:1!important;min-width:0!important;
+    height:38px!important;margin:0!important;
+  }
+  #contextFilterBar:has(> #filterBarBody.cm-fgrid:not(.hidden)) > .filter-bar-row1 > #btnFilterToggle{
+    grid-column:4!important;grid-row:1!important;min-width:0!important;
+    height:38px!important;margin:0!important;padding:0 8px!important;
+    gap:5px!important;justify-content:center!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterTahun{grid-column:5 / span 3!important;grid-row:1!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterKategori{grid-column:8 / span 3!important;grid-row:1!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterProgram{grid-column:11 / span 3!important;grid-row:1!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterUnitType{grid-column:14 / span 3!important;grid-row:1!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterUnit{grid-column:1 / span 3!important;grid-row:2!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterLayanan{grid-column:4 / span 3!important;grid-row:2!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterStatus{grid-column:7 / span 3!important;grid-row:2!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > #filterPic{grid-column:10 / span 3!important;grid-row:2!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fper{
+    grid-column:13 / span 3!important;grid-row:2!important;
+    width:100%!important;min-width:0!important;min-height:0!important;
+    height:38px!important;margin:0!important;padding:0 6px!important;gap:4px!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fper small{font-size:10.5px!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fper .filter-date-sep{font-size:11px!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fper input.filter-date{
+    font-size:11px!important;min-width:0!important;padding:0!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact{
+    grid-column:16!important;grid-row:2!important;
+    display:flex!important;align-items:center!important;justify-content:flex-end!important;
+    flex-wrap:nowrap!important;gap:3px!important;min-width:0!important;
+    width:100%!important;height:38px!important;margin:0!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > .sp{display:none!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > :is(.cm-frst,.btn){
+    box-sizing:border-box!important;
+    flex:1 1 0!important;min-width:0!important;
+    width:auto!important;max-width:38px!important;
+    height:38px!important;min-height:38px!important;
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;
+    gap:0!important;padding:0!important;margin:0!important;
+    border-radius:9px!important;white-space:nowrap!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > .cm-frst > span:not(.n){
+    position:absolute!important;width:1px!important;height:1px!important;
+    padding:0!important;margin:-1px!important;overflow:hidden!important;
+    clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > :is(.btn){
+    font-size:0!important;letter-spacing:0!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > :is(.btn,.cm-frst) svg{
+    flex:none!important;width:17px!important;height:17px!important;
+    margin:0!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > .cm-frst{position:relative!important}
+  #filterBarBody.cm-fgrid:not(.hidden) > .cm-fact > .cm-frst .n:not(.hidden){
+    position:absolute!important;top:-5px!important;right:-3px!important;
+    padding:0 4px!important;line-height:14px!important;min-width:14px!important;
+  }
+  #filterBarBody.cm-fgrid:not(.hidden) > select.filter-select{
+    height:38px!important;min-width:0!important;max-width:100%!important;
+    padding:0 22px 0 9px!important;margin:0!important;font-size:12px!important;
+  }
+}
