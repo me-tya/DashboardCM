@@ -1,4 +1,4 @@
-/* Exact original MT common helpers extracted by top-level AST spans from commit 38cfc10f443a9ae3bebd9acfce66e4604e72abd2. Never hand-modify these snippets. */
+/* Exact original MT common helpers extracted by top-level AST spans from commit 5399984bd1f9c96b7852bd8fb559dc92eed0af7f. Never hand-modify these snippets. */
 
 /* chLib */
 function chLib(src,test){if(test())return Promise.resolve();return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=()=>res();s.onerror=()=>rej(new Error('Pustaka ekspor tidak dapat dimuat.'));document.head.appendChild(s)})}
