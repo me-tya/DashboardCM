@@ -348,7 +348,7 @@ async function saveDraft(d){
     if(previous===undefined)delete a.cmMtDocumentDrafts;else a.cmMtDocumentDrafts=previous;
    }
   }
-  d.status=localSaved?'Draft tersimpan lokal di browser. Simpan Aktivitas agar dapat disinkronkan ke Firebase.':'Draft belum tersimpan. Unduh Word untuk menyimpan hasilnya.';
+  d.status=localSaved?'Draft tersimpan di browser ini. Setelah Aktivitas tersimpan, buka kembali konsep dan klik Simpan Draft untuk sinkronisasi Firebase.':'Draft belum tersimpan. Unduh Word untuk menyimpan hasilnya.';
   repaint();return;
  }
  const snapshot={year:d.year,tw:d.tw,cfg:d.B.cfg,rows:d.B.rows,updatedAt:now()};
@@ -357,7 +357,7 @@ async function saveDraft(d){
   const a=cmState().agendas.find(x=>String(x.id)===String(d.aid));
   if(a){const old=a.cmMtOneOnOneDraft;a.cmMtOneOnOneDraft=snapshot;try{if(await persist()){d.status='Draft tersimpan pada Aktivitas dan Firebase.';repaint();return;}}catch(e){console.warn(e);}a.cmMtOneOnOneDraft=old;}
  }
- d.status='Draft tersimpan lokal di browser. Untuk sinkronisasi Firebase, simpan Aktivitas terlebih dahulu.';repaint();
+ d.status='Draft tersimpan di browser ini. Setelah Aktivitas tersimpan, buka kembali konsep dan klik Simpan Draft untuk sinkronisasi Firebase.';repaint();
 }
 function filename(d){return d.kind==='one'?`Draft_Undangan_1on1_TW${D().ONE_RM[d.tw]}_${d.year}.docx`:d.kind==='st'?`Konsep_Surat_Tugas_${stamp().replace(/-/g,'')}.docx`:`Konsep_Undangan_${stamp().replace(/-/g,'')}.docx`;}
 async function makeWord(d){if(d.kind==='one'){if(!d.B.rows.length)throw Error('Isi minimal satu sesi.');const B={...d.B,cfg:{...d.B.cfg,conf:{...d.B.cfg.conf}},rows:d.B.rows.map((r,i)=>({...r,no:i+1,sasaran:d.B.cfg.jenis==='unit'?'unit':''}))};return D().oneDocx(B,d.tw,d.year);}
