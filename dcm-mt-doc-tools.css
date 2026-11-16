@@ -77,3 +77,36 @@
 .dcm-doc-review input{accent-color:#133e6c}
 .dcm-doc-error{padding:12px;background:#fff1f1;color:#a32727;border-radius:9px;margin-top:7px}
 @media(max-width:800px){.dcm-doc-body{grid-template-columns:1fr;overflow:auto}.dcm-doc-edit,.dcm-doc-preview{overflow:visible;border:0}.dcm-doc-dialog{max-height:95vh}.dcm-doc-paper{min-height:0;padding:17px}#dcmActDbk{padding:9px}}
+
+/* 261116-DCM-07: compact, consistent backup and filter controls, all menus. */
+#dcmActDbk{
+ box-sizing:border-box!important;
+ height:38px!important;min-height:38px!important;
+ padding:0 13px!important;border-radius:9px!important;
+ line-height:1.2!important;font:600 12.5px Inter,Arial,sans-serif!important;
+}
+#contextFilterBar #btnFilterToggle{
+ box-sizing:border-box!important;
+ height:38px!important;min-height:38px!important;
+ padding:0 13px!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head > #dcmActDbk{
+ flex:0 0 auto!important;margin-left:auto!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head > #prioFilterToggle{
+ margin-left:0!important;
+}
+#tab-priority .prio-toolbar-actions > #dcmActDbk{flex:0 0 auto!important}
+#tab-resource .res-toolbar > #dcmActDbk{margin-left:auto}
+#tab-tasks .task-tools > #dcmActDbk{margin-left:auto}
+#tab-pusmantap > .dcm-dbk-special{
+ display:flex;align-items:center;justify-content:flex-end;gap:8px;
+ min-height:38px;margin:0 0 5px;padding:0 4px;
+}
+#filterBarBody .cm-fact .sp{flex:1 1 auto}
+#filterBarBody .cm-fact .sp + #btnResetFilter{flex:0 0 auto;margin-right:0}
+@media(max-width:760px){
+ #tab-priority .prio-filter-panel > .prio-filter-head > #dcmActDbk{margin-left:0!important}
+ #tab-resource .res-toolbar > #dcmActDbk,#tab-tasks .task-tools > #dcmActDbk{margin-left:0}
+ #dcmActDbk{padding:0 10px!important}
+}
