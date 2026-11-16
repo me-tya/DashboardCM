@@ -134,7 +134,10 @@ function starter(form,kind){
  let saved=null;const aid=idFromForm();if(aid){
   const a=cmState()?.agendas.find(x=>String(x.id)===String(aid));if(a?.cmMtOneOnOneDraft)saved=a.cmMtOneOnOneDraft;
  }
- if(!saved)try{saved=JSON.parse(localStorage.getItem('dcm-mt-one-'+(aid||base.nama+'-'+base.tgl))||'null')}catch(e){}
+ if(!saved)try{
+  const keys=[aid&&'dcm-mt-one-'+aid,'dcm-mt-one-'+base.nama+'-'+base.tgl].filter(Boolean);
+  for(const key of keys){const item=JSON.parse(localStorage.getItem(key)||'null');if(item?.cfg&&Array.isArray(item.rows)){saved=item;break;}}
+ }catch(e){console.warn('Draft lokal belum bisa dibaca',e);}
  const B=saved&&saved.cfg&&Array.isArray(saved.rows)?saved:{cfg,rows:[s]};
  return {kind,base,B,year:saved?.year||year,tw:saved?.tw||tw,form,aid,status:''};
 }
