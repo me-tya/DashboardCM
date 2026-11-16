@@ -364,5 +364,5 @@ let queued=false;
 function mount(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;try{setToolbar();injectIcons();}catch(e){console.warn('DCM MT document tools mount:',e);}});}
 const observer=new MutationObserver(records=>{if(records.some(r=>r.addedNodes.length||r.removedNodes.length))mount();});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mount();observer.observe(document.body,{subtree:true,childList:true});},{once:true});else {mount();observer.observe(document.body,{subtree:true,childList:true});}
-window.DCM_MT_TOOLS=Object.freeze({mount,open:newModal,mergeAgendas,importZip});
+window.DCM_MT_TOOLS=Object.freeze({mount,open:newModal,mergeAgendas,importZip,importOneSchedule});
 })();
