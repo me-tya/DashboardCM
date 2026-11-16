@@ -170,6 +170,76 @@ function fieldsBasic(d){
  const val=key==='picNames'?d.base.pic.map(p=>p.nama).join(', '):x[key]||'',wide=['tujuan','picNames','peserta','lokasi'].includes(key);
  return `<label class="${wide?'wide':''}">${E(label)}${['tujuan','peserta'].includes(key)?`<textarea data-simple="${key}" rows="2">${E(val)}</textarea>`:`<input data-simple="${key}" type="${type||'text'}" value="${E(val)}">`}</label>`;}).join('')}</div>`;
 }
+
+/* Impor jadwal 1-on-1: baca tabel Lampiran II Word dari Modul Transformasi,
+   juga mendukung Excel dengan kolom tanggal/waktu/agenda/unit. */
+async function importOneSchedule(file,d){
+ if(!file||!d||d.kind!=='one')return;
+ if(file.size>12*1024*1024)throw Error('Berkas maksimal 12 MB.');
+ const ext=(file.name.split('.').pop()||'').toLowerCase();
+ let tables=[],full='';
+ if(ext==='docx'){
+  if(!window.JSZip)throw Error('Pembaca DOCX belum dimuat.');
+  const z=await window.JSZip.loadAsync(file),entry=z.file('word/document.xml');
+  if(!entry)throw Error('Berkas Word tidak memuat document.xml.');
+  const xml=new DOMParser().parseFromString(await entry.async('string'),'application/xml');
+  if(xml.getElementsByTagName('parsererror').length)throw Error('Struktur dokumen Word tidak valid.');
+  const t=n=>[...n.getElementsByTagNameNS('*','t')].map(v=>v.textContent||'').join(' ').replace(/\s+/g,' ').trim();
+  full=t(xml);
+  tables=[...xml.getElementsByTagNameNS('*','tbl')].map(tbl=>
+   [...tbl.getElementsByTagNameNS('*','tr')].map(tr=>
+    [...tr.childNodes].filter(n=>n.localName==='tc').map(tc=>t(tc))));
+ }else if(['xlsx','xls'].includes(ext)){
+  if(!window.XLSX)throw Error('Pembaca Excel belum siap.');
+  const book=window.XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
+  tables=book.SheetNames.map(k=>window.XLSX.utils.sheet_to_json(book.Sheets[k],{header:1,defval:'',raw:false}).map(r=>r.map(v=>String(v||''))));
+  full=book.SheetNames.join(' ');
+ }else throw Error('Pilih Word (.docx) atau Excel (.xlsx/.xls) yang berisi jadwal 1-on-1.');
+ const normal=v=>String(v||'').replace(/\s+/g,' ').trim();
+ const low=v=>normal(v).toLowerCase();
+ const cols=rows=>{
+  const idx=rows.findIndex(r=>r.some(x=>/^(tanggal|hari\s*\/\s*tanggal)/i.test(normal(x)))&&r.some(x=>/^(waktu|pukul)/i.test(normal(x)))&&r.some(x=>/agenda|program/i.test(normal(x))));
+  if(idx<0)return null;
+  const names=rows[idx].map(low);
+  const find=(p,f)=>{const n=names.findIndex(x=>p.test(x));return n<0?f:n;};
+  const ix={date:find(/tanggal/,1),time:find(/waktu|pukul/,2),agenda:find(/agenda|program/,3),unit:find(/unit|uic/,4),mode:find(/mode|metode/,5),place:find(/lokasi|tempat|tautan/,6)};
+  return rows.slice(idx+1).map(r=>({r,ix}));
+ };
+ const months={januari:1,februari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12};
+ const dateOf=s=>{
+  const str=normal(s);
+  let m=str.match(/\b(\d{4})-(\d{1,2})-(\d{1,2})\b/);if(m)return [m[1],m[2],m[3]].map((x,i)=>i?String(x).padStart(2,'0'):x).join('-');
+  m=str.match(/\b(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})\b/i);
+  return m?m[3]+'-'+String(months[m[2].toLowerCase()]).padStart(2,'0')+'-'+m[1].padStart(2,'0'):'';
+ };
+ const times=s=>{
+  const m=normal(s).match(/(\d{1,2})[.:](\d{2})[^\d]+(\d{1,2})[.:](\d{2})/);
+  return m?[m[1].padStart(2,'0')+':'+m[2],m[3].padStart(2,'0')+':'+m[4]]:['',''];
+ };
+ const parsed=[];
+ for(const table of tables){
+  const rows=cols(table);if(!rows)continue;
+  for(const {r,ix}of rows){
+   const program=normal(r[ix.agenda]),uic=normal(r[ix.unit]),tgl=dateOf(r[ix.date]),[j1,j2]=times(r[ix.time]);
+   if(!tgl||!j1||!j2||!program||/^jumlah|total$/i.test(program))continue;
+   const both=normal(r[ix.place]),url=(both.match(/https?:\/\/[^\s,;]+/i)||[])[0]||'';
+   const place=normal(both.replace(url,'')).replace(/[;,\s]+$/,'');
+   const rawMode=normal(r[ix.mode]),mode=/hybrid|campuran/i.test(rawMode)?'Hybrid':/online|daring/i.test(rawMode)?'Online':/offline|luring/i.test(rawMode)?'Offline':url&&place?'Hybrid':url?'Online':'Offline';
+   const key=program.toLowerCase()+'|'+uic.toLowerCase()+'|'+tgl+'|'+j1;
+   if(parsed.some(x=>x.key===key))continue;
+   parsed.push({key,record:{id:uid(),tahun:Number(tgl.slice(0,4)),tw:Math.ceil(Number(tgl.slice(5,7))/3),no:0,tgl,j1,j2,program,uic,mode,lokasi:place,link:url,tema:'',cek:true,sasaran:''}});
+  }
+ }
+ if(!parsed.length)throw Error('Tidak ditemukan tabel jadwal dengan kolom Tanggal, Waktu, Agenda, dan Unit. Periksa Lampiran II.');
+ const existing=new Set(d.B.rows.map(r=>r.program.toLowerCase()+'|'+String(r.uic||'').toLowerCase()+'|'+r.tgl+'|'+r.j1));
+ const fresh=parsed.filter(x=>!existing.has(x.key)).map(x=>x.record);
+ if(!fresh.length){say('Semua sesi dari berkas sudah ada dalam draft.');return;}
+ if(!confirm('Tambahkan '+fresh.length+' sesi dari '+file.name+'? '+(parsed.length-fresh.length)+' sesi duplikat akan dilewati.'))return;
+ d.B.rows.push(...fresh);
+ if(/JADWAL RAPAT 1-ON-1 PER UNIT/i.test(full))d.B.cfg.jenis='unit';
+ d.status='Impor selesai: '+fresh.length+' sesi ditambahkan. Periksa tanda kuning sebelum mengunduh Word.';
+ repaint();
+}
 function fieldsOne(d){
  const C=d.B.cfg;const formFields=[
  ['sifat','Sifat surat'],['pen','Penandatangan'],['tempat','Tempat bersama'],['link','Tautan materi'],['rapat','Hari/tanggal bersama'],['tujuan','Daftar tujuan Lampiran I (1 per baris)'],['p1','Paragraf pembuka'],['p2a','Paragraf pengantar materi'],['p2b','Paragraf penutup materi'],['p3','Paragraf penutup surat']
@@ -184,7 +254,7 @@ function fieldsOne(d){
  ${[['program','Program / agenda','text'],['uic','Unit Eselon I','text'],['tgl','Tanggal','date'],['j1','Jam mulai','time'],['j2','Jam selesai','time'],['mode','Mode','mode'],['lokasi','Lokasi','text'],['link','Tautan Teams','text'],['tema','Tema / bahasan','text']].map(([key,label,typ])=>`<label class="${['program','tema'].includes(key)?'wide':''}">${label}${typ==='mode'?`<select data-row-field="${key}">${['Offline','Hybrid','Online'].map(m=>`<option ${r.mode===m?'selected':''}>${m}</option>`).join('')}</select>`:`<input data-row-field="${key}" type="${typ}" value="${E(r[key]||'')}" ${key==='program'?'list="dcmMtProgramList"':''}>`}</label>`).join('')}
  </div><div class="dcm-doc-review"><label><input type="checkbox" data-row-field="cek" ${r.cek?'':'checked'}> Tanggal, waktu dan lokasi sudah dicek</label></div></section>`).join('')}</div>
  <datalist id="dcmMtProgramList">${rowsInfo().map(s=>`<option value="${E(s)}"></option>`).join('')}</datalist>
- <div style="display:flex;gap:7px;margin-top:10px"><button type="button" class="dcm-doc-btn" data-add-session>＋ Tambah sesi</button><button type="button" class="dcm-doc-btn" data-copy-tw>⧉ Salin ke TW berikutnya</button></div>`;
+ <div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap"><button type="button" class="dcm-doc-btn" data-add-session>＋ Tambah sesi</button><button type="button" class="dcm-doc-btn" data-copy-tw>⧉ Salin ke TW berikutnya</button><button type="button" class="dcm-doc-btn" data-import-one>⇪ Impor jadwal Word/Excel</button><input id="dcmDocImportOne" type="file" accept=".docx,.xlsx,.xls" hidden></div>`;
 }
 let active=null;
 function repaint(){
@@ -229,6 +299,7 @@ function newModal(kind){
  host.addEventListener('change',e=>{
   const t=e.target,d=active;if(!d)return;
   if(t.dataset.confirm){d.B.cfg.conf[t.dataset.confirm]=t.checked;previewOnly();}
+  if(t.id==='dcmDocImportOne'){const file=t.files?.[0];t.value='';if(file)importOneSchedule(file,d).catch(err=>say('Impor 1-on-1 gagal: '+err.message,true));return;}
   if(t.id==='dcmDocJenis'){d.B.cfg.jenis=t.value;d.B.rows.forEach(r=>r.sasaran=t.value==='unit'?'unit':'');previewOnly();}
   if(t.id==='dcmDocQuarter'){d.tw=Number(t.value);d.B.rows.forEach(r=>{r.tw=d.tw;});repaint();}
   if(t.id==='dcmDocYear'){d.year=Number(t.value);d.B.rows.forEach(r=>{r.tahun=d.year;});repaint();}
@@ -238,6 +309,7 @@ function newModal(kind){
   if(b.dataset.docChoice){if(d.kind==='st')return;d.kind=b.dataset.docChoice;repaint();return;}
   if(b.hasAttribute('data-add-session')){d.B.rows.push({...getSession(d.form),id:uid(),program:'',tema:'',uic:'',tgl:'',j1:'',j2:'',cek:true});repaint();return;}
   if(b.dataset.delSession!=null){if(d.B.rows.length===1){say('Minimal satu sesi harus ada.');return;}d.B.rows.splice(Number(b.dataset.delSession),1);repaint();return;}
+  if(b.hasAttribute('data-import-one')){host.querySelector('#dcmDocImportOne')?.click();return;}
   if(b.hasAttribute('data-copy-tw')){const old=d.tw;d.tw=old===4?1:old+1;if(old===4)d.year++;d.B.rows=d.B.rows.map(r=>({...r,id:uid(),tw:d.tw,tahun:d.year,tgl:'',j1:'',j2:'',cek:true}));d.B.cfg.conf={tw:false,rapat:false,tempat:false,link:false,tujuan:false};d.B.cfg.rapat=null;repaint();return;}
   if(b.hasAttribute('data-doc-save'))await saveDraft(d);
   if(b.hasAttribute('data-doc-word'))await downloadDoc(d);
