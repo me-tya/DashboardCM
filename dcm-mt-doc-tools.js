@@ -48,6 +48,44 @@ function renderMenu(button){
   if(op==='zip')document.getElementById('dcmDbkZipInput')?.click();
  });
 }
+/* DCM 261116-07: same working Data & Backup button, across menu toolbars. */
+function placeBackupButton(button,filter){
+ const tab=typeof state==='undefined'?'table':state.activeTab;
+ const before=anchor=>{
+  if(anchor&&anchor.parentNode&&(button.parentNode!==anchor.parentNode||button.nextSibling!==anchor))anchor.parentNode.insertBefore(button,anchor);
+ };
+ const append=host=>{if(host&&(button.parentNode!==host||button!==host.lastElementChild))host.appendChild(button);};
+ if(tab==='priority'){
+  const host=document.getElementById('tab-priority');
+  const filterAction=host?.querySelector('#prioFilterToggle');
+  if(filterAction){before(filterAction);return;}
+  const toolbar=host?.querySelector('.prio-toolbar-actions');
+  if(toolbar){if(toolbar.firstElementChild)before(toolbar.firstElementChild);else append(toolbar);return;}
+ }
+ if(tab==='tasks'){
+  const host=document.querySelector('#tab-tasks .task-tools');
+  if(host){const reset=host.querySelector('#taskReset');if(reset)before(reset);else append(host);return;}
+ }
+ if(tab==='resource'){
+  const host=document.querySelector('#tab-resource .res-toolbar');
+  if(host){append(host);return;}
+ }
+ if(tab==='pusmantap'){
+  const panel=document.getElementById('tab-pusmantap');
+  if(panel){
+   let row=panel.querySelector(':scope > .dcm-dbk-special');
+   if(!row){row=document.createElement('div');row.className='dcm-dbk-special';panel.insertBefore(row,panel.firstChild);}
+   append(row);return;
+  }
+ }
+ before(filter);
+}
+/* Keep Reset next to Kompilasi Laporan, after the right-alignment spacer. */
+function alignFilterResetWithReports(){
+ const actions=document.querySelector('#filterBarBody .cm-fact');
+ const reset=actions?.querySelector('#btnResetFilter'),spacer=actions?.querySelector('.sp');
+ if(reset&&spacer&&spacer.nextElementSibling!==reset)spacer.after(reset);
+}
 function setToolbar(){
  const bar=document.getElementById('contextFilterBar'),filter=document.getElementById('btnFilterToggle');
  if(!bar||!filter)return;
@@ -58,8 +96,9 @@ function setToolbar(){
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
   button.addEventListener('click',()=>renderMenu(button));filter.parentNode.insertBefore(button,filter);
  }
- const visible=typeof state==='undefined'||state.activeTab==='table';
- button.classList.toggle('hidden',!visible);
+ button.classList.remove('hidden');
+ placeBackupButton(button,filter);
+ alignFilterResetWithReports();
  if(!document.getElementById('dcmDbkJsonInput')){
   const fi=document.createElement('input');fi.id='dcmDbkJsonInput';fi.type='file';fi.accept='.json,application/json';fi.hidden=true;document.body.appendChild(fi);
   fi.addEventListener('change',async()=>{const f=fi.files?.[0];fi.value='';if(!f)return;try{if(f.size>24*1024*1024)throw Error('File JSON maksimal 24 MB.');const o=JSON.parse(await f.text());const records=Array.isArray(o)?o:Array.isArray(o.agendas)?o.agendas:null;if(!records)throw Error('File tidak memuat daftar agendas.');await mergeAgendas(records,f.name);}catch(err){notify('Impor JSON gagal: '+err.message,true);}});
