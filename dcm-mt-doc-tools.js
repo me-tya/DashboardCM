@@ -139,6 +139,20 @@ function starter(form,kind){
   for(const key of keys){const item=JSON.parse(localStorage.getItem(key)||'null');if(item?.cfg&&Array.isArray(item.rows)){saved=item;break;}}
  }catch(e){console.warn('Draft lokal belum bisa dibaca',e);}
  const B=saved&&saved.cfg&&Array.isArray(saved.rows)?saved:{cfg,rows:[s]};
+ // Dokumen biasa dan Surat Tugas juga harus memulihkan draft, tidak hanya 1-on-1.
+ if(kind==='und'||kind==='st'){
+  const a=aid?cmState()?.agendas.find(x=>String(x.id)===String(aid)):null;
+  let draft=a?.cmMtDocumentDrafts?.[kind];
+  if(!draft)try{
+   const keys=[aid&&'dcm-mt-letter-'+aid+'-'+kind,'dcm-mt-letter-'+base.nama+'-'+base.tgl+'-'+kind].filter(Boolean);
+   for(const key of keys){const d=JSON.parse(localStorage.getItem(key)||'null');if(d?.base){draft=d;break;}}
+  }catch(e){console.warn('Draft surat lokal belum bisa dibaca',e);}
+  if(draft?.base&&typeof draft.base==='object'&&!Array.isArray(draft.base)){
+   for(const k of ['nama','tujuan','peserta','tgl','jam','lokasi','hal','pen','sifat','dasar','dipa','pic','unit']){
+    const val=draft.base[k];if(k==='pic'?Array.isArray(val):typeof val==='string')base[k]=val;
+   }
+  }
+ }
  return {kind,base,B,year:saved?.year||year,tw:saved?.tw||tw,form,aid,status:''};
 }
 const previewKop=()=>`<header><img src="${E(D().ONE_LOGO)}" alt="Logo Kementerian Keuangan"><div class="kop"><b>KEMENTERIAN KEUANGAN REPUBLIK INDONESIA</b><b>BADAN TEKNOLOGI, INFORMASI, DAN INTELIJEN KEUANGAN</b><b>PUSAT MANAJEMEN TRANSFORMASI DAN PERUBAHAN</b><small>GEDUNG JB. SUMARLIN LANTAI 1-6, JALAN DR. WAHIDIN RAYA NO. 1, JAKARTA 10710</small></div></header>`;
@@ -319,7 +333,24 @@ function newModal(kind){
 }
 function draftKey(d){return 'dcm-mt-one-'+(d.aid||d.base.nama+'-'+d.base.tgl);}
 async function saveDraft(d){
- if(d.kind!=='one'){d.status='Isian konsep tersedia selama jendela ini terbuka. Unduh Word untuk menyimpannya.';repaint();return;}
+ if(d.kind!=='one'){
+  const snapshot={kind:d.kind,base:JSON.parse(JSON.stringify(d.base)),updatedAt:now()};
+  const key='dcm-mt-letter-'+(d.aid||d.base.nama+'-'+d.base.tgl)+'-'+d.kind;
+  let localSaved=false;
+  try{localStorage.setItem(key,JSON.stringify(snapshot));localSaved=true;}catch(err){console.warn('Penyimpanan draft lokal:',err);}
+  if(d.aid&&cmState()){
+   const a=cmState().agendas.find(x=>String(x.id)===String(d.aid));
+   if(a){
+    const previous=a.cmMtDocumentDrafts;
+    a.cmMtDocumentDrafts={...(previous||{}),[d.kind]:snapshot};
+    try{if(await persist()){d.status='Draft '+(d.kind==='st'?'Surat Tugas':'Undangan Biasa')+' tersimpan pada Aktivitas dan Firebase.';repaint();return;}}
+    catch(e){console.warn('Gagal menyimpan draft surat ke Firebase:',e);}
+    if(previous===undefined)delete a.cmMtDocumentDrafts;else a.cmMtDocumentDrafts=previous;
+   }
+  }
+  d.status=localSaved?'Draft tersimpan lokal di browser. Simpan Aktivitas agar dapat disinkronkan ke Firebase.':'Draft belum tersimpan. Unduh Word untuk menyimpan hasilnya.';
+  repaint();return;
+ }
  const snapshot={year:d.year,tw:d.tw,cfg:d.B.cfg,rows:d.B.rows,updatedAt:now()};
  try{localStorage.setItem(draftKey(d),JSON.stringify(snapshot));}catch(err){console.warn(err);}
  if(d.aid&&cmState()){
