@@ -118,3 +118,27 @@
  #tab-resource .res-toolbar > #dcmActDbk,#tab-tasks .task-tools > #dcmActDbk{margin-left:0}
  #dcmActDbk{padding:0 10px!important}
 }
+
+/* DCM-65: search / Filter / Data & Backup have matching compact heights.
+   Pale navy distinguishes the administrator data action from the gray filter. */
+html:not([data-role="superadmin"]) #dcmActDbk{display:none!important}
+#dcmActDbk{
+  box-sizing:border-box!important;
+  height:42px!important;min-height:42px!important;
+  padding:0 13px!important;
+  background:#e8f0fb!important;border:1px solid #a8bfdc!important;
+  color:#143d72!important;border-radius:9px!important;
+}
+#dcmActDbk:hover,#dcmActDbk[aria-expanded="true"]{
+  background:#d9e7f9!important;border-color:#668ebd!important;color:#0b2e5a!important;
+}
+#dcmActDbk svg{width:17px;height:17px;flex:0 0 17px}
+#contextFilterBar .filter-bar-row1 #searchInput,
+#contextFilterBar .filter-bar-row1 #btnFilterToggle,
+#contextFilterBar .filter-bar-row1 #dcmActDbk{
+  box-sizing:border-box!important;
+  height:42px!important;min-height:42px!important;max-height:42px!important;
+}
+#contextFilterBar .filter-bar-row1 #searchInput{padding-top:0!important;padding-bottom:0!important}
+#contextFilterBar .filter-bar-row1 #btnFilterToggle,
+#contextFilterBar .filter-bar-row1 #dcmActDbk{padding-top:0!important;padding-bottom:0!important}

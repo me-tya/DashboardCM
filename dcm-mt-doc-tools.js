@@ -7,6 +7,8 @@ const editor=()=>document.querySelector('#agendaForm');
 const D=()=>window.DCM_MT_DOC_ENGINE;
 const mutable=()=>typeof cmCanMutate==='function'&&cmCanMutate();
 const privileged=()=>typeof cmCanManageReferences==='function'&&cmCanManageReferences();
+// The data-management toolbar is for authenticated Superadmin accounts only.
+const loggedInSuperadmin=()=>privileged()&&document.documentElement.getAttribute('data-role')==='superadmin'&&!!window.fbAuth?.currentUser;
 const say=(message,bad=false)=>{if(typeof toast==='function')toast(message,bad?'error':'info');else alert(message);};
 const term=(a,b)=>typeof uiText==='function'?uiText(a,b):b;
 const read=(f,k)=>f?.querySelector(`[name="${k}"]`)?.value?.trim()||'';
@@ -17,6 +19,7 @@ const cmState=()=>typeof state!=='undefined'&&state&&Array.isArray(state.agendas
 const notify=(t,error=false)=>{let n=document.getElementById('dcmDbkNotice');if(!n){n=document.createElement('div');n.id='dcmDbkNotice';n.innerHTML='<span></span><button type="button" title="Tutup">×</button>';n.querySelector('button').onclick=()=>n.remove();document.body.appendChild(n);}n.querySelector('span').textContent=t;n.style.background=error?'#8b2b36':'#102c52';};
 
 function renderMenu(button){
+ if(!loggedInSuperadmin()){document.getElementById('dcmMtDbkMenu')?.remove();button?.remove();return;}
  const old=document.getElementById('dcmMtDbkMenu');
  if(old){old.remove();button.setAttribute('aria-expanded','false');return}
  const menu=document.createElement('div');menu.id='dcmMtDbkMenu';menu.className='dcm-dbk-menu';menu.setAttribute('role','menu');
@@ -89,10 +92,16 @@ function alignFilterResetWithReports(){
 function setToolbar(){
  const bar=document.getElementById('contextFilterBar'),filter=document.getElementById('btnFilterToggle');
  if(!bar||!filter)return;
+ if(!loggedInSuperadmin()){
+  document.getElementById('dcmMtDbkMenu')?.remove();
+  document.getElementById('dcmActDbk')?.remove();
+  alignFilterResetWithReports();
+  return;
+ }
  let button=document.getElementById('dcmActDbk');
  if(!button){
   button=document.createElement('button');button.id='dcmActDbk';button.type='button';
-  button.innerHTML='<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Data &amp; Backup</span>';
+  button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg><span>Data &amp; Backup</span>';
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
   button.addEventListener('click',()=>renderMenu(button));filter.parentNode.insertBefore(button,filter);
  }
@@ -433,6 +442,9 @@ function injectIcons(){
 let queued=false;
 function mount(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;try{setToolbar();injectIcons();}catch(e){console.warn('DCM MT document tools mount:',e);}});}
 const observer=new MutationObserver(records=>{if(records.some(r=>r.addedNodes.length||r.removedNodes.length))mount();});
+// Role is stored on <html>, outside the existing body observer.
+const roleObserver=new MutationObserver(()=>mount());
+roleObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-role']});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{mount();observer.observe(document.body,{subtree:true,childList:true});},{once:true});else {mount();observer.observe(document.body,{subtree:true,childList:true});}
 window.DCM_MT_TOOLS=Object.freeze({mount,open:newModal,mergeAgendas,importZip,importOneSchedule});
 })();
