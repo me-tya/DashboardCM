@@ -1,0 +1,35 @@
+name: DCM 65 Compact Superadmin Database Toolbar
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-toolbar-superadmin-release-65.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Verify full prechange backup is safe
+        run: |
+          git fetch origin refs/heads/backup/261116-DCM-65:refs/remotes/origin/backup/261116-DCM-65
+          git archive --format=zip --output=/tmp/261116-DCM-65.zip origin/backup/261116-DCM-65
+          unzip -t /tmp/261116-DCM-65.zip | tail -1
+      - name: Apply compact superadmin toolbar
+        run: |
+          python3 scripts/dcm_toolbar_superadmin_65.py
+          node --check dcm-mt-doc-tools.js
+          git diff --check
+          git diff --stat
+      - name: Publish validated UI and role gate
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html dcm-mt-doc-tools.css dcm-mt-doc-tools.js
+          git commit -m "DCM-65: compact search toolbar with superadmin-only database button"
+          git pull --rebase origin main
+          git push origin HEAD:main
