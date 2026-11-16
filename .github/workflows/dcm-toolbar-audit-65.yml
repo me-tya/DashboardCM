@@ -1,0 +1,29 @@
+name: DCM 65 Toolbar Source Audit
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-toolbar-audit-65.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print context for the live toolbar and role checks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          pats=['Data & Backup','Data &amp; Backup','Data &amp;amp; Backup','dataBackup','data-backup','dataBackup','Superadmin','superadmin','searchInput','search-input','Filter','filter-toggle','toggleFilter']
+          for p in pats:
+            print('\\n### PATTERN',repr(p),'total',s.lower().count(p.lower()))
+            j=-1
+            for n in range(12):
+              j=s.lower().find(p.lower(),j+1)
+              if j<0:break
+              segment=s[max(0,j-650):j+850].replace('\\n','\\n')
+              print('MATCH',n+1,'OFFSET',j,'LINE',s.count('\\n',0,j)+1,'CONTEXT',repr(segment))
+          print('### INLINE STYLES AND SCRIPTS END')
+          print(repr(s[-1200:]))
+          PY
