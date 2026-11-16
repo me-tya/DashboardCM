@@ -85,3 +85,77 @@ function cmDetailV2(a,id){
   cmWireActivityNotulaDetail(a,modal);
 }
 window.cmDetailV2=cmDetailV2;
+
+
+/* Invitation Preview First: keep existing invitation sources/downloads; show preview before download. */
+(function(){
+ 'use strict';
+ var KEY='cm-inv-preview-first',active=null,files=[],token=0;
+ var tr=(en,id)=>typeof uiText==='function'?uiText(en,id):id;
+ var nm=f=>String(f.name||(f.url&&typeof fileNameFromUrl==='function'?fileNameFromUrl(f.url):'')||'Undangan');
+ var safe=u=>/^https?:\/\//i.test(String(u||''))?String(u):'';
+ var html=s=>typeof escapeHtml==='function'?escapeHtml(String(s||'')):String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ var style=document.createElement('style');style.id='cm-inv-preview-first-css';style.textContent=
+ '#cm-inv-preview-first{position:fixed;inset:0;z-index:100001;display:grid;place-items:center;padding:16px;background:#041936a8;font-family:inherit}'+
+ '#cm-inv-preview-first .cip-box{width:min(1060px,100%);height:min(820px,92vh);background:white;border-radius:15px;box-shadow:0 20px 65px #061b4355;display:flex;flex-direction:column;overflow:hidden}'+
+ '#cm-inv-preview-first .cip-head{background:#102b58;color:white;padding:12px 16px;display:flex;align-items:center;gap:12px}'+
+ '#cm-inv-preview-first .cip-head b{font-size:16px}#cm-inv-preview-first .cip-head small{display:block;color:#d5e0f1;font-size:11px;max-width:600px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+ '#cm-inv-preview-first .cip-close{border:1px solid #ffffff70;background:transparent;color:white;border-radius:8px;padding:5px 10px;margin-left:auto;font-size:20px;cursor:pointer}'+
+ '#cm-inv-preview-first .cip-main{display:flex;flex:1;min-height:0;background:#f5f7fb}'+
+ '#cm-inv-preview-first .cip-files{width:215px;flex:none;background:white;border-right:1px solid #e1e7f0;padding:10px;overflow:auto;display:grid;align-content:start;gap:6px}'+
+ '#cm-inv-preview-first .cip-files[hidden]{display:none}#cm-inv-preview-first .cip-files button{text-align:left;font-size:12px;color:#193762;background:white;border:1px solid #e0e6f0;border-radius:8px;padding:9px;overflow-wrap:anywhere;cursor:pointer}'+
+ '#cm-inv-preview-first .cip-files button.on{background:#fff8e6;border-color:#d7a62e}#cm-inv-preview-first .cip-view{min-width:0;flex:1;display:flex;flex-direction:column;min-height:0}'+
+ '#cm-inv-preview-first .cip-name{padding:10px;background:white;border-bottom:1px solid #e4e8f1;font-size:12px;font-weight:700;color:#162f59;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+ '#cm-inv-preview-first .cip-canvas{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;padding:7px}'+
+ '#cm-inv-preview-first .cip-canvas iframe{width:100%;height:100%;border:0;background:white}#cm-inv-preview-first .cip-canvas img{max-width:100%;max-height:100%;object-fit:contain}'+
+ '#cm-inv-preview-first .cip-info{text-align:center;color:#52637b;font-size:13px;line-height:1.5;padding:22px;max-width:480px}'+
+ '#cm-inv-preview-first .cip-foot{background:white;border-top:1px solid #e0e5ee;padding:10px 14px;display:flex;justify-content:flex-end;align-items:center;gap:8px}'+
+ '#cm-inv-preview-first .cip-foot button{border:1px solid #cbd6e6;background:#fff;color:#163668;padding:8px 12px;font:700 12px inherit;border-radius:8px;cursor:pointer}'+
+ '#cm-inv-preview-first .cip-foot .pri{background:#102b58;border-color:#102b58;color:#fff}'+
+ '@media(max-width:650px){#cm-inv-preview-first .cip-main{flex-direction:column}#cm-inv-preview-first .cip-files{width:auto;max-height:112px;grid-auto-flow:column;grid-auto-columns:minmax(130px,180px);border-right:0;border-bottom:1px solid #e1e7f0}}';
+ document.head.appendChild(style);
+ function close(){document.getElementById(KEY)?.remove();token++;document.removeEventListener('keydown',esc,true)}
+ function esc(e){if(e.key==='Escape'){e.preventDefault();close()}}
+ function kind(f,u){var z=(nm(f)+' '+String(f.mime||'')+' '+String(u).slice(0,50)).toLowerCase();return /application\/pdf|\.pdf(?:\?|$)/.test(z)?'pdf':/image\/(?:png|jpe?g|webp|gif|bmp)|\.(?:png|jpe?g|webp|gif|bmp)(?:\?|$)/.test(z)?'image':'other'}
+ async function choose(i){
+  var f=files[i],box=document.getElementById(KEY);if(!box||!f)return;
+  active=f;var serial=++token,canvas=box.querySelector('.cip-canvas'),source=box.querySelector('[data-cip-source]');
+  box.querySelector('.cip-name').textContent=nm(f);
+  box.querySelectorAll('[data-cip-select]').forEach(b=>b.classList.toggle('on',Number(b.dataset.cipSelect)===i));
+  canvas.innerHTML='<div class="cip-info">'+tr('Preparing preview…','Menyiapkan pratinjau…')+'</div>';
+  source.hidden=true;source.onclick=null;
+  try{
+   var url=f.refId?await fetchDocImageDataUrl(f.refId):safe(f.url);
+   if(serial!==token||!document.getElementById(KEY))return;
+   if(!url){canvas.innerHTML='<div class="cip-info">'+tr('Cannot load the file. Please check access.','Berkas tidak dapat dimuat. Periksa izin akses.')+'</div>';return}
+   var k=kind(f,url);
+   if(k==='image'){var im=document.createElement('img');im.src=url;im.alt=nm(f);canvas.replaceChildren(im)}
+   else if(k==='pdf'){var frame=document.createElement('iframe');frame.title=nm(f);frame.src=url;canvas.replaceChildren(frame)}
+   else canvas.innerHTML='<div class="cip-info">'+tr('This file format cannot be previewed directly. Open the source or download it below.','Format berkas ini belum mendukung pratinjau langsung. Buka sumber atau unduh melalui tombol di bawah.')+'</div>';
+   if(safe(url)){source.hidden=false;source.onclick=()=>window.open(url,'_blank','noopener,noreferrer')}
+  }catch(err){if(serial===token)canvas.innerHTML='<div class="cip-info">'+html(err.message||'Pratinjau tidak tersedia')+'</div>'}
+ }
+ function show(id){
+  var a=state.agendas.find(x=>String(x.id)===String(id));if(!a)return;
+  var list=cmInvitationSources(a);if(!list.length)return;
+  close();files=list;active=null;
+  var root=document.createElement('div');root.id=KEY;
+  root.innerHTML='<div class="cip-box" role="dialog" aria-modal="true" aria-label="'+html(tr('Invitation preview','Pratinjau undangan'))+'">'+
+   '<div class="cip-head"><div><b>'+tr('Invitation preview','Pratinjau Undangan')+'</b><small>'+html(a.namaKegiatan||'')+'</small></div><button type="button" class="cip-close" data-cip-close aria-label="'+tr('Close','Tutup')+'">×</button></div>'+
+   '<div class="cip-main"><aside class="cip-files"'+(list.length===1?' hidden':'')+'>'+list.map((f,i)=>'<button type="button" data-cip-select="'+i+'">'+html(nm(f))+'</button>').join('')+'</aside><div class="cip-view"><div class="cip-name"></div><div class="cip-canvas"></div></div></div>'+
+   '<div class="cip-foot"><button type="button" data-cip-source hidden>'+tr('Open original','Buka sumber')+'</button><button type="button" data-cip-close>'+tr('Close','Tutup')+'</button><button type="button" class="pri" data-cip-download>'+tr('Download','Unduh')+'</button></div></div>';
+  root.addEventListener('click',e=>{
+   if(e.target===root||e.target.closest('[data-cip-close]')){close();return}
+   var b=e.target.closest('[data-cip-select]');if(b){choose(+b.dataset.cipSelect);return}
+   if(e.target.closest('[data-cip-download]')&&active)cmInvitationFetch(active);
+  });
+  document.body.appendChild(root);document.addEventListener('keydown',esc,true);choose(0);
+ }
+ window.cmInvitationOpen=show;
+ if(typeof window.cmInvitationBadge==='function'){
+  var orig=window.cmInvitationBadge;window.cmInvitationBadge=function(a){
+   return orig(a).replace(/Klik untuk mengunduh undangan(?: \(\d+ file\))?/g,'Klik untuk pratinjau undangan').replace(/Click to download the invitation(?: \(\d+ files\))?/g,'Click to preview the invitation')
+    .replace(/<svg class="inv-dl"[\s\S]*?<\/svg>/,'<svg class="inv-dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>');
+  }
+ }
+})();
