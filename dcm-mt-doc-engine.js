@@ -6,6 +6,8 @@
 (function(){
 "use strict";
 const ONE_DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function oneMode(v,x){const t=String(v||'').trim().toLowerCase();if(/^(offline|luring|tatap muka|onsite)$/.test(t))return 'Offline';if(/^(online|daring|virtual)$/.test(t))return 'Online';if(/^(hybrid|hibrid|campuran|blended)$/.test(t))return 'Hybrid';const lok=String((x&&x.lokasi)||'').trim(),lnk=String((x&&x.link)||'').trim()||(/^https?:/i.test(lok)?lok:''),fisik=lok&&!/^https?:/i.test(lok);return fisik&&lnk?'Hybrid':lnk?'Online':'Offline';}
+
 const docZip=async()=>{if(typeof window.JSZip==='undefined')throw new Error('Pustaka Word (JSZip) belum tersedia. Muat ulang aplikasi.');};
 const oneJam=(a,b)=>String(a||'').replace(':','.')+' - '+String(b||'').replace(':','.')+' WIB';
 const oneRoom=r=>String(r?.lokasi||r?.room||'').trim();
@@ -120,5 +122,6 @@ async function ordinaryDocx(kind,x){
   +par(dxR('Mengingat pentingnya kegiatan dimaksud, kami mohon kehadiran Bapak/Ibu tepat pada waktunya.'))
   +par(dxR('Demikian kami sampaikan. Atas perhatian dan kerja sama Saudara, diucapkan terima kasih.'))+sig);
 }
+const oneYCount=B=>['tw','rapat','tempat','link','tujuan'].filter(k=>oneY(B,k)).length+B.rows.filter(r=>oneY(B,'tgl',r.id)||oneY(B,'jam',r.id)||oneY(B,'tl',r.id)).length;
 window.DCM_MT_DOC_ENGINE=Object.freeze({oneDocx,ordinaryDocx,ONE_RM,ONE_TUJUAN,ONE_DEF,ONE_LOGO,oneYCount,oneRange});
 })();
