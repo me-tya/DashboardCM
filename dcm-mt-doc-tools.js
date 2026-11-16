@@ -173,6 +173,7 @@ function fieldsOne(d){
  ];
  const props={...C,p1:C.p?.p1||D().ONE_DEF.p1(D().ONE_RM[d.tw],d.year),p2a:C.p?.p2a||D().ONE_DEF.p2a,p2b:C.p?.p2b||D().ONE_DEF.p2b,p3:C.p?.p3||D().ONE_DEF.p3,tujuan:(C.tujuan||[]).join('\n')};
  return `<div class="dcm-doc-title">Pengaturan draft undangan — Triwulan ${D().ONE_RM[d.tw]} ${d.year}</div>
+ <div class="dcm-doc-fields" style="margin-bottom:12px"><label class="wide">Jenis undangan (sama seperti Modul Transformasi)<select id="dcmDocJenis"><option value="program" ${C.jenis==='program'?'selected':''}>Per Program</option><option value="unit" ${C.jenis==='unit'?'selected':''}>Per Unit</option></select></label></div>
  <div class="dcm-doc-fields">${formFields.map(([key,label])=>`<label class="${['tujuan','p1','p2a','p2b','p3'].includes(key)?'wide':''}">${label}${['tujuan','p1','p2a','p2b','p3'].includes(key)?`<textarea data-cfg="${key}" rows="${key==='tujuan'?5:2}">${E(props[key]||'')}</textarea>`:`<input data-cfg="${key}" value="${E(props[key]||'')}">`}</label>`).join('')}</div>
  <div class="dcm-doc-review">${['tw','rapat','tempat','link','tujuan'].map(x=>`<label><input type="checkbox" data-confirm="${x}" ${C.conf?.[x]?'checked':''}> ${ {tw:'Triwulan',rapat:'Tanggal',tempat:'Tempat',link:'Tautan',tujuan:'Tujuan'}[x]} sudah dicek</label>`).join('')}</div>
  <div class="dcm-doc-title" style="margin-top:18px">Jadwal sesi 1-on-1</div>
@@ -225,6 +226,7 @@ function newModal(kind){
  host.addEventListener('change',e=>{
   const t=e.target,d=active;if(!d)return;
   if(t.dataset.confirm){d.B.cfg.conf[t.dataset.confirm]=t.checked;previewOnly();}
+  if(t.id==='dcmDocJenis'){d.B.cfg.jenis=t.value;d.B.rows.forEach(r=>r.sasaran=t.value==='unit'?'unit':'');previewOnly();}
   if(t.id==='dcmDocQuarter'){d.tw=Number(t.value);d.B.rows.forEach(r=>{r.tw=d.tw;});repaint();}
   if(t.id==='dcmDocYear'){d.year=Number(t.value);d.B.rows.forEach(r=>{r.tahun=d.year;});repaint();}
  });
