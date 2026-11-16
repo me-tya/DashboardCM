@@ -16,6 +16,18 @@ const MT_TEAMS=['Tim DCS','Tim DOA','Tim SPP','Tim SSB','Tim CM'];
 const MT_STR={'Kepala Pusat':'kapus','Kepala Bidang Program dan Manajemen Pengetahuan':'kabid','Kepala Subbidang Program dan Sistem Kerja':'psk','Kepala Subbagian Tata Usaha':'tu','Kepala Subbidang Manajemen Pengetahuan':'mp'};
 const mtCopy=x=>JSON.parse(JSON.stringify(x));
 const mtTxt=x=>String(x??'').trim();
+/* OCR Satu Kemenkeu: kqParseProfile in the unmodified MT helpers expects this
+ * name normalizer. Keep the missing dependency in the DCM compatibility shell
+ * rather than changing the original MT extraction. */
+function kqCleanName(raw){
+ return String(raw??'').normalize('NFKC')
+  .replace(/[\u200B-\u200D\uFEFF]/g,'')
+  .replace(/^\s*nama(?:\s+lengkap)?\s*[:：-]\s*/i,'')
+  .replace(/^[\s|•·@#(){}\[\]<>!?]+|[\s|•·@#(){}\[\]<>!?]+$/g,'')
+  .replace(/\s+/g,' ')
+  .trim();
+}
+
 function esc(s){return mtTxt(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function uid(){return 'DCM-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function log(){/* Audit persistence is managed by the DCM parent, not MT Firestore. */}
