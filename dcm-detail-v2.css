@@ -97,3 +97,29 @@
  .cm-detail .cd-title-banner{flex-wrap:wrap}
  .cm-detail .cd-id{max-width:none;margin-left:14px}
 }
+
+/* DCM 261116-02: consistent fixed action footer for Lihat/Ubah Aktivitas */
+.cm-detail .cd-footer{
+  flex:none;position:relative;z-index:20;min-height:64px;
+  display:flex;align-items:center;justify-content:flex-end;gap:9px;
+  border-top:1px solid #E4E9F2;background:#fff;padding:10px 16px;
+}
+.cm-detail .cd-foot-note{margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#60708A;font-size:11.5px}
+.cm-detail .cd-footer .btn{height:38px;padding:0 13px;font:600 12px 'Inter',sans-serif;white-space:nowrap;flex:none}
+.cm-detail .cd-footer .cd-report-btn{font-size:12px!important;display:inline-flex;align-items:center;justify-content:center}
+.cm-detail .cd-footer .cd-report-btn svg{width:15px;height:15px;flex:none;margin-right:5px}
+.cm-detail .cd-footer .cd-menu{flex:none;position:relative;z-index:30}
+.cm-detail .cd-footer .cd-menu>summary{height:38px;width:38px}
+.cm-detail .cd-footer .cd-menu-drop{top:auto;bottom:calc(100% + 6px);right:0;z-index:40}
+@media(max-width:1024px){
+ .cm-detail .cd-footer .cd-report-btn{font-size:11.5px!important}
+ .cm-detail .cd-footer .btn{padding:0 10px}
+}
+@media(max-width:760px){
+ .cm-detail .cd-footer{flex-wrap:wrap;min-height:56px;gap:6px;padding:9px 10px}
+ .cm-detail .cd-foot-note{display:none}
+ .cm-detail .cd-footer .btn{font-size:11.5px!important}
+}
+@media(max-width:520px){
+ .cm-detail .cd-footer .cd-report-btn{width:100%;order:2}
+}

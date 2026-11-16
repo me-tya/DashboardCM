@@ -47,16 +47,21 @@ function cmDetailV2(a,id){
     <div class="af-navfoot">${U('Read-only mode. Use Edit Activity to change the saved data.','Mode lihat. Gunakan Ubah Aktivitas untuk mengubah data yang tersimpan.')}</div>
     </aside><div class="af-main">
       <div class="modal-head"><div class="cd-head-title"><span class="af-num">${CM_AF_ICONS.doc}</span><div class="af-ttl"><h2>${t('activityDetails')}</h2><p>${U('Activity information and documents','Informasi dan dokumen aktivitas')}</p></div></div>
-        <div class="cd-header-actions"><button type="button" id="detailReport" class="btn btn-gold cd-report-btn">${CM_AF_ICONS.doc} ${U('Generate activity report','Buat Laporan Aktivitas')}</button>
-        ${can?`<button type="button" id="detailEdit" class="btn btn-outline">${U('Edit Activity','Ubah Aktivitas')}</button>`:''}
-        <details class="cd-menu"><summary title="${U('More actions','Aksi lainnya')}" aria-label="${U('More actions','Aksi lainnya')}">⋮</summary><div class="cd-menu-drop">${can?`<button type="button" id="detailDuplicate">${U('Duplicate','Duplikasi')}</button>`:''}<button type="button" id="detailHistory">${U('History','Riwayat')}</button>${eo?`<button type="button" id="detailManageEvent">${U('Manage Event','Kelola Event')}</button>`:''}${can?`<button type="button" id="detailDelete" class="cd-danger">${U('Delete','Hapus')}</button>`:''}</div></details>
-        <button type="button" class="modal-close" id="closeDetail" aria-label="${U('Close','Tutup')}">&times;</button></div></div>
+        <button type="button" class="modal-close" id="closeDetail" aria-label="${U('Close','Tutup')}">&times;</button></div>
       <div class="modal-body cd-body">${badge}<div class="cd-title-banner"><span class="cd-gold-bar"></span><h3>${E(a.namaKegiatan)}</h3><button type="button" class="cd-id" data-cd-copy-code title="${U('Copy activity number','Salin nomor aktivitas')}" aria-label="${U('Copy activity number','Salin nomor aktivitas')}" style="border:0;cursor:pointer;font-family:inherit">${E(publicCode)}</button></div>
         ${tabs.map(t=>`<div class="cd-panel ${t.k==='info'?'on':''}" data-cd-panel="${t.k}">${panels[t.k]||''}</div>`).join('')}</div>
+      <div class="modal-foot cd-footer">
+        <span class="cd-foot-note">${U('Read-only mode · saved activity','Mode lihat · data tersimpan')}</span>
+        <button type="button" id="detailCloseBottom" class="btn btn-outline btn-sm">${U('Close','Tutup')}</button>
+        <details class="cd-menu"><summary title="${U('More actions','Aksi lainnya')}" aria-label="${U('More actions','Aksi lainnya')}">⋮</summary><div class="cd-menu-drop">${can?`<button type="button" id="detailDuplicate">${U('Duplicate','Duplikasi')}</button>`:''}<button type="button" id="detailHistory">${U('History','Riwayat')}</button>${eo?`<button type="button" id="detailManageEvent">${U('Manage Event','Kelola Event')}</button>`:''}${can?`<button type="button" id="detailDelete" class="cd-danger">${U('Delete','Hapus')}</button>`:''}</div></details>
+        ${can?`<button type="button" id="detailEdit" class="btn btn-outline">${U('Edit Activity','Ubah Aktivitas')}</button>`:''}
+        <button type="button" id="detailReport" class="btn btn-gold cd-report-btn">${CM_AF_ICONS.doc} ${U('Generate activity report','Buat Laporan Aktivitas')}</button>
+      </div>
       </div></div>`;
   modal.classList.remove('hidden');
   hydrateDocThumbs(modal);hydrateGenericActivityFiles(modal);
   modal.querySelector('#closeDetail').onclick=()=>modal.classList.add('hidden');
+  modal.querySelector('#detailCloseBottom').onclick=()=>modal.classList.add('hidden');
   modal.querySelector('[data-cd-copy-code]')?.addEventListener('click',async()=>{
     try{
       if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(publicCode);}
