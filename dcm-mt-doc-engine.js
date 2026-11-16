@@ -5,6 +5,7 @@
  */
 (function(){
 "use strict";
+const JSZip=window.JSZip;
 const ONE_DAYS=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 function oneMode(v,x){const t=String(v||'').trim().toLowerCase();if(/^(offline|luring|tatap muka|onsite)$/.test(t))return 'Offline';if(/^(online|daring|virtual)$/.test(t))return 'Online';if(/^(hybrid|hibrid|campuran|blended)$/.test(t))return 'Hybrid';const lok=String((x&&x.lokasi)||'').trim(),lnk=String((x&&x.link)||'').trim()||(/^https?:/i.test(lok)?lok:''),fisik=lok&&!/^https?:/i.test(lok);return fisik&&lnk?'Hybrid':lnk?'Online':'Offline';}
 
