@@ -92,6 +92,14 @@
 }
 #tab-priority .prio-filter-panel > .prio-filter-head > #dcmActDbk{
  flex:0 0 auto!important;margin-left:auto!important;
+ height:30px!important;min-height:30px!important;padding:0 11px!important;
+ background:rgba(255,255,255,.13)!important;color:#fff!important;
+ border-color:rgba(240,207,126,.55)!important;border-radius:8px!important;
+ font:700 11.5px/1 Inter,Arial,sans-serif!important;
+}
+#tab-priority .prio-filter-panel > .prio-filter-head > #dcmActDbk:hover,
+#tab-priority .prio-filter-panel > .prio-filter-head > #dcmActDbk[aria-expanded="true"]{
+ background:rgba(255,255,255,.25)!important;color:#fff!important;
 }
 #tab-priority .prio-filter-panel > .prio-filter-head > #prioFilterToggle{
  margin-left:0!important;
