@@ -28,6 +28,10 @@ function kqCleanName(raw){
   .trim();
 }
 
+/* OCR profile sections contain the unit on a separate line after the job title.
+ * Missing global from the original MT helper extraction. */
+const KQ_UNIT_START=/^(?:pusat|biro|sekretariat|direktorat|inspektorat|badan|kantor|kanwil|kantor\s+wilayah|bidang|subbidang|sub\s+bidang|bagian|subbagian|sub\s+bagian|subdirektorat|sub\s+direktorat|seksi|unit|balai|UPT|dinas)\b/i;
+
 function esc(s){return mtTxt(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function uid(){return 'DCM-'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function log(){/* Audit persistence is managed by the DCM parent, not MT Firestore. */}
