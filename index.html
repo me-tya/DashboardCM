@@ -14086,7 +14086,7 @@ function cmAfBuildLayout(modal,a){
   // --- Info utama
   const imp=form.querySelector('.und-import-card');if(imp){imp.classList.add('af-import');P.info.appendChild(imp);}
   sec(P.info,1,U('Activity','Kegiatan'),U('Name and schedule.','Nama dan waktu pelaksanaan.'),[F('namaKegiatan'),row('af-g4',[F('tglMulai'),F('tglSelesai'),F('jamMulai'),F('jamSelesai')]),document.getElementById('dailyTimeModeField')]);
-  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),cmAfEl(ActivityWBS.formHTML(a))]);ActivityWBS.wire(form);
+  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),cmAfEl(ActivityWBS.formHTML(a))]);
   const slotU=cmAfLetterSlot(F('undangan'),'undangan',U('Invitation letter','Surat undangan')),slotS=cmAfLetterSlot(F('suratTugas'),'suratTugas',U('Assignment letter','Surat tugas'));
   sec(P.info,3,U('Letters','Dasar surat'),U('Several links/files allowed. The newest version is the reference.','Bisa lebih dari satu link/file. Versi terbaru dipakai sebagai acuan.'),[slotU,slotS]);
   sec(P.info,4,U('Method','Metode'),U('Venue and/or meeting link.','Tempat dan/atau tautan rapat.'),[form.querySelector('.meeting-mode-row')]);
@@ -14124,7 +14124,7 @@ function cmAfBuildLayout(modal,a){
   // sisa field yang belum terpetakan → tetap di Info Utama (tidak ada yang hilang)
   [...grid.children].forEach(ch=>{if(ch.matches('.form-field,.meeting-mode-row')&&!ch.closest('.af-panel'))P.info.appendChild(ch);});
   const panels=cmAfEl('<div class="af-panels"></div>');CM_AF_TABS.forEach(t=>panels.appendChild(P[t.k]));
-  grid.replaceWith(panels);
+  grid.replaceWith(panels);ActivityWBS.wire(form);
   // shell
   const nav=cmAfEl(`<aside class="af-nav"><span class="af-mode" id="afMode">${a?'✎ '+U('EDIT ACTIVITY','EDIT ACTIVITY'):'＋ '+U('NEW ACTIVITY','ACTIVITY BARU')}</span>
     <div class="af-sum"><b id="afSumName">—</b><div class="af-sum-meta"><span id="afSumDate"></span><span id="afSumUnit"></span></div><span class="af-st" id="afSumSt"></span></div>
