@@ -1,4 +1,4 @@
-name: Deploy WBS classification Dashboard CM
+name: Deploy WBS classification Dashboard CM (validated)
 on:
   push:
     branches: [main]
