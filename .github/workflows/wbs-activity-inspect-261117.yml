@@ -1,0 +1,30 @@
+name: Inspect activity integration points for WBS
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/wbs-activity-inspect-261117.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read activity functions and target DOM anchors
+        run: |
+          python3 - <<'PY'
+          import re,pathlib
+          pats=['af-mode','af-tab','cm-af','activityForm','activity-form','saveActivity','saveEditActivity','editActivity','openActivity','renderActivit','filterActivit','Daftar Aktivitas','Aktivitas','wbsL4','wbsL5','quarter','triwulan','WBS','function save','function render','activityCategory','actCategory','actDate','activityDate','af-panel','af-main','actFilter','filteredActivities','loadActivities','addActivity','getActivities','state.activities','setDoc','addDoc']
+          for fn in ['index.html','tim-pusmantap.html','index2.html','dcm-detail-v2.js','mt-activity-reports.js','mt-dcm-report.js']:
+            p=pathlib.Path(fn)
+            if not p.exists(): continue
+            s=p.read_text(encoding='utf-8',errors='replace')
+            print('\n###',fn,'bytes',len(s),'lines',s.count('\n'))
+            for term in pats:
+              matches=list(re.finditer(re.escape(term),s,re.I))
+              if not matches:continue
+              print('KEY',term,'count',len(matches))
+              for m in matches[:3]:
+                i=m.start();print(' *',repr(s[max(0,i-130):min(len(s),i+210)].replace('\n',' ')))
+          PY
