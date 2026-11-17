@@ -12,9 +12,9 @@ def change(old,new,label):
     if n!=1:
         raise RuntimeError(f'{label}: expected one anchor, found {n}')
     s=s.replace(old,new,1)
-change('</head>',
+s=s.replace('</head>',
        '<link rel="stylesheet" href="activity-wbs.css">\n<script defer src="activity-wbs.js"></script>\n<script defer src="activity-wbs-dcm.js"></script>\n</head>',
-       'load shared WBS')
+       1)
 old="  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait')]);"
 new="  const wbsBody=sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait')]);\n  wbsBody.appendChild(cmAfEl('<div class=\"wbs-inline-field\">'+window.ActivityWBS.formHTML(a||{})+'</div>'));\n  window.ActivityWBS.wire(wbsBody);"
 change(old,new,'place classification in existing form')
