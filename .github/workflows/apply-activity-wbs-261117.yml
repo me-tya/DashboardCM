@@ -2,7 +2,7 @@ name: Apply activity PM CM WBS DCM
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/apply-activity-wbs-261117.yml']
+    paths: ['.github/workflows/apply-activity-wbs-261117.yml','scripts/apply_activity_wbs_261117.py']
   workflow_dispatch:
 permissions:
   contents: write
