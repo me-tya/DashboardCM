@@ -10,23 +10,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show activity functions, DOM anchors and data writes
+      - name: Print integration source ranges
         run: |
           python3 - <<'PY'
-          import pathlib
-          pats=["agendaForm","function cmAf","function openForm","function openAgenda","function getFiltered","function renderTable","function renderActivity","function renderAgenda","function act","function one","function saveAgenda","function saveAct","agendaForm.addEventListener","state.agendas.push","state.agendas[","S.oneonone.push","S.oneonone.splice","oneonone.filter","getFiltered(","actRows(","actForm(","actModal(","actSave(","actEdit(","actAdd(","renderAct(","actList(","actTable(","filters: {","oneTw","actTahun","function openDetail","data-act=\"act","case 'act","class=\"af-panels","class=\"af-sec","id=\"agendaForm\"","id='agendaForm'","function buildActivity","function submit","agendaForm.onsubmit","form.addEventListener","tambahAktivitas","tab-table","actCh","actFilter","S.oneonone=","oneonone.unshift"]
-          for fn in ['index.html','dcm-detail-v2.js','mt-activity-reports.js']:
-            p=pathlib.Path(fn)
-            if not p.exists(): continue
-            s=p.read_text(encoding='utf8',errors='replace');print('###',fn,len(s))
-            for term in pats:
-              starts=[];i=0
-              while 1:
-                k=s.lower().find(term.lower(),i)
-                if k<0:break
-                starts.append(k);i=k+len(term)
-              if not starts: continue
-              print('KEY',term,'COUNT',len(starts))
-              for k in starts[:5]:
-                print(' * L',s.count('\n',0,k)+1,repr(s[max(0,k-145):min(len(s),k+390)].replace('\n',' ')))
+          from pathlib import Path
+          lines=Path('index.html').read_text(encoding='utf8').splitlines()
+          for rng in '14028:14098,14565:14605,15094:15173,7392:7419,9485:9557,12430:12462'.split(','):
+            a,b=map(int,rng.split(':'))
+            print('\n### INDEX',a,b)
+            for k in range(a,b+1):
+              if k<=len(lines):print(f'{k}: '+lines[k-1][:1250])
           PY
