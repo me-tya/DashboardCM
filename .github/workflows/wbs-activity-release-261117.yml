@@ -1,0 +1,36 @@
+name: Deploy WBS classification Dashboard CM
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/wbs-activity-release-261117.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Patch activity and validate source
+        run: |
+          set -eu
+          python3 scripts/apply-wbs-activity-261117.py
+          node --check activity-wbs.js
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf-8')
+          for x in ['activity-wbs.js?v=261117','ActivityWBS.wire(form)','ActivityWBS.valid','ActivityWBS.matches','cmWbsFilterToolbar(filtered)','data-wbs-export']:
+            assert x in s,x
+          assert s.count('activity-wbs.js?v=261117')==1
+          print('WBS integration assertions OK')
+          PY
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "feat(dcm): WBS PM CM classification, IKU filters and CSV" 
+          git push origin HEAD:main
