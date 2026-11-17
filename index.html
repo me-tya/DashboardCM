@@ -9576,7 +9576,7 @@ function renderTable() {
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
       <td class="mono">${formatActivityDateCell(a)}</td>
       <td>
-        ${cmInvitationBadge(a)}<div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
+        ${cmInvitationBadge(a)}<div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>${a.wbsGroup?`<div class="wbs-mini-tag">${ActivityWBS.badge(a)}</div>`:''}
         ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
