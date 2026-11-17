@@ -10,6 +10,9 @@ def change(old,new,label):
     global s
     n=s.count(old)
     if n!=1:
+        for probe in ["sec(P.info,2,U('Classification'","<label for=\"one-tw\"","data-one><div class=\"fld\"","sec(3,'Dasar surat'",'formHTML(item)']:
+            at=s.find(probe)
+            if at>=0:print('PROBE',probe,at,repr(s[max(0,at-180):at+300]))
         raise RuntimeError(f'{label}: expected one anchor, found {n}')
     s=s.replace(old,new,1)
 s=s.replace('</head>',
