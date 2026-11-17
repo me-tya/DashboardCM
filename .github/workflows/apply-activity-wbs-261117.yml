@@ -1,0 +1,52 @@
+name: Apply activity PM CM WBS DCM
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/apply-activity-wbs-261117.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Safely update the original activity screen and save logic
+        run: python3 scripts/apply_activity_wbs_261117.py
+      - name: Check patch, shared module and PM CM stage mapping
+        run: |
+          git diff --check
+          node --check activity-wbs.js
+          node --check activity-wbs-dcm.js
+          node - <<'JS'
+          const fs=require('fs'),vm=require('vm'),s={window:{}};
+          vm.runInNewContext(fs.readFileSync('activity-wbs.js','utf8'),s);
+          const w=s.window.ActivityWBS;
+          if(!w||w.l4('PM').length!==2||w.l4('CM').length!==1)throw Error('Group mapping failed');
+          if(w.l5('PM','Arsitektur Proses Bisnis').length!==4)throw Error('Architecture stages');
+          if(w.l5('PM','Pengembangan Sistem Informasi').length!==7)throw Error('System stages');
+          if(w.l5('CM','Manajemen Perubahan').length!==9)throw Error('Change stages');
+          if(!w.valid('CM','Manajemen Perubahan','Analisis Dampak Perubahan'))throw Error('CM validation');
+          if(w.valid('PM','Manajemen Perubahan','Analisis Dampak Perubahan'))throw Error('Cross group validation');
+          if(!w.matches({wbsGroup:'CM',wbsLevel4:'Manajemen Perubahan',wbsLevel5:'Analisis Dampak Perubahan',tglMulai:'2026-11-17'},
+           {wbsGroup:'CM',wbsQuarter:'4'},'tglMulai'))throw Error('Quarter matching');
+          console.log('WBS mapping and filtering tests passed');
+          JS
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text(encoding='utf8')
+          for token in ['activity-wbs.js','activity-wbs.css','activity-wbs-dcm.js','wbsGroup','wbsLevel4','wbsLevel5']:
+            assert token in s,token
+          print('HTML hooks present')
+          PY
+      - name: Commit only verified integration to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(activity): classify PM CM WBS L4 L5 and filter IKU by period"
+            git push origin HEAD:main
+          fi
