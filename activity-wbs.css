@@ -1,5 +1,5 @@
 /* Shared WBS activity classification — Dashboard CM + Modul Transformasi */
-.wbs-classify{box-sizing:border-box;width:100%;max-width:100%;display:flex;flex-direction:column;gap:10px;font-family:'Inter',Arial,sans-serif;color:#16315D;padding:2px 0}
+.wbs-classify{box-sizing:border-box;width:100%;max-width:100%;display:flex;flex-direction:column;gap:10px;font-family:inherit;color:#16315D;padding:2px 0}
 .wbs-radios{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
 .wbs-radio{display:flex;align-items:center;gap:9px;cursor:pointer;flex:1 1 180px;min-width:0;box-sizing:border-box;padding:9px 12px;border:1px solid #D9E2EF;background:#F8FAFD;border-radius:10px;transition:background .16s,border-color .16s,box-shadow .16s}
 .wbs-radio input{margin:0;width:16px;height:16px;accent-color:#173A74;flex:none}
@@ -9,17 +9,17 @@
 .wbs-radio.chosen{background:#FEF8E7;border-color:#D9AD4B;box-shadow:0 0 0 1px #E9C86655}
 .wbs-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end}
 .wbs-fields label{min-width:0;display:flex;flex-direction:column;gap:5px;color:#364E72;font-size:11.5px;font-weight:700}
-.wbs-fields select,.wbs-filter-bar select{font-family:'Inter',Arial,sans-serif;box-sizing:border-box;width:100%;min-width:0;height:36px;padding:0 10px;font-size:11.5px;font-weight:600;border:1px solid #D9E2EF;border-radius:8px;background:#fff;color:#18345F;text-overflow:ellipsis}
+.wbs-fields select,.wbs-filter-bar select{font-family:inherit;box-sizing:border-box;width:100%;min-width:0;height:36px;padding:0 10px;font-size:11.5px;font-weight:600;border:1px solid #D9E2EF;border-radius:8px;background:#fff;color:#18345F;text-overflow:ellipsis}
 .wbs-fields select:disabled{opacity:.6;background:#F0F3F8}
 .wbs-fields select.wbs-locked{background:#F8F6ED;pointer-events:none;border-color:#E7D8AA}
 .wbs-form-hint{font-size:10.5px;color:#6B7890;line-height:1.5}
 .wbs-filter-bar{display:grid;grid-template-columns:minmax(95px,.65fr) minmax(105px,.65fr) minmax(145px,1.15fr) minmax(185px,1.7fr) auto;gap:7px;align-items:center;padding:8px 10px;border:1px solid #E1E7F1;border-radius:10px;background:#F9FBFE;margin:8px 0}
-.wbs-filter-bar button{height:35px;white-space:nowrap;padding:0 10px;background:#173A74;border:1px solid #173A74;color:#fff;border-radius:8px;font-family:'Inter',Arial,sans-serif;font-size:11px;font-weight:700;cursor:pointer}
+.wbs-filter-bar button{height:35px;white-space:nowrap;padding:0 10px;background:#173A74;border:1px solid #173A74;color:#fff;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .wbs-filter-bar button:hover{background:#254C89}
 .wbs-filter-bar .wbs-reset{background:#fff;color:#173A74;border-color:#D9E2EF}
 .wbs-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#50617E;font-size:11px;margin:4px 0}
 .wbs-summary strong{color:#173A74}
-.wbs-chip{display:inline-flex;align-items:center;max-width:100%;width:max-content;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;padding:3px 7px;border-radius:6px;font-family:'Inter',Arial,sans-serif;font-size:9.5px;font-weight:750;line-height:1.25;border:1px solid #D6E4FA;background:#EDF4FF;color:#193F80}
+.wbs-chip{display:inline-flex;align-items:center;max-width:100%;width:max-content;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box;padding:3px 7px;border-radius:6px;font-family:inherit;font-size:9.5px;font-weight:750;line-height:1.25;border:1px solid #D6E4FA;background:#EDF4FF;color:#193F80}
 .wbs-chip.wbs-cm{background:#FEF6DE;border-color:#F1DEAE;color:#80600C}
 .wbs-mini-tag{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin:3px 0}
 .wbs-detail-line{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
