@@ -3,7 +3,6 @@ on:
   push:
     branches: [main]
     paths: ['.github/workflows/wbs-activity-inspect-261117.yml']
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -11,20 +10,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Read activity functions and target DOM anchors
+      - name: Show activity DOM functions and saving logic
         run: |
           python3 - <<'PY'
           import re,pathlib
-          pats=['af-mode','af-tab','cm-af','activityForm','activity-form','saveActivity','saveEditActivity','editActivity','openActivity','renderActivit','filterActivit','Daftar Aktivitas','Aktivitas','wbsL4','wbsL5','quarter','triwulan','WBS','function save','function render','activityCategory','actCategory','actDate','activityDate','af-panel','af-main','actFilter','filteredActivities','loadActivities','addActivity','getActivities','state.activities','setDoc','addDoc']
-          for fn in ['index.html','tim-pusmantap.html','index2.html','dcm-detail-v2.js','mt-activity-reports.js','mt-dcm-report.js']:
+          names=['index.html','dcm-detail-v2.js','mt-activity-reports.js']
+          pats=[
+          r'<form[^>]*agendaForm',r'<form[^>]*act',r'function\\s+cmAf\\w+',r'function\\s+openForm',r'function\\s+openAgenda',r'function\\s+openActivity',r'function\\s+openAdd',r'function\\s+getFiltered',r'function\\s+renderTable',r'function\\s+renderActivity',r'function\\s+renderAgenda',r'function\\s+act\\w+',r'function\\s+one\\w+',r'function\\s+saveAgenda',r'function\\s+saveAct',
+          r'agendaForm\\.addEventListener',r"getElementById\\(['\\\"]agendaForm",r'addEventListener\\([\\'\\"]submit',r'state\\.agendas\\.(push|unshift|splice)',r'S\\.oneonone\\.(push|unshift|splice)',r'oneonone\\.push',r'oneonone\\.filter',r'getFiltered\\(',r'actRows\\(',r'actForm\\(',r'actModal\\(',r'function\\s+actSave',r'function\\s+actEdit',r'function\\s+actAdd',r'function\\s+renderAct',r'function\\s+actList',r'function\\s+actTable',r'filters\\s*:\\s*\\{',r'oneTw',r'actTahun',r'function\\s+openDetail',r'data-act="act',r'case\\s+[\\'\\"]act',r'activityCategory',r'<div class="af-panels',r'class="af-sec',r'function\\s+cmAfBuild'
+          ]
+          for fn in names:
             p=pathlib.Path(fn)
-            if not p.exists(): continue
-            s=p.read_text(encoding='utf-8',errors='replace')
-            print('\n###',fn,'bytes',len(s),'lines',s.count('\n'))
-            for term in pats:
-              matches=list(re.finditer(re.escape(term),s,re.I))
+            if not p.exists():continue
+            ss=p.read_text(encoding='utf8',errors='replace');L=ss.splitlines()
+            print('\n###',fn,len(L),'lines')
+            for pat in pats:
+              try:matches=list(re.finditer(pat,ss,re.I))
+              except Exception as e:print('INVALID',pat,e);continue
               if not matches:continue
-              print('KEY',term,'count',len(matches))
-              for m in matches[:3]:
-                i=m.start();print(' *',repr(s[max(0,i-130):min(len(s),i+210)].replace('\n',' ')))
+              print('PATTERN',pat,'COUNT',len(matches))
+              for m in matches[:8]:
+                lin=ss.count('\n',0,m.start()); l=L[lin]
+                print(' LINE',lin+1,'::',l[:min(700,len(l))])
+                if len(l)>700:
+                  ix=m.start()-ss.rfind('\n',0,m.start())-1
+                  print(' LOCAL:',l[max(0,ix-160):ix+400])
           PY
