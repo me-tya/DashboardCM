@@ -1,0 +1,32 @@
+name: Fix Dashboard CM WBS wizard initialization
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/wbs-wire-fix-261117.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move WBS wiring to correct form lifecycle
+        run: |
+          set -eu
+          python3 scripts/fix-wbs-form-wire-261117.py
+          node --check activity-wbs.js
+          git diff --check
+      - name: Commit without overwriting other updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix(dcm): initialize PM CM WBS selects after modal form panels mount"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          exit 1
