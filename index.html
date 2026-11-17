@@ -2952,6 +2952,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media(max-width:900px){.prio-unified-toolbar{flex-wrap:wrap}.prio-toolbar-left{flex-basis:100%}.prio-toolbar-actions{margin-left:auto}.prio-page>.prio-subtabs{overflow-x:auto}.prio-page>.prio-subtabs .cm-survey-subtab{flex:0 0 auto}}
 @media(max-width:480px){.prio-unified-toolbar{padding:8px}.prio-toolbar-actions{gap:6px}.prio-toolbar-btn{padding:0 10px}}
 </style>
+<link rel="stylesheet" href="activity-wbs.css?v=261117"><script src="activity-wbs.js?v=261117"></script>
 </head>
 <body>
 
@@ -7406,6 +7407,7 @@ function getFiltered() {
     if (f.tahun !== 'ALL' && String(a.tglMulai || '').slice(0, 4) !== f.tahun) return false;
     if (f.dateFrom && a.tglMulai < f.dateFrom) return false;
     if (f.dateTo && a.tglMulai > f.dateTo) return false;
+    if(!ActivityWBS.matches(a,f,'tglMulai'))return false;
     return true;
   });
   out.sort((x, y) => {
@@ -9483,6 +9485,49 @@ function cmInvitationOpen(id,el){
   setTimeout(()=>{const off=e=>{if(!m.contains(e.target)){m.remove();document.removeEventListener('click',off,true);}};document.addEventListener('click',off,true);},0);
 }
 window.cmInvitationOpen=cmInvitationOpen;
+
+/* WBS filters share the same state as IKU / activity reports. */
+function cmWbsFilterToolbar(items) {
+  const f=state.filters||{},g=f.wbsGroup&&f.wbsGroup!=='ALL'?f.wbsGroup:'';
+  const all4=Object.keys(ActivityWBS.stages), level4=g?ActivityWBS.l4(g):all4;
+  const chosen4=f.wbsLevel4&&f.wbsLevel4!=='ALL'?f.wbsLevel4:'';
+  const level5=chosen4?(ActivityWBS.stages[chosen4]||[]):level4.flatMap(k=>ActivityWBS.stages[k]||[]);
+  const sel=(key,arr,title)=>{
+    const v=f[key]&&f[key]!=='ALL'?f[key]:'';
+    return '<select class="filter-select" data-wbs-filter="'+key+'" aria-label="'+ActivityWBS.E(title)+'"><option value="ALL">'+ActivityWBS.E(title)+'</option>'+
+      arr.map(x=>'<option value="'+ActivityWBS.E(x)+'"'+(x===v?' selected':'')+'>'+ActivityWBS.E(x)+'</option>').join('')+'</select>';
+  };
+  const n=items.length,pm=items.filter(x=>x.wbsGroup==='PM').length,cm=items.filter(x=>x.wbsGroup==='CM').length;
+  return '<div class="wbs-filter-bar" role="group" aria-label="Filter PM CM dan tahapan WBS">'+
+    sel('wbsQuarter',[1,2,3,4].map(x=>String(x)),'Semua Triwulan')+
+    sel('wbsGroup',['PM','CM'],'Semua PM/CM')+
+    sel('wbsLevel4',level4,'Semua WBS Level 4')+
+    sel('wbsLevel5',level5,'Semua WBS Level 5')+
+    '<div class="wbs-iku-actions"><button type="button" data-wbs-export="dcm" title="Ekspor data dukung IKU dari semua aktivitas sesuai filter aktif">CSV IKU</button><button type="button" class="wbs-reset" data-wbs-reset title="Reset filter PM/CM dan WBS">Reset</button></div></div>'+
+    '<div class="wbs-summary"><strong>'+n+'</strong> aktivitas sesuai filter · <span>PM <strong>'+pm+'</strong></span> · <span>CM <strong>'+cm+'</strong></span> · <span>Belum diklasifikasi <strong>'+(n-pm-cm)+'</strong></span></div>';
+}
+document.addEventListener('change',function(e){
+  const control=e.target.closest('[data-wbs-filter]');
+  if(!control)return;
+  const f=state.filters,key=control.dataset.wbsFilter;
+  f[key]=control.value||'ALL';
+  if(key==='wbsGroup'){f.wbsLevel4='ALL';f.wbsLevel5='ALL';}
+  if(key==='wbsLevel4')f.wbsLevel5='ALL';
+  state.page=1;renderActiveTab();updateFilterActiveBadge();
+});
+document.addEventListener('click',function(e){
+  if(e.target.closest('[data-wbs-reset]')){
+    Object.assign(state.filters,{wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL'});
+    state.page=1;renderActiveTab();updateFilterActiveBadge();return;
+  }
+  if(e.target.closest('[data-wbs-export="dcm"]')){
+    const data=getFiltered();
+    const headers=['ID','Tanggal Mulai','Tanggal Selesai','Kegiatan','Kategori','Program','Unit Pemohon','PIC','PM/CM','WBS Level 4','WBS Level 5','Triwulan','Status','Tujuan/Output','Ringkasan Hasil','Tindak Lanjut'];
+    const rows=data.map(x=>[x.id,x.tglMulai,x.tglSelesai,x.namaKegiatan,x.kategori,x.programTerkait,x.unitPemohon,x.picTimCM,x.wbsGroup,x.wbsLevel4,x.wbsLevel5,ActivityWBS.quarter(x.tglMulai),x.statusNorm,x.tujuanOutput,x.ringkasanHasil,x.tindakLanjut]);
+    ActivityWBS.csv('Data_Dukung_IKU_DashboardCM_'+new Date().toISOString().slice(0,10)+'.csv',[headers].concat(rows));
+  }
+});
+
 function renderTable() {
   const filtered = getFiltered();
   document.getElementById('cntTable').textContent = filtered.length;
@@ -9495,7 +9540,7 @@ function renderTable() {
   const container = document.getElementById('tab-table');
   const todayHtml=cmRenderTodayAgenda();
   const cmAddHtml=(typeof cmCanMutate==='function'&&cmCanMutate())?`<span class="cm-addg"><button type="button" class="cm-add" onclick="openForm(null)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${uiText('Activity','Aktivitas')}</button><button type="button" class="cm-addc" onclick="cmAddMenu(this)" aria-haspopup="menu" aria-expanded="false" aria-label="${uiText('Add activity options','Pilihan tambah aktivitas')}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span>`:'';
-  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span>${cmAddHtml}</div>`;
+  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span>${cmAddHtml}</div>`+cmWbsFilterToolbar(filtered);
   if (!filtered.length) {
     container.innerHTML = todayHtml + cmTblHead + emptyState(uiText('No matching agenda found','Agenda yang sesuai tidak ditemukan'), uiText('Try adjusting the search or filters.','Coba sesuaikan pencarian atau filter.'));
     cmWireTodayAgenda();
@@ -12451,7 +12496,7 @@ function refreshAutomaticActivityStatuses(){
 
 function activityFilterCount(){
   const f=state.filters;let n=0;
-  ['kategori','program','status','pic','unit','layanan','tahun','unitType'].forEach(k=>{if(f[k]&&f[k]!=='ALL')n++;});
+  ['kategori','program','status','pic','unit','layanan','tahun','unitType','wbsGroup','wbsLevel4','wbsLevel5','wbsQuarter'].forEach(k=>{if(f[k]&&f[k]!=='ALL')n++;});
   if(f.dateFrom)n++;if(f.dateTo)n++;return n;
 }
 function contextFilterCount(tab=state.activeTab){
@@ -14041,7 +14086,7 @@ function cmAfBuildLayout(modal,a){
   // --- Info utama
   const imp=form.querySelector('.und-import-card');if(imp){imp.classList.add('af-import');P.info.appendChild(imp);}
   sec(P.info,1,U('Activity','Kegiatan'),U('Name and schedule.','Nama dan waktu pelaksanaan.'),[F('namaKegiatan'),row('af-g4',[F('tglMulai'),F('tglSelesai'),F('jamMulai'),F('jamSelesai')]),document.getElementById('dailyTimeModeField')]);
-  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait')]);
+  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),cmAfEl(ActivityWBS.formHTML(a))]);ActivityWBS.wire(form);
   const slotU=cmAfLetterSlot(F('undangan'),'undangan',U('Invitation letter','Surat undangan')),slotS=cmAfLetterSlot(F('suratTugas'),'suratTugas',U('Assignment letter','Surat tugas'));
   sec(P.info,3,U('Letters','Dasar surat'),U('Several links/files allowed. The newest version is the reference.','Bisa lebih dari satu link/file. Versi terbaru dipakai sebagai acuan.'),[slotU,slotS]);
   sec(P.info,4,U('Method','Metode'),U('Venue and/or meeting link.','Tempat dan/atau tautan rapat.'),[form.querySelector('.meeting-mode-row')]);
@@ -15113,6 +15158,8 @@ function cmAfBuildFormObj(form){
   const fd = new FormData(form);
   const obj = {};
   fd.forEach((val, key) => obj[key] = val);
+  if(obj.wbsGroup==='CM')obj.wbsLevel4='Manajemen Perubahan';
+  if((!state.editingId||obj.wbsGroup)&&!ActivityWBS.valid(obj.wbsGroup,obj.wbsLevel4,obj.wbsLevel5))error=uiText('Choose PM/CM and a valid WBS Level 5 stage.','Pilih PM/CM serta tahapan WBS Level 4–5 yang sesuai.');
   let dailySchedule=normalizeActivityDailySchedule(obj.jadwalHarianJson);
   delete obj.jadwalHarianJson;
   const expectedDailyDates=activityDateList(obj.tglMulai,obj.tglSelesai||obj.tglMulai);
