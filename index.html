@@ -7595,12 +7595,16 @@ function iconClipboardSmall(){return `<svg width="15" height="15" viewBox="0 0 2
 /* ============================================================
    TODAY AGENDA — compact, collapsible, independent from Activity filters
 ============================================================ */
+/* Agenda harian dihitung berdasarkan tanggal, bukan status berlangsung atau jam selesai. */
+function cmActivityOnDate(a,day){
+  const start=String(a?.tglMulai||'').trim().slice(0,10);
+  const end=String(a?.tglSelesai||start).trim().slice(0,10)||start;
+  return /^\d{4}-\d{2}-\d{2}$/.test(start)&&start<=day&&day<=end;
+}
 function cmTodayItems(){
   const today=dayjs().format('YYYY-MM-DD');
-  return state.agendas.filter(a=>{
-    const start=a.tglMulai||today, end=a.tglSelesai||start;
-    return start<=today && end>=today;
-  }).sort((a,b)=>String(a.waktu||'99:99').localeCompare(String(b.waktu||'99:99')) || String(a.namaKegiatan||'').localeCompare(String(b.namaKegiatan||'')));
+  return (state.agendas||[]).filter(a=>cmActivityOnDate(a,today))
+    .sort((a,b)=>String(a.waktu||'99:99').localeCompare(String(b.waktu||'99:99')) || String(a.namaKegiatan||'').localeCompare(String(b.namaKegiatan||'')));
 }
 function cmOpenTodayCalendar(){
   state.calMonth=dayjs().format('YYYY-MM');
@@ -9522,7 +9526,7 @@ function renderTable() {
     const cs = getCategoryStyle(a.kategori);
     const ss = STATUS_STYLES[a.statusNorm] || STATUS_STYLES['Scheduled'];
     const ls = a.layanan === 'Yes' ? { bg:'var(--blue-bg)', fg:'var(--navy-700)' } : { bg:'var(--gold-100)', fg:'#8A6A1B' };
-    const _td=dayjs().format('YYYY-MM-DD'),_isToday=!!a.tglMulai&&a.tglMulai<=_td&&(a.tglSelesai||a.tglMulai)>=_td;
+    const _td=dayjs().format('YYYY-MM-DD'),_isToday=cmActivityOnDate(a,_td);
     html += `<tr data-id="${a.id}"${_isToday?` class="row-today" title="${uiText('Today\'s activity','Kegiatan hari ini')}"`:''}>
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
       <td class="mono">${formatActivityDateCell(a)}</td>
