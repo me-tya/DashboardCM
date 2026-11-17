@@ -10,29 +10,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Show activity DOM functions and saving logic
+      - name: Show activity functions, DOM anchors and data writes
         run: |
           python3 - <<'PY'
-          import re,pathlib
-          names=['index.html','dcm-detail-v2.js','mt-activity-reports.js']
-          pats=[
-          r'<form[^>]*agendaForm',r'<form[^>]*act',r'function\\s+cmAf\\w+',r'function\\s+openForm',r'function\\s+openAgenda',r'function\\s+openActivity',r'function\\s+openAdd',r'function\\s+getFiltered',r'function\\s+renderTable',r'function\\s+renderActivity',r'function\\s+renderAgenda',r'function\\s+act\\w+',r'function\\s+one\\w+',r'function\\s+saveAgenda',r'function\\s+saveAct',
-          r'agendaForm\\.addEventListener',r"getElementById\\(['\\\"]agendaForm",r'addEventListener\\([\\'\\"]submit',r'state\\.agendas\\.(push|unshift|splice)',r'S\\.oneonone\\.(push|unshift|splice)',r'oneonone\\.push',r'oneonone\\.filter',r'getFiltered\\(',r'actRows\\(',r'actForm\\(',r'actModal\\(',r'function\\s+actSave',r'function\\s+actEdit',r'function\\s+actAdd',r'function\\s+renderAct',r'function\\s+actList',r'function\\s+actTable',r'filters\\s*:\\s*\\{',r'oneTw',r'actTahun',r'function\\s+openDetail',r'data-act="act',r'case\\s+[\\'\\"]act',r'activityCategory',r'<div class="af-panels',r'class="af-sec',r'function\\s+cmAfBuild'
-          ]
-          for fn in names:
+          import pathlib
+          pats=["agendaForm","function cmAf","function openForm","function openAgenda","function getFiltered","function renderTable","function renderActivity","function renderAgenda","function act","function one","function saveAgenda","function saveAct","agendaForm.addEventListener","state.agendas.push","state.agendas[","S.oneonone.push","S.oneonone.splice","oneonone.filter","getFiltered(","actRows(","actForm(","actModal(","actSave(","actEdit(","actAdd(","renderAct(","actList(","actTable(","filters: {","oneTw","actTahun","function openDetail","data-act=\"act","case 'act","class=\"af-panels","class=\"af-sec","id=\"agendaForm\"","id='agendaForm'","function buildActivity","function submit","agendaForm.onsubmit","form.addEventListener","tambahAktivitas","tab-table","actCh","actFilter","S.oneonone=","oneonone.unshift"]
+          for fn in ['index.html','dcm-detail-v2.js','mt-activity-reports.js']:
             p=pathlib.Path(fn)
-            if not p.exists():continue
-            ss=p.read_text(encoding='utf8',errors='replace');L=ss.splitlines()
-            print('\n###',fn,len(L),'lines')
-            for pat in pats:
-              try:matches=list(re.finditer(pat,ss,re.I))
-              except Exception as e:print('INVALID',pat,e);continue
-              if not matches:continue
-              print('PATTERN',pat,'COUNT',len(matches))
-              for m in matches[:8]:
-                lin=ss.count('\n',0,m.start()); l=L[lin]
-                print(' LINE',lin+1,'::',l[:min(700,len(l))])
-                if len(l)>700:
-                  ix=m.start()-ss.rfind('\n',0,m.start())-1
-                  print(' LOCAL:',l[max(0,ix-160):ix+400])
+            if not p.exists(): continue
+            s=p.read_text(encoding='utf8',errors='replace');print('###',fn,len(s))
+            for term in pats:
+              starts=[];i=0
+              while 1:
+                k=s.lower().find(term.lower(),i)
+                if k<0:break
+                starts.append(k);i=k+len(term)
+              if not starts: continue
+              print('KEY',term,'COUNT',len(starts))
+              for k in starts[:5]:
+                print(' * L',s.count('\n',0,k)+1,repr(s[max(0,k-145):min(len(s),k+390)].replace('\n',' ')))
           PY
