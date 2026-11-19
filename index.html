@@ -2953,6 +2953,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media(max-width:480px){.prio-unified-toolbar{padding:8px}.prio-toolbar-actions{gap:6px}.prio-toolbar-btn{padding:0 10px}}
 </style>
 <link rel="stylesheet" href="activity-wbs.css?v=261117"><script src="activity-wbs.js?v=261117"></script>
+<link rel="stylesheet" href="dcm-filter-consolidated-261119.css?v=261119-DCM-67">
 </head>
 <body>
 
@@ -9487,24 +9488,24 @@ function cmInvitationOpen(id,el){
 window.cmInvitationOpen=cmInvitationOpen;
 
 /* WBS filters share the same state as IKU / activity reports. */
-function cmWbsFilterToolbar(items) {
-  const f=state.filters||{},g=f.wbsGroup&&f.wbsGroup!=='ALL'?f.wbsGroup:'';
-  const all4=Object.keys(ActivityWBS.stages), level4=g?ActivityWBS.l4(g):all4;
+function cmWbsFilterSelects() {
+  const f=state.filters||{}, g=f.wbsGroup&&f.wbsGroup!=='ALL'?f.wbsGroup:'';
+  const level4=g?ActivityWBS.l4(g):Object.keys(ActivityWBS.stages);
   const chosen4=f.wbsLevel4&&f.wbsLevel4!=='ALL'?f.wbsLevel4:'';
   const level5=chosen4?(ActivityWBS.stages[chosen4]||[]):level4.flatMap(k=>ActivityWBS.stages[k]||[]);
-  const sel=(key,arr,title)=>{
-    const v=f[key]&&f[key]!=='ALL'?f[key]:'';
-    return '<select class="filter-select" data-wbs-filter="'+key+'" aria-label="'+ActivityWBS.E(title)+'"><option value="ALL">'+ActivityWBS.E(title)+'</option>'+
-      arr.map(x=>'<option value="'+ActivityWBS.E(x)+'"'+(x===v?' selected':'')+'>'+ActivityWBS.E(x)+'</option>').join('')+'</select>';
+  const sel=(key,values,placeholder)=>{
+    const selected=f[key]&&f[key]!=='ALL'?String(f[key]):'';
+    return '<select class="filter-select" data-wbs-filter="'+key+'" aria-label="'+ActivityWBS.E(placeholder)+'"><option value="ALL">'+ActivityWBS.E(placeholder)+'</option>'+
+      values.map(value=>{const v=String(value);return '<option value="'+ActivityWBS.E(v)+'"'+(v===selected?' selected':'')+'>'+ActivityWBS.E(v)+'</option>';}).join('')+'</select>';
   };
-  const n=items.length,pm=items.filter(x=>x.wbsGroup==='PM').length,cm=items.filter(x=>x.wbsGroup==='CM').length;
-  return '<div class="wbs-filter-bar" role="group" aria-label="Filter PM CM dan tahapan WBS">'+
-    sel('wbsQuarter',[1,2,3,4].map(x=>String(x)),'Semua Triwulan')+
+  return sel('wbsQuarter',[1,2,3,4],'Semua Triwulan')+
     sel('wbsGroup',['PM','CM'],'Semua PM/CM')+
     sel('wbsLevel4',level4,'Semua WBS Level 4')+
-    sel('wbsLevel5',level5,'Semua WBS Level 5')+
-    '<div class="wbs-iku-actions"><button type="button" data-wbs-export="dcm" title="Ekspor data dukung IKU dari semua aktivitas sesuai filter aktif">CSV IKU</button><button type="button" class="wbs-reset" data-wbs-reset title="Reset filter PM/CM dan WBS">Reset</button></div></div>'+
-    '<div class="wbs-summary"><strong>'+n+'</strong> aktivitas sesuai filter · <span>PM <strong>'+pm+'</strong></span> · <span>CM <strong>'+cm+'</strong></span> · <span>Belum diklasifikasi <strong>'+(n-pm-cm)+'</strong></span></div>';
+    sel('wbsLevel5',level5,'Semua WBS Level 5');
+}
+function cmWbsFilterToolbar(items) {
+  const n=items.length,pm=items.filter(x=>x.wbsGroup==='PM').length,cm=items.filter(x=>x.wbsGroup==='CM').length;
+  return '<div class="wbs-summary"><strong>'+n+'</strong> aktivitas sesuai filter · <span>PM <strong>'+pm+'</strong></span> · <span>CM <strong>'+cm+'</strong></span> · <span>Belum diklasifikasi <strong>'+(n-pm-cm)+'</strong></span></div>';
 }
 document.addEventListener('change',function(e){
   const control=e.target.closest('[data-wbs-filter]');
@@ -9513,7 +9514,7 @@ document.addEventListener('change',function(e){
   f[key]=control.value||'ALL';
   if(key==='wbsGroup'){f.wbsLevel4='ALL';f.wbsLevel5='ALL';}
   if(key==='wbsLevel4')f.wbsLevel5='ALL';
-  state.page=1;renderActiveTab();updateFilterActiveBadge();
+  state.page=1;configureContextToolbar(state.activeTab);renderActiveTab();updateFilterActiveBadge();
 });
 document.addEventListener('click',function(e){
   if(e.target.closest('[data-wbs-reset]')){
@@ -9540,7 +9541,7 @@ function renderTable() {
   const container = document.getElementById('tab-table');
   const todayHtml=cmRenderTodayAgenda();
   const cmAddHtml=(typeof cmCanMutate==='function'&&cmCanMutate())?`<span class="cm-addg"><button type="button" class="cm-add" onclick="openForm(null)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${uiText('Activity','Aktivitas')}</button><button type="button" class="cm-addc" onclick="cmAddMenu(this)" aria-haspopup="menu" aria-expanded="false" aria-label="${uiText('Add activity options','Pilihan tambah aktivitas')}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span>`:'';
-  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span>${cmAddHtml}</div>`+cmWbsFilterToolbar(filtered);
+  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span><button type="button" class="cm-iku-export" data-wbs-export="dcm" title="Unduh CSV data dukung IKU sesuai filter aktif" aria-label="Unduh CSV data dukung IKU">⇩ CSV IKU</button>${cmAddHtml}</div>`+cmWbsFilterToolbar(filtered);
   if (!filtered.length) {
     container.innerHTML = todayHtml + cmTblHead + emptyState(uiText('No matching agenda found','Agenda yang sesuai tidak ditemukan'), uiText('Try adjusting the search or filters.','Coba sesuaikan pencarian atau filter.'));
     cmWireTodayAgenda();
@@ -12548,13 +12549,13 @@ function configureContextToolbar(tab=state.activeTab){
   label.textContent=uiText('Filters','Filter');
   let html='';
   if(['analytics','table','calendar','kanban','matrix'].includes(tab)){
-    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterPic"></select><div class="cm-fper"><small>${uiText('Period','Periode')}</small><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}" aria-label="${uiText('From date','Dari tanggal')}"><span class="filter-date-sep">${uiText('to','s.d.')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}" aria-label="${uiText('To date','Sampai tanggal')}"></div><div class="cm-fact"><button type="button" class="cm-frst" id="btnResetFilter" title="${uiText('Clear all filters and search','Kosongkan semua filter dan pencarian')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg><span>${uiText('Reset','Reset')}</span><span class="n hidden" id="cmFrstN"></span></button><span class="sp"></span>${typeof cmCtxReportButtons==='function'?cmCtxReportButtons(tab):''}</div>`;
+    html=`<select class="filter-select" id="filterTahun"></select><select class="filter-select" id="filterUnitType"></select><select class="filter-select" id="filterKategori"></select><select class="filter-select" id="filterProgram"></select><select class="filter-select" id="filterStatus"></select><select class="filter-select" id="filterLayanan"></select><select class="filter-select" id="filterUnit"></select><select class="filter-select" id="filterPic"></select>${cmWbsFilterSelects()}<div class="cm-fper"><small>${uiText('Period','Periode')}</small><input type="date" class="filter-date" id="filterDateFrom" value="${escapeHtml(state.filters.dateFrom||'')}" aria-label="${uiText('From date','Dari tanggal')}"><span class="filter-date-sep">${uiText('to','s.d.')}</span><input type="date" class="filter-date" id="filterDateTo" value="${escapeHtml(state.filters.dateTo||'')}" aria-label="${uiText('To date','Sampai tanggal')}"></div><div class="cm-fact"><button type="button" class="cm-frst" id="btnResetFilter" title="${uiText('Clear all filters and search','Kosongkan semua filter dan pencarian')}"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg><span>${uiText('Reset','Reset')}</span><span class="n hidden" id="cmFrstN"></span></button><span class="sp"></span>${typeof cmCtxReportButtons==='function'?cmCtxReportButtons(tab):''}</div>`;
     body.innerHTML=html;populateFilterDropdowns();
     const map={filterKategori:'kategori',filterProgram:'program',filterStatus:'status',filterPic:'pic',filterUnit:'unit',filterLayanan:'layanan',filterTahun:'tahun',filterUnitType:'unitType'};
     Object.entries(map).forEach(([id,key])=>document.getElementById(id)?.addEventListener('change',e=>{state.filters[key]=e.target.value;state.page=1;renderActiveTab();updateFilterActiveBadge();}));
     document.getElementById('filterDateFrom')?.addEventListener('change',e=>{state.filters.dateFrom=e.target.value;renderActiveTab();updateFilterActiveBadge();});
     document.getElementById('filterDateTo')?.addEventListener('change',e=>{state.filters.dateTo=e.target.value;renderActiveTab();updateFilterActiveBadge();});
-    document.getElementById('btnResetFilter')?.addEventListener('click',()=>{/* Reset = kosongkan SEMUA, termasuk kata pencarian (dipakai bersama Agenda/Calendar/Kanban/Matrix/Analytics) */state.page=1;state.filters={search:'',kategori:'ALL',program:'ALL',status:'ALL',pic:'ALL',unit:'ALL',layanan:'ALL',tahun:'ALL',unitType:'ALL',dateFrom:'',dateTo:''};configureContextToolbar(tab);renderActiveTab();updateFilterActiveBadge();});
+    document.getElementById('btnResetFilter')?.addEventListener('click',()=>{/* Reset = kosongkan SEMUA, termasuk kata pencarian (dipakai bersama Agenda/Calendar/Kanban/Matrix/Analytics) */state.page=1;state.filters={search:'',kategori:'ALL',program:'ALL',status:'ALL',pic:'ALL',unit:'ALL',layanan:'ALL',tahun:'ALL',unitType:'ALL',dateFrom:'',dateTo:'',wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL'};configureContextToolbar(tab);renderActiveTab();updateFilterActiveBadge();});
   }else if(tab==='knowledge'){
     const groups=state.knowledge||[],types=[...new Set([...groups.flatMap(g=>(g.items||[]).map(i=>i.type||'link')),'reference-v2'])].sort();
     html=`<select class="filter-select" id="ctxKbGroup">${contextOption('ALL',uiText('All clusters','Semua cluster'),state.knowledgeFilters.group)}${groups.map(g=>contextOption(g.id,g.group,state.knowledgeFilters.group)).join('')}${contextOption('manual',uiText('User Manual','User Manual'),state.knowledgeFilters.group)}</select><select class="filter-select" id="ctxKbType">${contextOption('ALL',uiText('All content types','Semua tipe konten'),state.knowledgeFilters.type)}${types.map(x=>contextOption(x,x==='reference-v2'?uiText('AI Reference Document','Dokumen Referensi AI'):x,state.knowledgeFilters.type)).join('')}${contextOption('manual',uiText('Manual article','Artikel manual'),state.knowledgeFilters.type)}</select><button class="btn btn-outline btn-sm context-reset" id="ctxKbReset">${uiText('Reset','Reset')}</button>`;
