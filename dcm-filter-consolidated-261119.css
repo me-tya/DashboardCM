@@ -1,0 +1,47 @@
+/* 261119-DCM-67: satu area filter untuk Overview/Agenda/Kalender/Workboard/Matriks.
+   Daftar Aktivitas tidak lagi menampilkan bar filter WBS kedua. */
+#contextFilterBar{padding:10px 12px!important;margin-bottom:10px!important}
+#contextFilterBar .filter-bar-row1{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-height:34px}
+#contextFilterBar .filter-bar-row1 .search-wrap{flex:1 1 auto;min-width:0;width:auto;max-width:none}
+#contextFilterBar .filter-bar-row1 .search-wrap input{height:36px}
+#contextFilterBar .filter-bar-row1 #btnFilterToggle,#contextFilterBar #dcmActDbk{
+  height:36px!important;min-height:36px!important;padding:0 11px!important;
+  box-sizing:border-box;line-height:1;align-self:center;margin:0!important;
+}
+#contextFilterBar #filterBarBody.cm-fgrid:not(.hidden){
+  grid-template-columns:minmax(0,.82fr) minmax(0,.95fr) minmax(0,1.36fr) minmax(0,1.42fr)!important;
+  gap:7px!important;align-items:center;
+}
+#contextFilterBar #filterBarBody{margin-top:8px!important;padding-top:8px!important}
+#contextFilterBar #filterBarBody.cm-fgrid select.filter-select{
+  height:36px!important;padding:0 26px 0 10px!important;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;font-size:12px!important;
+}
+#contextFilterBar #filterBarBody .cm-fper{height:36px!important;padding-left:9px}
+#contextFilterBar #filterBarBody .cm-fper input.filter-date{height:32px!important}
+#contextFilterBar #filterBarBody .cm-fact{grid-column:span 2;gap:6px;flex-wrap:nowrap}
+#contextFilterBar #filterBarBody .cm-fact .cm-frst,
+#contextFilterBar #filterBarBody .cm-fact .btn{height:36px!important;padding:0 10px}
+#tab-table .cm-tbl-head{display:flex;align-items:center;gap:7px}
+#tab-table .cm-tbl-head .sp{flex:1 1 auto}
+#tab-table .cm-iku-export{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  flex:0 0 auto;height:34px;padding:0 11px;border-radius:8px;
+  border:1px solid #173A74;background:#173A74;color:#fff;
+  font:700 11.5px Inter,Arial,sans-serif;cursor:pointer;white-space:nowrap;
+}
+#tab-table .cm-iku-export:hover,#tab-table .cm-iku-export:focus-visible{background:#254C89;border-color:#254C89;outline-offset:2px}
+#tab-table .wbs-summary{padding:0 2px;margin:3px 0 8px;font-size:11px}
+@media(max-width:1100px){
+ #contextFilterBar #filterBarBody.cm-fgrid:not(.hidden){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #contextFilterBar .filter-bar-row1{flex-wrap:wrap}
+ #contextFilterBar .filter-bar-row1 .search-wrap{flex:1 1 100%}
+ #contextFilterBar #filterBarBody .cm-fact{flex-wrap:wrap}
+}
+@media(max-width:650px){
+ #contextFilterBar #filterBarBody.cm-fgrid:not(.hidden){grid-template-columns:1fr!important}
+ #contextFilterBar #filterBarBody .cm-fper,#contextFilterBar #filterBarBody .cm-fact{grid-column:1/-1}
+ #contextFilterBar .filter-bar-row1 #btnFilterToggle,#contextFilterBar #dcmActDbk{width:auto!important;flex:1 1 auto}
+ #tab-table .cm-tbl-head{flex-wrap:wrap}
+ #tab-table .cm-tbl-head .sp{flex:1 1 auto}
+}
