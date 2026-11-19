@@ -81,6 +81,12 @@ function placeBackupButton(button,filter){
    append(row);return;
   }
  }
+ // For every activity-backed tab, keep the Superadmin-only action on
+ // the same compact first row, immediately to the right of Filter.
+ if(['analytics','table','calendar','kanban','matrix'].includes(tab)){
+  if(button.parentNode!==filter.parentNode||button.previousElementSibling!==filter)filter.after(button);
+  return;
+ }
  before(filter);
 }
 /* Keep Reset next to Kompilasi Laporan, after the right-alignment spacer. */
