@@ -1,0 +1,25 @@
+name: Full prechange backup 261119-DCM-67
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-261119-dcm-67.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create complete restorable 261119-DCM-67.zip
+        run: |
+          git fetch origin refs/heads/backup/261119-DCM-67:refs/remotes/origin/backup/261119-DCM-67
+          git archive --format=zip --output=261119-DCM-67.zip origin/backup/261119-DCM-67
+          unzip -t 261119-DCM-67.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261119-DCM-67
+          path: 261119-DCM-67.zip
+          retention-days: 90
