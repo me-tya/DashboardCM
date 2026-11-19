@@ -1,0 +1,19 @@
+name: Verify unified activity filters 261119
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'dcm-filter-consolidated-261119.css'
+      - 'tests/filter-consolidation-261119.test.cjs'
+      - '.github/workflows/verify-filter-consolidation-261119.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run unified filter regression tests
+        run: node --test tests/filter-consolidation-261119.test.cjs
