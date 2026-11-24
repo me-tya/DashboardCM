@@ -99,8 +99,8 @@ const matchFilter=(a,f)=>!f||!f.iku||f.iku==='ALL'||refsOf(a).includes(f.iku);
 
 /* DCM-70: private, one-time import of externally reviewed IKU mappings.
    The mapping file stays on the administrator's device. No activity data is committed to GitHub.
-   Opt-in query parameter ?iku-migration=1 exposes the temporary control. */
-const bulkEnabled=()=>new URLSearchParams(location.search).get('iku-migration')==='1'&&typeof cmCanManageReferences==='function'&&cmCanManageReferences();
+   The control is visible only to Superadmin; no special URL is needed. */
+const bulkEnabled=()=>typeof cmCanManageReferences==='function'&&cmCanManageReferences();
 let bulkBusy=false;
 const bulkAuth=()=>bulkEnabled()&&window.fbAuth?.currentUser&&!window.fbAuth.currentUser.isAnonymous&&window.fbDb&&typeof window.fbRunTransaction==='function';
 function bulkDownload(name,data){
