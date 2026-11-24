@@ -2952,7 +2952,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media(max-width:900px){.prio-unified-toolbar{flex-wrap:wrap}.prio-toolbar-left{flex-basis:100%}.prio-toolbar-actions{margin-left:auto}.prio-page>.prio-subtabs{overflow-x:auto}.prio-page>.prio-subtabs .cm-survey-subtab{flex:0 0 auto}}
 @media(max-width:480px){.prio-unified-toolbar{padding:8px}.prio-toolbar-actions{gap:6px}.prio-toolbar-btn{padding:0 10px}}
 </style>
-<link rel="stylesheet" href="activity-wbs.css?v=261124"><script src="activity-wbs.js?v=261124"></script>
+<link rel="stylesheet" href="activity-wbs.css?v=261124"><script src="activity-wbs.js?v=261124b"></script>
 <link rel="stylesheet" href="dcm-filter-consolidated-261119.css?v=261119-DCM-67">
 </head>
 <body>
@@ -14083,11 +14083,11 @@ function cmAfBuildLayout(modal,a){
   if(dS&&dS.querySelector('[name="tglMulai"]')){dS.id='activityStartDateField';dE&&(dE.id='activityEndDateField');F('jamMulai')&&(F('jamMulai').id='activityStartTimeField');F('jamSelesai')&&(F('jamSelesai').id='activityEndTimeField');}
   const P={};CM_AF_TABS.forEach(t=>{P[t.k]=cmAfEl(`<section class="af-panel" data-af-panel="${t.k}"></section>`);});
   const U=uiText;
-  const sec=(panel,num,title,desc,nodes,cls)=>{const s=cmAfEl(`<div class="af-sec ${cls||''}"><div class="af-sec-lab"><b>${num?`<i>${num}</i>`:''}${title}</b>${desc?`<small>${desc}</small>`:''}</div><div class="af-sec-body"></div></div>`);const b=s.querySelector('.af-sec-body');nodes.filter(Boolean).forEach(n=>b.appendChild(n));panel.appendChild(s);return b;};
+  const sec=(panel,num,title,desc,nodes,cls)=>{const s=cmAfEl(`<div class="af-sec ${cls||''}"><div class="af-sec-lab"><b>${num?`<i>${num}</i>`:''}${title}${desc&&window.MT_INFO_ICON?window.MT_INFO_ICON(desc):''}</b></div><div class="af-sec-body"></div></div>`);const b=s.querySelector('.af-sec-body');nodes.filter(Boolean).forEach(n=>b.appendChild(n));panel.appendChild(s);return b;};
   const row=(cls,nodes)=>{const r=cmAfEl(`<div class="af-row ${cls}"></div>`);nodes.filter(Boolean).forEach(n=>r.appendChild(n));return r;};
   // --- Info utama
   const imp=form.querySelector('.und-import-card');if(imp){imp.classList.add('af-import');P.info.appendChild(imp);}
-  sec(P.info,1,U('Activity','Kegiatan'),U('Name and schedule.','Nama dan waktu pelaksanaan.'),[F('namaKegiatan'),row('af-g4',[F('tglMulai'),F('tglSelesai'),F('jamMulai'),F('jamSelesai')]),document.getElementById('dailyTimeModeField')]);
+  sec(P.info,1,U('Activity','Kegiatan'),U('Name and schedule. Fill in both times so the status updates automatically (Scheduled → Ongoing → Completed).','Nama dan waktu pelaksanaan. Isi kedua jam agar status otomatis (Terjadwal → Sedang Berlangsung → Selesai) dapat berjalan.'),[F('namaKegiatan'),row('af-g4',[F('tglMulai'),F('tglSelesai'),F('jamMulai'),F('jamSelesai')]),document.getElementById('dailyTimeModeField')]);
   sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),window.DCMIKU?.formField?.(a)||null]);
   sec(P.info,3,U('WBS stages','Tahapan WBS'),U('Tick when the activity supports WBS stages. More than one stage allowed (PM and CM in parallel).','Centang bila kegiatan mendukung tahapan WBS. Bisa lebih dari satu tahapan (PM dan CM paralel).'),[cmAfEl(ActivityWBS.formHTML(a))]);
   const slotU=cmAfLetterSlot(F('undangan'),'undangan',U('Invitation letter','Surat undangan')),slotS=cmAfLetterSlot(F('suratTugas'),'suratTugas',U('Assignment letter','Surat tugas'));
@@ -14097,7 +14097,7 @@ function cmAfBuildLayout(modal,a){
   sec(P.plan,1,U('Goal & notes','Tujuan & catatan'),'',[row('af-g2',[F('tujuanOutput'),F('catatan')])]);
   const picField=F('picTimCM')||form.querySelector('[data-pic-field]')?.closest('.form-field');
   const conflict=cmAfEl('<div class="af-conflict hidden" id="afPicConflict" role="status"></div>');
-  sec(P.plan,2,U('Status & PIC','Status & PIC'),'',[F('status'),picField,conflict]);
+  sec(P.plan,2,U('Status & PIC','Status & PIC'),U('Scheduled changes automatically to Ongoing during the activity time. Other statuses are set manually.','Terjadwal otomatis menjadi Sedang Berlangsung saat memasuki waktu kegiatan. Status lain ditetapkan manual.'),[F('status'),picField,conflict]);
   sec(P.plan,3,U('Speakers & participants','Narasumber & peserta'),'',[row('af-g2',[F('unitAsalNarsum'),F('pesertaTarget')])]);
   const eoField=document.getElementById('eoToggle')?.closest('.form-field');if(eoField){eoField.classList.add('af-eo-field');const sm=eoField.querySelector('.eo-toggle-copy small');if(sm)sm.textContent=U('Turn on to add an Event (EO) tab with a per-stage task checklist.','Aktifkan untuk menambah tab Event (EO) berisi checklist tugas per tahap.');P.plan.appendChild(eoField);}
   // --- Event (EO)
@@ -14113,10 +14113,10 @@ function cmAfBuildLayout(modal,a){
       <button type="button" data-cmd="createLink" title="${U('Link','Tautan')}">🔗</button><button type="button" data-cmd="removeFormat" title="${U('Clear format','Hapus format')}">⌫</button>
       <span class="af-rte-state" id="afRteState"></span><button type="button" class="af-rte-full" data-rte-full>⤢ ${U('Full screen','Layar penuh')}</button></div>
       <div class="af-rte-ct" id="afRteCt" contenteditable="true" data-placeholder="${U('Type the minutes here: agenda points, agreements, follow-ups…','Ketik notula di sini: pokok bahasan, kesepakatan, tindak lanjut…')}"></div>
-      <div class="af-rte-ft"><span id="afRteCount">0 ${U('words','kata')}</span><span>${U('Searchable in activity search & used by the AI assistant and reports','Ikut dicari di pencarian activity & dipakai asisten AI serta laporan')}</span></div></div></div>`);
+      <div class="af-rte-ft"><span id="afRteCount">0 ${U('words','kata')}</span></div></div></div>`);
   if(notulaFiles){notulaFiles.querySelector('label')?.remove();notulaHost.querySelector('#afNotulaFiles').appendChild(notulaFiles.querySelector('#activityNotulaEditor'));notulaFiles.remove();}
   else notulaHost.querySelector('#afNotulaFiles').innerHTML=`<div class="af-hint-box">⤒ ${U('Uploading minutes files becomes available after the activity is saved once. You can already type the minutes below.','Unggah file notula aktif setelah activity disimpan sekali. Catatan notula di bawah sudah bisa diketik sekarang.')}</div>`;
-  const nb=sec(P.run,2,U('Meeting minutes','Notula rapat'),'',[notulaHost],'af-sec-grow');
+  const nb=sec(P.run,2,U('Meeting minutes','Notula rapat'),U('Upload minutes files and/or type the minutes. The text is searchable in activity search and used by the AI assistant and reports.','Unggah berkas notula dan/atau ketik notula. Isinya ikut dicari di pencarian aktivitas dan dipakai asisten AI serta laporan.'),[notulaHost],'af-sec-grow');
   // --- Kesimpulan Rapat
   sec(P.res,1,U('Documentation','Dokumentasi'),U('Photos are compressed automatically.','Foto dikompres otomatis.'),[F('dokumentasi')||document.getElementById('docThumbGrid')?.closest('.form-field')],'af-nolab');
   const rh=cmAfEl(`<div class="form-field"><label>${U('Summary','Ringkasan')}</label><textarea name="ringkasanHasil" rows="5" placeholder="${U('What was achieved, attendance, key agreements…','Capaian kegiatan, jumlah peserta, kesepakatan utama…')}"></textarea><small class="status-help" id="afGoalRef"></small></div>`);
@@ -14665,7 +14665,7 @@ function openForm(id) {
             <label>${uiText('End Time','Jam Selesai')} ${(!a||initialStartClock||initialEndClock)?'<span class="req">*</span>':''}</label>
             <input type="time" name="jamSelesai" ${(!a||initialStartClock||initialEndClock)?'required':''} value="${escapeHtml(initialEndClock)}">
             <input type="hidden" name="waktuLegacy" value="${escapeHtml(v('waktu'))}">
-            <small class="status-help">${a&&!initialStartClock&&!initialEndClock&&v('waktu')?`${uiText('Legacy time retained','Waktu lama tetap dipertahankan')}: <b>${escapeHtml(v('waktu'))}</b>. ${uiText('Enter both times to enable automation.','Isi kedua jam untuk mengaktifkan otomatisasi.')}`:uiText('Complete both times to enable automatic status.','Isi kedua jam agar status otomatis dapat berjalan.')}</small>
+            <small class="status-help">${a&&!initialStartClock&&!initialEndClock&&v('waktu')?`${uiText('Legacy time retained','Waktu lama tetap dipertahankan')}: <b>${escapeHtml(v('waktu'))}</b>. ${uiText('Enter both times to enable automation.','Isi kedua jam untuk mengaktifkan otomatisasi.')}`:''}</small>
           </div>
           <div class="form-field full daily-time-mode" id="dailyTimeModeField">
             <label class="daily-time-toggle"><input type="checkbox" id="dailyTimeDifferent" ${initialDifferentDailyTime?'checked':''}> <span>${uiText('Different times for each day','Jam berbeda setiap hari')}</span></label>
@@ -14708,7 +14708,6 @@ function openForm(id) {
               <option value="Not Attended" ${initialStatus==='Not Attended'?'selected':''}>${uiText('Not Attended','Tidak Dihadiri')}</option>
               <option value="Cancelled" ${initialStatus==='Cancelled'?'selected':''}>${uiText('Cancelled','Dibatalkan')}</option>
             </select>
-            <small class="status-help">${uiText('Scheduled changes automatically to Ongoing during the activity time.','Terjadwal otomatis menjadi Sedang Berlangsung saat memasuki waktu kegiatan.')}</small>
           </div>
           <div class="form-field">
             <label>${t('fieldCmPic')}</label>
@@ -21223,7 +21222,8 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 </script>
 <script src="dcm-guide-header.js?v=261124-43"></script>
 <script src="dcm-detail-v2.js?v=261124-06"></script>
-<link rel="stylesheet" href="dcm-iku-ipr.css?v=261124-01"><script src="dcm-iku-ipr.js?v=261124-01"></script>
+<script src="dcm-info-icon.js?v=261124-01"></script>
+<link rel="stylesheet" href="dcm-iku-ipr.css?v=261124-03"><script src="dcm-iku-ipr.js?v=261124-02"></script>
 <script src="dcm-pusmantap-bridge.js?v=20261115-53"></script>
 <script src="dcm-header-reference-30.js?v=261114-30"></script>
 <!-- Dashboard CM Aktivitas: Data & Backup, MT Word surat, dan template 1-on-1 -->

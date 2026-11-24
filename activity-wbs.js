@@ -68,7 +68,7 @@
   function formHTML(row){
     const list=items(row),on=list.length>0,f=flat(list);
     return '<div class="wbs-classify'+(on?' on':'')+'" data-wbs-form>'+
-      '<label class="wbs-toggle"><input type="checkbox" data-wbs-on'+(on?' checked':'')+'><span><b>Terkait WBS</b><small>Centang bila kegiatan ini mendukung tahapan WBS (Arsitektur, Pengembangan Sistem, Change Management)</small></span></label>'+
+      '<label class="wbs-toggle"><input type="checkbox" data-wbs-on'+(on?' checked':'')+'><span><b>Terkait WBS</b></span></label>'+
       '<div class="wbs-body"'+(on?'':' hidden')+'><div class="wbs-rows" data-wbs-rows>'+(on?list:[{}]).map(rowHTML).join('')+'</div>'+
       '<button type="button" class="wbs-add" data-wbs-add>＋ Tambah tahapan</button>'+
       '<div class="wbs-form-hint" aria-live="polite"></div></div>'+

@@ -68,7 +68,7 @@ function modal(title,body,okLabel,onOk,o){o=o||{};const ov=document.createElemen
 /* ---------- isian IKU Terkait pada form aktivitas ---------- */
 function formField(a){const refs=refsOf(a);
  const el=document.createElement('div');el.className='form-field full dcm-iku-fld';el.dataset.ikuFld='1';
- el.innerHTML=`<label>${uiText('Related IKU','IKU terkait')} <span class="dcm-iku-opt">${uiText('(one or more · supporting data for IPR)','(boleh lebih dari satu · data dukung IPR)')}</span></label><div class="dcm-iku-box"><div class="dcm-iku-chips" data-iku-chips></div><button type="button" class="btn btn-outline btn-sm" data-iku-pick>☑ ${uiText('Choose IKU','Pilih IKU')}</button></div><input type="hidden" name="ikuRefsJson" value="${E(JSON.stringify(refs))}">`;
+ el.innerHTML=`<label>${uiText('Related IKU','IKU terkait')}${window.MT_INFO_ICON?window.MT_INFO_ICON(uiText('One or more IKUs. Used as supporting data for the Actions and Obstacles columns of the IPR export.','Boleh lebih dari satu IKU. Dipakai sebagai data dukung kolom Tindakan dan Kendala pada Ekspor IPR.')):''}</label><div class="dcm-iku-box"><div class="dcm-iku-chips" data-iku-chips></div><button type="button" class="btn btn-outline btn-sm" data-iku-pick>☑ ${uiText('Choose IKU','Pilih IKU')}</button></div><input type="hidden" name="ikuRefsJson" value="${E(JSON.stringify(refs))}">`;
  setTimeout(()=>{const f=el.closest('form');if(f)wireForm(f)},0);return el}
 const hid=root=>root&&root.querySelector('input[name="ikuRefsJson"]');
 function readForm(root){const h=hid(root);if(!h)return [];try{const a=JSON.parse(h.value||'[]');return Array.isArray(a)?[...new Set(a.map(nk).filter(Boolean))]:[]}catch(e){return []}}

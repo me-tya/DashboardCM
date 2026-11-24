@@ -64,3 +64,5 @@
 @media(max-width:700px){.dcm-iku-sumg{grid-template-columns:1fr 1fr}.dcm-iku-search{width:100%}}
 /* sub tab Aktivitas: Daftar · Kalender · Workboard · Matriks · Referensi IKU */
 #dcm-activity-view-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+.cm-af .dcm-iku-fld>label{display:flex!important;justify-content:flex-start!important;align-items:center;gap:0}
+.cm-af .af-sec-lab b .mt-info-ic{vertical-align:middle}
