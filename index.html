@@ -2952,7 +2952,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
 @media(max-width:900px){.prio-unified-toolbar{flex-wrap:wrap}.prio-toolbar-left{flex-basis:100%}.prio-toolbar-actions{margin-left:auto}.prio-page>.prio-subtabs{overflow-x:auto}.prio-page>.prio-subtabs .cm-survey-subtab{flex:0 0 auto}}
 @media(max-width:480px){.prio-unified-toolbar{padding:8px}.prio-toolbar-actions{gap:6px}.prio-toolbar-btn{padding:0 10px}}
 </style>
-<link rel="stylesheet" href="activity-wbs.css?v=261117"><script src="activity-wbs.js?v=261117"></script>
+<link rel="stylesheet" href="activity-wbs.css?v=261124"><script src="activity-wbs.js?v=261124"></script>
 <link rel="stylesheet" href="dcm-filter-consolidated-261119.css?v=261119-DCM-67">
 </head>
 <body>
@@ -3106,6 +3106,10 @@ html.cm-svc-open #toastContainer{z-index:9500}
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span data-i18n="tabMatrix">Matrix</span>
     </button>
+    <button class="tab-btn" data-tab="ikuref" title="Referensi IKU — daftar IKU per tahun untuk data dukung IPR">
+      <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4V2M17 4V2"/></svg>
+      <span data-iku-tablabel>Referensi IKU</span>
+    </button>
     <button class="tab-btn" data-tab="knowledge">
       <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4a4 4 0 00-4 4v1a4 4 0 004 4 4 4 0 004-4V8a4 4 0 00-4-4z"/><path d="M6 20c0-3 2.5-5 6-5s6 2 6 5"/></svg>
       <span data-i18n="tabKnowledge">Knowledge</span>
@@ -3162,6 +3166,7 @@ html.cm-svc-open #toastContainer{z-index:9500}
   <section class="tab-panel panel hidden" id="tab-calendar"></section>
   <section class="tab-panel panel hidden" id="tab-kanban"></section>
   <section class="tab-panel panel hidden" id="tab-matrix"></section>
+  <section class="tab-panel panel hidden" id="tab-ikuref"></section>
   <section class="tab-panel panel" id="tab-analytics"></section>
   <section class="tab-panel panel hidden" id="tab-knowledge"></section>
   <section class="tab-panel panel hidden" id="tab-contact"></section>
@@ -3568,6 +3573,7 @@ function ensureUiTranslationObserver(){
   cmUiObserver.observe(document.body,{childList:true,subtree:true});
 }
 function applyLanguage() {
+  try{const l=document.querySelector('[data-iku-tablabel]');if(l)l.textContent=uiText('IKU Reference','Referensi IKU');}catch(e){}
   try { dayjs.locale(currentLang); } catch (e) {}
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));
@@ -4454,7 +4460,7 @@ function cmCanReport(){const r=cmGetAccessRole();return r===CM_ROLE_SUPERADMIN||
 function cmRoleLabel(role){
   return role===CM_ROLE_SUPERADMIN?'SUPERADMIN':role===CM_ROLE_ADMIN?(cmIsPmoUser()?'PMO PUSAT':'CMO PUSAT'):role===CM_ROLE_VIEWER?uiText('VIEWER · READ & REPORT','PEMBACA · LIHAT & LAPORAN'):uiText('GUEST · VIEW ONLY','TAMU · MODE LIHAT');
 }
-const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','priority','contact','resource','pusmantap'];
+const CM_MENU_TABS=['analytics','table','tasks','calendar','kanban','matrix','ikuref','knowledge','survey','priority','contact','resource','pusmantap'];
 var cmMenuCfg=(()=>{try{return JSON.parse(localStorage.getItem('cm_menu_cfg_v1')||'{}')||{};}catch(e){return {};}})();
 function cmMenuHidden(key){let h=cmMenuCfg?.hidden?.[key];if(key==='viewer'&&!Array.isArray(h))h=cmMenuCfg?.hidden?.admin; // default Pembaca = seperti CMO Pusat
   return new Set(Array.isArray(h)?h.filter(t=>t!=='analytics'):[]);}
@@ -5075,7 +5081,7 @@ const CM_ESELON1_UNITS=[
   {code:'LNSW',short:'LNSW',name:'Lembaga National Single Window'},
   {code:'EKSTERNAL',short:'Eksternal',name:'Eksternal'}
 ];
-const CM_ALL_TABS=['analytics','table','tasks','calendar','kanban','matrix','knowledge','survey','contact','resource','pusmantap'];
+const CM_ALL_TABS=['analytics','table','tasks','calendar','kanban','matrix','ikuref','knowledge','survey','contact','resource','pusmantap'];
 function cmUnitByCode(code){return CM_ESELON1_UNITS.find(u=>u.code===code)||null;}
 
 /* ============================================================
@@ -7409,6 +7415,7 @@ function getFiltered() {
     if (f.dateFrom && a.tglMulai < f.dateFrom) return false;
     if (f.dateTo && a.tglMulai > f.dateTo) return false;
     if(!ActivityWBS.matches(a,f,'tglMulai'))return false;
+    if(window.DCMIKU&&!DCMIKU.matchFilter(a,f))return false;
     return true;
   });
   out.sort((x, y) => {
@@ -9489,23 +9496,22 @@ window.cmInvitationOpen=cmInvitationOpen;
 
 /* WBS filters share the same state as IKU / activity reports. */
 function cmWbsFilterSelects() {
-  const f=state.filters||{}, g=f.wbsGroup&&f.wbsGroup!=='ALL'?f.wbsGroup:'';
-  const level4=g?ActivityWBS.l4(g):Object.keys(ActivityWBS.stages);
+  const f=state.filters||{};
   const chosen4=f.wbsLevel4&&f.wbsLevel4!=='ALL'?f.wbsLevel4:'';
-  const level5=chosen4?(ActivityWBS.stages[chosen4]||[]):level4.flatMap(k=>ActivityWBS.stages[k]||[]);
-  const sel=(key,values,placeholder)=>{
+  const level5=chosen4?(ActivityWBS.stages[chosen4]||[]):ActivityWBS.COMPONENTS.flatMap(k=>ActivityWBS.stages[k]||[]);
+  const sel=(key,values,placeholder,labels)=>{
     const selected=f[key]&&f[key]!=='ALL'?String(f[key]):'';
     return '<select class="filter-select" data-wbs-filter="'+key+'" aria-label="'+ActivityWBS.E(placeholder)+'"><option value="ALL">'+ActivityWBS.E(placeholder)+'</option>'+
-      values.map(value=>{const v=String(value);return '<option value="'+ActivityWBS.E(v)+'"'+(v===selected?' selected':'')+'>'+ActivityWBS.E(v)+'</option>';}).join('')+'</select>';
+      values.map(value=>{const v=String(value);return '<option value="'+ActivityWBS.E(v)+'"'+(v===selected?' selected':'')+'>'+ActivityWBS.E(labels&&labels[v]||(key==='wbsQuarter'?'Triwulan '+['','I','II','III','IV'][+v]:v))+'</option>';}).join('')+'</select>';
   };
   return sel('wbsQuarter',[1,2,3,4],'Semua Triwulan')+
-    sel('wbsGroup',['PM','CM'],'Semua PM/CM')+
-    sel('wbsLevel4',level4,'Semua WBS Level 4')+
-    sel('wbsLevel5',level5,'Semua WBS Level 5');
+    sel('wbsLevel4',ActivityWBS.COMPONENTS,'Semua Komponen WBS',ActivityWBS.LABELS)+
+    sel('wbsLevel5',level5,'Semua Tahapan WBS')+
+    (window.DCMIKU?window.DCMIKU.filterSelect():'');
 }
 function cmWbsFilterToolbar(items) {
-  const n=items.length,pm=items.filter(x=>x.wbsGroup==='PM').length,cm=items.filter(x=>x.wbsGroup==='CM').length;
-  return '<div class="wbs-summary"><strong>'+n+'</strong> aktivitas sesuai filter · <span>PM <strong>'+pm+'</strong></span> · <span>CM <strong>'+cm+'</strong></span> · <span>Belum diklasifikasi <strong>'+(n-pm-cm)+'</strong></span></div>';
+  const n=items.length,has=g=>items.filter(x=>ActivityWBS.items(x).some(w=>w.wbsGroup===g)).length,pm=has('PM'),cm=has('CM'),none=items.filter(x=>!ActivityWBS.items(x).length).length;
+  return '<div class="wbs-summary"><strong>'+n+'</strong> aktivitas sesuai filter · <span>PM <strong>'+pm+'</strong></span> · <span>CM <strong>'+cm+'</strong></span> · <span>Belum terkait WBS <strong>'+none+'</strong></span></div>';
 }
 document.addEventListener('change',function(e){
   const control=e.target.closest('[data-wbs-filter]');
@@ -9518,14 +9524,8 @@ document.addEventListener('change',function(e){
 });
 document.addEventListener('click',function(e){
   if(e.target.closest('[data-wbs-reset]')){
-    Object.assign(state.filters,{wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL'});
+    Object.assign(state.filters,{wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL',iku:'ALL'});
     state.page=1;renderActiveTab();updateFilterActiveBadge();return;
-  }
-  if(e.target.closest('[data-wbs-export="dcm"]')){
-    const data=getFiltered();
-    const headers=['ID','Tanggal Mulai','Tanggal Selesai','Kegiatan','Kategori','Program','Unit Pemohon','PIC','PM/CM','WBS Level 4','WBS Level 5','Triwulan','Status','Tujuan/Output','Ringkasan Hasil','Tindak Lanjut'];
-    const rows=data.map(x=>[x.id,x.tglMulai,x.tglSelesai,x.namaKegiatan,x.kategori,x.programTerkait,x.unitPemohon,x.picTimCM,x.wbsGroup,x.wbsLevel4,x.wbsLevel5,ActivityWBS.quarter(x.tglMulai),x.statusNorm,x.tujuanOutput,x.ringkasanHasil,x.tindakLanjut]);
-    ActivityWBS.csv('Data_Dukung_IKU_DashboardCM_'+new Date().toISOString().slice(0,10)+'.csv',[headers].concat(rows));
   }
 });
 
@@ -9541,7 +9541,7 @@ function renderTable() {
   const container = document.getElementById('tab-table');
   const todayHtml=cmRenderTodayAgenda();
   const cmAddHtml=(typeof cmCanMutate==='function'&&cmCanMutate())?`<span class="cm-addg"><button type="button" class="cm-add" onclick="openForm(null)"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>${uiText('Activity','Aktivitas')}</button><button type="button" class="cm-addc" onclick="cmAddMenu(this)" aria-haspopup="menu" aria-expanded="false" aria-label="${uiText('Add activity options','Pilihan tambah aktivitas')}"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span>`:'';
-  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span><button type="button" class="cm-iku-export" data-wbs-export="dcm" title="Unduh CSV data dukung IKU sesuai filter aktif" aria-label="Unduh CSV data dukung IKU">⇩ CSV IKU</button>${cmAddHtml}</div>`+cmWbsFilterToolbar(filtered);
+  const cmTblHead=`<div class="cm-tbl-head"><h3>${uiText('Activity list','Daftar Aktivitas')} <span>(${filtered.length})</span></h3><span class="sp"></span>${cmCanMutate()?`<button type="button" class="cm-iku-export" data-ipr-export title="Unduh Excel IPR (4 sheet per triwulan) dari aktivitas yang terkait IKU" aria-label="Unduh Excel IPR">⇩ IPR</button>`:''}${cmAddHtml}</div>`+cmWbsFilterToolbar(filtered);
   if (!filtered.length) {
     container.innerHTML = todayHtml + cmTblHead + emptyState(uiText('No matching agenda found','Agenda yang sesuai tidak ditemukan'), uiText('Try adjusting the search or filters.','Coba sesuaikan pencarian atau filter.'));
     cmWireTodayAgenda();
@@ -9577,7 +9577,7 @@ function renderTable() {
       <td class="mono" style="color:var(--ink-500);font-weight:600;">${startIdx + idx + 1}</td>
       <td class="mono">${formatActivityDateCell(a)}</td>
       <td>
-        ${cmInvitationBadge(a)}<div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>${a.wbsGroup?`<div class="wbs-mini-tag">${ActivityWBS.badge(a)}</div>`:''}
+        ${cmInvitationBadge(a)}<div class="table-title">${escapeHtml(a.namaKegiatan)}${cmEoMiniBadge(a)}</div>
         ${(getMeetingLocation(a)||getMeetingLink(a)) ? `<div class="table-meta">${renderMeetingLocationAndLink(a,true)}</div>` : ''}
       </td>
       <td><span class="status-badge" style="background:${ls.bg};color:${ls.fg}">${a.layanan}</span></td>
@@ -10933,6 +10933,7 @@ function renderActiveTab() {
   else if (state.activeTab === 'calendar') renderCalendar();
   else if (state.activeTab === 'kanban') renderKanban();
   else if (state.activeTab === 'matrix') renderMatrix();
+  else if (state.activeTab === 'ikuref') { window.DCMIKU?.renderTab(); window.DCMIKU?.load().then(()=>{if(state.activeTab==='ikuref')window.DCMIKU.renderTab();}); }
   else if (state.activeTab === 'analytics') renderAnalytics();
   else if (state.activeTab === 'knowledge') renderKnowledge();
   else if (state.activeTab === 'contact') renderContact();
@@ -12497,7 +12498,7 @@ function refreshAutomaticActivityStatuses(){
 
 function activityFilterCount(){
   const f=state.filters;let n=0;
-  ['kategori','program','status','pic','unit','layanan','tahun','unitType','wbsGroup','wbsLevel4','wbsLevel5','wbsQuarter'].forEach(k=>{if(f[k]&&f[k]!=='ALL')n++;});
+  ['kategori','program','status','pic','unit','layanan','tahun','unitType','wbsGroup','wbsLevel4','wbsLevel5','wbsQuarter','iku'].forEach(k=>{if(f[k]&&f[k]!=='ALL')n++;});
   if(f.dateFrom)n++;if(f.dateTo)n++;return n;
 }
 function contextFilterCount(tab=state.activeTab){
@@ -12540,7 +12541,7 @@ function contextOption(value,label,selected){return `<option value="${escapeHtml
 function configureContextToolbar(tab=state.activeTab){
   const bar=document.getElementById('contextFilterBar'),body=document.getElementById('filterBarBody'),search=document.getElementById('searchInput'),toggle=document.getElementById('btnFilterToggle'),label=document.getElementById('contextFilterLabel');
   if(!bar||!body||!search||!toggle)return;
-  if(tab==='resource'||tab==='tasks'||tab==='priority'||tab==='pusmantap'){bar.classList.add('hidden');body.innerHTML='';return;}
+  if(tab==='resource'||tab==='tasks'||tab==='priority'||tab==='pusmantap'||tab==='ikuref'){bar.classList.add('hidden');body.innerHTML='';return;}
   const help=document.getElementById('cmContextHelp');if(help){help.title='User Manual';help.setAttribute('aria-label','User Manual');}
   if(tab==='analytics'){bar.classList.remove('hidden');}
   bar.classList.remove('hidden');
@@ -12555,7 +12556,7 @@ function configureContextToolbar(tab=state.activeTab){
     Object.entries(map).forEach(([id,key])=>document.getElementById(id)?.addEventListener('change',e=>{state.filters[key]=e.target.value;state.page=1;renderActiveTab();updateFilterActiveBadge();}));
     document.getElementById('filterDateFrom')?.addEventListener('change',e=>{state.filters.dateFrom=e.target.value;renderActiveTab();updateFilterActiveBadge();});
     document.getElementById('filterDateTo')?.addEventListener('change',e=>{state.filters.dateTo=e.target.value;renderActiveTab();updateFilterActiveBadge();});
-    document.getElementById('btnResetFilter')?.addEventListener('click',()=>{/* Reset = kosongkan SEMUA, termasuk kata pencarian (dipakai bersama Agenda/Calendar/Kanban/Matrix/Analytics) */state.page=1;state.filters={search:'',kategori:'ALL',program:'ALL',status:'ALL',pic:'ALL',unit:'ALL',layanan:'ALL',tahun:'ALL',unitType:'ALL',dateFrom:'',dateTo:'',wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL'};configureContextToolbar(tab);renderActiveTab();updateFilterActiveBadge();});
+    document.getElementById('btnResetFilter')?.addEventListener('click',()=>{/* Reset = kosongkan SEMUA, termasuk kata pencarian (dipakai bersama Agenda/Calendar/Kanban/Matrix/Analytics) */state.page=1;state.filters={search:'',kategori:'ALL',program:'ALL',status:'ALL',pic:'ALL',unit:'ALL',layanan:'ALL',tahun:'ALL',unitType:'ALL',dateFrom:'',dateTo:'',wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL',iku:'ALL'};configureContextToolbar(tab);renderActiveTab();updateFilterActiveBadge();});
   }else if(tab==='knowledge'){
     const groups=state.knowledge||[],types=[...new Set([...groups.flatMap(g=>(g.items||[]).map(i=>i.type||'link')),'reference-v2'])].sort();
     html=`<select class="filter-select" id="ctxKbGroup">${contextOption('ALL',uiText('All clusters','Semua cluster'),state.knowledgeFilters.group)}${groups.map(g=>contextOption(g.id,g.group,state.knowledgeFilters.group)).join('')}${contextOption('manual',uiText('User Manual','User Manual'),state.knowledgeFilters.group)}</select><select class="filter-select" id="ctxKbType">${contextOption('ALL',uiText('All content types','Semua tipe konten'),state.knowledgeFilters.type)}${types.map(x=>contextOption(x,x==='reference-v2'?uiText('AI Reference Document','Dokumen Referensi AI'):x,state.knowledgeFilters.type)).join('')}${contextOption('manual',uiText('Manual article','Artikel manual'),state.knowledgeFilters.type)}</select><button class="btn btn-outline btn-sm context-reset" id="ctxKbReset">${uiText('Reset','Reset')}</button>`;
@@ -14040,7 +14041,7 @@ const CM_AF_TABS=[
   {k:'plan',n:'2',en:['Planning','Goal, PIC, participants'],id:['Perencanaan','Tujuan, PIC, peserta'],desc:['What to achieve, who is in charge, speakers and participants.','Apa yang ingin dicapai, siapa PIC-nya, siapa narasumber dan pesertanya.']},
   {k:'eo',n:'EO',en:['Event (EO)','Event checklist'],id:['Event (EO)','Checklist acara'],desc:['Event task checklist per stage. Tick a task when it is done.','Checklist tugas acara per tahap. Centang tugas saat selesai.']},
   {k:'run',n:'3',en:['Execution','Materials & minutes'],id:['Pelaksanaan','Materi & notula'],desc:['Materials used and the meeting minutes.','Bahan yang dipakai saat kegiatan dan notula hasil diskusi.']},
-  {k:'res',n:'4',en:['Results & Output','Photos & follow-up'],id:['Hasil & Output','Dokumentasi & tindak lanjut'],desc:['Evidence and results: photos, result summary, follow-up.','Bukti dan capaian kegiatan: dokumentasi, ringkasan hasil, dan tindak lanjut.']}
+  {k:'res',n:'4',en:['Meeting Conclusion','Photos & conclusion'],id:['Kesimpulan Rapat','Dokumentasi & kesimpulan'],desc:['Evidence and conclusion: photos, summary, obstacles, follow-up.','Bukti dan kesimpulan kegiatan: dokumentasi, ringkasan, kendala, dan tindak lanjut.']}
 ];
 const CM_AF_ICONS={
  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v5h1"/></svg>',
@@ -14087,10 +14088,11 @@ function cmAfBuildLayout(modal,a){
   // --- Info utama
   const imp=form.querySelector('.und-import-card');if(imp){imp.classList.add('af-import');P.info.appendChild(imp);}
   sec(P.info,1,U('Activity','Kegiatan'),U('Name and schedule.','Nama dan waktu pelaksanaan.'),[F('namaKegiatan'),row('af-g4',[F('tglMulai'),F('tglSelesai'),F('jamMulai'),F('jamSelesai')]),document.getElementById('dailyTimeModeField')]);
-  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),cmAfEl(ActivityWBS.formHTML(a))]);
+  sec(P.info,2,U('Classification','Klasifikasi'),U('Used for statistics & reports.','Untuk statistik & laporan.'),[row('af-g3',[F('layanan'),F('unitPemohon'),F('kategori')]),F('programTerkait'),window.DCMIKU?.formField?.(a)||null]);
+  sec(P.info,3,U('WBS stages','Tahapan WBS'),U('Tick when the activity supports WBS stages. More than one stage allowed (PM and CM in parallel).','Centang bila kegiatan mendukung tahapan WBS. Bisa lebih dari satu tahapan (PM dan CM paralel).'),[cmAfEl(ActivityWBS.formHTML(a))]);
   const slotU=cmAfLetterSlot(F('undangan'),'undangan',U('Invitation letter','Surat undangan')),slotS=cmAfLetterSlot(F('suratTugas'),'suratTugas',U('Assignment letter','Surat tugas'));
-  sec(P.info,3,U('Letters','Dasar surat'),U('Several links/files allowed. The newest version is the reference.','Bisa lebih dari satu link/file. Versi terbaru dipakai sebagai acuan.'),[slotU,slotS]);
-  sec(P.info,4,U('Method','Metode'),U('Venue and/or meeting link.','Tempat dan/atau tautan rapat.'),[form.querySelector('.meeting-mode-row')]);
+  sec(P.info,4,U('Letters','Dasar surat'),U('Several links/files allowed. The newest version is the reference.','Bisa lebih dari satu link/file. Versi terbaru dipakai sebagai acuan.'),[slotU,slotS]);
+  sec(P.info,5,U('Method','Metode'),U('Venue and/or meeting link.','Tempat dan/atau tautan rapat.'),[form.querySelector('.meeting-mode-row')]);
   // --- Perencanaan
   sec(P.plan,1,U('Goal & notes','Tujuan & catatan'),'',[row('af-g2',[F('tujuanOutput'),F('catatan')])]);
   const picField=F('picTimCM')||form.querySelector('[data-pic-field]')?.closest('.form-field');
@@ -14115,13 +14117,13 @@ function cmAfBuildLayout(modal,a){
   if(notulaFiles){notulaFiles.querySelector('label')?.remove();notulaHost.querySelector('#afNotulaFiles').appendChild(notulaFiles.querySelector('#activityNotulaEditor'));notulaFiles.remove();}
   else notulaHost.querySelector('#afNotulaFiles').innerHTML=`<div class="af-hint-box">⤒ ${U('Uploading minutes files becomes available after the activity is saved once. You can already type the minutes below.','Unggah file notula aktif setelah activity disimpan sekali. Catatan notula di bawah sudah bisa diketik sekarang.')}</div>`;
   const nb=sec(P.run,2,U('Meeting minutes','Notula rapat'),'',[notulaHost],'af-sec-grow');
-  // --- Hasil & Output
+  // --- Kesimpulan Rapat
   sec(P.res,1,U('Documentation','Dokumentasi'),U('Photos are compressed automatically.','Foto dikompres otomatis.'),[F('dokumentasi')||document.getElementById('docThumbGrid')?.closest('.form-field')],'af-nolab');
-  const rh=cmAfEl(`<div class="form-field"><label>${U('Result summary','Ringkasan hasil')}</label><textarea name="ringkasanHasil" rows="4" placeholder="${U('What was achieved, attendance, key agreements…','Capaian kegiatan, jumlah peserta, kesepakatan utama…')}"></textarea><small class="status-help" id="afGoalRef"></small></div>`);
-  const tl=cmAfEl(`<div class="form-field"><label>${U('Follow-up','Tindak lanjut')}</label><textarea name="tindakLanjut" rows="4" placeholder="${U('1. Action — owner, target date','1. Rencana aksi — pihak, target waktu')}"></textarea></div>`);
-  rh.querySelector('textarea').value=String(a?.ringkasanHasil||'');tl.querySelector('textarea').value=String(a?.tindakLanjut||'');
-  sec(P.res,2,U('Results & follow-up','Hasil & tindak lanjut'),'',[row('af-g2',[rh,tl])]);
-  P.res.appendChild(cmAfEl(`<div class="af-rep" id="afRepBox"><span class="ic">${CM_AF_ICONS.doc}</span><div><b>${U('Activity report','Laporan kegiatan')}</b><small>${U('Uses the existing report generator — goal, minutes and photos are filled in automatically.','Memakai fitur Generate Laporan yang sudah ada — tujuan, notula, dan dokumentasi terisi otomatis.')}</small></div><button type="button" class="btn btn-gold btn-sm" id="afRepBtn">${U('Generate report','Generate Laporan')}</button></div>`));
+  const rh=cmAfEl(`<div class="form-field"><label>${U('Summary','Ringkasan')}</label><textarea name="ringkasanHasil" rows="5" placeholder="${U('What was achieved, attendance, key agreements…','Capaian kegiatan, jumlah peserta, kesepakatan utama…')}"></textarea><small class="status-help" id="afGoalRef"></small></div>`);
+  const kd=cmAfEl(`<div class="form-field"><label>${U('Obstacles','Kendala')}</label><textarea name="kendala" rows="5" placeholder="${U('Obstacles found (feeds the IPR “Kendala” column)','Kendala yang ditemui (masuk ke kolom Kendala IPR)')}"></textarea></div>`);
+  const tl=cmAfEl(`<div class="form-field"><label>${U('Follow-up','Tindak lanjut')}</label><textarea name="tindakLanjut" rows="5" placeholder="${U('1. Action — owner, target date','1. Rencana aksi — pihak, target waktu')}"></textarea></div>`);
+  rh.querySelector('textarea').value=String(a?.ringkasanHasil||'');kd.querySelector('textarea').value=String(a?.kendala||'');tl.querySelector('textarea').value=String(a?.tindakLanjut||'');
+  sec(P.res,2,U('Conclusion','Kesimpulan'),'',[row('af-g3',[rh,kd,tl])]);
   // sisa field yang belum terpetakan → tetap di Info Utama (tidak ada yang hilang)
   [...grid.children].forEach(ch=>{if(ch.matches('.form-field,.meeting-mode-row')&&!ch.closest('.af-panel'))P.info.appendChild(ch);});
   const panels=cmAfEl('<div class="af-panels"></div>');CM_AF_TABS.forEach(t=>panels.appendChild(P[t.k]));
@@ -14141,6 +14143,8 @@ function cmAfBuildLayout(modal,a){
   const prev=cmAfEl(`<button type="button" class="btn btn-outline btn-sm af-prev" id="afPrev"></button>`),next=cmAfEl(`<button type="button" class="btn btn-outline btn-sm af-next" id="afNext"></button>`);
   const dup=cmAfEl(`<button type="button" class="btn btn-outline btn-sm af-dup ${a?'':'hidden'}" id="afDup" title="${U('Copy into a new activity (date/unit can be changed)','Salin menjadi activity baru (tanggal/unit bisa diganti)')}">⧉ ${U('Duplicate','Duplikat')}</button>`);
   cancel.after(dup);dup.after(prev);prev.after(next);
+  const rep=cmAfEl(`<button type="button" class="btn btn-outline btn-sm af-repbtn" id="afRepBtn" title="${U('Generate the activity report (goal, minutes and photos are filled in automatically)','Buat laporan kegiatan — tujuan, notula, dan dokumentasi terisi otomatis')}">${CM_AF_ICONS.doc}<span>${U('Generate report','Generate Laporan')}</span></button>`);
+  const saveBtn=foot.querySelector('#submitForm');if(saveBtn)saveBtn.before(rep);else foot.appendChild(rep);
   box.innerHTML='';box.appendChild(nav);box.appendChild(main);main.appendChild(head);main.appendChild(body);main.appendChild(foot);
   // nilai awal field baru
   const nt=document.getElementById('afNotulaTeks'),ct=document.getElementById('afRteCt');const initHtml=cmAfSanitizeHtml(a?.notulaTeks||'');nt.value=initHtml;ct.innerHTML=initHtml;
@@ -14401,6 +14405,9 @@ function cmAfApplyValues(vals){
     if(n==='kategori')return cmAfSetSelectHidden('kategoriSelect','kategoriHidden','kategoriNewInput',val);
     if(n==='picTimCM'){const bx=f.querySelector('[data-pic-field]');if(bx&&typeof cmPicSetField==='function')cmPicSetField(bx,cmPicList(val));return;}
     if(n==='eoEnabled'){const t=document.getElementById('eoToggle');if(t){t.checked=String(val)==='true';t.dispatchEvent(new Event('change',{bubbles:true}));}return;}
+    if(n==='wbsGroup'||n==='wbsLevel4'||n==='wbsLevel5')return;
+    if(n==='wbsItemsJson'){let l=[];try{l=JSON.parse(val||'[]')}catch(e){}ActivityWBS.set(f,l);return;}
+    if(n==='ikuRefsJson'){let l=[];try{l=JSON.parse(val||'[]')}catch(e){}window.DCMIKU?.setFormRefs?.(f,l);return;}
     if(n==='notulaTeks'){const ct=document.getElementById('afRteCt');if(ct){ct.innerHTML=cmAfSanitizeHtml(val);ct.dispatchEvent(new Event('input',{bubbles:true}));}return;}
     const el=f.elements[n];if(!el)return;
     if(el instanceof RadioNodeList){el.value=val;[...el].forEach(r=>r.checked&&r.dispatchEvent(new Event('change',{bubbles:true})));return;}
@@ -14457,7 +14464,8 @@ function cmAfAfterOpen(a){
 const CM_MERGE_SKIP=new Set(['updatedBy','updatedAt','id','no']);
 const CM_MERGE_GROUPS={
   jam:['jamMulai','jamSelesai','waktu','jadwalHarian','jamBerbedaPerHari'],
-  lokasi:['meetingMode','meetingLocation','meetingLink','lokasiChannel']
+  lokasi:['meetingMode','meetingLocation','meetingLink','lokasiChannel'],
+  wbs:['wbsGroup','wbsLevel4','wbsLevel5','wbsItems']
 };
 const CM_MERGE_TEXT=new Set(['notulaTeks','catatan','tujuanOutput','pesertaTarget']);
 function cmMergeIsList(k){return k==='dokumentasi'||k==='eoChecklist'||/Files$/.test(k);}
@@ -14604,7 +14612,7 @@ function cmAfDuplicate(id){
   const eo=cmParseEoChecklist(src.eoChecklist).map(x=>({...x,id:cmEoItemId(),done:false,completedAt:'',completedBy:''}));
   openForm(null);
   setTimeout(()=>{
-    cmAfApplyValues({namaKegiatan:`${src.namaKegiatan||''} (${uiText('copy','salinan')})`,tglMulai:src.tglMulai||'',tglSelesai:src.tglSelesai||src.tglMulai||'',jamMulai:src.jamMulai||'',jamSelesai:src.jamSelesai||'',layanan:src.layanan||'Yes',unitPemohon:src.unitPemohon&&src.unitPemohon!=='-'?src.unitPemohon:'',kategori:src.kategori||'',programTerkait:src.programTerkait&&src.programTerkait!=='-'?src.programTerkait:'',meetingMode:getMeetingMode(src),meetingLocation:src.meetingLocation||'',meetingLink:src.meetingLink||'',unitAsalNarsum:src.unitAsalNarsum||'',pesertaTarget:src.pesertaTarget||'',tujuanOutput:src.tujuanOutput||'',picTimCM:src.picTimCM||'',status:'Scheduled',eoEnabled:String(cmIsEoEnabled(src.eoEnabled)),eoChecklist:JSON.stringify(eo)});
+    cmAfApplyValues({namaKegiatan:`${src.namaKegiatan||''} (${uiText('copy','salinan')})`,tglMulai:src.tglMulai||'',tglSelesai:src.tglSelesai||src.tglMulai||'',jamMulai:src.jamMulai||'',jamSelesai:src.jamSelesai||'',layanan:src.layanan||'Yes',unitPemohon:src.unitPemohon&&src.unitPemohon!=='-'?src.unitPemohon:'',kategori:src.kategori||'',programTerkait:src.programTerkait&&src.programTerkait!=='-'?src.programTerkait:'',meetingMode:getMeetingMode(src),meetingLocation:src.meetingLocation||'',meetingLink:src.meetingLink||'',unitAsalNarsum:src.unitAsalNarsum||'',pesertaTarget:src.pesertaTarget||'',tujuanOutput:src.tujuanOutput||'',picTimCM:src.picTimCM||'',wbsItemsJson:JSON.stringify(ActivityWBS.items(src)),ikuRefsJson:JSON.stringify(Array.isArray(src.ikuRefs)?src.ikuRefs:[]),status:'Scheduled',eoEnabled:String(cmIsEoEnabled(src.eoEnabled)),eoChecklist:JSON.stringify(eo)});
     if(cmAfCtx){cmAfCtx.snap=JSON.stringify({});}
     cmAfGo('info');const n=document.querySelector('#agendaForm [name="namaKegiatan"]');n?.focus();n?.select();
     toast(uiText('Copy created — change the date/unit as needed, then save. Letters, minutes and photos are not copied.','Salinan dibuat — ganti tanggal/unit bila perlu, lalu simpan. Surat, notula, dan foto tidak ikut disalin.'),'success');
@@ -15159,8 +15167,10 @@ function cmAfBuildFormObj(form){
   const fd = new FormData(form);
   const obj = {};
   fd.forEach((val, key) => obj[key] = val);
-  if(obj.wbsGroup==='CM')obj.wbsLevel4='Manajemen Perubahan';
-  if((!state.editingId||obj.wbsGroup)&&!ActivityWBS.valid(obj.wbsGroup,obj.wbsLevel4,obj.wbsLevel5))error=uiText('Choose PM/CM and a valid WBS Level 5 stage.','Pilih PM/CM serta tahapan WBS Level 4–5 yang sesuai.');
+  {const w=ActivityWBS.read(form);delete obj.wbsItemsJson;Object.assign(obj,{wbsGroup:w.wbsGroup,wbsLevel4:w.wbsLevel4,wbsLevel5:w.wbsLevel5,wbsItems:w.wbsItems});
+   if(w.on&&(w.incomplete||w.empty))error=uiText('Complete the WBS component and stage on every row, or untick "Related to WBS".','Lengkapi komponen dan tahapan WBS di setiap baris, atau hapus centang "Terkait WBS".');}
+  {let refs=[];try{refs=JSON.parse(obj.ikuRefsJson||'[]')}catch(e){refs=[]}delete obj.ikuRefsJson;obj.ikuRefs=Array.isArray(refs)?[...new Set(refs.map(String).filter(Boolean))]:[];}
+  obj.kendala=String(obj.kendala||'');
   let dailySchedule=normalizeActivityDailySchedule(obj.jadwalHarianJson);
   delete obj.jadwalHarianJson;
   const expectedDailyDates=activityDateList(obj.tglMulai,obj.tglSelesai||obj.tglMulai);
@@ -21211,8 +21221,9 @@ waitForFirebaseAuthReady().then(cmTaskLoad);
 <script>
 (function(){const nav=document.getElementById('tabNav');if(!nav)return;const show=()=>{if(window.innerWidth>640)return;const a=nav.querySelector('.tab-btn.active');if(a){const l=nav.scrollLeft+(a.getBoundingClientRect().left-nav.getBoundingClientRect().left)-(nav.clientWidth-a.offsetWidth)/2;nav.scrollTo({left:Math.max(0,l),behavior:'smooth'});}};nav.addEventListener('click',e=>{if(e.target.closest('.tab-btn'))setTimeout(show,60);});window.addEventListener('load',()=>setTimeout(show,400));})();
 </script>
-<script src="dcm-guide-header.js?v=261114-42"></script>
-<script src="dcm-detail-v2.js?v=261116-05"></script>
+<script src="dcm-guide-header.js?v=261124-43"></script>
+<script src="dcm-detail-v2.js?v=261124-06"></script>
+<link rel="stylesheet" href="dcm-iku-ipr.css?v=261124-01"><script src="dcm-iku-ipr.js?v=261124-01"></script>
 <script src="dcm-pusmantap-bridge.js?v=20261115-53"></script>
 <script src="dcm-header-reference-30.js?v=261114-30"></script>
 <!-- Dashboard CM Aktivitas: Data & Backup, MT Word surat, dan template 1-on-1 -->

@@ -559,7 +559,7 @@
     if(!nav||!filter||document.getElementById('dcm-activity-view-tabs'))return;
     var agenda=nav.querySelector('button[data-tab="table"]');
     if(!agenda)return;
-    var views=['calendar','kanban','matrix'];
+    var views=['calendar','kanban','matrix','ikuref'];
     var originals=views.map(function(k){return nav.querySelector('button[data-tab="'+k+'"]')});
     if(originals.some(function(el){return !el}))return;
     var tabs=document.createElement('nav');

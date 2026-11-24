@@ -1,0 +1,66 @@
+/* Dashboard CM — Referensi IKU, IKU terkait, Ekspor IPR (2026-11-24) */
+.dcm-iku-fld{margin-top:4px}
+.dcm-iku-fld label .dcm-iku-opt{font-weight:500;color:#6B7890;font-size:10.5px}
+.dcm-iku-box{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;min-height:38px;padding:6px 8px;border:1px solid #D9E2EF;border-radius:10px;background:#fff}
+.dcm-iku-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.dcm-iku-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 4px 3px 8px;border-radius:7px;background:#FEF6DE;border:1px solid #F1DEAE;color:#5E4708;font-size:11px;line-height:1.3}
+.dcm-iku-chip b{font-weight:800;color:#0B2447;white-space:nowrap}
+.dcm-iku-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:330px}
+.dcm-iku-chip button{border:0;background:transparent;color:#9A3B3B;cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.dcm-iku-chip.miss{background:#FDF0F0;border-color:#F0C9C9}
+.dcm-iku-none{font-size:11px;color:#8A96AA;align-self:center}
+.dcm-iku-ov{z-index:160}
+.dcm-iku-ov .modal-box.dcm-iku-md{max-width:720px}
+.dcm-iku-ov .modal-box.dcm-iku-wide{max-width:860px}
+.dcm-iku-ov .modal-body{padding:16px 22px}
+.dcm-iku-ov .modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 22px;border-top:1px solid var(--border,#E1E7F1)}
+.dcm-iku-h{margin:0 0 10px;font-size:12px;color:#4A5B78;line-height:1.5}
+.dcm-iku-q,.dcm-iku-search{box-sizing:border-box;height:34px;padding:0 10px;border:1px solid #D9E2EF;border-radius:8px;font:inherit;font-size:12px}
+.dcm-iku-q{width:100%;margin-bottom:8px}
+.dcm-iku-pk{max-height:52vh;overflow:auto;border:1px solid #E1E7F1;border-radius:10px}
+.dcm-iku-pk-ss{display:flex;gap:8px;align-items:center;padding:7px 10px;background:#F4F7FC;font-size:11.5px;font-weight:800;color:#0B2447;border-top:1px solid #E1E7F1;position:sticky;top:0}
+.dcm-iku-pk-g:first-child .dcm-iku-pk-ss{border-top:0}
+.dcm-iku-pk-ss i{font-style:normal;display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:6px;background:#0B2447;color:#fff;font-size:10.5px}
+.dcm-iku-pk-r{display:grid;grid-template-columns:18px 64px 1fr;gap:8px;align-items:start;padding:7px 10px;border-top:1px solid #F0F3F8;cursor:pointer;font-size:12px}
+.dcm-iku-pk-r:hover{background:#FFFBEF}
+.dcm-iku-pk-r input{margin:2px 0 0;accent-color:#0B2447}
+.dcm-iku-pk-r b{color:#0B2447}
+.dcm-iku-pk-r[hidden],.dcm-iku-pk-g[hidden]{display:none}
+.dcm-iku-page{padding:2px}
+.dcm-iku-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.dcm-iku-head h3{margin:0;font-size:15px;color:#0B2447}
+.dcm-iku-head h3 span{font-weight:500;color:#6B7890;font-size:12px}
+.dcm-iku-head .sp{flex:1}
+.dcm-iku-yr{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:#364E72}
+.dcm-iku-yr select{height:34px;width:auto}
+.dcm-iku-search{width:220px}
+.dcm-iku-head .cm-iku-export{display:inline-flex;align-items:center;height:32px;padding:0 11px;border-radius:8px;border:1px solid #173A74;background:#173A74;color:#fff;font:700 11.5px Inter,Arial,sans-serif;cursor:pointer}
+.dcm-iku-note{margin:0 0 10px;padding:8px 12px;border-radius:10px;background:#F7F0DC;color:#5E4708;font-size:11.5px}
+.dcm-iku-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.dcm-iku-tbl th{text-align:left;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:#5D6785;padding:8px;border-bottom:1px solid #E1E7F1;background:#F7F9FC}
+.dcm-iku-tbl td{vertical-align:top;padding:8px;border-bottom:1px solid #EEF1F6;line-height:1.45}
+.dcm-iku-tbl tr.dcm-iku-ss td{background:#FDE9D9;font-weight:800;color:#0B2447}
+.dcm-iku-tbl td.k{font-weight:800;color:#0B2447;white-space:nowrap}
+.dcm-iku-tbl td.s{color:#4A5B78}
+.dcm-iku-tbl td.c{white-space:nowrap}
+.dcm-iku-tbl td.c span{display:inline-grid;place-items:center;min-width:24px;height:22px;margin-right:3px;border-radius:6px;background:#F0F3F8;color:#8A96AA;font-size:11px;font-weight:700}
+.dcm-iku-tbl td.c span.on{background:#E8F1FC;color:#163A6B}
+.dcm-iku-tbl td.c b{margin-left:6px;color:#0B2447}
+.dcm-iku-tbl td.a{white-space:nowrap}
+.dcm-iku-tbl td.a .btn{padding:0 8px;height:28px}
+.dcm-iku-empty{padding:18px;text-align:center;color:#6B7890;font-size:12px}
+.dcm-iku-form .full{grid-column:1/-1}
+.dcm-iku-repl{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:12px;color:#4A5B78}
+.dcm-iku-prev{max-height:34vh;overflow:auto;font-size:12px}
+.dcm-iku-sumg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.dcm-iku-sumg div{border:1px solid #E1E7F1;border-radius:10px;padding:8px 10px;background:#F9FBFE}
+.dcm-iku-sumg small{display:block;font-size:10.5px;font-weight:800;color:#6B7890}
+.dcm-iku-sumg b{font-size:20px;color:#0B2447}
+.dcm-iku-sumg span{display:block;font-size:10.5px;color:#6B7890}
+.dcm-iku-warn{margin:6px 0;padding:7px 10px;border-radius:8px;background:#FDF0F0;color:#8A2B2B;font-size:11.5px}
+/* tombol Generate Laporan di footer form */
+.cm-af .modal-foot .af-repbtn{display:inline-flex;align-items:center;gap:6px}
+.cm-af .modal-foot .af-repbtn svg{width:15px;height:15px}
+@media(max-width:700px){.dcm-iku-sumg{grid-template-columns:1fr 1fr}.dcm-iku-search{width:100%}}
+/* sub tab Aktivitas: Daftar · Kalender · Workboard · Matriks · Referensi IKU */
+#dcm-activity-view-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}

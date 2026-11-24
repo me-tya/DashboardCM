@@ -47,7 +47,7 @@ const notes=app.slice(app.indexOf('const CM_MANUAL_OPERATIONAL_LIMITS={'),app.in
 const ids=['getting-started','overview','activities','today-calendar','workboard','matrix','knowledge','cra-create','cra-share-qr','cra-answer','cra-analytics','cra-action-plan','cra-rounds-version','cra-question-bank','squad','resource','backup','ai-assistant','activity-auto-status','crud-guide','ai-reference-library','reminders','whats-new','reports-export','report-compilation','chart-explanations','guest-access','user-access-admin','schedule-request','cm-team-tasks'];
 for(const k of ids)assert(notes.includes("'"+k+"':{en:"),'Missing practical limits for '+k);
 assert(app.includes('dcm-priority-filter-option1-42.css?v=261114-42'),'Chosen mockup stylesheet is linked');
-assert(app.includes('dcm-guide-header.js?v=261114-42'),'Updated guide cache busted');
+assert(/dcm-guide-header\.js\?v=26\d{4}-\d+/.test(app),'Updated guide cache busted');
 for(const action of ['#prioSnapSave','#prioCmpSnap','[data-prio-filter]','[data-prio-sort]','[data-prio-view]']){
  assert(priority.includes(action),'Original callback/data action remains '+action);
 }

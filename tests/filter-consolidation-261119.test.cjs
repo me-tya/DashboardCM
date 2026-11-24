@@ -12,27 +12,25 @@ test('WBS selectors live in the common top activity filter and not below the age
  assert.match(html,/\['analytics','table','calendar','kanban','matrix'\]/);
 });
 test('single Reset clears standard and WBS filters',()=>{
- assert.match(html,/wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL'\};configureContextToolbar\(tab\)/);
+ assert.match(html,/wbsGroup:'ALL',wbsLevel4:'ALL',wbsLevel5:'ALL',wbsQuarter:'ALL',iku:'ALL'\};configureContextToolbar\(tab\)/);
  assert.match(html,/state\.page=1;configureContextToolbar\(state\.activeTab\);renderActiveTab\(\);updateFilterActiveBadge\(\);/);
 });
-test('dependent WBS selects preserve all four fields and narrow choices by PM/CM',()=>{
+test('WBS selects: triwulan, komponen, tahapan (narrowed by komponen) plus IKU filter (2026-11-24)',()=>{
  const start=html.indexOf('function cmWbsFilterSelects()');
  const end=html.indexOf('\nfunction cmWbsFilterToolbar(items)',start);
  assert.ok(start>=0&&end>start);
- const sandbox={state:{filters:{wbsGroup:'PM',wbsLevel4:'ALL',wbsLevel5:'ALL'}},
- ActivityWBS:{stages:{'Tahap PM':['Langkah PM'],'Tahap CM':['Langkah CM']},l4:g=>g==='PM'?['Tahap PM']:['Tahap CM'],E:s=>String(s)}};
+ const sandbox={state:{filters:{wbsLevel4:'Tahap PM',wbsLevel5:'ALL'}},window:{DCMIKU:{filterSelect:()=>'<select data-wbs-filter="iku"></select>'}},
+ ActivityWBS:{COMPONENTS:['Tahap PM','Tahap CM'],LABELS:{'Tahap CM':'Change Management'},stages:{'Tahap PM':['Langkah PM'],'Tahap CM':['Langkah CM']},E:s=>String(s)}};
  const output=vm.runInNewContext(html.slice(start,end)+'\ncmWbsFilterSelects();',sandbox);
  assert.equal((output.match(/<select /g)||[]).length,4);
- assert.match(output,/data-wbs-filter="wbsQuarter"/);
- assert.match(output,/data-wbs-filter="wbsGroup"/);
- assert.match(output,/data-wbs-filter="wbsLevel4"/);
- assert.match(output,/data-wbs-filter="wbsLevel5"/);
- assert.match(output,/Tahap PM/);
- assert.doesNotMatch(output,/Tahap CM/);
+ for(const k of ['wbsQuarter','wbsLevel4','wbsLevel5','iku'])assert.match(output,new RegExp('data-wbs-filter="'+k+'"'));
+ assert.doesNotMatch(output,/data-wbs-filter="wbsGroup"/);
+ assert.match(output,/Langkah PM/);
+ assert.doesNotMatch(output,/Langkah CM/);
 });
-test('CSV IKU stays beside activity list title; style is compact and responsive',()=>{
- assert.match(html,/class="cm-iku-export" data-wbs-export="dcm"/);
- assert.equal((html.match(/data-wbs-export="dcm"/g)||[]).length,2); // event handler + one rendered button
+test('IPR export replaces CSV IKU beside activity list title; style is compact and responsive',()=>{
+ assert.doesNotMatch(html,/data-wbs-export="dcm"/);
+ assert.equal((html.match(/class="cm-iku-export" data-ipr-export/g)||[]).length,1);
  assert.match(css,/#contextFilterBar #filterBarBody\.cm-fgrid/);
  assert.match(css,/#tab-table \.cm-iku-export/);
  assert.match(css,/@media\(max-width:650px\)/);

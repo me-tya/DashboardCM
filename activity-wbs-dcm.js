@@ -25,12 +25,6 @@ W.attachDcmFilters=function(body,f,refresh,exportRows){
   make('filterWbsL4','wbsLevel4','Semua WBS Level 4',four,k);
   make('filterWbsL5','wbsLevel5','Semua WBS Level 5',five,s);
   make('filterWbsQuarter','wbsQuarter','Semua Triwulan',[['1','Triwulan I'],['2','Triwulan II'],['3','Triwulan III'],['4','Triwulan IV']],String(f.wbsQuarter||'ALL'));
-  const actions=body.querySelector('.cm-fact');
-  if(actions){
-    const btn=document.createElement('button');btn.type='button';btn.className='cm-frst';btn.id='btnWbsCsv';btn.title='Ekspor aktivitas sesuai filter PM/CM, tahapan WBS dan triwulan';
-    btn.textContent='⇩ IKU CSV';
-    btn.addEventListener('click',exportRows);
-    actions.appendChild(btn);
-  }
+  /* Tombol ekspor CSV IKU dihapus (2026-11-24) — diganti Export IPR (dcm-iku-ipr.js). */
 };
 })();
