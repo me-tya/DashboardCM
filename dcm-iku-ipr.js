@@ -109,27 +109,43 @@ function bulkDownload(name,data){
 }
 const bulkList=v=>{if(typeof v==='string'){try{v=JSON.parse(v)}catch(e){throw Error('Format IKU existing tidak valid')}}if(v==null)return [];if(!Array.isArray(v))throw Error('Format IKU existing bukan array');return [...new Set(v.map(x=>String(x).replace(/\s+/g,'')))].sort()};
 const bulkEq=(a,b)=>JSON.stringify(bulkList(a))===JSON.stringify(bulkList(b));
-function bulkCheck(row,a){
+const bulkWbsKey=list=>JSON.stringify(list.map(w=>[w.wbsGroup,w.wbsLevel4,w.wbsLevel5]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
+const bulkWbsEqual=(a,b)=>bulkWbsKey(a)===bulkWbsKey(b);
+function bulkCheck(row,a,wbs=false){
  if(!a||String(a.id)!==row.id)return 'ID tidak ditemukan/sesuai';
  if(String(a.tglMulai||'')!==row.date||String(a.namaKegiatan||'')!==row.title)return 'Tanggal/judul berubah sejak ekspor';
+ if(wbs){
+  const current=window.ActivityWBS.items(a);
+  if(bulkWbsEqual(current,row.wbsItems))return 'sudah sesuai';
+  if(!bulkWbsEqual(current,row.expectedWbsItems))return 'WBS existing berubah sejak ekspor';
+  if(current.length)return 'WBS existing dipertahankan';
+  return '';
+ }
  if(bulkEq(a.ikuRefs,row.ikuRefs))return 'sudah sesuai';
  if(!bulkEq(a.ikuRefs,row.expectedRefs))return 'IKU existing berubah sejak ekspor';
  if(row.expectedUpdatedAt&&a.updatedAt&&String(a.updatedAt)!==row.expectedUpdatedAt)return 'Record telah diperbarui sejak ekspor';
  return '';
 }
-async function bulkApply(file){
+function bulkAssign(a,row,wbs){if(wbs)Object.assign(a,window.ActivityWBS.flat(row.wbsItems));else a.ikuRefs=row.ikuRefs.slice();}
+async function bulkApply(file,wbs=false){
  if(bulkBusy||!bulkAuth())throw Error('Sesi Superadmin dan Firebase yang aktif diperlukan.');
  bulkBusy=true;
  try{
   if(file.size>2000000)throw Error('File mapping terlalu besar.');
   const p=JSON.parse(await file.text());
-  if(p.kind!=='dcm-iku-mapping-v1'||p.year!=='2026'||p.sourceProject!=='dashboard-cm-bb716'||!Array.isArray(p.rows)||p.rows.length>400)throw Error('Format, proyek, atau tahun mapping tidak sesuai.');
-  await load(true);
+  const label=wbs?'WBS':'IKU',kind=wbs?'wbs':'iku';
+  if(p.kind!=='dcm-'+kind+'-mapping-v1'||p.year!=='2026'||p.sourceProject!=='dashboard-cm-bb716'||!Array.isArray(p.rows)||p.rows.length>400)throw Error('Format, proyek, atau tahun mapping tidak sesuai.');
+  if(wbs&&!window.ActivityWBS)throw Error('Master WBS belum siap.');
+  if(!wbs)await load(true);
   const allowed=new Set(ref('2026').map(x=>nk(x.kode))),seen=new Set();
   for(const row of p.rows){
-   if(!row||typeof row.id!=='string'||!row.id||seen.has(row.id)||!/^2026-\d{2}-\d{2}$/.test(row.date)||typeof row.title!=='string'||!['apply','keep','review'].includes(row.decision)||!Array.isArray(row.expectedRefs)||!Array.isArray(row.ikuRefs))throw Error('Record mapping tidak valid atau ID ganda.');
+   if(!row||typeof row.id!=='string'||!row.id||seen.has(row.id)||!/^2026-\d{2}-\d{2}$/.test(row.date)||typeof row.title!=='string'||!(wbs?['apply','keep','review','none']:['apply','keep','review']).includes(row.decision)||(wbs?(!Array.isArray(row.expectedWbsItems)||!Array.isArray(row.wbsItems)):(!Array.isArray(row.expectedRefs)||!Array.isArray(row.ikuRefs))))throw Error('Record mapping tidak valid atau ID ganda.');
    seen.add(row.id);
-   if(row.decision==='apply'&&(!row.ikuRefs.length||row.ikuRefs.some(k=>typeof k!=='string'||!allowed.has(k))))throw Error('Kode IKU usulan tidak ada di Referensi IKU 2026: '+row.ikuRefs.join(', '));
+   if(wbs){
+    const api=window.ActivityWBS;
+    if([...row.expectedWbsItems,...row.wbsItems].some(w=>!w||typeof w!=='object'||!['wbsGroup','wbsLevel4','wbsLevel5'].every(k=>typeof w[k]==='string')))throw Error('Format tahapan WBS tidak valid.');
+    if(row.decision==='apply'&&(!row.wbsItems.length||row.expectedWbsItems.length||row.wbsItems.some(w=>!api.valid(w.wbsGroup,w.wbsLevel4,w.wbsLevel5))||new Set(row.wbsItems.map(w=>JSON.stringify([w.wbsGroup,w.wbsLevel4,w.wbsLevel5]))).size!==row.wbsItems.length))throw Error('Tahapan WBS tidak valid, ganda, atau berisiko menimpa WBS existing.');
+   }else if(row.decision==='apply'&&(!row.ikuRefs.length||row.ikuRefs.some(k=>typeof k!=='string'||!allowed.has(k))))throw Error('Kode IKU usulan tidak ada di Referensi IKU 2026: '+row.ikuRefs.join(', '));
   }
   const selected=p.rows.filter(r=>r.decision==='apply');
   if(!selected.length)throw Error('Tidak ada record siap diterapkan.');
@@ -137,7 +153,7 @@ async function bulkApply(file){
   const db=window.fbDb,mode=cmActMode,stamp=new Date().toISOString(),legacy=mode==='legacy';
   const actualMig=await cmActReadMig();
   if(Boolean(actualMig)!==!legacy)throw Error('Mode penyimpanan belum sinkron. Refresh aplikasi terlebih dahulu.');
-  const backup={kind:'dcm-iku-migration-backup-v1',at:stamp,mode,year:p.year,documents:[]},plan=[],skips=[];
+  const backup={kind:'dcm-'+kind+'-migration-backup-v1',at:stamp,mode,year:p.year,documents:[]},plan=[],skips=[];
   let legacyRaw='';
   if(legacy){
    const doc=window.fbDoc(db,'dashboard',STORAGE_KEY),snap=await window.fbGetDoc(doc);
@@ -145,21 +161,21 @@ async function bulkApply(file){
    const data=snap.data();legacyRaw=data.value;
    const rows=JSON.parse(legacyRaw);if(!Array.isArray(rows))throw Error('Format aktivitas Firebase tidak valid.');
    const byId=new Map();rows.forEach(a=>{const key=String(a.id);if(byId.has(key))throw Error('ID aktivitas ganda di Firebase.');byId.set(key,a)});
-   for(const r of selected){const a=byId.get(r.id),why=bulkCheck(r,a);if(why)skips.push({id:r.id,reason:why});else plan.push({row:r});}
+   for(const r of selected){const a=byId.get(r.id),why=bulkCheck(r,a,wbs);if(why)skips.push({id:r.id,reason:why});else plan.push({row:r});}
    backup.documents.push({path:'dashboard/'+STORAGE_KEY,data});
   }else{
    for(let i=0;i<selected.length;i+=20){
     await Promise.all(selected.slice(i,i+20).map(async r=>{
      const id=cmActDocId(r.id),doc=window.fbDoc(db,CM_ACT_COLL,id),snap=await window.fbGetDoc(doc);
-     const data=snap.exists()?snap.data():null,a=data?.v?JSON.parse(data.v):null,why=bulkCheck(r,a);
+     const data=snap.exists()?snap.data():null,a=data?.v?JSON.parse(data.v):null,why=bulkCheck(r,a,wbs);
      if(why)skips.push({id:r.id,reason:why});else{plan.push({row:r,doc,raw:data.v});backup.documents.push({path:CM_ACT_COLL+'/'+id,data});}
     }));
    }
   }
-  if(!plan.length){bulkDownload('DCM_Hasil_Migrasi_IKU_2026.json',{updated:0,skips});T('Tidak ada perubahan yang diperlukan; cek laporan hasil.','info');return;}
+  if(!plan.length){bulkDownload('DCM_Hasil_Migrasi_'+label+'_2026.json',{updated:0,skips});T('Tidak ada perubahan yang diperlukan; cek laporan hasil.','info');return;}
   // Save exact before-images privately before any writes.
-  bulkDownload('DCM_Backup_Data_IKU_2026_'+stamp.replace(/[:.]/g,'-')+'.json',backup);
-  if(!confirm('Backup data telah disiapkan untuk diunduh. Terapkan '+plan.length+' pemetaan IKU? '+skips.length+' record dilewati; '+p.rows.filter(r=>r.decision==='review').length+' perlu validasi. Hanya ikuRefs yang diubah. Pastikan backup tersimpan.'))return;
+  bulkDownload('DCM_Backup_Data_'+label+'_2026_'+stamp.replace(/[:.]/g,'-')+'.json',backup);
+  if(!confirm('Backup data telah disiapkan untuk diunduh. Terapkan '+plan.length+' pemetaan '+label+'? '+skips.length+' record dilewati; '+p.rows.filter(r=>r.decision==='review').length+' perlu validasi. '+(wbs?'Hanya field WBS yang diubah. IKU tidak berubah.':'Hanya ikuRefs yang diubah.')+' Pastikan backup tersimpan.'))return;
   if(!bulkAuth()||cmActMode!==mode||cmActMigrating)throw Error('Sesi atau mode penyimpanan berubah. Ulangi setelah refresh.');
   const updated=await window.fbRunTransaction(db,async tx=>{
    if(!bulkAuth()||cmActMode!==mode)throw Error('Sesi berubah.');
@@ -172,40 +188,72 @@ async function bulkApply(file){
     const doc=window.fbDoc(db,'dashboard',STORAGE_KEY),snap=await tx.get(doc);
     if(!snap.exists()||snap.data().value!==legacyRaw)throw Error('Data berubah sejak backup. Tidak ada pemetaan yang disimpan; ulangi impor.');
     const rows=JSON.parse(legacyRaw),map=new Map(plan.map(x=>[x.row.id,x.row]));
-    rows.forEach(a=>{const r=map.get(String(a.id));if(r){const why=bulkCheck(r,a);if(why)throw Error('Konflik data: '+r.id);a.ikuRefs=r.ikuRefs.slice()}});
+    rows.forEach(a=>{const r=map.get(String(a.id));if(r){const why=bulkCheck(r,a,wbs);if(why)throw Error('Konflik data: '+r.id);bulkAssign(a,r,wbs)}});
     tx.update(doc,{value:JSON.stringify(rows)});
    }else{
     const snaps=await Promise.all(plan.map(x=>tx.get(x.doc)));
     for(let i=0;i<plan.length;i++){if(!snaps[i].exists()||snaps[i].data().v!==plan[i].raw)throw Error('Data berubah sejak backup. Tidak ada pemetaan yang disimpan; ulangi impor.');}
-    plan.forEach(x=>{const a=JSON.parse(x.raw);a.ikuRefs=x.row.ikuRefs.slice();tx.update(x.doc,{v:JSON.stringify(a)})});
+    plan.forEach(x=>{const a=JSON.parse(x.raw);bulkAssign(a,x.row,wbs);tx.update(x.doc,{v:JSON.stringify(a)})});
    }
    return plan.length;
   });
-  const report={kind:'dcm-iku-migration-report-v1',at:stamp,updated,updatedIds:plan.map(x=>x.row.id),skips,review:p.rows.filter(r=>r.decision==='review').map(r=>({id:r.id,reason:r.reason})),kept:p.rows.filter(r=>r.decision==='keep').length};
-  bulkDownload('DCM_Hasil_Migrasi_IKU_2026.json',report);
+  const report={kind:'dcm-'+kind+'-migration-report-v1',at:stamp,updated,updatedIds:plan.map(x=>x.row.id),skips,review:p.rows.filter(r=>r.decision==='review').map(r=>({id:r.id,reason:r.reason})),kept:p.rows.filter(r=>r.decision==='keep').length};
+  bulkDownload('DCM_Hasil_Migrasi_'+label+'_2026.json',report);
   T(updated+' aktivitas berhasil disimpan ke Firebase; '+skips.length+' dilewati. Refresh untuk melihat hasil.','success');
   try{renderTab()}catch(e){}
  }finally{bulkBusy=false}
 }
-function bulkPick(){
+function bulkPick(wbs=false){
  if(!bulkAuth()){T('Akses Superadmin dengan Firebase diperlukan.','error');return}
  const i=document.createElement('input');i.type='file';i.accept='.json,application/json';
- i.onchange=()=>{const f=i.files?.[0];if(f)bulkApply(f).catch(e=>T('Migrasi IKU gagal: '+e.message,'error'));i.remove()};
+ i.onchange=()=>{const f=i.files?.[0];if(f)bulkApply(f,wbs).catch(e=>T('Migrasi '+(wbs?'WBS':'IKU')+' gagal: '+e.message,'error'));i.remove()};
  i.click();
 }
 
-const UI={year:'',q:''};
+const UI={year:'',q:'',sub:'iku',wbsQ:''};
+function referenceTabs(){
+ return '<div class="dcm-reference-tabs" role="tablist" aria-label="'+E(uiText('References','Referensi'))+'">'+
+  [['iku',uiText('IKU Reference','Referensi IKU')],['wbs',uiText('WBS Stages','Tahapan WBS')]].map(([key,label])=>'<button type="button" role="tab" data-ref-sub="'+key+'" aria-selected="'+(UI.sub===key)+'" class="'+(UI.sub===key?'active':'')+'">'+E(label)+'</button>').join('')+'</div>';
+}
+function renderWbsTab(host){
+ const api=window.ActivityWBS,y=curYear(),ys=years();
+ if(!api){host.innerHTML=referenceTabs()+'<div class="dcm-iku-note">Master WBS belum termuat. Refresh aplikasi.</div>';return;}
+ const cnt=new Map();
+ acts().filter(a=>yearOfItem(a)===y&&!SKIP_ST.includes(stOf(a))).forEach(a=>api.items(a).forEach(w=>{const k=JSON.stringify([w.wbsGroup,w.wbsLevel4,w.wbsLevel5]);const c=cnt.get(k)||[0,0,0,0,0];c[twOf(a)]++;c[0]++;cnt.set(k,c)}));
+ const q=UI.wbsQ.toLowerCase().trim();
+ let rows='',n=0,visible=0;
+ for(const group of ['PM','CM']){
+  for(const component of api.GROUPS[group]){
+   const name=api.LABELS[component]||component;
+   const stages=api.l5(group,component);
+   n+=stages.length;
+   const filtered=stages.filter(s=>!q||[group,name,component,s].join(' ').toLowerCase().includes(q));
+   if(!filtered.length)continue;
+   visible+=filtered.length;
+   rows+='<tr class="dcm-iku-ss"><td colspan="4">'+E(group==='PM'?'Project Management':'Change Management')+' · '+E(name)+'</td></tr>';
+   for(const s of filtered){
+    const c=cnt.get(JSON.stringify([group,component,s]))||[0,0,0,0,0];
+    rows+='<tr><td class="k">'+E(group)+'</td><td>'+E(name)+'</td><td>'+E(s)+'</td><td class="c">'+[1,2,3,4].map(t=>'<span class="'+(c[t]?'on':'')+'" title="TW '+t+': '+c[t]+' aktivitas">'+c[t]+'</span>').join('')+'<b>'+c[0]+'</b></td></tr>';
+   }
+  }
+ }
+ host.innerHTML=referenceTabs()+'<div class="dcm-iku-page"><div class="cm-tbl-head dcm-iku-head"><h3>'+E(uiText('WBS Stages','Tahapan WBS'))+' <span>('+n+' '+E(uiText('stages','tahapan'))+')</span></h3><label class="dcm-iku-yr">'+E(uiText('Year','Tahun'))+' <select class="filter-select" data-iku-year>'+ys.map(v=>'<option'+(v===y?' selected':'')+'>'+E(v)+'</option>').join('')+'</select></label><input class="dcm-iku-search" data-wbs-search placeholder="'+E(uiText('Search stages…','Cari tahapan…'))+'" value="'+E(UI.wbsQ)+'"><span class="sp"></span>'+(bulkEnabled()&&y==='2026'?'<button type="button" class="btn btn-outline btn-sm" data-wbs-bulk>⇪ Terapkan Mapping WBS 2026</button>':'')+'</div><div class="table-wrap"><table class="dcm-iku-tbl"><colgroup><col style="width:70px"><col style="width:29%"><col><col style="width:178px"></colgroup><thead><tr><th>PM / CM</th><th>'+E(uiText('Level 4 component','Komponen Level 4'))+'</th><th>'+E(uiText('Level 5 stage','Tahapan Level 5'))+'</th><th>'+E(uiText('Activities Q1–Q4 · total','Aktivitas TW I–IV · total'))+'</th></tr></thead><tbody>'+(visible?rows:'<tr><td colspan="4" class="dcm-iku-empty">'+E(uiText('No matching stage.','Tidak ada tahapan yang cocok.'))+'</td></tr>')+'</tbody></table></div></div>';
+ const input=host.querySelector('[data-wbs-search]');
+ input?.addEventListener('input',()=>{UI.wbsQ=input.value;clearTimeout(input._t);input._t=setTimeout(()=>{if(UI.sub!=='wbs')return;const p=input.selectionStart;renderTab();const next=host.querySelector('[data-wbs-search]');if(next){next.focus();try{next.setSelectionRange(p,p)}catch(e){}}},200)});
+}
 function counts(y){const out={};acts().filter(a=>yearOfItem(a)===String(y)&&!SKIP_ST.includes(stOf(a))).forEach(a=>{const tw=twOf(a);refsOf(a).forEach(k=>{out[k]=out[k]||[0,0,0,0,0];out[k][tw]++;out[k][0]++})});return out}
 function curYear(){const ys=years();let y=String(UI.year||yNow());return ys.includes(y)?y:ys[ys.length-1]}
 function renderTab(){const host=document.getElementById('tab-ikuref');if(!host)return;
+ tabLabel();
+ if(UI.sub==='wbs'){renderWbsTab(host);return;}
  const ys=years(),y=curYear(),rows=ref(y),cnt=counts(y),ed=canEdit(),seeded=!(DATA.ref&&DATA.ref[y])&&!!SEED[y];
  const q=UI.q.toLowerCase().trim(),vis=rows.filter(r=>!q||(r.kode+' '+r.nama+' '+r.ssNama+' '+r.strategi).toLowerCase().includes(q));
  let last=null;const tb=vis.map(r=>{const c=cnt[r.kode]||[0,0,0,0,0];const ss=r.ssNo!==last?`<tr class="dcm-iku-ss"><td>${E(r.ssNo)}.</td><td colspan="${ed?5:4}">${E(r.ssNama||'Sasaran Strategis '+r.ssNo)}</td></tr>`:'';last=r.ssNo;
   return ss+`<tr><td class="k">${E(r.kode)}</td><td class="n">${E(r.nama)}</td><td class="s">${E(r.strategi||'—')}</td><td class="c">${[1,2,3,4].map(t=>`<span class="${c[t]?'on':''}" title="TW ${t}: ${c[t]} aktivitas">${c[t]}</span>`).join('')}<b>${c[0]}</b></td>${ed?`<td class="a"><button type="button" class="btn btn-outline btn-sm" data-iku-edit="${E(r.kode)}" title="${uiText('Edit','Ubah')}">✎</button><button type="button" class="btn btn-outline btn-sm" data-iku-del="${E(r.kode)}" title="${uiText('Delete','Hapus')}">🗑</button></td>`:''}</tr>`}).join('');
- host.innerHTML=`<div class="dcm-iku-page"><div class="cm-tbl-head dcm-iku-head"><h3>${uiText('IKU Reference','Referensi IKU')} <span>(${rows.length} IKU · ${E(y)})</span></h3>
+ host.innerHTML=referenceTabs()+`<div class="dcm-iku-page"><div class="cm-tbl-head dcm-iku-head"><h3>${uiText('IKU Reference','Referensi IKU')} <span>(${rows.length} IKU · ${E(y)})</span></h3>
   <label class="dcm-iku-yr">${uiText('Year','Tahun')} <select class="filter-select" data-iku-year>${ys.map(v=>`<option${v===y?' selected':''}>${v}</option>`).join('')}</select></label>
   <input class="dcm-iku-search" placeholder="${uiText('Search IKU…','Cari IKU…')}" value="${E(UI.q)}" data-iku-search><span class="sp"></span>
-  ${ed?`${bulkEnabled()&&y==='2026'?`<button type="button" class="btn btn-outline btn-sm" data-iku-bulk>⇪ Terapkan Mapping 2026</button>`:''}<button type="button" class="btn btn-outline btn-sm" data-iku-import>⇪ ${uiText('Import IKU','Import IKU')}</button><button type="button" class="btn btn-outline btn-sm" data-iku-add>＋ IKU</button><button type="button" class="cm-iku-export" data-ipr-export>⇩ IPR</button>`:''}</div>
+  ${ed?`${bulkEnabled()&&y==='2026'?`<button type="button" class="btn btn-outline btn-sm" data-iku-bulk>⇪ Terapkan Mapping IKU 2026</button>`:''}<button type="button" class="btn btn-outline btn-sm" data-iku-import>⇪ ${uiText('Import IKU','Import IKU')}</button><button type="button" class="btn btn-outline btn-sm" data-iku-add>＋ IKU</button><button type="button" class="cm-iku-export" data-ipr-export>⇩ IPR</button>`:''}</div>
   ${seeded?`<div class="dcm-iku-note">ⓘ ${uiText('This year still uses the initial list from the Pusmantap IKU achievement file. The first change (edit/add/import) saves it as the official reference.','Daftar '+E(y)+' masih memakai data awal dari file Capaian IKU Pusmantap '+E(y)+'. Perubahan pertama (ubah/tambah/import) akan menyimpannya sebagai referensi resmi.')}</div>`:''}
   ${rows.length?`<div class="table-wrap"><table class="dcm-iku-tbl"><colgroup><col style="width:84px"><col style="width:30%"><col><col style="width:178px">${ed?'<col style="width:92px">':''}</colgroup><thead><tr><th>${uiText('Code','Kode')}</th><th>${uiText('IKU name','Nama IKU')}</th><th>${uiText('Proposed strategy (standard, same every quarter)','Usulan strategi (normatif, sama tiap TW)')}</th><th>${uiText('Activities Q1–Q4 · total','Aktivitas TW I–IV · total')}</th>${ed?'<th></th>':''}</tr></thead><tbody>${tb||`<tr><td colspan="5" class="dcm-iku-empty">${uiText('No matching IKU.','Tidak ada IKU yang cocok.')}</td></tr>`}</tbody></table></div>`:`<div class="dcm-iku-empty">${uiText('No IKU reference for this year yet.','Belum ada Referensi IKU tahun ini.')} ${ed?uiText('Use Import IKU or + IKU.','Gunakan Import IKU atau ＋ IKU.'):''}</div>`}</div>`;
  const s=host.querySelector('[data-iku-search]');if(s){s.addEventListener('input',()=>{UI.q=s.value;clearTimeout(s._t);s._t=setTimeout(()=>{const p=s.selectionStart;renderTab();const n=document.querySelector('#tab-ikuref [data-iku-search]');if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}},250)})}}
@@ -215,6 +263,8 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target;if(!t)r
  if(!t.closest('#tab-ikuref'))return;
  const ed=t.closest('[data-iku-edit]');if(ed){editIku(ed.dataset.ikuEdit);return}
  const dl=t.closest('[data-iku-del]');if(dl){delIku(dl.dataset.ikuDel);return}
+ const sub=t.closest('[data-ref-sub]');if(sub){UI.sub=sub.dataset.refSub==='wbs'?'wbs':'iku';renderTab();document.querySelector('#tab-ikuref [data-ref-sub="'+UI.sub+'"]')?.focus();return}
+ if(t.closest('[data-wbs-bulk]')){bulkPick(true);return}
  if(t.closest('[data-iku-bulk]')){bulkPick();return}
  if(t.closest('[data-iku-add]')){editIku('');return}
  if(t.closest('[data-iku-import]')){importIku();return}});
@@ -301,7 +351,8 @@ async function openIprExport(){if(!canEdit()){T(uiText('IPR export is for CMO Pu
 
 window.DCMIKU={KEY,SEED,load,ref,years,writeRef,formField,readForm,setFormRefs,wireForm,filterOptions,filterSelect,matchFilter,renderTab,openIprExport,parsePaste,parseSheet,iprData,buildXlsx,refsOf};
 /* label tab mengikuti bahasa */
-function tabLabel(){const l=document.querySelector('[data-iku-tablabel]');if(l)l.textContent=uiText('IKU Reference','Referensi IKU')}
+let refLabelObserver=null;
+function tabLabel(){const l=document.querySelector('[data-iku-tablabel]');if(!l)return;const label=uiText('References','Referensi');if(l.textContent!==label)l.textContent=label;const b=l.closest('button');if(b)b.title=uiText('IKU Reference and WBS Stages','Referensi IKU dan Tahapan WBS');if(!refLabelObserver){refLabelObserver=new MutationObserver(()=>tabLabel());refLabelObserver.observe(l,{childList:true,characterData:true,subtree:true});}}
 setTimeout(tabLabel,0);
 /* muat referensi dari Firebase setelah login */
 (function boot(n){if(typeof isLoggedIn==='function'&&isLoggedIn()&&window.fbDb){load(true).then(rerender);return}if(n<120)setTimeout(()=>boot(n+1),1000)})(0);

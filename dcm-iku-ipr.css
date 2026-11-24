@@ -66,3 +66,11 @@
 #dcm-activity-view-tabs{grid-template-columns:repeat(5,minmax(0,1fr))!important}
 .cm-af .dcm-iku-fld>label{display:flex!important;justify-content:flex-start!important;align-items:center;gap:0}
 .cm-af .af-sec-lab b .mt-info-ic{vertical-align:middle}
+
+
+/* DCM-71: Reference subtabs — aligned with the compact navy/gold secondary navigation. */
+#tab-ikuref .dcm-reference-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;background:#fff;border:1px solid #DCE4EE;border-bottom:2px solid #D4AF43;border-radius:9px;margin:0 0 10px}
+#tab-ikuref .dcm-reference-tabs button{min-width:0;height:34px;padding:0 10px;border:0;border-radius:7px;background:#fff;color:#465B7B;font:inherit;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap}
+#tab-ikuref .dcm-reference-tabs button.active{background:linear-gradient(135deg,#17477E,#0E3066);color:#fff;box-shadow:0 2px 5px rgba(11,42,91,.16)}
+#tab-ikuref .dcm-reference-tabs button:not(.active):hover{background:#E8EFFA;color:#173A74}
+#tab-ikuref .dcm-reference-tabs button:focus-visible{outline:2px solid #D4AF43;outline-offset:1px}
