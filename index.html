@@ -13326,9 +13326,69 @@ function cmMatThumbsBind(host){
 }
 /* Kalimat ketentuan unggah dibungkus ikon ⓘ (tooltip saat hover/fokus), tidak ditulis terbuka di bawah kolom. */
 function cmHintIc(t){const a=escapeHtml(t);return `<span class="cm-hint-ic" tabindex="0" role="img" aria-label="${a}" data-tip="${a}">ⓘ</span>`}
+/* DCM-73: output-only attachments; existing activity storage and merge are reused. */
+const CM_AF_OUTPUT_FIELDS=['daftarHadirFiles','notulaTteFiles','ndNotulaFiles','outputLainnyaFiles'];
+function cmAfOutputSlot(field,raw){
+  const host=cmAfEl('<div class="form-field">'+activityFileEditorHtml(field,JSON.stringify(parseActivityFiles(raw)))+'</div>');
+  host.querySelector('[data-file-editor]').dataset.outputEditor='1';
+  return host;
+}
+function cmAfOutputActions(rows,edit=false){
+  const U=uiText,E=escapeHtml;
+  return rows.length?rows.map((x,i)=>'<div class="activity-file-row" style="gap:6px;align-items:center"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis" title="'+E(x.name||x.url||'')+'">'+E(x.name||x.url||U('Attachment','Lampiran'))+'</span><button type="button" class="btn btn-outline btn-sm" data-out-preview="'+i+'">'+U('Preview','Pratinjau')+'</button><button type="button" class="btn btn-outline btn-sm" data-out-download="'+i+'">'+U('Download','Unduh')+'</button>'+(edit?'<button type="button" class="icon-btn" data-out-remove="'+i+'" title="'+U('Remove','Hapus')+'" aria-label="'+U('Remove','Hapus')+'">×</button>':'')+'</div>').join(''):'<div class="af-vempty">'+U('No files or links yet.','Belum ada berkas/tautan.')+'</div>';
+}
+function cmAfOutputOpen(x,download){
+  if(!x)return;const U=uiText;
+  const url=String(x.url||'').trim();
+  if(!x.refId){if(/^https?:\/\//i.test(url)){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';if(download)a.download=x.name||'';document.body.appendChild(a);a.click();a.remove();}return;}
+  (async()=>{try{
+    const src=await fetchDocImageDataUrl(x.refId);
+    if(!src)throw Error('missing');
+    const name=x.name||'attachment';
+    const blob=await (await fetch(src)).blob();
+    const mime=String(x.mime||blob.type||'');
+    const previewable=/^(image\/(png|jpeg|gif|webp|bmp)|application\/pdf|text\/plain)(;|$)/i.test(mime);
+    const objectUrl=URL.createObjectURL(blob);
+    if(download||!previewable){
+      if(!download)toast(U('Preview unavailable for this format; downloading instead.','Format ini tidak dapat dipratinjau; berkas diunduh.'),'info');
+      const a=document.createElement('a');a.href=objectUrl;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);return;
+    }
+    const dialog=document.createElement('dialog');
+    dialog.style.cssText='width:min(900px,90vw);max-height:90vh;border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--bg);color:var(--ink-900);font:inherit';
+    const head=document.createElement('div');head.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
+    const title=document.createElement('b');title.textContent=name;title.style.flex='1';head.appendChild(title);
+    const dl=document.createElement('a');dl.className='btn btn-outline btn-sm';dl.href=objectUrl;dl.download=name;dl.textContent=U('Download','Unduh');head.appendChild(dl);
+    const close=document.createElement('button');close.type='button';close.className='btn btn-outline btn-sm';close.textContent=U('Close','Tutup');close.onclick=()=>dialog.close();head.appendChild(close);
+    const frame=document.createElement('iframe');frame.title=name;frame.src=objectUrl;frame.style.cssText='width:100%;height:68vh;border:0;background:white';dialog.append(head,frame);
+    dialog.addEventListener('close',()=>{dialog.remove();URL.revokeObjectURL(objectUrl);},{once:true});document.body.appendChild(dialog);dialog.showModal();
+  }catch(e){toast(U('File could not be opened.','Berkas tidak dapat dibuka.'),'error');}})();
+}
+function cmAfOutputBind(host,rows){
+  host.querySelectorAll('[data-out-preview]').forEach(b=>b.onclick=()=>cmAfOutputOpen(rows[+b.dataset.outPreview],false));
+  host.querySelectorAll('[data-out-download]').forEach(b=>b.onclick=()=>cmAfOutputOpen(rows[+b.dataset.outDownload],true));
+}
+function cmAfOutputEditor(host,field,hidden,ownerId){
+  const U=uiText;let rows=parseActivityFiles(hidden.value),busy=false;
+  const sync=()=>{hidden.value=JSON.stringify(rows);hidden.dispatchEvent(new Event('change',{bubbles:true}));};
+  const draw=()=>{
+    host.innerHTML='<div class="activity-file-list">'+cmAfOutputActions(rows,true)+'</div><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:7px"><input type="url" data-out-url placeholder="'+U('Paste SharePoint / OneDrive link…','Tempel tautan SharePoint / OneDrive…')+'" style="flex:1;min-width:180px"><button type="button" class="btn btn-outline btn-sm" data-out-add>+ '+U('Link','Tautan')+'</button><button type="button" class="btn btn-outline btn-sm" data-out-file>+ '+U('File','Berkas')+'</button><input type="file" data-out-input multiple hidden'+(field==='notulaTteFiles'?' accept=".pdf,application/pdf"':'')+'>'+cmHintIc(U('Local files max. 600 KB; use a link for larger files.','Berkas lokal maksimal 600 KB; gunakan tautan untuk berkas lebih besar.'))+'</div>';
+    cmAfOutputBind(host,rows);
+    host.querySelectorAll('[data-out-remove]').forEach(b=>b.onclick=()=>{if(busy||!confirm(U('Remove this attachment?','Hapus lampiran ini?')))return;rows.splice(+b.dataset.outRemove,1);sync();draw();});
+    const input=host.querySelector('[data-out-url]'),add=host.querySelector('[data-out-add]'),fileBtn=host.querySelector('[data-out-file]'),picker=host.querySelector('[data-out-input]');
+    add.disabled=fileBtn.disabled=busy;
+    add.onclick=()=>{const raw=input.value.trim(),url=/^www\./i.test(raw)?'https://'+raw:raw;try{if(!/^https?:\/\//i.test(url)||!new URL(url).hostname)throw Error('invalid');}catch(e){toast(U('Enter a valid URL.','Masukkan URL yang valid.'),'error');return;}if(rows.some(x=>x.url===url))return;rows.push({url,name:fileNameFromUrl(url)||url});sync();draw();};
+    input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();add.click();}};
+    fileBtn.onclick=()=>picker.click();
+    picker.onchange=()=>{const files=[...picker.files];if(!files.length||busy)return;busy=true;draw();const batch=(async()=>{for(const file of files){try{
+      if(field==='notulaTteFiles'&&!/\.pdf$/i.test(file.name)){toast(U('Use a PDF for signed minutes.','Notula TTE harus berupa PDF.'),'error');continue;}
+      rows.push(await uploadGenericActivityFile(file,ownerId));sync();
+    }catch(e){toast(e.message==='File too large'?U('File exceeds 600 KB; use a link.','Berkas melebihi 600 KB; gunakan tautan.'):U('Upload failed.','Unggah gagal.'),'error');}}})().finally(()=>{busy=false;draw();});cmAfPendingUploads.add(batch);batch.finally(()=>cmAfPendingUploads.delete(batch));};
+  };draw();host.cmSetRows=r=>{rows=parseActivityFiles(r);sync();draw();};host.cmRowCount=()=>rows.length;
+}
 function setupActivityFileEditors(ownerId){
   document.querySelectorAll('[data-file-editor]').forEach(host=>{
     const field=host.dataset.fileEditor,hidden=document.getElementById(field+'Hidden');let rows=parseActivityFiles(hidden?.value);
+    if(host.dataset.outputEditor==='1'&&hidden){cmAfOutputEditor(host,field,hidden,ownerId);return;}
     if(host.dataset.versioned==='1'&&typeof cmAfVersionedEditor==='function'&&hidden){cmAfVersionedEditor(host,field,hidden,ownerId);return;}
     const sync=()=>{hidden.value=JSON.stringify(rows);};
     const thumbs=field==='materiFiles';
@@ -14041,7 +14101,7 @@ const CM_AF_TABS=[
   {k:'plan',n:'2',en:['Planning','Goal, PIC, participants'],id:['Perencanaan','Tujuan, PIC, peserta'],desc:['What to achieve, who is in charge, speakers and participants.','Apa yang ingin dicapai, siapa PIC-nya, siapa narasumber dan pesertanya.']},
   {k:'eo',n:'EO',en:['Event (EO)','Event checklist'],id:['Event (EO)','Checklist acara'],desc:['Event task checklist per stage. Tick a task when it is done.','Checklist tugas acara per tahap. Centang tugas saat selesai.']},
   {k:'run',n:'3',en:['Execution','Materials & minutes'],id:['Pelaksanaan','Materi & notula'],desc:['Materials used and the meeting minutes.','Bahan yang dipakai saat kegiatan dan notula hasil diskusi.']},
-  {k:'res',n:'4',en:['Meeting Conclusion','Photos & conclusion'],id:['Kesimpulan Rapat','Dokumentasi & kesimpulan'],desc:['Evidence and conclusion: photos, summary, obstacles, follow-up.','Bukti dan kesimpulan kegiatan: dokumentasi, ringkasan, kendala, dan tindak lanjut.']}
+  {k:'res',n:'4',en:['Results & Output','Evidence & conclusion'],id:['Hasil & Output','Bukti & kesimpulan'],desc:['Evidence, final minutes, attendance, and meeting conclusion.','Dokumentasi, presensi, notula final, dokumen output, dan kesimpulan kegiatan.']}
 ];
 const CM_AF_ICONS={
  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 12h1v5h1"/></svg>',
@@ -14117,13 +14177,17 @@ function cmAfBuildLayout(modal,a){
   if(notulaFiles){notulaFiles.querySelector('label')?.remove();notulaHost.querySelector('#afNotulaFiles').appendChild(notulaFiles.querySelector('#activityNotulaEditor'));notulaFiles.remove();}
   else notulaHost.querySelector('#afNotulaFiles').innerHTML=`<div class="af-hint-box">⤒ ${U('Uploading minutes files becomes available after the activity is saved once. You can already type the minutes below.','Unggah file notula aktif setelah activity disimpan sekali. Catatan notula di bawah sudah bisa diketik sekarang.')}</div>`;
   const nb=sec(P.run,2,U('Meeting minutes','Notula rapat'),U('Upload minutes files and/or type the minutes. The text is searchable in activity search and used by the AI assistant and reports.','Unggah berkas notula dan/atau ketik notula. Isinya ikut dicari di pencarian aktivitas dan dipakai asisten AI serta laporan.'),[notulaHost],'af-sec-grow');
-  // --- Kesimpulan Rapat
+  // --- Hasil & Output
   sec(P.res,1,U('Documentation','Dokumentasi'),U('Photos are compressed automatically.','Foto dikompres otomatis.'),[F('dokumentasi')||document.getElementById('docThumbGrid')?.closest('.form-field')],'af-nolab');
+  sec(P.res,2,U('Attendance','Presensi / Daftar Hadir'),U('Upload or link attendance evidence.','Unggah atau tautkan bukti kehadiran peserta.'),[cmAfOutputSlot('daftarHadirFiles',a?.daftarHadirFiles)],'af-nolab');
+  sec(P.res,3,U('Signed minutes','Notula TTE'),U('Final electronically signed minutes (PDF).','Notula final bertanda tangan elektronik (PDF).'),[cmAfOutputSlot('notulaTteFiles',a?.notulaTteFiles)],'af-nolab');
+  sec(P.res,4,U('Minutes transmittal memo','ND Penyampaian Notula'),U('Attach the issued transmittal memo.','Lampirkan nota dinas penyampaian notula yang telah diterbitkan.'),[cmAfOutputSlot('ndNotulaFiles',a?.ndNotulaFiles)],'af-nolab');
   const rh=cmAfEl(`<div class="form-field"><label>${U('Summary','Ringkasan')}</label><textarea name="ringkasanHasil" rows="5" placeholder="${U('What was achieved, attendance, key agreements…','Capaian kegiatan, jumlah peserta, kesepakatan utama…')}"></textarea><small class="status-help" id="afGoalRef"></small></div>`);
   const kd=cmAfEl(`<div class="form-field"><label>${U('Obstacles','Kendala')}</label><textarea name="kendala" rows="5" placeholder="${U('Obstacles found (feeds the IPR “Kendala” column)','Kendala yang ditemui (masuk ke kolom Kendala IPR)')}"></textarea></div>`);
   const tl=cmAfEl(`<div class="form-field"><label>${U('Follow-up','Tindak lanjut')}</label><textarea name="tindakLanjut" rows="5" placeholder="${U('1. Action — owner, target date','1. Rencana aksi — pihak, target waktu')}"></textarea></div>`);
   rh.querySelector('textarea').value=String(a?.ringkasanHasil||'');kd.querySelector('textarea').value=String(a?.kendala||'');tl.querySelector('textarea').value=String(a?.tindakLanjut||'');
-  sec(P.res,2,U('Conclusion','Kesimpulan'),'',[row('af-g3',[rh,kd,tl])]);
+  sec(P.res,5,U('Conclusion','Kesimpulan'),'',[row('af-g3',[rh,kd,tl])]);
+  sec(P.res,6,U('Other outputs','Output Lainnya'),U('Other supporting activity outputs.','Bukti output kegiatan lainnya, bila ada.'),[cmAfOutputSlot('outputLainnyaFiles',a?.outputLainnyaFiles)],'af-nolab');
   // sisa field yang belum terpetakan → tetap di Info Utama (tidak ada yang hilang)
   [...grid.children].forEach(ch=>{if(ch.matches('.form-field,.meeting-mode-row')&&!ch.closest('.af-panel'))P.info.appendChild(ch);});
   const panels=cmAfEl('<div class="af-panels"></div>');CM_AF_TABS.forEach(t=>panels.appendChild(P[t.k]));
@@ -14338,7 +14402,7 @@ function cmAfChecks(){
     plan:[!!v('tujuanOutput'),!!v('catatan'),!!v('picTimCM'),!!v('unitAsalNarsum'),!!v('pesertaTarget')],
     eo:eo.map(x=>!!x.done),
     run:[!!(v('materi')||js('materiFiles')),!!(notulaFiles||v('notulaTeks'))],
-    res:[js('dokumentasi')>0,!!v('ringkasanHasil'),!!v('tindakLanjut')]
+    res:[js('dokumentasi')>0,js('daftarHadirFiles')>0,js('notulaTteFiles')>0,js('ndNotulaFiles')>0,!!(v('ringkasanHasil')||v('tindakLanjut'))]
   };
 }
 function cmAfRefresh(){

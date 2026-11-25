@@ -11,12 +11,13 @@ test('WBS: checkbox + baris komponen/tahapan, PM & CM paralel, field lama terbac
  assert.equal(W.items({wbsGroup:'CM',wbsLevel4:'Manajemen Perubahan',wbsLevel5:'Asesmen Kesiapan Perubahan'}).length,1);
  assert.match(W.formHTML({}),/data-wbs-on/);assert.doesNotMatch(W.formHTML({}),/type="radio"/);
 });
-test('Form: IKU di Klasifikasi, Tahapan WBS bagian 3, Kesimpulan Rapat, Generate Laporan di kiri Simpan',()=>{
+test('Form: IKU di Klasifikasi, Tahapan WBS bagian 3, Hasil & Output, Generate Laporan di kiri Simpan',()=>{
  assert.match(html,/sec\(P\.info,2,U\('Classification','Klasifikasi'\)[^\n]*DCMIKU\?\.formField/);
  assert.match(html,/sec\(P\.info,3,U\('WBS stages','Tahapan WBS'\)/);
  assert.match(html,/sec\(P\.info,4,U\('Letters','Dasar surat'\)/);assert.match(html,/sec\(P\.info,5,U\('Method','Metode'\)/);
- assert.match(html,/id:\['Kesimpulan Rapat','Dokumentasi & kesimpulan'\]/);
- assert.match(html,/sec\(P\.res,2,U\('Conclusion','Kesimpulan'\),'',\[row\('af-g3',\[rh,kd,tl\]\)\]\)/);
+ assert.match(html,/id:\['Hasil & Output','Bukti & kesimpulan'\]/);
+ assert.match(html,/sec\(P\.res,5,U\('Conclusion','Kesimpulan'\),'',\[row\('af-g3',\[rh,kd,tl\]\)\]\)/);
+ for(const key of ['daftarHadirFiles','notulaTteFiles','ndNotulaFiles','outputLainnyaFiles'])assert.ok(html.includes("cmAfOutputSlot('"+key+"'"));
  assert.match(html,/name="kendala"/);
  assert.match(html,/saveBtn\.before\(rep\)/);assert.doesNotMatch(html,/id="afRepBox"/);
  assert.doesNotMatch(html,/wbs-mini-tag">\$\{ActivityWBS\.badge/,'label WBS tidak tampil di daftar aktivitas');
