@@ -6305,16 +6305,27 @@ function cmOpenDashboardTitleEditor(){
 }
 document.addEventListener('click',e=>{if(e.target?.closest?.('#cmEditDashboardTitle'))cmOpenDashboardTitleEditor();});
 
+// Coalesce only concurrent reads of the same document and authenticated identity.
+const cmFirestoreInFlight=new Map();
 async function firestoreGet(key) {
   if (!isLoggedIn() || !window.fbDb) return null;
-  try {
-    const ref = window.fbDoc(window.fbDb, 'dashboard', key);
-    const snap = await window.fbGetDoc(ref);
-    return (snap && snap.exists()) ? snap.data().value : null;
-  } catch (e) {
-    console.error('Firestore get error:', key, e);
-    return null;
-  }
+  const uid=window.fbAuth?.currentUser?.uid;
+  if(!uid)return null;
+  const id=uid+'::'+key;
+  if(cmFirestoreInFlight.has(id))return cmFirestoreInFlight.get(id);
+  const request=(async()=>{
+    try {
+      const ref = window.fbDoc(window.fbDb, 'dashboard', key);
+      const snap = await window.fbGetDoc(ref);
+      if(window.fbAuth?.currentUser?.uid!==uid)return null;
+      return (snap && snap.exists()) ? snap.data().value : null;
+    } catch (e) {
+      console.error('Firestore get error:', key, e);
+      return null;
+    }
+  })();
+  cmFirestoreInFlight.set(id,request);
+  try{return await request}finally{if(cmFirestoreInFlight.get(id)===request)cmFirestoreInFlight.delete(id)}
 }
 async function firestoreSet(key, value, options={}) {
   if (!isLoggedIn() || !window.fbDb) return false;
@@ -6434,7 +6445,7 @@ async function cmActMaybeMigrate(){
  if(cmActMode!=='legacy'||cmActMigrating||!cmActIsStaff()||!window.fbWriteBatch||!Array.isArray(state.agendas)||!state.agendas.length)return;
  cmActMigrating=true;
  try{
-  if(await cmActReadMig()){cmActMig=await cmActReadMig();const rows=await cmActListen();state.agendas=rows;cmActMode='docs';detachAgendaLiveSync();refreshAll();return;}
+  const existingMig=await cmActReadMig();if(existingMig){cmActMig=existingMig;const rows=await cmActListen();state.agendas=rows;cmActMode='docs';detachAgendaLiveSync();refreshAll();return;}
   // id ganda diberi id baru agar tidak saling menimpa
   const seen=new Set();let fixed=0;state.agendas.forEach(a=>{let id=cmActDocId(a.id);if(seen.has(id)){a.id=uid('AGD');id=cmActDocId(a.id);fixed++;}seen.add(id);});
   await window.fbGetDoc(window.fbDoc(window.fbDb,CM_ACT_COLL,'__cek_izin'));
@@ -12641,7 +12652,15 @@ async function cmActivityLogLoadAll(){
   return rows;
 }
 async function cmActivityLogLoad(activityId){
-  const rows=await cmActivityLogLoadAll();
+  let rows=cmActivityLogLocalAll();
+  if(isLoggedIn()&&window.fbDb&&window.fbCollection&&window.fbGetDocs&&window.fbQuery&&window.fbWhere){
+    try{
+      const q=window.fbQuery(window.fbCollection(window.fbDb,CM_ACTIVITY_LOG_COLLECTION),window.fbWhere('activityId','==',activityId));
+      const snap=await window.fbGetDocs(q);
+      const remote=snap.docs.map(d=>{const x={id:d.id,...d.data()};const st=cmActivityLogTimestampValue(x.createdAt);if(st)x.createdAtServer=st;delete x.createdAt;return x;});
+      rows=cmActivityLogMergeLocal(remote);
+    }catch(e){console.warn('Activity audit Firestore read skipped',e);}
+  }
   return rows.filter(x=>String(x.activityId)===String(activityId)).sort((a,b)=>String(cmActivityLogEventTime(b)).localeCompare(String(cmActivityLogEventTime(a))));
 }
 async function cmActivityLogRestore(rows){
