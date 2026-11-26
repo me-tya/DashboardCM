@@ -123,3 +123,13 @@
 @media(max-width:520px){
  .cm-detail .cd-footer .cd-report-btn{width:100%;order:2}
 }
+
+
+/* Hasil & Output: do not reserve a row for empty attachments in these three editors.
+   Existing attachment rows, the upload controls and read-only view stay unchanged. */
+.cm-af [data-af-panel="res"] [data-output-editor="1"]:is([data-file-editor="daftarHadirFiles"],[data-file-editor="notulaTteFiles"],[data-file-editor="ndNotulaFiles"]) > .activity-file-list:has(> .af-vempty:only-child) {
+  display: none;
+}
+.cm-af [data-af-panel="res"] [data-output-editor="1"]:is([data-file-editor="daftarHadirFiles"],[data-file-editor="notulaTteFiles"],[data-file-editor="ndNotulaFiles"]) > .activity-file-list:has(> .af-vempty:only-child) + div {
+  margin-top: 0 !important;
+}
