@@ -324,6 +324,11 @@
   background:#EDF3FC!important;
   color:#102F59!important;
 }
+/* Keep the profile backup label in the same navy as its menu button. */
+#appHeader #dcmRefUserMenu #dcmProfileDbk > span{
+  color:inherit!important;
+  -webkit-text-fill-color:currentColor!important;
+}
 #appHeader #dcmRefUserMenu #btnAccessAdmin svg,
 #appHeader #dcmRefUserMenu #dcmProfileDbk svg,
 #appHeader #dcmRefUserMenu #btnLogout svg{
