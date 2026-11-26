@@ -295,6 +295,7 @@
   color:#123765!important;
 }
 #appHeader #dcmRefUserMenu #btnAccessAdmin,
+#appHeader #dcmRefUserMenu #dcmProfileDbk,
 #appHeader #dcmRefUserMenu #btnLogout{
   box-sizing:border-box!important;
   display:flex!important;
@@ -318,11 +319,13 @@
 #appHeader #dcmRefUserMenu #btnAccessAdmin.hidden,
 #appHeader #dcmRefUserMenu #btnLogout.hidden{display:none!important}
 #appHeader #dcmRefUserMenu #btnAccessAdmin:hover,
+#appHeader #dcmRefUserMenu #dcmProfileDbk:hover,
 #appHeader #dcmRefUserMenu #btnLogout:hover{
   background:#EDF3FC!important;
   color:#102F59!important;
 }
 #appHeader #dcmRefUserMenu #btnAccessAdmin svg,
+#appHeader #dcmRefUserMenu #dcmProfileDbk svg,
 #appHeader #dcmRefUserMenu #btnLogout svg{
   width:17px!important;height:17px!important;
   flex:none!important;stroke:currentColor!important;
@@ -359,3 +362,5 @@
   #appHeader .dcm-ref-divider{height:24px!important;margin:0 2px!important}
   #appHeader .topbar-actions.dcm-reference-toolbar-30 #cmGuideToggle{font-size:12px!important}
 }
+
+html:not([data-role="superadmin"]) #dcmProfileDbk{display:none!important}

@@ -18,7 +18,8 @@ const fmt=(date)=>{if(!date)return '';const d=new Date(date+'T00:00:00');return 
 const cmState=()=>typeof state!=='undefined'&&state&&Array.isArray(state.agendas)?state:null;
 const notify=(t,error=false)=>{let n=document.getElementById('dcmDbkNotice');if(!n){n=document.createElement('div');n.id='dcmDbkNotice';n.innerHTML='<span></span><button type="button" title="Tutup">×</button>';n.querySelector('button').onclick=()=>n.remove();document.body.appendChild(n);}n.querySelector('span').textContent=t;n.style.background=error?'#8b2b36':'#102c52';};
 
-function renderMenu(button){
+function renderMenu(button,anchor){
+ anchor=anchor||button;
  if(!loggedInSuperadmin()){document.getElementById('dcmMtDbkMenu')?.remove();button?.remove();return;}
  const old=document.getElementById('dcmMtDbkMenu');
  if(old){old.remove();button.setAttribute('aria-expanded','false');return}
@@ -34,7 +35,7 @@ function renderMenu(button){
   item('restore','Restore All','Pemulihan penuh melalui konfirmasi Dashboard CM','M12 20V8m-5 5 5-5 5 5M4 6V3h16v3'):'')+
   '<div class="dcm-dbk-warning">Impor aktivitas tidak menghapus data lain. Restore All menggunakan alur konfirmasi bawaan dan dapat mengganti data.</div>';
  document.body.appendChild(menu);button.setAttribute('aria-expanded','true');
- const r=button.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
+ const r=anchor.getBoundingClientRect(),w=menu.offsetWidth,h=menu.offsetHeight;
  menu.style.left=Math.max(8,Math.min(r.right-w,window.innerWidth-w-8))+'px';
  menu.style.top=(r.bottom+8+h>window.innerHeight?Math.max(8,r.top-h-8):r.bottom+8)+'px';
  const close=()=>{menu.remove();button.setAttribute('aria-expanded','false');document.removeEventListener('pointerdown',outside,true);document.removeEventListener('keydown',key);window.removeEventListener('resize',close);window.removeEventListener('scroll',close,true);};
@@ -95,25 +96,29 @@ function alignFilterResetWithReports(){
  const reset=actions?.querySelector('#btnResetFilter'),spacer=actions?.querySelector('.sp');
  if(reset&&spacer&&spacer.nextElementSibling!==reset)spacer.after(reset);
 }
+/* DCM 261126: Data & Backup dipindah dari toolbar filter ke menu profil, tepat di bawah Pengaturan. */
+function closeProfileMenu(){const m=document.getElementById('dcmRefUserMenu'),t=document.getElementById('dcmRefAvatarTrigger');if(m)m.hidden=true;if(t)t.setAttribute('aria-expanded','false');}
 function setToolbar(){
- const bar=document.getElementById('contextFilterBar'),filter=document.getElementById('btnFilterToggle');
- if(!bar||!filter)return;
+ document.getElementById('dcmActDbk')?.remove();
+ alignFilterResetWithReports();
+ const profile=document.getElementById('dcmRefUserMenu');
+ let item=document.getElementById('dcmProfileDbk');
  if(!loggedInSuperadmin()){
   document.getElementById('dcmMtDbkMenu')?.remove();
-  document.getElementById('dcmActDbk')?.remove();
-  alignFilterResetWithReports();
+  item?.remove();
   return;
  }
- let button=document.getElementById('dcmActDbk');
- if(!button){
-  button=document.createElement('button');button.id='dcmActDbk';button.type='button';
-  button.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg><span>Data &amp; Backup</span>';
-  button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
-  button.addEventListener('click',()=>renderMenu(button));filter.parentNode.insertBefore(button,filter);
+ if(!profile)return;
+ if(!item){
+  item=document.createElement('button');item.id='dcmProfileDbk';item.type='button';item.className='dcm-ref-menu-action';item.setAttribute('role','menuitem');
+  item.setAttribute('aria-haspopup','menu');item.setAttribute('aria-expanded','false');
+  item.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg><span>Data &amp; Backup</span>';
+  item.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();closeProfileMenu();renderMenu(item,document.getElementById('dcmRefAvatarTrigger')||item);});
  }
- button.classList.remove('hidden');
- placeBackupButton(button,filter);
- alignFilterResetWithReports();
+ const settings=profile.querySelector('#btnAccessAdmin'),logout=profile.querySelector('#btnLogout');
+ if(settings){if(settings.nextElementSibling!==item)settings.after(item);}
+ else if(logout){if(logout.previousElementSibling!==item)profile.insertBefore(item,logout);}
+ else if(item.parentNode!==profile)profile.appendChild(item);
  if(!document.getElementById('dcmDbkJsonInput')){
   const fi=document.createElement('input');fi.id='dcmDbkJsonInput';fi.type='file';fi.accept='.json,application/json';fi.hidden=true;document.body.appendChild(fi);
   fi.addEventListener('change',async()=>{const f=fi.files?.[0];fi.value='';if(!f)return;try{if(f.size>24*1024*1024)throw Error('File JSON maksimal 24 MB.');const o=JSON.parse(await f.text());const records=Array.isArray(o)?o:Array.isArray(o.agendas)?o.agendas:null;if(!records)throw Error('File tidak memuat daftar agendas.');await mergeAgendas(records,f.name);}catch(err){notify('Impor JSON gagal: '+err.message,true);}});
@@ -121,6 +126,7 @@ function setToolbar(){
   zi.addEventListener('change',async()=>{const f=zi.files?.[0];zi.value='';if(!f)return;try{await importZip(f);}catch(err){notify('Impor ZIP gagal: '+err.message,true);}});
  }
 }
+
 async function mergeAgendas(records,name,options={}){
  if(!mutable())throw Error('Akses edit diperlukan untuk mengimpor.');
  const st=cmState();if(!st)throw Error('Data aktivitas belum dimuat.');if(records.length>30000)throw Error('Jumlah data terlalu besar.');
