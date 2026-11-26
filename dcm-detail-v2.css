@@ -133,3 +133,18 @@
 .cm-af [data-af-panel="res"] [data-output-editor="1"]:is([data-file-editor="daftarHadirFiles"],[data-file-editor="notulaTteFiles"],[data-file-editor="ndNotulaFiles"]) > .activity-file-list:has(> .af-vempty:only-child) + div {
   margin-top: 0 !important;
 }
+
+
+/* Info Utama: keep Dasar surat on the same section grid as WBS and Metode.
+   Only the outer section alignment changes; compact letter cards stay intact. */
+.cm-af [data-af-panel="info"] .af-sec:has(> .af-sec-body .af-letter) {
+  grid-template-columns: 172px minmax(0,1fr);
+  gap: 16px;
+  padding: 12px 16px;
+}
+@media (max-width:1024px) {
+  .cm-af [data-af-panel="info"] .af-sec:has(> .af-sec-body .af-letter) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
