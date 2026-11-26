@@ -338,16 +338,31 @@ async function buildXlsx(y){const D=iprData(y);
  catch(e){console.warn('[IPR] ExcelJS tidak tersedia, memakai format sederhana',e);if(!window.XLSX)throw e;
   const wb=XLSX.utils.book_new();[1,2,3,4].forEach(t=>{const ws=XLSX.utils.aoa_to_sheet([HEAD].concat(sheetRows(D,t).map(r=>r.v)));ws['!cols']=WID.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,'Capaian TW '+t)});
   return {buf:XLSX.write(wb,{type:'array',bookType:'xlsx'}),D}}}
+/* IPR 261126: pratinjau isi sheet sebelum unduh */
+function iprPvTw(y){const d=new Date();return String(y)===String(d.getFullYear())?Math.ceil((d.getMonth()+1)/3):1}
+function iprPreviewHTML(D,t){const W=[6,20,9,9,16,17,23],tot=100,rows=sheetRows(D,t),n=[1,2,3,4].map(k=>D.acts.filter(x=>twOf(x)===k).length);
+ const cell=(r,c,i)=>{const em=!r.ss&&!c&&(i===2||i===3);return '<td'+(em?' class="em"':'')+'>'+(em?'—':E(c))+'</td>'};
+ return '<div class="ipr-pv-tabs" role="tablist">'+[1,2,3,4].map(k=>'<button type="button" role="tab" data-pvt="'+k+'" class="'+(k===t?'on':'')+'" aria-selected="'+(k===t)+'">Capaian TW '+k+'<i>'+n[k-1]+'</i></button>').join('')+'</div>'
+  +'<div class="ipr-pv-sc"><table><colgroup>'+W.map(w=>'<col style="width:'+(w/tot*100).toFixed(2)+'%">').join('')+'</colgroup><thead><tr>'+HEAD.map(h=>'<th>'+E(h)+'</th>').join('')+'</tr></thead><tbody>'
+  +(rows.length?rows.map(r=>'<tr'+(r.ss?' class="ss"':'')+'>'+r.v.map((c,i)=>cell(r,c,i)).join('')+'</tr>').join(''):'<tr><td colspan="7" class="em" style="text-align:center">'+uiText('IKU Reference is empty.','Referensi IKU masih kosong.')+'</td></tr>')
+  +'</tbody></table></div><div class="ipr-pv-ft"><span>Sheet “Capaian TW '+t+'” · '+rows.filter(r=>!r.ss).length+' IKU</span><span>'+uiText('Realisation & Evidence left empty (managed in the IKU app)','Realisasi &amp; Bukti Dukung dikosongkan (dikelola di aplikasi IKU)')+'</span></div>'}
+function iprPvWire(ov,getY,btn){const pv=ov.querySelector('[data-xp]');let t=iprPvTw(getY());
+ const draw=()=>{if(pv.hidden)return;pv.innerHTML=iprPreviewHTML(iprData(getY()),t)};
+ pv.addEventListener('click',e=>{const b=e.target.closest('[data-pvt]');if(b){t=+b.dataset.pvt;draw()}});
+ const toggle=()=>{pv.hidden=!pv.hidden;if(btn)btn.textContent=pv.hidden?'👁 '+uiText('Preview','Pratinjau')+'':'✕ '+uiText('Close preview','Tutup pratinjau')+'';draw();if(!pv.hidden)pv.scrollIntoView({block:'nearest',behavior:'smooth'})};
+ return {draw,toggle,year:()=>{t=iprPvTw(getY());draw()}}}
 async function openIprExport(){if(!canEdit()){T(uiText('IPR export is for CMO Pusat and PMO Pusat.','Ekspor IPR hanya untuk CMO Pusat dan PMO Pusat.'));return}await load();
  const ys=years(),f=state.filters||{},y0=String(UI.year||(f.tahun&&f.tahun!=='ALL'?f.tahun:yNow()));
- const body=`<div class="form-grid"><div class="form-field"><label>${uiText('IPR year','Tahun IPR')}</label><select data-xy>${ys.map(v=>`<option${v===y0?' selected':''}>${v}</option>`).join('')}</select></div></div><div data-xs></div>
+ const body=`<div class="form-grid"><div class="form-field"><label>${uiText('IPR year','Tahun IPR')}</label><select data-xy>${ys.map(v=>`<option${v===y0?' selected':''}>${v}</option>`).join('')}</select></div></div><div data-xs></div><div class="ipr-pv" data-xp hidden></div>
   <p class="dcm-iku-h">${uiText('Each sheet: <b>Obstacles</b> from the activities’ Obstacles field, <b>Proposed Strategy</b> from the IKU Reference (same every quarter), <b>Actions taken</b> from activities in that quarter linked to the IKU. Realisation and Evidence stay empty (managed in the IKU app). Cancelled, postponed, not-attended and future activities are excluded.','Isi tiap sheet: <b>Kendala</b> dari isian Kendala aktivitas, <b>Usulan Strategi</b> dari Referensi IKU (sama setiap TW), <b>Tindakan yang dilaksanakan</b> dari aktivitas pada TW tersebut yang dikaitkan ke IKU itu. Kolom Realisasi dan Bukti Dukung dibiarkan kosong (dikelola di aplikasi IKU). Kegiatan dibatalkan, ditunda, tidak dihadiri, atau yang tanggalnya belum lewat tidak ikut.')}</p>`;
  const ov=modal(uiText('IPR export (Excel)','Ekspor IPR (Excel)'),body,'⇩ '+uiText('Download Excel','Unduh Excel'),async o=>{const y=o.querySelector('[data-xy]').value,btn=o.querySelector('[data-ok]');btn.disabled=true;btn.textContent=uiText('Building…','Menyusun…');
   try{const {buf}=await buildXlsx(y);const url=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));const a=document.createElement('a');a.href=url;a.download='IPR_Pusmantap_'+y+'.xlsx';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);T(uiText('IPR Excel downloaded.','Excel IPR '+y+' diunduh.'),'success');return true}
   catch(e){btn.disabled=false;btn.textContent='⇩ '+uiText('Download Excel','Unduh Excel');T(uiText('Failed to build the IPR Excel: ','Gagal menyusun Excel IPR: ')+e.message,'error');return false}},{cls:'dcm-iku-wide'});
+ const pvb=document.createElement('button');pvb.type='button';pvb.className='btn btn-outline btn-sm';pvb.dataset.pv='1';pvb.textContent='👁 '+uiText('Preview','Pratinjau');ov.querySelector('[data-ok]').before(pvb);
+ const PV=iprPvWire(ov,()=>ov.querySelector('[data-xy]').value,pvb);pvb.addEventListener('click',()=>PV.toggle());
  const sum=()=>{const y=ov.querySelector('[data-xy]').value,D=iprData(y),per=[1,2,3,4].map(t=>Object.values(D.tw[t-1]).filter(p=>p.n).length);
   ov.querySelector('[data-xs]').innerHTML=D.rows.length?`<div class="dcm-iku-sumg">${[1,2,3,4].map(t=>`<div><small>TW ${['I','II','III','IV'][t-1]}</small><b>${D.acts.filter(a=>twOf(a)===t).length}</b><span>${uiText('activities','aktivitas')} · ${per[t-1]}/${D.rows.length} IKU ${uiText('filled','terisi')}</span></div>`).join('')}</div>${D.orphan?`<p class="dcm-iku-warn">⚠ ${D.orphan} ${uiText('activities use an IKU code that is not in the reference and are not exported.','aktivitas memakai kode IKU yang tidak ada di Referensi IKU '+E(y)+' dan tidak ikut terekspor.')}</p>`:''}`:`<p class="dcm-iku-warn">${uiText('IKU Reference is empty for this year.','Referensi IKU '+E(y)+' masih kosong.')}</p>`};
- ov.querySelector('[data-xy]').addEventListener('change',sum);sum()}
+ ov.querySelector('[data-xy]').addEventListener('change',()=>{sum();PV.year()});sum()}
 
 window.DCMIKU={KEY,SEED,load,ref,years,writeRef,formField,readForm,setFormRefs,wireForm,filterOptions,filterSelect,matchFilter,renderTab,openIprExport,parsePaste,parseSheet,iprData,buildXlsx,refsOf};
 /* label tab mengikuti bahasa */

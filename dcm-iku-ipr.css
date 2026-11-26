@@ -74,3 +74,23 @@
 #tab-ikuref .dcm-reference-tabs button.active{background:linear-gradient(135deg,#17477E,#0E3066);color:#fff;box-shadow:0 2px 5px rgba(11,42,91,.16)}
 #tab-ikuref .dcm-reference-tabs button:not(.active):hover{background:#E8EFFA;color:#173A74}
 #tab-ikuref .dcm-reference-tabs button:focus-visible{outline:2px solid #D4AF43;outline-offset:1px}
+/* IPR 261126: pratinjau sebelum unduh (meniru format sheet Excel) */
+.ipr-pv{margin-top:10px;border:1px solid #DCE3EE;border-radius:10px;overflow:hidden;background:#fff}
+.ipr-pv[hidden]{display:none!important}
+.ipr-pv-tabs{display:flex;border-bottom:1px solid #E3E8F1;background:#fff}
+.ipr-pv-tabs button{all:unset;box-sizing:border-box;flex:1;text-align:center;padding:9px 6px;font:600 12px Inter,Arial,sans-serif;color:#51607A;cursor:pointer;border-bottom:3px solid transparent}
+.ipr-pv-tabs button:hover{color:#0F2346;background:#F7F9FC}
+.ipr-pv-tabs button.on{color:#0F2346;border-bottom-color:#D6AD3A;font-weight:700}
+.ipr-pv-tabs button i{font-style:normal;margin-left:6px;padding:1px 7px;border-radius:10px;background:#EEF2F8;font-size:10.5px;color:#41506B}
+.ipr-pv-tabs button.on i{background:#FFF1C9;color:#7A5300}
+.ipr-pv-sc{max-height:42vh;overflow:auto}
+.ipr-pv table{width:100%;min-width:900px;border-collapse:collapse;table-layout:fixed;font:12px/1.4 Barlow,Inter,Arial,sans-serif;color:#1B2436}
+.ipr-pv th{position:sticky;top:0;z-index:1;background:#1F497D;color:#fff;font-weight:700;text-align:center;vertical-align:middle;padding:7px 6px;border:1px solid #16365E}
+.ipr-pv td{border:1px solid #C9D1DD;padding:6px 7px;vertical-align:top;white-space:pre-line;word-break:break-word}
+.ipr-pv td:first-child{text-align:center}
+.ipr-pv tr.ss td{background:#FDE9D9;font-weight:700}
+.ipr-pv td.em{color:#A3ADBD}
+.ipr-pv-ft{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-top:1px solid #E3E8F1;background:#F9FBFE;font-size:11px;color:#6B7690}
+.dcm-iku-ov .modal-box.dcm-iku-wide{display:flex;flex-direction:column;overflow:hidden;transition:max-width .2s}
+.dcm-iku-ov .modal-box.dcm-iku-wide .modal-body{flex:1 1 auto;min-height:0;overflow-y:auto}
+.dcm-iku-ov .modal-box.dcm-iku-wide:has(.ipr-pv:not([hidden])){max-width:1120px}
