@@ -1,0 +1,26 @@
+name: Full prechange backup 261126-DCM-68
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/dcm-backup-261126-dcm-68.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 36acf21351d7b2641562b685a6b0364068225422
+          fetch-depth: 0
+      - name: Create and verify complete snapshot
+        run: |
+          test "$(git rev-parse HEAD)" = "36acf21351d7b2641562b685a6b0364068225422"
+          git archive --format=zip --output=261126-DCM-68.zip HEAD
+          unzip -t 261126-DCM-68.zip | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 261126-DCM-68
+          path: 261126-DCM-68.zip
+          retention-days: 90
